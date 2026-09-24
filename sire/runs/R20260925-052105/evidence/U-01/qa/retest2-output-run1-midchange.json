@@ -1,0 +1,84 @@
+{
+  "R1 1a 仓库有其他提交": {
+    "git_status": "?? workflow/",
+    "log_rc": 0,
+    "ACTIVE": {
+      "status": "STOP",
+      "classification": "rsi_unregistered_change",
+      "changed": [
+        "workflow/"
+      ],
+      "last_workflow_commit": null,
+      "matched": [],
+      "ok": true
+    },
+    "PROPOSED": {
+      "status": "PASS",
+      "classification": null,
+      "changed": [
+        "workflow/"
+      ],
+      "last_workflow_commit": null,
+      "matched": [
+        "RSI-QA-OLD"
+      ],
+      "ok": true
+    }
+  },
+  "R1 1b 仓库零提交": {
+    "git_status": "?? workflow/",
+    "log_rc": 128,
+    "ACTIVE": {
+      "status": "STOP",
+      "classification": "rsi_git_undetermined",
+      "changed": [
+        "workflow/"
+      ],
+      "last_workflow_commit": null,
+      "matched": [],
+      "ok": true
+    },
+    "PROPOSED": {
+      "status": "STOP",
+      "classification": "rsi_git_undetermined",
+      "changed": [
+        "workflow/"
+      ],
+      "last_workflow_commit": null,
+      "matched": [],
+      "ok": false
+    }
+  },
+  "R2 finalize STOP 写 rsi-report": {
+    "preflight_start_rc": [
+      0,
+      0
+    ],
+    "finalize_rc": 3,
+    "traceback": false,
+    "rsi_report_exists": true,
+    "rsi_report_status": "STOP",
+    "rsi_report_classification": "rsi_unregistered_change",
+    "checked_at": "2026-09-24T21:31:07.496556+00:00",
+    "manifest_unchanged": true,
+    "ok": true
+  },
+  "R3 真实库 rsi-check": {
+    "rc": 0,
+    "status": "PASS",
+    "matched": [
+      "RSI-20260925-R9GATE"
+    ],
+    "sha_before": "cc4924ce0b309f846a1fcfa77664067e04afefc1c3ab34aa5c9abcf76afe9659",
+    "sha_after": "cc4924ce0b309f846a1fcfa77664067e04afefc1c3ab34aa5c9abcf76afe9659",
+    "data_before": [
+      "sire_vectors.sqlite3",
+      "snapshot-manifest.json"
+    ],
+    "data_after": [
+      "sire_vectors.sqlite3",
+      "snapshot-manifest.json"
+    ],
+    "ok": true
+  }
+}

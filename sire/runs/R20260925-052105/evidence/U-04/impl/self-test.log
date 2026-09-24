@@ -1,0 +1,18 @@
+commit 0515fb99d145109736e21a436fcfd601166dfe49
+Author: caiyixuan <caiyixuan@kingkong.tech>
+Date:   Fri Sep 25 06:42:33 2026 +0800
+
+    RSI 接入入口并由 R9 finalize 兜底拦截未登记的工作流改动
+    
+    - SKILL.md：新增 Workflow changes (RSI) 段，链接 references/self-optimization.md
+    - supervisor.md：检查项 8 rsi-check（fail-closed 语义）
+    - sire_supervisor.py：新增只读 rsi-check，接入 finalize；STOP 时不推进基线并写 rsi-report.json
+    
+    RSI 提案：RSI-20260925-R9GATE；run R20260925-052105（R4/R6A/R6B/R6C/R7 PASS）
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+ sire/workflow/shared/sire/SKILL.md                 |   5 +
+ sire/workflow/shared/sire/references/supervisor.md |   1 +
+ .../shared/sire/scripts/sire_supervisor.py         | 101 +++++++++++++++++++++
+ 3 files changed, 107 insertions(+)

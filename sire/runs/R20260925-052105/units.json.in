@@ -1,0 +1,75 @@
+{
+ "units": [
+  {
+   "id": "U-01",
+   "title": "sire_supervisor.py 新增只读 rsi-check 并接入 finalize",
+   "maps": "REQ-03",
+   "owner": "R5",
+   "accept": "当 D:/sire/AI/AI/sire/workflow/shared/sire 有未提交改动且该目录最后一次提交之后无 PROPOSED/EVALUATED_PASS/ACTIVE 提案时，rsi-check 与 finalize 应返回 rc=3、classification=rsi_unregistered_change，finalize 不应推进 BASELINE_MANIFEST；当存在匹配提案或目录无未提交改动时应返回 rc=0；当库文件缺失、表缺失或文件不是 SQLite 时应返回 STOP 且不抛异常并以只读方式打开；当目录不在 Git 仓库或不存在时应返回 SKIPPED、rc=0",
+   "files": [
+    "D:/sire/AI/AI/sire/workflow/shared/sire/scripts/sire_supervisor.py"
+   ],
+   "verify": "R7 T1-T8 与 X1/X4 复测：真实库 PASS；删提案/EVALUATED_FAIL/ROLLED_BACK/早于提交/无库/无表/非 SQLite 文件 均 STOP rc=3；非 Git 与不存在目录 SKIPPED rc=0；提交后目录无改动 PASS；隔离 SIRE_KB_DIR 下 finalize STOP 时 manifest 不变；真实库 sha256 不变；回归 python D:/sire/.sire/runs/R20260924-192838/evidence/U-02B/qa/qa_all.py <tmp> U-02B 输出 ALL PASS 且 rc=0",
+   "deps": [],
+   "wave": 1,
+   "risk": "其他会话留下未提交工作流改动时 finalize 会 STOP（预期）",
+   "stop": "需改 sire_rsi.py 或数据库结构时退回 R0"
+  },
+  {
+   "id": "U-02",
+   "title": "SKILL.md 与 references/supervisor.md 写明 RSI 规则并链接 self-optimization.md",
+   "maps": "REQ-02",
+   "owner": "R5",
+   "accept": "当 U-01 的 R6/R7 PASS 后，SKILL.md 应含 ## Workflow changes (RSI) 段且 Supporting references 应链接 references/self-optimization.md，supervisor.md Checks 应有第 8 项 rsi-check，比对清单每个词应在文档出现且在对应代码中逐字存在",
+   "files": [
+    "D:/sire/AI/AI/sire/workflow/shared/sire/SKILL.md",
+    "D:/sire/AI/AI/sire/workflow/shared/sire/references/supervisor.md"
+   ],
+   "verify": "grep 比对清单：rsi-check、finalize、rsi_unregistered_change、STOP、PROPOSED、EVALUATED_PASS、ACTIVE 在 sire_supervisor.py 中逐字存在；propose、evaluate、activate、rollback 在 sire_rsi.py 中逐字存在；链接目标文件存在",
+   "deps": [
+    "U-01"
+   ],
+   "wave": 2,
+   "risk": "低",
+   "stop": "需改 global-contract.md 时退回 R0"
+  },
+  {
+   "id": "U-04",
+   "title": "本地提交 U-01/U-02 工作流改动（不 push）",
+   "maps": "REQ-05",
+   "owner": "R5",
+   "accept": "当 U-01、U-02 均 DONE 时，应只提交 SKILL.md、references/supervisor.md、scripts/sire_supervisor.py 三个文件，提交后 git status -- sire/workflow/shared/sire 应为空且 rsi-check 应返回 PASS rc=0，不应 push",
+   "files": [
+    "D:/sire/AI/AI/sire/workflow/shared/sire/SKILL.md",
+    "D:/sire/AI/AI/sire/workflow/shared/sire/references/supervisor.md",
+    "D:/sire/AI/AI/sire/workflow/shared/sire/scripts/sire_supervisor.py"
+   ],
+   "verify": "git show --stat HEAD 仅含 3 个文件；git status --porcelain -- sire/workflow/shared/sire 为空；python sire_supervisor.py rsi-check rc=0；git status -sb 显示未推送",
+   "deps": [
+    "U-01",
+    "U-02"
+   ],
+   "wave": 3,
+   "risk": "低",
+   "stop": "暂存区出现其他文件时停止"
+  },
+  {
+   "id": "U-03",
+   "title": "RSI-20260925-R9GATE 在归档库评估并激活 v6.2",
+   "maps": "REQ-04",
+   "owner": "R5",
+   "accept": "当 U-04 完成后，应先把仓库库中 RSI-20260925-R9GATE 原行（created_at=2026-09-24T21:19:32.584126+00:00，早于首次改动）原样复制进归档库 D:/sire/sire_vectors.sqlite3（写前备份并持锁），再用三项指标 evaluate：rsi_rule_reachable（before=0，target=1，after=grep SKILL.md 是否链接 self-optimization.md 的实测 0/1）、rsi_gate_tests_pass（before=0，target=1，after=R7 test.md 首行 VERDICT 为 PASS 且复测全 PASS 时取 1 否则 0）、regression_qa_all_pass（before=1，target=1，after=U-02B qa_all.py ALL PASS 时取 1 否则 0）；全部达标时应为 EVALUATED_PASS 并 activate v6.2（config_hash 应等于 git -C D:/sire/AI/AI rev-parse HEAD:sire/workflow/shared/sire），v6.1 应为 RETIRED；任一未达标时应不激活",
+   "files": [
+    "D:/sire/sire_vectors.sqlite3",
+    "C:/Users/Administrator/sire/db-backups/"
+   ],
+   "verify": "只读 SQL：归档库中该提案 created_at 等于原值、status=ACTIVE；improvement_metrics 3 行 passed=1 且 evidence 指向 evidence/U-01/qa/test.md 与 qa_all 输出；workflow_versions v6.2 ACTIVE 且 config_hash 与 git -C D:/sire/AI/AI rev-parse HEAD:sire/workflow/shared/sire 一致、v6.1 RETIRED；PRAGMA integrity_check=ok",
+   "deps": [
+    "U-04"
+   ],
+   "wave": 4,
+   "risk": "sire_rsi.py 默认写仓库库，收尾快照从归档库重建仓库库，必须写归档库",
+   "stop": "指标未达标则记录 EVALUATED_FAIL 并报告"
+  }
+ ]
+}

@@ -1,0 +1,17 @@
+# U-02 R5 自测：比对清单
+rsi-check doc=0 code=2
+finalize doc=0 code=5
+rsi_unregistered_change doc=0 code=1
+STOP doc=0 code=13
+PROPOSED doc=0 code=2
+EVALUATED_PASS doc=0 code=2
+ACTIVE doc=0 code=2
+propose doc=1 rsi=2
+evaluate doc=1 rsi=4
+activate doc=1 rsi=5
+rollback doc=1 rsi=4
+D:/sire/AI/AI/sire/workflow/shared/sire/references/self-optimization.md
+76:## Workflow changes (RSI)
+78:Any change to files in this shared skill directory is a workflow mechanism change. Before the first edit, register a proposal with `scripts/sire_rsi.py propose`; after verification, record metrics with `evaluate`, and `activate` only an `EVALUATED_PASS` proposal; `rollback` on regression. R9 `sire_supervisor.py finalize` (and the read-only `rsi-check`) returns `STOP` (`rsi_unregistered_change`) when this directory has uncommitted changes but no `PROPOSED`/`EVALUATED_PASS`/`ACTIVE` proposal was created after its last commit. Full rules: [references/self-optimization.md](references/self-optimization.md) §5.1.
+87:- Learning, self-optimization, and RSI gate: [references/self-optimization.md](references/self-optimization.md)
+26:8. Run `scripts/sire_supervisor.py rsi-check` (also enforced by `finalize`): 

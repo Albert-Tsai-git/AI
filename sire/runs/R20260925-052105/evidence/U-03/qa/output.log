@@ -1,0 +1,10 @@
+tree_hash ad38036a68f10c191e3ebc8ae85a57c6005b313f
+proposal ('RSI-20260925-R9GATE', 'ACTIVE', '2026-09-24T21:19:32.584126+00:00')
+metrics cols ['id', 'proposal_id', 'metric', 'before_value', 'after_value', 'target_value', 'passed', 'evidence', 'created_at']
+metrics [(4, 'RSI-20260925-R9GATE', 'rsi_rule_reachable', 0.0, 1.0, 1.0, 1, 'SKILL.md 链接 self-optimization.md（grep 实测）', '2026-09-24T22:42:53.576855+00:00'), (5, 'RSI-20260925-R9GATE', 'rsi_gate_tests_pass', 0.0, 1.0, 1.0, 1, 'run R20260925-052105 evidence/U-01/qa/test.md', '2026-09-24T22:42:53.576855+00:00'), (6, 'RSI-20260925-R9GATE', 'regression_qa_all_pass', 1.0, 1.0, 1.0, 1, 'U-02B qa_all.py ALL PASS 实测', '2026-09-24T22:42:53.576855+00:00')]
+versions cols ['version', 'proposal_id', 'status', 'config_hash', 'created_at', 'activated_at', 'retired_at']
+version ('v6.1', 'RSI-20260921-DB', 'RETIRED', 'local-db-rsi-v1', '2026-09-21T00:50:32.020639+00:00', '2026-09-21T00:50:32.020639+00:00', '2026-09-24T22:42:54.210204+00:00')
+version ('v6.2', 'RSI-20260925-R9GATE', 'ACTIVE', 'ad38036a68f10c191e3ebc8ae85a57c6005b313f', '2026-09-24T22:42:54.210204+00:00', '2026-09-24T22:42:54.210204+00:00', None)
+integrity_check ok
+{'proposal': True, 'metrics3_passed': True, 'v6.2': True, 'v6.1': True, 'integrity': True}
+ALL PASS

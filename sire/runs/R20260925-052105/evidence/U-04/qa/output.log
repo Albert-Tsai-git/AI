@@ -1,0 +1,20 @@
+== show --stat HEAD
+0515fb99d145109736e21a436fcfd601166dfe49 RSI 接入入口并由 R9 finalize 兜底拦截未登记的工作流改动
+
+ sire/workflow/shared/sire/SKILL.md                 |   5 +
+ sire/workflow/shared/sire/references/supervisor.md |   1 +
+ .../shared/sire/scripts/sire_supervisor.py         | 101 +++++++++++++++++++++
+ 3 files changed, 107 insertions(+)
+== status workflow
+(end, rc=0)
+== rsi-check
+{
+  "status": "PASS",
+  "reason": "工作流目录无未提交改动",
+  "changed": []
+}
+rc=0
+== status -sb
+## feature/feishu-hub...origin/feature/feishu-hub [ahead 5]
+ M sire/data/sire_vectors.sqlite3
+ M sire/knowledge/global/SIRE-MIGRATION.md

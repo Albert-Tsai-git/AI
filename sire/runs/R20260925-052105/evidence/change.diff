@@ -1,0 +1,155 @@
+diff --git a/sire/workflow/shared/sire/SKILL.md b/sire/workflow/shared/sire/SKILL.md
+index 9502467..5361600 100644
+--- a/sire/workflow/shared/sire/SKILL.md
++++ b/sire/workflow/shared/sire/SKILL.md
+@@ -73,6 +73,10 @@ python <SHARED_SKILL_DIR>\scripts\sire_vector_db.py stats
+ 
+ On completion, archive reusable facts, search terms, decisions, limitations, validation results, and the task record to the shared database; update the shared Markdown index; and set `meta.sire_last_project`, `meta.sire_last_run`, and `meta.sire_last_status`. Commit the changed database, knowledge, workflow, and evidence to this Git repository. Do not push unless explicitly asked. Database migrations/indexing must keep a recoverable backup and verify row counts, FTS, vectors, and `integrity_check`.
+ 
++## Workflow changes (RSI)
++
++Any change to files in this shared skill directory is a workflow mechanism change. Before the first edit, register a proposal with `scripts/sire_rsi.py propose`; after verification, record metrics with `evaluate`, and `activate` only an `EVALUATED_PASS` proposal; `rollback` on regression. R9 `sire_supervisor.py finalize` (and the read-only `rsi-check`) returns `STOP` (`rsi_unregistered_change`) when this directory has uncommitted changes but no `PROPOSED`/`EVALUATED_PASS`/`ACTIVE` proposal was created after its last commit. Full rules: [references/self-optimization.md](references/self-optimization.md) §5.1.
++
+ ## Supporting references
+ 
+ - Role and output details: [references/roles.md](references/roles.md)
+@@ -80,6 +84,7 @@ On completion, archive reusable facts, search terms, decisions, limitations, val
+ - Gates and test evidence: [references/gates.md](references/gates.md)
+ - Vector database design: [references/vector-knowledge.md](references/vector-knowledge.md)
+ - Integrity and final review: [references/supervisor.md](references/supervisor.md)
++- Learning, self-optimization, and RSI gate: [references/self-optimization.md](references/self-optimization.md)
+ - Claude adapter role files: [agents/claude/](agents/claude/)
+ - Codex discovery metadata: [agents/openai.yaml](agents/openai.yaml)
+ 
+diff --git a/sire/workflow/shared/sire/references/supervisor.md b/sire/workflow/shared/sire/references/supervisor.md
+index 71ed8f7..9271e01 100644
+--- a/sire/workflow/shared/sire/references/supervisor.md
++++ b/sire/workflow/shared/sire/references/supervisor.md
+@@ -23,6 +23,7 @@ Run `scripts/sire_supervisor.py preflight`, `start --run-id <RUN_ID>`, `check --
+ 5. Inspect source manifests and package manifests for missing or duplicate SIRE rule sources.
+ 6. Verify database integrity, core table counts, FTS search, embedding references/hashes, and last-run metadata.
+ 7. Review staged blobs for credentials, private keys, machine-specific absolute paths, and database sidecars.
++8. Run `scripts/sire_supervisor.py rsi-check` (also enforced by `finalize`): uncommitted changes in the shared skill directory require a `PROPOSED`/`EVALUATED_PASS`/`ACTIVE` RSI proposal created after that directory's last commit; otherwise `STOP` with `rsi_unregistered_change` and do not advance the baseline. The check reads the database read-only.
+ 
+ If a required source file is missing, a link points to a divergent copy, or the database is corrupt, record `STOP` with the exact artifact and last known state. Do not silently reconstruct private materials or erase prior evidence. Declared changes are recorded with before/after hashes and reason.
+ 
+diff --git a/sire/workflow/shared/sire/scripts/sire_supervisor.py b/sire/workflow/shared/sire/scripts/sire_supervisor.py
+index 7fe8479..fd11b9d 100644
+--- a/sire/workflow/shared/sire/scripts/sire_supervisor.py
++++ b/sire/workflow/shared/sire/scripts/sire_supervisor.py
+@@ -8,13 +8,16 @@ import hashlib
+ import json
+ import os
+ import shutil
++import sqlite3
+ import stat
++import subprocess
+ import sys
+ import zipfile
+ from datetime import datetime, timezone
+ from pathlib import Path
+ 
+ from sire_bundle import files_for, historical_specs, is_sensitive, kb_dir, target_specs
++from sire_paths import DATABASE_PATH, SHARED_SKILL_DIR
+ 
+ 
+ INTEGRITY_DIR = kb_dir() / "integrity"
+@@ -237,10 +240,81 @@ def check(run_id: str, unit_id: str | None) -> int:
+     return fail_if_loss(payload) if status == "STOP" else (print(json.dumps(payload, ensure_ascii=False, indent=2)) or 0)
+ 
+ 
++# 这些状态的提案才算"已登记且未失败"；EVALUATED_FAIL / ROLLED_BACK 的改动不应留在工作区
++RSI_OPEN_STATUSES = ("PROPOSED", "EVALUATED_PASS", "ACTIVE")
++
++
++def git_output(args: list[str], cwd: Path) -> tuple[int, str]:
++    try:
++        result = subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True, encoding="utf-8", errors="replace")
++    except FileNotFoundError:
++        return 127, ""
++    return result.returncode, result.stdout
++
++
++def rsi_proposals(db_path: Path) -> list[dict[str, str]]:
++    """只读读取 RSI 提案；库或表不存在时返回空列表，不建表、不切换日志模式。"""
++    if not db_path.is_file():
++        return []
++    conn = sqlite3.connect(db_path.resolve().as_uri() + "?mode=ro", uri=True, timeout=30)
++    try:
++        conn.execute("PRAGMA query_only=ON")
++        rows = conn.execute("SELECT proposal_id, status, created_at FROM improvement_proposals").fetchall()
++    except sqlite3.OperationalError:
++        return []
++    finally:
++        conn.close()
++    return [{"proposal_id": row[0], "status": row[1], "created_at": row[2]} for row in rows]
++
++
++def rsi_gate(db_path: Path = DATABASE_PATH, skill_dir: Path = SHARED_SKILL_DIR) -> dict[str, object]:
++    """R9 RSI 门禁：共享工作流目录有未提交改动时，必须存在该目录最后一次提交之后登记、且未失败的 RSI 提案。"""
++    code, _ = git_output(["rev-parse", "--show-toplevel"], skill_dir)
++    if code != 0:
++        return {"status": "SKIPPED", "reason": "工作流目录不在 Git 仓库中或未找到 git", "skill_dir": str(skill_dir)}
++    code, porcelain = git_output(["status", "--porcelain", "--", "."], skill_dir)
++    if code != 0:
++        return {"status": "SKIPPED", "reason": "git status 执行失败", "skill_dir": str(skill_dir)}
++    changed = [line[3:] for line in porcelain.splitlines() if line.strip()]
++    if not changed:
++        return {"status": "PASS", "reason": "工作流目录无未提交改动", "changed": []}
++    _, last_commit = git_output(["log", "-1", "--format=%cI", "--", "."], skill_dir)
++    last_commit = last_commit.strip()
++    since = datetime.fromisoformat(last_commit) if last_commit else None
++    matched = []
++    for item in rsi_proposals(db_path):
++        if item["status"] not in RSI_OPEN_STATUSES:
++            continue
++        try:
++            created = datetime.fromisoformat(item["created_at"])
++        except (TypeError, ValueError):
++            continue
++        if created.tzinfo is None:
++            created = created.replace(tzinfo=timezone.utc)
++        if since is None or created >= since:
++            matched.append(item)
++    payload = {"changed": changed, "last_workflow_commit": last_commit or None, "db": str(db_path), "matched_proposals": matched}
++    if matched:
++        return {"status": "PASS", "reason": "工作流改动已登记 RSI 提案", **payload}
++    return {"status": "STOP", "classification": "rsi_unregistered_change",
++            "reason": "工作流目录有未提交改动，但最后一次工作流提交之后没有登记未失败的 RSI 提案；先运行 sire_rsi.py propose",
++            **payload}
++
++
++def rsi_check() -> int:
++    result = rsi_gate()
++    stream = sys.stderr if result["status"] == "STOP" else sys.stdout
++    print(json.dumps(result, ensure_ascii=False, indent=2), file=stream)
++    return 3 if result["status"] == "STOP" else 0
++
++
+ def finalize(run_id: str) -> int:
+     result = check(run_id, None)
+     if result != 0:
+         return result
++    # RSI 门禁失败时不推进基线，保证下次仍能发现同一批未登记改动
++    if rsi_check() != 0:
++        return 3
+     manifest_path, payload = snapshot("baseline-next")
+     write_json(BASELINE_MANIFEST, payload)
+     print(json.dumps({"status": "FINALIZED", "run_id": run_id, "manifest": str(BASELINE_MANIFEST), "entries": payload["entry_count"]}, ensure_ascii=False))
+@@ -329,6 +403,7 @@ def main() -> int:
+     check_parser.add_argument("--unit-id")
+     finalize_parser = sub.add_parser("finalize")
+     finalize_parser.add_argument("--run-id", required=True)
++    sub.add_parser("rsi-check")
+     verify_parser = sub.add_parser("verify-zip")
+     verify_parser.add_argument("--zip", required=True, type=Path)
+     verify_parser.add_argument("--against-current", action="store_true")
+@@ -341,6 +416,8 @@ def main() -> int:
+         return check(args.run_id, args.unit_id)
+     if args.command == "finalize":
+         return finalize(args.run_id)
++    if args.command == "rsi-check":
++        return rsi_check()
+     return verify_zip(args.zip, args.against_current)
+ 
+ 

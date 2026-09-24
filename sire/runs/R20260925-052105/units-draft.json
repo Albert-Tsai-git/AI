@@ -1,0 +1,43 @@
+{
+  "units": [
+    {
+      "id": "U-01",
+      "title": "sire_supervisor.py 新增只读 rsi-check 并接入 finalize",
+      "maps": "REQ-03",
+      "owner": "R5",
+      "accept": "工作流目录有未提交改动且其最后一次提交之后没有 PROPOSED/EVALUATED_PASS/ACTIVE 提案时，rsi-check 与 finalize 返回 rc=3、classification=rsi_unregistered_change，finalize 不推进 BASELINE_MANIFEST；有匹配提案或目录无改动时 rc=0；数据库只读打开且库或表缺失不崩溃；非 Git 目录返回 SKIPPED",
+      "files": ["D:/sire/AI/AI/sire/workflow/shared/sire/scripts/sire_supervisor.py"],
+      "verify": "CLI 实测 rsi-check：真实库 PASS、空库/无库/提案失败状态/提案早于提交 均 STOP；隔离 SIRE_KB_DIR 下 start→finalize 在 STOP 时基线不变；真实库 sha256 运行前后不变且无 -wal/-shm；回归 U-02B qa_all.py ALL PASS",
+      "deps": [],
+      "wave": 1,
+      "risk": "工作流目录被其他会话改动时 finalize 会 STOP（预期行为）",
+      "stop": "需要修改 sire_rsi.py 或数据库结构时停止并退回 R0"
+    },
+    {
+      "id": "U-02",
+      "title": "SKILL.md 与 references/supervisor.md 写明 RSI 规则并链接 self-optimization.md",
+      "maps": "REQ-02",
+      "owner": "R5",
+      "accept": "SKILL.md 有 Workflow changes (RSI) 段落且 Supporting references 链接 self-optimization.md；supervisor.md Checks 增第 8 项 rsi-check；文档描述与 U-01 实现一致",
+      "files": ["D:/sire/AI/AI/sire/workflow/shared/sire/SKILL.md", "D:/sire/AI/AI/sire/workflow/shared/sire/references/supervisor.md"],
+      "verify": "grep 段落与链接存在；链接目标文件存在；状态名/分类名/命令名与代码逐字一致",
+      "deps": [],
+      "wave": 1,
+      "risk": "低",
+      "stop": "需要改 global-contract.md 时停止并退回 R0"
+    },
+    {
+      "id": "U-03",
+      "title": "RSI 提案 RSI-20260925-R9GATE 评估并激活 v6.2",
+      "maps": "REQ-04",
+      "owner": "R5",
+      "accept": "U-01/U-02 通过 R6/R7 后，evaluate 记录指标且 EVALUATED_PASS，activate v6.2（config-hash=提交后工作流目录 git tree hash），v6.1 变为 RETIRED",
+      "files": ["D:/sire/AI/AI/sire/data/sire_vectors.sqlite3"],
+      "verify": "只读 SQL 查询 improvement_proposals/improvement_metrics/workflow_versions；PRAGMA integrity_check=ok",
+      "deps": ["U-01", "U-02"],
+      "wave": 2,
+      "risk": "数据库写入须走 sire_rsi.py 的锁与备份",
+      "stop": "评估未达标时不激活，记录 EVALUATED_FAIL 并报告"
+    }
+  ]
+}

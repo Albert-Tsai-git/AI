@@ -1,0 +1,41 @@
+[
+  {
+    "cmd": [
+      "preflight"
+    ],
+    "rc": 0,
+    "traceback": false,
+    "stderr_tail": [],
+    "manifest_before": null,
+    "manifest_after": "9367447f648721315efebac1a9561f1ce145a8a3c30739bee042d6355b572a01"
+  },
+  {
+    "cmd": [
+      "start",
+      "--run-id",
+      "QA-RSI"
+    ],
+    "rc": 0,
+    "traceback": false,
+    "stderr_tail": [],
+    "manifest_before": "9367447f648721315efebac1a9561f1ce145a8a3c30739bee042d6355b572a01",
+    "manifest_after": "9367447f648721315efebac1a9561f1ce145a8a3c30739bee042d6355b572a01"
+  },
+  {
+    "cmd": [
+      "finalize",
+      "--run-id",
+      "QA-RSI"
+    ],
+    "rc": 1,
+    "traceback": true,
+    "stderr_tail": [
+      "sqlite3.DatabaseError: file is not a database"
+    ],
+    "manifest_before": "9367447f648721315efebac1a9561f1ce145a8a3c30739bee042d6355b572a01",
+    "manifest_after": "9367447f648721315efebac1a9561f1ce145a8a3c30739bee042d6355b572a01"
+  },
+  {
+    "baseline_next_exists": false
+  }
+]

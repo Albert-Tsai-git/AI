@@ -1,0 +1,52 @@
+== grep 修复点
+250:    except OSError:
+262:    except sqlite3.Error:
+267:    except sqlite3.Error:
+== R1 X1 garbage sha_before=a5dc7b7f7af50366
+{
+  "status": "STOP",
+  "classification": "rsi_unregistered_change",
+  "reason": "工作流目录有未提交改动，但最后一次工作流提交之后没有登记未失败的 RSI 提案；先运行 sire_rsi.py propose",
+  "changed": [
+    "sire/workflow/shared/sire/SKILL.md",
+    "sire/workflow/shared/sire/references/supervisor.md",
+    "sire/workflow/shared/sire/scripts/sire_supervisor.py"
+  ],
+  "last_workflow_commit": "2026-09-25T05:18:45+08:00",
+  "db": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\garbage.sqlite3",
+  "matched_proposals": []
+}
+rc=3
+garbage sha_after=a5dc7b7f7af50366
+== R2 X4 nonexistent skill_dir
+{
+  "skill_dir": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\does-not-exist",
+  "raised": false,
+  "result": {
+    "status": "SKIPPED",
+    "reason": "工作流目录不在 Git 仓库中或未找到 git",
+    "skill_dir": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\does-not-exist"
+  }
+}
+rc=0
+== R3 real DB sha_before=cc4924ce0b309f84 data=sire_vectors.sqlite3 snapshot-manifest.json 
+{
+  "status": "PASS",
+  "reason": "工作流改动已登记 RSI 提案",
+  "changed": [
+    "sire/workflow/shared/sire/SKILL.md",
+    "sire/workflow/shared/sire/references/supervisor.md",
+    "sire/workflow/shared/sire/scripts/sire_supervisor.py"
+  ],
+  "last_workflow_commit": "2026-09-25T05:18:45+08:00",
+  "db": "D:\\sire\\AI\\AI\\sire\\data\\sire_vectors.sqlite3",
+  "matched_proposals": [
+    {
+      "proposal_id": "RSI-20260925-R9GATE",
+      "status": "PROPOSED",
+      "created_at": "2026-09-24T21:19:32.584126+00:00"
+    }
+  ]
+}
+rc=0
+real DB sha_after=cc4924ce0b309f84 data=sire_vectors.sqlite3 snapshot-manifest.json 

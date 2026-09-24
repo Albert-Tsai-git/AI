@@ -456,6 +456,35 @@
         "snapshot",
         "database"
       ]
+    },
+    {
+      "id": "P-20260925",
+      "type": "problem",
+      "title": "SIRE 的 RSI 规则曾是孤岛——入口不可达且无触发点，需由 R9 收尾门禁兜底",
+      "file": "global_problem_solutions.md",
+      "line": 228,
+      "date": "2026-09-25",
+      "project": "SIRE v6 Claude/Codex 共享工作流",
+      "status": "已验证（run R20260925-052105）",
+      "keywords": [
+        "SIRE",
+        "RSI",
+        "自我优化",
+        "self-optimization",
+        "sire_rsi",
+        "improvement_proposals",
+        "workflow_versions",
+        "提案",
+        "激活",
+        "回滚",
+        "R9",
+        "rsi-check",
+        "finalize",
+        "rsi_unregistered_change",
+        "工作流改动",
+        "门禁",
+        "关键词子串误报"
+      ]
     }
   ],
   "features": {
@@ -1096,7 +1125,8 @@
     "SIRE": [
       "P-024",
       "P-20260923",
-      "P-20260924"
+      "P-20260924",
+      "P-20260925"
     ],
     "Git 归档": [
       "P-024"
@@ -1161,6 +1191,54 @@
     ],
     "database": [
       "P-20260924"
+    ],
+    "RSI": [
+      "P-20260925"
+    ],
+    "自我优化": [
+      "P-20260925"
+    ],
+    "self-optimization": [
+      "P-20260925"
+    ],
+    "sire_rsi": [
+      "P-20260925"
+    ],
+    "improvement_proposals": [
+      "P-20260925"
+    ],
+    "workflow_versions": [
+      "P-20260925"
+    ],
+    "提案": [
+      "P-20260925"
+    ],
+    "激活": [
+      "P-20260925"
+    ],
+    "回滚": [
+      "P-20260925"
+    ],
+    "R9": [
+      "P-20260925"
+    ],
+    "rsi-check": [
+      "P-20260925"
+    ],
+    "finalize": [
+      "P-20260925"
+    ],
+    "rsi_unregistered_change": [
+      "P-20260925"
+    ],
+    "工作流改动": [
+      "P-20260925"
+    ],
+    "门禁": [
+      "P-20260925"
+    ],
+    "关键词子串误报": [
+      "P-20260925"
     ]
   },
   "efficiency": {},
@@ -1190,6 +1268,6 @@
       "H-004"
     ]
   },
-  "last_updated": "2026-09-24T16:16:22Z",
-  "total_records": 17
+  "last_updated": "2026-09-24T23:56:10Z",
+  "total_records": 18
 }

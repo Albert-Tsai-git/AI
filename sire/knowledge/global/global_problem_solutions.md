@@ -223,3 +223,38 @@ Claude 和 Codex 共用仓库中的同一份 SIRE 向量库。检索、统计或
 
 ## 限制
 真实 Claude/Codex 桌面 UI 只能在应用可被自动化访问时验收，CLI 成功不能代替 UI 验收。仓库归档的是规范化应用数据库；机器级任务关闭归档仍按全局契约写入指定外部 archive。数据库写入脚本新增后必须纳入写入口审查，否则锁仍可能被绕过。
+
+
+### P-20260925: SIRE 的 RSI 规则曾是孤岛——入口不可达且无触发点，需由 R9 收尾门禁兜底
+
+**日期**: 2026-09-25
+**项目**: SIRE v6 Claude/Codex 共享工作流
+**状态**: 已验证（run R20260925-052105）
+**关键词**: SIRE, RSI, 自我优化, self-optimization, sire_rsi, improvement_proposals, workflow_versions, 提案, 激活, 回滚, R9, rsi-check, finalize, rsi_unregistered_change, 工作流改动, 门禁, 关键词子串误报
+
+## 需求场景
+用户询问 SIRE 是否包含 RSI、RSI 如何触发。RSI（受控递归自我改进）要求工作流机制改动走"提案 → 基线指标 → 独立评估 → 版本化激活 → 观测 → 回滚"。
+
+## 原因
+1. `references/self-optimization.md` §5.1 与 `scripts/sire_rsi.py` 存在，但 `SKILL.md` 与 `global-contract.md` 均未链接该文件，按入口执行的 Agent 读不到 RSI 规则。
+2. 没有任何脚本、阶段、Hook（Claude settings.json / Codex hooks.json）调用 `sire_rsi.py`；RSI 只能手动触发。结果：提案表只有 2026-09-21 的 2 条冒烟记录，此后多次工作流改动均未登记。
+3. `sire_kb.py search` 按不区分大小写的子串匹配，检索 "RSI" 会误命中 "VERSION"/"supportedVersions"；RSI 相关知识需用向量检索或 `self-optimization`、`improvement_proposals` 等词。
+
+## 方案
+- `SKILL.md` 新增 "Workflow changes (RSI)" 段并在 Supporting references 链接 `self-optimization.md`：改共享 skill 目录前先 `sire_rsi.py propose`，验证后 `evaluate`，只激活 `EVALUATED_PASS`，回归则 `rollback`。
+- `sire_supervisor.py` 新增只读 `rsi-check` 子命令并接入 `finalize`：共享 skill 目录有未提交改动（`git status --porcelain -- .`），且该目录最后一次提交（`git log -1 --format=%cI -- .`）之后没有 `PROPOSED`/`EVALUATED_PASS`/`ACTIVE` 提案时，返回 `STOP`、rc=3、`rsi_unregistered_change`，finalize 不推进 R9 基线。数据库以 `mode=ro` + `query_only` 打开，库/表缺失或非 SQLite 文件按"无提案"处理（fail-closed）；只有目录不存在或不在 Git 仓库时返回 `SKIPPED`，git 不可用或 status/log 失败返回 `STOP`（`rsi_git_undetermined`）；取不到最后提交时间（仓库尚无提交）时 `ACTIVE` 提案不算；finalize 把结果写入运行目录 `rsi-report.json`。
+- 本次改动自身按 RSI 走完：`RSI-20260925-R9GATE` propose → evaluate → activate v6.2（config-hash = 提交后工作流目录 git tree hash）。
+
+## 关键文件
+- `sire/workflow/shared/sire/SKILL.md`、`references/supervisor.md`（检查项 8）、`references/self-optimization.md` §5.1
+- `sire/workflow/shared/sire/scripts/sire_supervisor.py`（`rsi_gate` / `rsi_check` / `finalize`）
+- `sire/workflow/shared/sire/scripts/sire_rsi.py`
+
+## 验证
+R4 拆解复核、R6A/R6B/R6C 独立复核与 R7 功能测试结论见 run R20260925-052105 的 evidence（U-01 qa/review）。正常路径：真实库有提案 → PASS；异常/边界：删提案、提案 EVALUATED_FAIL/ROLLED_BACK、提案早于最后提交、库不存在、无表空库 → STOP rc=3；只读：运行前后库 sha256 不变且无 -wal/-shm；finalize 在 STOP 时基线不变；verify-zip 回归通过。
+
+## 限制
+- 门禁把"最后一次工作流提交之后的任一未失败提案"视为已登记，无法证明提案与具体 diff 对应；它是兜底而非审计。
+- 其他会话在共享 skill 目录留下未提交改动时，任何 run 的 finalize 都会 STOP（预期行为），需先由改动方登记提案或提交。
+- `sire_rsi.py` 默认写仓库库 `sire/data/sire_vectors.sqlite3`，而收尾流程用 `snapshot_db.py` 从机器级归档库重建仓库库：只写进仓库库的 RSI 记录会在快照时丢失，RSI 写入必须同时（或只）写归档库后再快照。
+- 未修复：`sire_rsi.py status` 会先备份并 `CREATE TABLE`，不是只读；`evaluate` 只支持"越高越好"（after >= target）。

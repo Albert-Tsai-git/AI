@@ -1,0 +1,397 @@
+{
+  "results": [
+    {
+      "id": "T1",
+      "name": "真实库 rsi-check 正常路径",
+      "steps": "cwd=scripts; 不设 SIRE_VECTOR_DB; python sire_supervisor.py rsi-check",
+      "expected": "rc=0, status=PASS, matched_proposals 含 RSI-20260925-R9GATE",
+      "actual": {
+        "rc": 0,
+        "status": "PASS",
+        "matched": [
+          "RSI-20260925-R9GATE"
+        ],
+        "last_workflow_commit": "2026-09-25T05:18:45+08:00",
+        "changed": [
+          "sire/workflow/shared/sire/SKILL.md",
+          "sire/workflow/shared/sire/references/supervisor.md",
+          "sire/workflow/shared/sire/scripts/sire_supervisor.py"
+        ],
+        "db": "D:\\sire\\AI\\AI\\sire\\data\\sire_vectors.sqlite3"
+      },
+      "verdict": "PASS",
+      "evidence": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\run-output.log"
+    },
+    {
+      "id": "T5",
+      "name": "真实库只读",
+      "steps": "T1 前后计算真实库 sha256/mtime，并列出 data 目录",
+      "expected": "sha256 与 mtime 不变；data 目录无 -wal/-shm/-journal，文件列表不变",
+      "actual": {
+        "sha256_before": "cc4924ce0b309f846a1fcfa77664067e04afefc1c3ab34aa5c9abcf76afe9659",
+        "sha256_after": "cc4924ce0b309f846a1fcfa77664067e04afefc1c3ab34aa5c9abcf76afe9659",
+        "mtime_ns_before": 1790284772590226500,
+        "mtime_ns_after": 1790284772590226500,
+        "data_before": [
+          "sire_vectors.sqlite3",
+          "snapshot-manifest.json"
+        ],
+        "data_after": [
+          "sire_vectors.sqlite3",
+          "snapshot-manifest.json"
+        ],
+        "sidecars": []
+      },
+      "verdict": "PASS",
+      "evidence": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\run-output.log"
+    },
+    {
+      "id": "T2",
+      "name": "库副本删除提案后 STOP",
+      "steps": "复制真实库→tmp/db_noprop.sqlite3，DELETE RSI-20260925-R9GATE；SIRE_VECTOR_DB=副本 rsi-check",
+      "expected": "rc=3, status=STOP, classification=rsi_unregistered_change",
+      "actual": {
+        "rc": 3,
+        "status": "STOP",
+        "classification": "rsi_unregistered_change",
+        "matched": [],
+        "remaining_rows": [
+          [
+            "RSI-20260921-DB",
+            "ACTIVE",
+            "2026-09-21T00:50:31.853594+00:00"
+          ],
+          [
+            "RSI-TEST-ROLLBACK",
+            "ROLLED_BACK",
+            "2026-09-21T00:51:03.463776+00:00"
+          ]
+        ]
+      },
+      "verdict": "PASS",
+      "evidence": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\run-output.log"
+    },
+    {
+      "id": "T3",
+      "name": "库缺失/缺表边界",
+      "steps": "SIRE_VECTOR_DB 分别指向 tmp/nope/missing.sqlite3（不存在）、tmp/empty0.sqlite3（0 字节）、tmp/no_table.sqlite3（只有 other 表）",
+      "expected": "均 rc=3、STOP、rsi_unregistered_change，无 Traceback；不创建文件、不改文件",
+      "actual": {
+        "不存在的文件": {
+          "rc": 3,
+          "status": "STOP",
+          "classification": "rsi_unregistered_change",
+          "traceback": false,
+          "file_unchanged": true,
+          "exists_after": false,
+          "sidecars": [],
+          "ok": true
+        },
+        "0 字节空 sqlite": {
+          "rc": 3,
+          "status": "STOP",
+          "classification": "rsi_unregistered_change",
+          "traceback": false,
+          "file_unchanged": true,
+          "exists_after": true,
+          "sidecars": [],
+          "ok": true
+        },
+        "无 improvement_proposals 表的 sqlite": {
+          "rc": 3,
+          "status": "STOP",
+          "classification": "rsi_unregistered_change",
+          "traceback": false,
+          "file_unchanged": true,
+          "exists_after": true,
+          "sidecars": [],
+          "ok": true
+        }
+      },
+      "verdict": "PASS",
+      "evidence": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\run-output.log"
+    },
+    {
+      "id": "T4",
+      "name": "提案状态/时间边界",
+      "steps": "db_var 副本依次 UPDATE RSI-20260925-R9GATE 的 status/created_at 后运行 rsi-check（最后提交 2026-09-25T05:18:45+08:00）",
+      "expected": "EVALUATED_FAIL/ROLLED_BACK/早于提交 均 STOP rc=3；naive 晚于提交不崩溃（按 UTC 解释 → PASS）",
+      "actual": {
+        "a status=EVALUATED_FAIL": {
+          "row": [
+            "RSI-20260925-R9GATE",
+            "EVALUATED_FAIL",
+            "2026-09-24T21:19:32.584126+00:00"
+          ],
+          "want": "STOP",
+          "rc": 3,
+          "status": "STOP",
+          "classification": "rsi_unregistered_change",
+          "matched": [],
+          "traceback": false,
+          "ok": true
+        },
+        "b status=ROLLED_BACK": {
+          "row": [
+            "RSI-20260925-R9GATE",
+            "ROLLED_BACK",
+            "2026-09-24T21:19:32.584126+00:00"
+          ],
+          "want": "STOP",
+          "rc": 3,
+          "status": "STOP",
+          "classification": "rsi_unregistered_change",
+          "matched": [],
+          "traceback": false,
+          "ok": true
+        },
+        "c created_at 早于提交 2026-09-20T00:00:00+00:00": {
+          "row": [
+            "RSI-20260925-R9GATE",
+            "PROPOSED",
+            "2026-09-20T00:00:00+00:00"
+          ],
+          "want": "STOP",
+          "rc": 3,
+          "status": "STOP",
+          "classification": "rsi_unregistered_change",
+          "matched": [],
+          "traceback": false,
+          "ok": true
+        },
+        "d naive created_at 2026-09-25T00:00:00（按 UTC 晚于提交）": {
+          "row": [
+            "RSI-20260925-R9GATE",
+            "PROPOSED",
+            "2026-09-25T00:00:00"
+          ],
+          "want": "PASS",
+          "rc": 0,
+          "status": "PASS",
+          "classification": null,
+          "matched": [
+            "RSI-20260925-R9GATE"
+          ],
+          "traceback": false,
+          "ok": true
+        },
+        "e(额外) created_at 恰等于提交时间": {
+          "row": [
+            "RSI-20260925-R9GATE",
+            "PROPOSED",
+            "2026-09-25T05:18:45+08:00"
+          ],
+          "want": "PASS",
+          "rc": 0,
+          "status": "PASS",
+          "classification": null,
+          "matched": [
+            "RSI-20260925-R9GATE"
+          ],
+          "traceback": false,
+          "ok": true
+        },
+        "f(额外) created_at=not-a-date": {
+          "row": [
+            "RSI-20260925-R9GATE",
+            "PROPOSED",
+            "not-a-date"
+          ],
+          "want": "STOP",
+          "rc": 3,
+          "status": "STOP",
+          "classification": "rsi_unregistered_change",
+          "matched": [],
+          "traceback": false,
+          "ok": true
+        },
+        "g(额外) status=EVALUATED_PASS": {
+          "row": [
+            "RSI-20260925-R9GATE",
+            "EVALUATED_PASS",
+            "2026-09-24T21:19:32.584126+00:00"
+          ],
+          "want": "PASS",
+          "rc": 0,
+          "status": "PASS",
+          "classification": null,
+          "matched": [
+            "RSI-20260925-R9GATE"
+          ],
+          "traceback": false,
+          "ok": true
+        },
+        "h(额外) status=ACTIVE": {
+          "row": [
+            "RSI-20260925-R9GATE",
+            "ACTIVE",
+            "2026-09-24T21:19:32.584126+00:00"
+          ],
+          "want": "PASS",
+          "rc": 0,
+          "status": "PASS",
+          "classification": null,
+          "matched": [
+            "RSI-20260925-R9GATE"
+          ],
+          "traceback": false,
+          "ok": true
+        }
+      },
+      "verdict": "PASS",
+      "evidence": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\run-output.log"
+    },
+    {
+      "id": "T6",
+      "name": "finalize 集成（隔离 SIRE_KB_DIR）",
+      "steps": "复制真实知识目录（排除 integrity/secrets/exports）到 tmp/kb_a、tmp/kb_b；各自 preflight→start --run-id QA-RSI→finalize --run-id QA-RSI；a 用无提案副本，b 用含提案副本",
+      "expected": "a: finalize rc=3 + rsi_unregistered_change，manifest.json 不变，不生成 baseline-next；b: finalize rc=0 FINALIZED，manifest 推进为 baseline-next",
+      "actual": {
+        "a 无提案副本": {
+          "preflight_rc": 0,
+          "preflight_status": "INITIALIZED",
+          "start_rc": 0,
+          "start_status": "STARTED",
+          "finalize_rc": 3,
+          "run_check_report_status": "PASS",
+          "finalize_stderr_classification": "rsi_unregistered_change",
+          "finalize_last_stdout_status": "PASS",
+          "manifest_sha_before": "d1194b2de6b9ad1f43bf0087ee56d12e00299a5a9da58d7e9d1a88b091b10c07",
+          "manifest_sha_after": "d1194b2de6b9ad1f43bf0087ee56d12e00299a5a9da58d7e9d1a88b091b10c07",
+          "manifest_label_before": "baseline",
+          "manifest_label_after": "baseline",
+          "baseline_next_snapshot_exists": false,
+          "traceback": false,
+          "ok": true
+        },
+        "b 含提案真实库副本": {
+          "preflight_rc": 0,
+          "preflight_status": "INITIALIZED",
+          "start_rc": 0,
+          "start_status": "STARTED",
+          "finalize_rc": 0,
+          "run_check_report_status": "PASS",
+          "finalize_stderr_classification": null,
+          "finalize_last_stdout_status": "FINALIZED",
+          "manifest_sha_before": "1fa5f147708ac80250c21020b60b0bd7f0666a6117a2e7d74cc44a14caa91d44",
+          "manifest_sha_after": "30b7d99cb48edb4c0338aa9332fbb377bff75000329e91024dd70cacb75fc948",
+          "manifest_label_before": "baseline",
+          "manifest_label_after": "baseline-next",
+          "baseline_next_snapshot_exists": true,
+          "traceback": false,
+          "ok": true
+        }
+      },
+      "verdict": "PASS",
+      "evidence": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\run-output.log"
+    },
+    {
+      "id": "T7",
+      "name": "回归：verify-zip qa_all + --help",
+      "steps": "python qa_all.py D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\u02b U-02B；python sire_supervisor.py --help",
+      "expected": "qa_all 输出 ALL PASS；--help 列出 rsi-check",
+      "actual": {
+        "qa_all": {
+          "rc": 0,
+          "all_pass_line": true,
+          "fail_lines": [],
+          "pass_count": 30
+        },
+        "help": {
+          "rc": 0,
+          "lists_rsi_check": true,
+          "usage_line": "usage: sire_supervisor.py [-h]"
+        }
+      },
+      "verdict": "PASS",
+      "evidence": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\run-output.log"
+    },
+    {
+      "id": "T8",
+      "name": "非 Git 目录 rsi_gate 返回 SKIPPED",
+      "steps": "子进程内 import sire_supervisor，调用 rsi_gate(skill_dir=<非 Git 目录>)",
+      "expected": "status=SKIPPED，不抛异常",
+      "actual": {
+        "probe_sys_tmp_rc": 128,
+        "probe_ceiling_rc": 128,
+        "a 系统临时目录(真实非 Git)": {
+          "rc": 0,
+          "raised": false,
+          "status": "SKIPPED",
+          "reason": "工作流目录不在 Git 仓库中或未找到 git",
+          "ok": true
+        },
+        "b tmp/nogit + GIT_CEILING_DIRECTORIES": {
+          "rc": 0,
+          "raised": false,
+          "status": "SKIPPED",
+          "reason": "工作流目录不在 Git 仓库中或未找到 git",
+          "ok": true
+        }
+      },
+      "verdict": "PASS",
+      "evidence": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\run-output.log"
+    }
+  ],
+  "extra_observations": {
+    "X1 非 sqlite 垃圾文件": {
+      "rc": 1,
+      "status": null,
+      "traceback": true,
+      "stderr_tail": [
+        "sqlite3.DatabaseError: file is not a database"
+      ]
+    },
+    "X2 SIRE_VECTOR_DB 指向目录": {
+      "rc": 3,
+      "status": "STOP",
+      "classification": "rsi_unregistered_change",
+      "traceback": false
+    },
+    "T4 额外子项 e/f/g/h": {
+      "e(额外) created_at 恰等于提交时间": true,
+      "f(额外) created_at=not-a-date": true,
+      "g(额外) status=EVALUATED_PASS": true,
+      "h(额外) status=ACTIVE": true
+    },
+    "X3 PATH 无 git": {
+      "rc": 0,
+      "raised": false,
+      "exc": null,
+      "status": "SKIPPED",
+      "reason": "工作流目录不在 Git 仓库中或未找到 git"
+    },
+    "X4 skill_dir 不存在": {
+      "rc": 0,
+      "raised": true,
+      "exc": "NotADirectoryError(20, '目录名称无效。', None, 267, None)",
+      "status": null,
+      "reason": null
+    }
+  },
+  "post_checks": {
+    "workflow_dir_diff": {
+      "added": [],
+      "removed": [],
+      "modified": []
+    },
+    "real_kb_diff": {
+      "added": [],
+      "removed": [],
+      "modified": []
+    },
+    "data_dir_before": [
+      "sire_vectors.sqlite3",
+      "snapshot-manifest.json"
+    ],
+    "data_dir_end": [
+      "sire_vectors.sqlite3",
+      "snapshot-manifest.json"
+    ],
+    "real_db_sha_start": "cc4924ce0b309f846a1fcfa77664067e04afefc1c3ab34aa5c9abcf76afe9659",
+    "real_db_sha_end": "cc4924ce0b309f846a1fcfa77664067e04afefc1c3ab34aa5c9abcf76afe9659",
+    "workflow_commit_before": "31a3d7da0a5f7e6ef3de3ac3d1cde8a25315fd4b 2026-09-25T05:18:45+08:00",
+    "workflow_commit_after": "31a3d7da0a5f7e6ef3de3ac3d1cde8a25315fd4b 2026-09-25T05:18:45+08:00",
+    "workflow_status_unchanged": true
+  }
+}

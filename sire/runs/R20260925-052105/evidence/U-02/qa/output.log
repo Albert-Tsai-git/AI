@@ -1,0 +1,34 @@
+== 正常路径
+PASS rsi-check 在文档且在 sire_supervisor.py
+PASS finalize 在文档且在 sire_supervisor.py
+PASS rsi_unregistered_change 在文档且在 sire_supervisor.py
+PASS STOP 在文档且在 sire_supervisor.py
+PASS PROPOSED 在文档且在 sire_supervisor.py
+PASS EVALUATED_PASS 在文档且在 sire_supervisor.py
+PASS ACTIVE 在文档且在 sire_supervisor.py
+PASS propose 在 SKILL.md 且在 sire_rsi.py
+PASS evaluate 在 SKILL.md 且在 sire_rsi.py
+PASS activate 在 SKILL.md 且在 sire_rsi.py
+PASS rollback 在 SKILL.md 且在 sire_rsi.py
+PASS SKILL.md 含 ## Workflow changes (RSI)
+PASS SKILL.md 链接 self-optimization.md 且文件存在
+PASS supervisor.md 第 8 项含 rsi-check
+ALL PASS
+rc=0
+== 异常路径（删链接副本）
+PASS rsi-check 在文档且在 sire_supervisor.py
+PASS finalize 在文档且在 sire_supervisor.py
+PASS rsi_unregistered_change 在文档且在 sire_supervisor.py
+PASS STOP 在文档且在 sire_supervisor.py
+PASS PROPOSED 在文档且在 sire_supervisor.py
+PASS EVALUATED_PASS 在文档且在 sire_supervisor.py
+PASS ACTIVE 在文档且在 sire_supervisor.py
+PASS propose 在 SKILL.md 且在 sire_rsi.py
+PASS evaluate 在 SKILL.md 且在 sire_rsi.py
+PASS activate 在 SKILL.md 且在 sire_rsi.py
+PASS rollback 在 SKILL.md 且在 sire_rsi.py
+PASS SKILL.md 含 ## Workflow changes (RSI)
+FAIL SKILL.md 链接 self-optimization.md 且文件存在
+PASS supervisor.md 第 8 项含 rsi-check
+ALL FAIL
+rc=1

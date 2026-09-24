@@ -1,0 +1,23 @@
+# U-01 R5 自测
+$ python -m py_compile sire_supervisor.py
+OK
+$ python sire_supervisor.py rsi-check
+{
+  "status": "PASS",
+  "reason": "工作流改动已登记 RSI 提案",
+  "changed": [
+    "sire/workflow/shared/sire/SKILL.md",
+    "sire/workflow/shared/sire/references/supervisor.md",
+    "sire/workflow/shared/sire/scripts/sire_supervisor.py"
+  ],
+  "last_workflow_commit": "2026-09-25T05:18:45+08:00",
+  "db": "D:\\sire\\AI\\AI\\sire\\data\\sire_vectors.sqlite3",
+  "matched_proposals": [
+    {
+      "proposal_id": "RSI-20260925-R9GATE",
+      "status": "PROPOSED",
+      "created_at": "2026-09-24T21:19:32.584126+00:00"
+    }
+  ]
+}
+rc=0

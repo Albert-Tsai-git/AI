@@ -1,0 +1,1105 @@
+[qa] python=C:\Users\Administrator\AppData\Local\Programs\Python\Python312\python.exe 3.12.10  started=2026-09-25 05:27:45
+[qa] 工作流目录最后提交: 31a3d7da0a5f7e6ef3de3ac3d1cde8a25315fd4b 2026-09-25T05:18:45+08:00
+[qa] 工作流目录 git status --porcelain:
+ M sire/workflow/shared/sire/SKILL.md
+ M sire/workflow/shared/sire/references/supervisor.md
+ M sire/workflow/shared/sire/scripts/sire_supervisor.py
+
+[qa] 真实库提案（只读）: [[["RSI-20260921-DB", "ACTIVE", "2026-09-21T00:50:31.853594+00:00"], ["RSI-TEST-ROLLBACK", "ROLLED_BACK", "2026-09-21T00:51:03.463776+00:00"], ["RSI-20260925-R9GATE", "PROPOSED", "2026-09-24T21:19:32.584126+00:00"]]]
+[qa] 工作流目录文件数=53 真实知识目录(跟随链接)文件数=294 data 目录=['sire_vectors.sqlite3', 'snapshot-manifest.json']
+
+===== [T1 真实库 rsi-check] $ (cwd=D:\sire\AI\AI\sire\workflow\shared\sire\scripts) C:\Users\Administrator\AppData\Local\Programs\Python\Python312\python.exe D:\sire\AI\AI\sire\workflow\shared\sire\scripts\sire_supervisor.py rsi-check
+  rc=0  elapsed=0.34s
+  --- stdout ---
+{
+  "status": "PASS",
+  "reason": "工作流改动已登记 RSI 提案",
+  "changed": [
+    "sire/workflow/shared/sire/SKILL.md",
+    "sire/workflow/shared/sire/references/supervisor.md",
+    "sire/workflow/shared/sire/scripts/sire_supervisor.py"
+  ],
+  "last_workflow_commit": "2026-09-25T05:18:45+08:00",
+  "db": "D:\\sire\\AI\\AI\\sire\\data\\sire_vectors.sqlite3",
+  "matched_proposals": [
+    {
+      "proposal_id": "RSI-20260925-R9GATE",
+      "status": "PROPOSED",
+      "created_at": "2026-09-24T21:19:32.584126+00:00"
+    }
+  ]
+}
+
+  --- stderr ---
+
+>>> T1 真实库 rsi-check 正常路径: PASS | {"rc": 0, "status": "PASS", "matched": ["RSI-20260925-R9GATE"], "last_workflow_commit": "2026-09-25T05:18:45+08:00", "changed": ["sire/workflow/shared/sire/SKILL.md", "sire/workflow/shared/sire/references/supervisor.md", "sire/workflow/shared/sire/scripts/sire_supervisor.py"], "db": "D:\\sire\\AI\\AI\\sire\\data\\sire_vectors.sqlite3"}
+>>> T5 真实库只读: PASS | {"sha256_before": "cc4924ce0b309f846a1fcfa77664067e04afefc1c3ab34aa5c9abcf76afe9659", "sha256_after": "cc4924ce0b309f846a1fcfa77664067e04afefc1c3ab34aa5c9abcf76afe9659", "mtime_ns_before": 1790284772590226500, "mtime_ns_after": 1790284772590226500, "data_before": ["sire_vectors.sqlite3", "snapshot-manifest.json"], "data_after": ["sire_vectors.sqlite3", "snapshot-manifest.json"], "sidecars": []}
+[qa] 副本 db_full sha256=cc4924ce0b309f846a1fcfa77664067e04afefc1c3ab34aa5c9abcf76afe9659 源 sha256=cc4924ce0b309f846a1fcfa77664067e04afefc1c3ab34aa5c9abcf76afe9659 rows=[('RSI-20260921-DB', 'ACTIVE', '2026-09-21T00:50:31.853594+00:00'), ('RSI-20260925-R9GATE', 'PROPOSED', '2026-09-24T21:19:32.584126+00:00'), ('RSI-TEST-ROLLBACK', 'ROLLED_BACK', '2026-09-21T00:51:03.463776+00:00')]
+[qa] db_noprop 删除 RSI-20260925-R9GATE 后 rows=[('RSI-20260921-DB', 'ACTIVE', '2026-09-21T00:50:31.853594+00:00'), ('RSI-TEST-ROLLBACK', 'ROLLED_BACK', '2026-09-21T00:51:03.463776+00:00')]
+
+===== [T2 无提案副本] $ (cwd=D:\sire\AI\AI\sire\workflow\shared\sire\scripts) C:\Users\Administrator\AppData\Local\Programs\Python\Python312\python.exe D:\sire\AI\AI\sire\workflow\shared\sire\scripts\sire_supervisor.py rsi-check
+  env override: {"SIRE_VECTOR_DB": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\db_noprop.sqlite3"}
+  rc=3  elapsed=0.34s
+  --- stdout ---
+
+  --- stderr ---
+{
+  "status": "STOP",
+  "classification": "rsi_unregistered_change",
+  "reason": "工作流目录有未提交改动，但最后一次工作流提交之后没有登记未失败的 RSI 提案；先运行 sire_rsi.py propose",
+  "changed": [
+    "sire/workflow/shared/sire/SKILL.md",
+    "sire/workflow/shared/sire/references/supervisor.md",
+    "sire/workflow/shared/sire/scripts/sire_supervisor.py"
+  ],
+  "last_workflow_commit": "2026-09-25T05:18:45+08:00",
+  "db": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\db_noprop.sqlite3",
+  "matched_proposals": []
+}
+
+>>> T2 库副本删除提案后 STOP: PASS | {"rc": 3, "status": "STOP", "classification": "rsi_unregistered_change", "matched": [], "remaining_rows": [["RSI-20260921-DB", "ACTIVE", "2026-09-21T00:50:31.853594+00:00"], ["RSI-TEST-ROLLBACK", "ROLLED_BACK", "2026-09-21T00:51:03.463776+00:00"]]}
+
+===== [T3 不存在的文件] $ (cwd=D:\sire\AI\AI\sire\workflow\shared\sire\scripts) C:\Users\Administrator\AppData\Local\Programs\Python\Python312\python.exe D:\sire\AI\AI\sire\workflow\shared\sire\scripts\sire_supervisor.py rsi-check
+  env override: {"SIRE_VECTOR_DB": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\nope\\missing.sqlite3"}
+  rc=3  elapsed=0.33s
+  --- stdout ---
+
+  --- stderr ---
+{
+  "status": "STOP",
+  "classification": "rsi_unregistered_change",
+  "reason": "工作流目录有未提交改动，但最后一次工作流提交之后没有登记未失败的 RSI 提案；先运行 sire_rsi.py propose",
+  "changed": [
+    "sire/workflow/shared/sire/SKILL.md",
+    "sire/workflow/shared/sire/references/supervisor.md",
+    "sire/workflow/shared/sire/scripts/sire_supervisor.py"
+  ],
+  "last_workflow_commit": "2026-09-25T05:18:45+08:00",
+  "db": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\nope\\missing.sqlite3",
+  "matched_proposals": []
+}
+
+
+===== [T3 0 字节空 sqlite] $ (cwd=D:\sire\AI\AI\sire\workflow\shared\sire\scripts) C:\Users\Administrator\AppData\Local\Programs\Python\Python312\python.exe D:\sire\AI\AI\sire\workflow\shared\sire\scripts\sire_supervisor.py rsi-check
+  env override: {"SIRE_VECTOR_DB": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\empty0.sqlite3"}
+  rc=3  elapsed=0.36s
+  --- stdout ---
+
+  --- stderr ---
+{
+  "status": "STOP",
+  "classification": "rsi_unregistered_change",
+  "reason": "工作流目录有未提交改动，但最后一次工作流提交之后没有登记未失败的 RSI 提案；先运行 sire_rsi.py propose",
+  "changed": [
+    "sire/workflow/shared/sire/SKILL.md",
+    "sire/workflow/shared/sire/references/supervisor.md",
+    "sire/workflow/shared/sire/scripts/sire_supervisor.py"
+  ],
+  "last_workflow_commit": "2026-09-25T05:18:45+08:00",
+  "db": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\empty0.sqlite3",
+  "matched_proposals": []
+}
+
+
+===== [T3 无 improvement_proposals 表的 sqlite] $ (cwd=D:\sire\AI\AI\sire\workflow\shared\sire\scripts) C:\Users\Administrator\AppData\Local\Programs\Python\Python312\python.exe D:\sire\AI\AI\sire\workflow\shared\sire\scripts\sire_supervisor.py rsi-check
+  env override: {"SIRE_VECTOR_DB": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\no_table.sqlite3"}
+  rc=3  elapsed=0.34s
+  --- stdout ---
+
+  --- stderr ---
+{
+  "status": "STOP",
+  "classification": "rsi_unregistered_change",
+  "reason": "工作流目录有未提交改动，但最后一次工作流提交之后没有登记未失败的 RSI 提案；先运行 sire_rsi.py propose",
+  "changed": [
+    "sire/workflow/shared/sire/SKILL.md",
+    "sire/workflow/shared/sire/references/supervisor.md",
+    "sire/workflow/shared/sire/scripts/sire_supervisor.py"
+  ],
+  "last_workflow_commit": "2026-09-25T05:18:45+08:00",
+  "db": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\no_table.sqlite3",
+  "matched_proposals": []
+}
+
+>>> T3 库缺失/缺表边界: PASS | {"不存在的文件": {"rc": 3, "status": "STOP", "classification": "rsi_unregistered_change", "traceback": false, "file_unchanged": true, "exists_after": false, "sidecars": [], "ok": true}, "0 字节空 sqlite": {"rc": 3, "status": "STOP", "classification": "rsi_unregistered_change", "traceback": false, "file_unchanged": true, "exists_after": true, "sidecars": [], "ok": true}, "无 improvement_proposals 表的 sqlite": {"rc": 3, "status": "STOP", "classification": "rsi_unregistered_change", "traceback": false, "file_unchanged": true, "exists_after": true, "sidecars": [], "ok": true}}
+
+===== [X1 垃圾文件（额外观察）] $ (cwd=D:\sire\AI\AI\sire\workflow\shared\sire\scripts) C:\Users\Administrator\AppData\Local\Programs\Python\Python312\python.exe D:\sire\AI\AI\sire\workflow\shared\sire\scripts\sire_supervisor.py rsi-check
+  env override: {"SIRE_VECTOR_DB": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\garbage.sqlite3"}
+  rc=1  elapsed=0.33s
+  --- stdout ---
+
+  --- stderr ---
+Traceback (most recent call last):
+  File "D:\sire\AI\AI\sire\workflow\shared\sire\scripts\sire_supervisor.py", line 425, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "D:\sire\AI\AI\sire\workflow\shared\sire\scripts\sire_supervisor.py", line 420, in main
+    return rsi_check()
+           ^^^^^^^^^^^
+  File "D:\sire\AI\AI\sire\workflow\shared\sire\scripts\sire_supervisor.py", line 305, in rsi_check
+    result = rsi_gate()
+             ^^^^^^^^^^
+  File "D:\sire\AI\AI\sire\workflow\shared\sire\scripts\sire_supervisor.py", line 285, in rsi_gate
+    for item in rsi_proposals(db_path):
+                ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\sire\AI\AI\sire\workflow\shared\sire\scripts\sire_supervisor.py", line 262, in rsi_proposals
+    rows = conn.execute("SELECT proposal_id, status, created_at FROM improvement_proposals").fetchall()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.DatabaseError: file is not a database
+
+
+===== [X2 目录路径（额外观察）] $ (cwd=D:\sire\AI\AI\sire\workflow\shared\sire\scripts) C:\Users\Administrator\AppData\Local\Programs\Python\Python312\python.exe D:\sire\AI\AI\sire\workflow\shared\sire\scripts\sire_supervisor.py rsi-check
+  env override: {"SIRE_VECTOR_DB": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp"}
+  rc=3  elapsed=0.37s
+  --- stdout ---
+
+  --- stderr ---
+{
+  "status": "STOP",
+  "classification": "rsi_unregistered_change",
+  "reason": "工作流目录有未提交改动，但最后一次工作流提交之后没有登记未失败的 RSI 提案；先运行 sire_rsi.py propose",
+  "changed": [
+    "sire/workflow/shared/sire/SKILL.md",
+    "sire/workflow/shared/sire/references/supervisor.md",
+    "sire/workflow/shared/sire/scripts/sire_supervisor.py"
+  ],
+  "last_workflow_commit": "2026-09-25T05:18:45+08:00",
+  "db": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp",
+  "matched_proposals": []
+}
+
+
+===== [T4 a status=EVALUATED_FAIL] $ (cwd=D:\sire\AI\AI\sire\workflow\shared\sire\scripts) C:\Users\Administrator\AppData\Local\Programs\Python\Python312\python.exe D:\sire\AI\AI\sire\workflow\shared\sire\scripts\sire_supervisor.py rsi-check
+  env override: {"SIRE_VECTOR_DB": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\db_var.sqlite3"}
+  rc=3  elapsed=0.34s
+  --- stdout ---
+
+  --- stderr ---
+{
+  "status": "STOP",
+  "classification": "rsi_unregistered_change",
+  "reason": "工作流目录有未提交改动，但最后一次工作流提交之后没有登记未失败的 RSI 提案；先运行 sire_rsi.py propose",
+  "changed": [
+    "sire/workflow/shared/sire/SKILL.md",
+    "sire/workflow/shared/sire/references/supervisor.md",
+    "sire/workflow/shared/sire/scripts/sire_supervisor.py"
+  ],
+  "last_workflow_commit": "2026-09-25T05:18:45+08:00",
+  "db": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\db_var.sqlite3",
+  "matched_proposals": []
+}
+
+
+===== [T4 b status=ROLLED_BACK] $ (cwd=D:\sire\AI\AI\sire\workflow\shared\sire\scripts) C:\Users\Administrator\AppData\Local\Programs\Python\Python312\python.exe D:\sire\AI\AI\sire\workflow\shared\sire\scripts\sire_supervisor.py rsi-check
+  env override: {"SIRE_VECTOR_DB": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\db_var.sqlite3"}
+  rc=3  elapsed=0.35s
+  --- stdout ---
+
+  --- stderr ---
+{
+  "status": "STOP",
+  "classification": "rsi_unregistered_change",
+  "reason": "工作流目录有未提交改动，但最后一次工作流提交之后没有登记未失败的 RSI 提案；先运行 sire_rsi.py propose",
+  "changed": [
+    "sire/workflow/shared/sire/SKILL.md",
+    "sire/workflow/shared/sire/references/supervisor.md",
+    "sire/workflow/shared/sire/scripts/sire_supervisor.py"
+  ],
+  "last_workflow_commit": "2026-09-25T05:18:45+08:00",
+  "db": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\db_var.sqlite3",
+  "matched_proposals": []
+}
+
+
+===== [T4 c created_at 早于提交 2026-09-20T00:00:00+00:00] $ (cwd=D:\sire\AI\AI\sire\workflow\shared\sire\scripts) C:\Users\Administrator\AppData\Local\Programs\Python\Python312\python.exe D:\sire\AI\AI\sire\workflow\shared\sire\scripts\sire_supervisor.py rsi-check
+  env override: {"SIRE_VECTOR_DB": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\db_var.sqlite3"}
+  rc=3  elapsed=0.34s
+  --- stdout ---
+
+  --- stderr ---
+{
+  "status": "STOP",
+  "classification": "rsi_unregistered_change",
+  "reason": "工作流目录有未提交改动，但最后一次工作流提交之后没有登记未失败的 RSI 提案；先运行 sire_rsi.py propose",
+  "changed": [
+    "sire/workflow/shared/sire/SKILL.md",
+    "sire/workflow/shared/sire/references/supervisor.md",
+    "sire/workflow/shared/sire/scripts/sire_supervisor.py"
+  ],
+  "last_workflow_commit": "2026-09-25T05:18:45+08:00",
+  "db": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\db_var.sqlite3",
+  "matched_proposals": []
+}
+
+
+===== [T4 d naive created_at 2026-09-25T00:00:00（按 UTC 晚于提交）] $ (cwd=D:\sire\AI\AI\sire\workflow\shared\sire\scripts) C:\Users\Administrator\AppData\Local\Programs\Python\Python312\python.exe D:\sire\AI\AI\sire\workflow\shared\sire\scripts\sire_supervisor.py rsi-check
+  env override: {"SIRE_VECTOR_DB": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\db_var.sqlite3"}
+  rc=0  elapsed=0.33s
+  --- stdout ---
+{
+  "status": "PASS",
+  "reason": "工作流改动已登记 RSI 提案",
+  "changed": [
+    "sire/workflow/shared/sire/SKILL.md",
+    "sire/workflow/shared/sire/references/supervisor.md",
+    "sire/workflow/shared/sire/scripts/sire_supervisor.py"
+  ],
+  "last_workflow_commit": "2026-09-25T05:18:45+08:00",
+  "db": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\db_var.sqlite3",
+  "matched_proposals": [
+    {
+      "proposal_id": "RSI-20260925-R9GATE",
+      "status": "PROPOSED",
+      "created_at": "2026-09-25T00:00:00"
+    }
+  ]
+}
+
+  --- stderr ---
+
+
+===== [T4 e(额外) created_at 恰等于提交时间] $ (cwd=D:\sire\AI\AI\sire\workflow\shared\sire\scripts) C:\Users\Administrator\AppData\Local\Programs\Python\Python312\python.exe D:\sire\AI\AI\sire\workflow\shared\sire\scripts\sire_supervisor.py rsi-check
+  env override: {"SIRE_VECTOR_DB": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\db_var.sqlite3"}
+  rc=0  elapsed=0.35s
+  --- stdout ---
+{
+  "status": "PASS",
+  "reason": "工作流改动已登记 RSI 提案",
+  "changed": [
+    "sire/workflow/shared/sire/SKILL.md",
+    "sire/workflow/shared/sire/references/supervisor.md",
+    "sire/workflow/shared/sire/scripts/sire_supervisor.py"
+  ],
+  "last_workflow_commit": "2026-09-25T05:18:45+08:00",
+  "db": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\db_var.sqlite3",
+  "matched_proposals": [
+    {
+      "proposal_id": "RSI-20260925-R9GATE",
+      "status": "PROPOSED",
+      "created_at": "2026-09-25T05:18:45+08:00"
+    }
+  ]
+}
+
+  --- stderr ---
+
+
+===== [T4 f(额外) created_at=not-a-date] $ (cwd=D:\sire\AI\AI\sire\workflow\shared\sire\scripts) C:\Users\Administrator\AppData\Local\Programs\Python\Python312\python.exe D:\sire\AI\AI\sire\workflow\shared\sire\scripts\sire_supervisor.py rsi-check
+  env override: {"SIRE_VECTOR_DB": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\db_var.sqlite3"}
+  rc=3  elapsed=0.34s
+  --- stdout ---
+
+  --- stderr ---
+{
+  "status": "STOP",
+  "classification": "rsi_unregistered_change",
+  "reason": "工作流目录有未提交改动，但最后一次工作流提交之后没有登记未失败的 RSI 提案；先运行 sire_rsi.py propose",
+  "changed": [
+    "sire/workflow/shared/sire/SKILL.md",
+    "sire/workflow/shared/sire/references/supervisor.md",
+    "sire/workflow/shared/sire/scripts/sire_supervisor.py"
+  ],
+  "last_workflow_commit": "2026-09-25T05:18:45+08:00",
+  "db": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\db_var.sqlite3",
+  "matched_proposals": []
+}
+
+
+===== [T4 g(额外) status=EVALUATED_PASS] $ (cwd=D:\sire\AI\AI\sire\workflow\shared\sire\scripts) C:\Users\Administrator\AppData\Local\Programs\Python\Python312\python.exe D:\sire\AI\AI\sire\workflow\shared\sire\scripts\sire_supervisor.py rsi-check
+  env override: {"SIRE_VECTOR_DB": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\db_var.sqlite3"}
+  rc=0  elapsed=0.34s
+  --- stdout ---
+{
+  "status": "PASS",
+  "reason": "工作流改动已登记 RSI 提案",
+  "changed": [
+    "sire/workflow/shared/sire/SKILL.md",
+    "sire/workflow/shared/sire/references/supervisor.md",
+    "sire/workflow/shared/sire/scripts/sire_supervisor.py"
+  ],
+  "last_workflow_commit": "2026-09-25T05:18:45+08:00",
+  "db": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\db_var.sqlite3",
+  "matched_proposals": [
+    {
+      "proposal_id": "RSI-20260925-R9GATE",
+      "status": "EVALUATED_PASS",
+      "created_at": "2026-09-24T21:19:32.584126+00:00"
+    }
+  ]
+}
+
+  --- stderr ---
+
+
+===== [T4 h(额外) status=ACTIVE] $ (cwd=D:\sire\AI\AI\sire\workflow\shared\sire\scripts) C:\Users\Administrator\AppData\Local\Programs\Python\Python312\python.exe D:\sire\AI\AI\sire\workflow\shared\sire\scripts\sire_supervisor.py rsi-check
+  env override: {"SIRE_VECTOR_DB": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\db_var.sqlite3"}
+  rc=0  elapsed=0.34s
+  --- stdout ---
+{
+  "status": "PASS",
+  "reason": "工作流改动已登记 RSI 提案",
+  "changed": [
+    "sire/workflow/shared/sire/SKILL.md",
+    "sire/workflow/shared/sire/references/supervisor.md",
+    "sire/workflow/shared/sire/scripts/sire_supervisor.py"
+  ],
+  "last_workflow_commit": "2026-09-25T05:18:45+08:00",
+  "db": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\db_var.sqlite3",
+  "matched_proposals": [
+    {
+      "proposal_id": "RSI-20260925-R9GATE",
+      "status": "ACTIVE",
+      "created_at": "2026-09-24T21:19:32.584126+00:00"
+    }
+  ]
+}
+
+  --- stderr ---
+
+>>> T4 提案状态/时间边界: PASS | {"a status=EVALUATED_FAIL": {"row": ["RSI-20260925-R9GATE", "EVALUATED_FAIL", "2026-09-24T21:19:32.584126+00:00"], "want": "STOP", "rc": 3, "status": "STOP", "classification": "rsi_unregistered_change", "matched": [], "traceback": false, "ok": true}, "b status=ROLLED_BACK": {"row": ["RSI-20260925-R9GATE", "ROLLED_BACK", "2026-09-24T21:19:32.584126+00:00"], "want": "STOP", "rc": 3, "status": "STOP", "classification": "rsi_unregistered_change", "matched": [], "traceback": false, "ok": true}, "c created_at 早于提交 2026-09-20T00:00:00+00:00": {"row": ["RSI-20260925-R9GATE", "PROPOSED", "2026-09-20T00:00:00+00:00"], "want": "STOP", "rc": 3, "status": "STOP", "classification": "rsi_unregistered_change", "matched": [], "traceback": false, "ok": true}, "d naive created_at 2026-09-25T00:00:00（按 UTC 晚于提交）": {"row": ["RSI-20260925-R9GATE", "PROPOSED", "2026-09-25T00:00:00"], "want": "PASS", "rc": 0, "status": "PASS", "classification": null, "matched": ["RSI-20260925-R9GATE"], "traceback": false, "ok": true}, "e(额外) created_at 恰等于提交时间": {"row": ["RSI-20260925-R9GATE", "PROPOSED", "2026-09-25T05:18:45+08:00"], "want": "PASS", "rc": 0, "status": "PASS", "classification": null, "matched": ["RSI-20260925-R9GATE"], "traceback": false, "ok": true}, "f(额外) created_at=not-a-date": {"row": ["RSI-20260925-R9GATE", "PROPOSED", "not-a-date"], "want": "STOP", "rc": 3, "status": "STOP", "classification": "rsi_unregistered_change", "matched": [], "traceback": false, "ok": true}, "g(额外) status=EVALUATED_PASS": {"row": ["RSI-20260925-R9GATE", "EVALUATED_PASS", "2026-09-24T21:19:32.584126+00:00"], "want": "PASS", "rc": 0, "status": "PASS", "classification": null, "matched": ["RSI-20260925-R9GATE"], "traceback": false, "ok": true}, "h(额外) status=ACTIVE": {"row": ["RSI-20260925-R9GATE", "ACTIVE", "2026-09-24T21:19:32.584126+00:00"], "want": "PASS", "rc": 0, "status": "PASS", "classification": null, "matched": ["RSI-20260925-R9GATE"], "traceback": false, "ok": true}}
+
+===== [T6a 无提案副本 preflight] $ (cwd=D:\sire\AI\AI\sire\workflow\shared\sire\scripts) C:\Users\Administrator\AppData\Local\Programs\Python\Python312\python.exe D:\sire\AI\AI\sire\workflow\shared\sire\scripts\sire_supervisor.py preflight
+  env override: {"SIRE_KB_DIR": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\kb_a", "SIRE_VECTOR_DB": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\db_noprop.sqlite3"}
+  rc=0  elapsed=0.38s
+  --- stdout ---
+{"status": "INITIALIZED", "manifest": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\kb_a\\integrity\\snapshots\\baseline\\MANIFEST.json", "entries": 62}
+
+  --- stderr ---
+
+
+===== [T6a 无提案副本 start] $ (cwd=D:\sire\AI\AI\sire\workflow\shared\sire\scripts) C:\Users\Administrator\AppData\Local\Programs\Python\Python312\python.exe D:\sire\AI\AI\sire\workflow\shared\sire\scripts\sire_supervisor.py start --run-id QA-RSI
+  env override: {"SIRE_KB_DIR": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\kb_a", "SIRE_VECTOR_DB": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\db_noprop.sqlite3"}
+  rc=0  elapsed=0.47s
+  --- stdout ---
+{
+  "format": "sire-supervisor-report-v1",
+  "status": "PASS",
+  "mode": "preflight",
+  "checked_at": "2026-09-24T21:27:51.928206+00:00",
+  "baseline": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\kb_a\\integrity\\manifest.json",
+  "diff": {
+    "missing": [],
+    "changed": [],
+    "added": []
+  }
+}
+{"status": "STARTED", "run_id": "QA-RSI", "before": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\kb_a\\integrity\\runs\\QA-RSI\\before.json", "entries": 62}
+
+  --- stderr ---
+
+
+===== [T6a 无提案副本 finalize] $ (cwd=D:\sire\AI\AI\sire\workflow\shared\sire\scripts) C:\Users\Administrator\AppData\Local\Programs\Python\Python312\python.exe D:\sire\AI\AI\sire\workflow\shared\sire\scripts\sire_supervisor.py finalize --run-id QA-RSI
+  env override: {"SIRE_KB_DIR": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\kb_a", "SIRE_VECTOR_DB": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\db_noprop.sqlite3"}
+  rc=3  elapsed=0.43s
+  --- stdout ---
+{
+  "format": "sire-supervisor-report-v1",
+  "status": "PASS",
+  "mode": "run-check",
+  "checked_at": "2026-09-24T21:27:52.400132+00:00",
+  "baseline": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\kb_a\\integrity\\runs\\QA-RSI\\before.json",
+  "diff": {
+    "missing": [],
+    "changed": [],
+    "added": []
+  }
+}
+
+  --- stderr ---
+{
+  "status": "STOP",
+  "classification": "rsi_unregistered_change",
+  "reason": "工作流目录有未提交改动，但最后一次工作流提交之后没有登记未失败的 RSI 提案；先运行 sire_rsi.py propose",
+  "changed": [
+    "sire/workflow/shared/sire/SKILL.md",
+    "sire/workflow/shared/sire/references/supervisor.md",
+    "sire/workflow/shared/sire/scripts/sire_supervisor.py"
+  ],
+  "last_workflow_commit": "2026-09-25T05:18:45+08:00",
+  "db": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\db_noprop.sqlite3",
+  "matched_proposals": []
+}
+
+
+===== [T6b 含提案真实库副本 preflight] $ (cwd=D:\sire\AI\AI\sire\workflow\shared\sire\scripts) C:\Users\Administrator\AppData\Local\Programs\Python\Python312\python.exe D:\sire\AI\AI\sire\workflow\shared\sire\scripts\sire_supervisor.py preflight
+  env override: {"SIRE_KB_DIR": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\kb_b", "SIRE_VECTOR_DB": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\db_full.sqlite3"}
+  rc=0  elapsed=0.37s
+  --- stdout ---
+{"status": "INITIALIZED", "manifest": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\kb_b\\integrity\\snapshots\\baseline\\MANIFEST.json", "entries": 62}
+
+  --- stderr ---
+
+
+===== [T6b 含提案真实库副本 start] $ (cwd=D:\sire\AI\AI\sire\workflow\shared\sire\scripts) C:\Users\Administrator\AppData\Local\Programs\Python\Python312\python.exe D:\sire\AI\AI\sire\workflow\shared\sire\scripts\sire_supervisor.py start --run-id QA-RSI
+  env override: {"SIRE_KB_DIR": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\kb_b", "SIRE_VECTOR_DB": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\db_full.sqlite3"}
+  rc=0  elapsed=0.48s
+  --- stdout ---
+{
+  "format": "sire-supervisor-report-v1",
+  "status": "PASS",
+  "mode": "preflight",
+  "checked_at": "2026-09-24T21:27:53.219943+00:00",
+  "baseline": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\kb_b\\integrity\\manifest.json",
+  "diff": {
+    "missing": [],
+    "changed": [],
+    "added": []
+  }
+}
+{"status": "STARTED", "run_id": "QA-RSI", "before": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\kb_b\\integrity\\runs\\QA-RSI\\before.json", "entries": 62}
+
+  --- stderr ---
+
+
+===== [T6b 含提案真实库副本 finalize] $ (cwd=D:\sire\AI\AI\sire\workflow\shared\sire\scripts) C:\Users\Administrator\AppData\Local\Programs\Python\Python312\python.exe D:\sire\AI\AI\sire\workflow\shared\sire\scripts\sire_supervisor.py finalize --run-id QA-RSI
+  env override: {"SIRE_KB_DIR": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\kb_b", "SIRE_VECTOR_DB": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\db_full.sqlite3"}
+  rc=0  elapsed=0.54s
+  --- stdout ---
+{
+  "format": "sire-supervisor-report-v1",
+  "status": "PASS",
+  "mode": "run-check",
+  "checked_at": "2026-09-24T21:27:53.693834+00:00",
+  "baseline": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\kb_b\\integrity\\runs\\QA-RSI\\before.json",
+  "diff": {
+    "missing": [],
+    "changed": [],
+    "added": []
+  }
+}
+{
+  "status": "PASS",
+  "reason": "工作流改动已登记 RSI 提案",
+  "changed": [
+    "sire/workflow/shared/sire/SKILL.md",
+    "sire/workflow/shared/sire/references/supervisor.md",
+    "sire/workflow/shared/sire/scripts/sire_supervisor.py"
+  ],
+  "last_workflow_commit": "2026-09-25T05:18:45+08:00",
+  "db": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\db_full.sqlite3",
+  "matched_proposals": [
+    {
+      "proposal_id": "RSI-20260925-R9GATE",
+      "status": "PROPOSED",
+      "created_at": "2026-09-24T21:19:32.584126+00:00"
+    }
+  ]
+}
+{"status": "FINALIZED", "run_id": "QA-RSI", "manifest": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\kb_b\\integrity\\manifest.json", "entries": 62}
+
+  --- stderr ---
+
+>>> T6 finalize 集成（隔离 SIRE_KB_DIR）: PASS | {"a 无提案副本": {"preflight_rc": 0, "preflight_status": "INITIALIZED", "start_rc": 0, "start_status": "STARTED", "finalize_rc": 3, "run_check_report_status": "PASS", "finalize_stderr_classification": "rsi_unregistered_change", "finalize_last_stdout_status": "PASS", "manifest_sha_before": "d1194b2de6b9ad1f43bf0087ee56d12e00299a5a9da58d7e9d1a88b091b10c07", "manifest_sha_after": "d1194b2de6b9ad1f43bf0087ee56d12e00299a5a9da58d7e9d1a88b091b10c07", "manifest_label_before": "baseline", "manifest_label_after": "baseline", "baseline_next_snapshot_exists": false, "traceback": false, "ok": true}, "b 含提案真实库副本": {"preflight_rc": 0, "preflight_status": "INITIALIZED", "start_rc": 0, "start_status": "STARTED", "finalize_rc": 0, "run_check_report_status": "PASS", "finalize_stderr_classification": null, "finalize_last_stdout_status": "FINALIZED", "manifest_sha_before": "1fa5f147708ac80250c21020b60b0bd7f0666a6117a2e7d74cc44a14caa91d44", "manifest_sha_after": "30b7d99cb48edb4c0338aa9332fbb377bff75000329e91024dd70cacb75fc948", "manifest_label_before": "baseline", "manifest_label_after": "baseline-next", "baseline_next_snapshot_exists": true, "traceback": false, "ok": true}}
+[qa] db_full 在 T6 后 sha256=cc4924ce0b309f846a1fcfa77664067e04afefc1c3ab34aa5c9abcf76afe9659（应等于复制源 cc4924ce0b309f846a1fcfa77664067e04afefc1c3ab34aa5c9abcf76afe9659）
+
+===== [T7 qa_all.py U-02B] $ (cwd=D:\code\driverSoftware\.sire\runs\R20260925-052105\evidence\U-01\qa) C:\Users\Administrator\AppData\Local\Programs\Python\Python312\python.exe C:\Users\ADMINI~1\AppData\Local\Temp\claude\D--code-driverSoftware\cf61fd01-38cb-47e9-bb50-00b26b934feb\scratchpad\verify-192838\u02b\qa_all.py D:\code\driverSoftware\.sire\runs\R20260925-052105\evidence\U-01\qa\tmp\u02b U-02B
+  rc=0  elapsed=8.07s
+  --- stdout ---
+{
+  "status": "PASS",
+  "zip": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\u02b\\t.zip",
+  "expected": 62,
+  "actual": 63,
+  "missing": [],
+  "required_missing": [],
+  "current_inventory_missing": [],
+  "sensitive_leak": [],
+  "corrupted": [],
+  "classification": null
+}
+PASS py_compile
+PASS 常量恰 21 项 | 21
+{
+  "format": "sire-workflow-bundle-v2",
+  "created_at": "2026-09-24T21:27:54.300355+00:00",
+  "source_home": "C:\\Users\\Administrator",
+  "entries": 62,
+  "missing_paths": [],
+  "historical_discovery": "轻量包不含历史产物：历史 run 产物由本机数据库和归档机制管理，不进入 ZIP",
+  "sensitive_policy": "敏感文件（secrets 目录及 .pem/.key/.pfx/.p12/.vault）不进入 ZIP",
+  "included": [
+    "shared/knowledge/feedback/feedback-20260921-115802/plan-disagreements.jsonl",
+    "shared/knowledge/feedback/plan-disagreements.jsonl",
+    "shared/knowledge/global_dev_features.md",
+    "shared/knowledge/global_dev_habits.md",
+    "shared/knowledge/global_index.json",
+    "shared/knowledge/global_knowledge_records.md",
+    "shared/knowledge/global_problem_solutions.md",
+    "shared/knowledge/knowledge_angle_reading_20260922.md",
+    "shared/knowledge/KNOWLEDGE_TEMPLATE.md",
+    "shared/knowledge/RESTORE_GUIDE.md",
+    "shared/knowledge/SIRE-MIGRATION-legacy-v1.md",
+    "shared/knowledge/SIRE-MIGRATION.md",
+    "shared/knowledge/sire_ai_rules.md",
+    "shared/knowledge/sire_multi_role_workflow.md",
+    "shared/knowledge/sire_sync_guide.md",
+    "shared/sire/agents/claude/sire-analyst.md",
+    "shared/sire/agents/claude/sire-code-reviewer-a.md",
+    "shared/sire/agents/claude/sire-code-reviewer-b.md",
+    "shared/sire/agents/claude/sire-code-reviewer-c.md",
+    "shared/sire/agents/claude/sire-code-reviewer.md",
+    "shared/sire/agents/claude/sire-decomposer.md",
+    "shared/sire/agents/claude/sire-implementer.md",
+    "shared/sire/agents/claude/sire-integrator.md",
+    "shared/sire/agents/claude/sire-librarian.md",
+    "shared/sire/agents/claude/sire-qa-tester.md",
+    "shared/sire/agents/claude/sire-spec-reviewer.md",
+    "shared/sire/agents/claude/sire-supervisor.md",
+    "shared/sire/agents/claude/sire-system-operator.md",
+    "shared/sire/agents/openai.yaml",
+    "shared/sire/references/autonomy.md",
+    "shared/sire/references/development-overlay.md",
+    "shared/sire/references/domain-tests.md",
+    "shared/sire/references/gates.md",
+    "shared/sire/references/global-contract.md",
+    "shared/sire/references/governor/agents/openai.yaml",
+    "shared/sire/references/governor/references/templates.md",
+    "shared/sire/references/governor/references/workflow-spec.md",
+    "shared/sire/references/governor/SKILL.md",
+    "shared/sire/references/knowledge.md",
+    "shared/sire/references/legacy-v5.1.md",
+    "shared/sire/references/role-boundaries.md",
+    "shared/sire/references/roles.md",
+    "shared/sire/references/scheduler.md",
+    "shared/sire/references/self-optimization.md",
+    "shared/sire/references/supervisor.md",
+    "shared/sire/references/vector-knowledge.md",
+    "shared/sire/scripts/sire_bundle.py",
+    "shared/sire/scripts/sire_db_backup.py",
+    "shared/sire/scripts/sire_feedback.py",
+    "shared/sire/scripts/sire_kb.py",
+    "shared/sire/scripts/sire_knowledge_index.py",
+    "shared/sire/scripts/sire_paths.py",
+    "shared/sire/scripts/sire_rsi.py",
+    "shared/sire/scripts/sire_run.py",
+    "shared/sire/scripts/sire_supervisor.py",
+    "shared/sire/scripts/sire_vector_db.py",
+    "shared/sire/SKILL.md",
+    "shared/sire/templates/units.template.json",
+    "support/ai-workflow-governor/agents/openai.yaml",
+    "support/ai-workflow-governor/references/templates.md",
+    "support/ai-workflow-governor/references/workflow-spec.md",
+    "support/ai-workflow-governor/SKILL.md"
+  ],
+  "entry_records": [
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\knowledge\\global\\feedback\\feedback-20260921-115802\\plan-disagreements.jsonl",
+      "archive_path": "shared/knowledge/feedback/feedback-20260921-115802/plan-disagreements.jsonl",
+      "size": 1068,
+      "sha256": "871d3a0484a2931f5d40212fc610f18f2092dfc435b7148564d3e096c35082d3"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\knowledge\\global\\feedback\\plan-disagreements.jsonl",
+      "archive_path": "shared/knowledge/feedback/plan-disagreements.jsonl",
+      "size": 4788,
+      "sha256": "2290fd35db003afc734c1295246deeeb63151611b9627809eec678f716fba523"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\knowledge\\global\\global_dev_features.md",
+      "archive_path": "shared/knowledge/global_dev_features.md",
+      "size": 31612,
+      "sha256": "1a46b2249485d23161fea1fbdabd091eaaeeb8a25fb91032f1e50f1254c30342"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\knowledge\\global\\global_dev_habits.md",
+      "archive_path": "shared/knowledge/global_dev_habits.md",
+      "size": 2150,
+      "sha256": "079c0206f8d8bdb02492125dbfbcaba1fb53fd9e9fec7090f89f001621aa1e28"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\knowledge\\global\\global_index.json",
+      "archive_path": "shared/knowledge/global_index.json",
+      "size": 24456,
+      "sha256": "c97a299c6fa5406794b647afc32772e5e4091929697e216821440098e4c7ca55"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\knowledge\\global\\global_knowledge_records.md",
+      "archive_path": "shared/knowledge/global_knowledge_records.md",
+      "size": 124686,
+      "sha256": "5b310a3b3a0c9b8b82a9cd76bb282796af3cbffbd60f03160135091c3e28f93c"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\knowledge\\global\\global_problem_solutions.md",
+      "archive_path": "shared/knowledge/global_problem_solutions.md",
+      "size": 21881,
+      "sha256": "eec6634fa945ad009624cea315f536dfa118de2167f6188050bcc09f2c6bda90"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\knowledge\\global\\knowledge_angle_reading_20260922.md",
+      "archive_path": "shared/knowledge/knowledge_angle_reading_20260922.md",
+      "size": 4223,
+      "sha256": "84b43892cd17d1edaf300942bd87d37eb7a8b7c99d4c943efb84ed66e46edfbb"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\knowledge\\global\\KNOWLEDGE_TEMPLATE.md",
+      "archive_path": "shared/knowledge/KNOWLEDGE_TEMPLATE.md",
+      "size": 1666,
+      "sha256": "843b7fcd64cff7a0d9dd465252e43422eb9b0d253445e457947f7805cc1e16fc"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\knowledge\\global\\RESTORE_GUIDE.md",
+      "archive_path": "shared/knowledge/RESTORE_GUIDE.md",
+      "size": 1387,
+      "sha256": "96425418bdd1d074cd2432867037d1544559e9e469768c2426066804ec6151b6"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\knowledge\\global\\SIRE-MIGRATION-legacy-v1.md",
+      "archive_path": "shared/knowledge/SIRE-MIGRATION-legacy-v1.md",
+      "size": 20068,
+      "sha256": "8e2c965ad21ce8d43b29844fbf8eecd0cd85cea7cf2e16bd8018f5a8e4168001"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\knowledge\\global\\SIRE-MIGRATION.md",
+      "archive_path": "shared/knowledge/SIRE-MIGRATION.md",
+      "size": 3591,
+      "sha256": "bd9fc4f6b9d1618ea6f980993f79d4261ddcc8951986e9dc3b0bc0bb7dd594b3"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\knowledge\\global\\sire_ai_rules.md",
+      "archive_path": "shared/knowledge/sire_ai_rules.md",
+      "size": 37241,
+      "sha256": "8625f5282b17f118c7ff48499fbbd76359836030cc90ffafc80870050664a6bf"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\knowledge\\global\\sire_multi_role_workflow.md",
+      "archive_path": "shared/knowledge/sire_multi_role_workflow.md",
+      "size": 21792,
+      "sha256": "0bec92061c041f727f5ed32d7f1bb33174fbe8acf1b66dbe1118d8daa55da1a9"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\knowledge\\global\\sire_sync_guide.md",
+      "archive_path": "shared/knowledge/sire_sync_guide.md",
+      "size": 9621,
+      "sha256": "99b1dc264553a25fdd18db13020c8cf7a7ead0f2f10c81b46081fcc0ae4b2726"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\agents\\claude\\sire-analyst.md",
+      "archive_path": "shared/sire/agents/claude/sire-analyst.md",
+      "size": 1267,
+      "sha256": "c375580c0777372c583b45600ab1f160530062004f2780fe704ec4f9576b7ef0"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\agents\\claude\\sire-code-reviewer-a.md",
+      "archive_path": "shared/sire/agents/claude/sire-code-reviewer-a.md",
+      "size": 2525,
+      "sha256": "59942a7d63ef0b1fdcfbc8b88ec411de9f3f64a0778048a5b36668f604a01d08"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\agents\\claude\\sire-code-reviewer-b.md",
+      "archive_path": "shared/sire/agents/claude/sire-code-reviewer-b.md",
+      "size": 2783,
+      "sha256": "54bbe0df841d6a27cb6635ccb2c264ded9ed9e79a7f582f2aef5ba9a4a803e53"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\agents\\claude\\sire-code-reviewer-c.md",
+      "archive_path": "shared/sire/agents/claude/sire-code-reviewer-c.md",
+      "size": 2757,
+      "sha256": "2a9377683727d72c6b1480f16351b78275896b73aba1f45e2e4803bbbc46ff02"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\agents\\claude\\sire-code-reviewer.md",
+      "archive_path": "shared/sire/agents/claude/sire-code-reviewer.md",
+      "size": 2245,
+      "sha256": "8ee987e2a7ce0e53c5993c94f6013614688c3174e59a1eeb04e2b27f371afb2e"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\agents\\claude\\sire-decomposer.md",
+      "archive_path": "shared/sire/agents/claude/sire-decomposer.md",
+      "size": 1965,
+      "sha256": "79b3529d44b0e17c1bc21d1eb781d50f683667a54844f3a99d54e774a1c7b36c"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\agents\\claude\\sire-implementer.md",
+      "archive_path": "shared/sire/agents/claude/sire-implementer.md",
+      "size": 1824,
+      "sha256": "2c85a511883b82fcec873227aeeb11a66e2579f30fea4bb26924f833f418be13"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\agents\\claude\\sire-integrator.md",
+      "archive_path": "shared/sire/agents/claude/sire-integrator.md",
+      "size": 1434,
+      "sha256": "d062219e179789513b8aa0966b3da846deac6d5041923b4051f3d7d269bb9069"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\agents\\claude\\sire-librarian.md",
+      "archive_path": "shared/sire/agents/claude/sire-librarian.md",
+      "size": 1500,
+      "sha256": "9d219771f9d60a4f9179fa7168cb375f7c0444519ebe50b931dcfe13db2c1957"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\agents\\claude\\sire-qa-tester.md",
+      "archive_path": "shared/sire/agents/claude/sire-qa-tester.md",
+      "size": 1518,
+      "sha256": "7be823edd67aaac908eef77d386a179d8e6bd0d7ab35b38e6852cc04755debe7"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\agents\\claude\\sire-spec-reviewer.md",
+      "archive_path": "shared/sire/agents/claude/sire-spec-reviewer.md",
+      "size": 1463,
+      "sha256": "e22ee4de21df5dde22c406e99411919b9f9a9cdf7a0741083f781ae1b112fff6"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\agents\\claude\\sire-supervisor.md",
+      "archive_path": "shared/sire/agents/claude/sire-supervisor.md",
+      "size": 1668,
+      "sha256": "f147fd197e1245efcc6f6fcca1121b3dbe59d5815b88137c04b58e1a4904df2d"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\agents\\claude\\sire-system-operator.md",
+      "archive_path": "shared/sire/agents/claude/sire-system-operator.md",
+      "size": 2897,
+      "sha256": "f155105e0902fc6dc49cc13535c27cdac1d812af5426736f055540414eda8b13"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\agents\\openai.yaml",
+      "archive_path": "shared/sire/agents/openai.yaml",
+      "size": 307,
+      "sha256": "dcc47bfc37a26d1088b3e2a6caf7c762ce5c711ae30598d2baa3c5258d309692"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\references\\autonomy.md",
+      "archive_path": "shared/sire/references/autonomy.md",
+      "size": 3371,
+      "sha256": "c42d544076e5130ae64fab5e63173ef18a59885077dd06e26a3e624301a2f15c"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\references\\development-overlay.md",
+      "archive_path": "shared/sire/references/development-overlay.md",
+      "size": 7927,
+      "sha256": "ccaf4dd98255f657922bab9fff316eebb66f41358d39c1956b42114fcd7126ca"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\references\\domain-tests.md",
+      "archive_path": "shared/sire/references/domain-tests.md",
+      "size": 2354,
+      "sha256": "b097e73512f1cd2519a6ddeb55861abe7160b09d265baa0b946151b92153ecce"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\references\\gates.md",
+      "archive_path": "shared/sire/references/gates.md",
+      "size": 3227,
+      "sha256": "3ebb84947bbedc6ea0b871c43bc72b9ad64e3d9c44eb3dca86bc689e24dca093"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\references\\global-contract.md",
+      "archive_path": "shared/sire/references/global-contract.md",
+      "size": 5415,
+      "sha256": "2dffe352676701e2af1f860de0a4b7541d26d8d5286ced11d77aa0e98ce9e1da"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\references\\governor\\agents\\openai.yaml",
+      "archive_path": "shared/sire/references/governor/agents/openai.yaml",
+      "size": 332,
+      "sha256": "922ac24bf9872a6918574a2b15a4954919a8f92fc3f83e44ced14714e7945a4e"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\references\\governor\\references\\templates.md",
+      "archive_path": "shared/sire/references/governor/references/templates.md",
+      "size": 3794,
+      "sha256": "a206e6162774ee96a6fdd6052f5cc0735fae42bbb87be6424a868634891cc6ad"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\references\\governor\\references\\workflow-spec.md",
+      "archive_path": "shared/sire/references/governor/references/workflow-spec.md",
+      "size": 9338,
+      "sha256": "6ae7a9454dee74ca0e2842a0ae2384374ea1e06c90c1c31f04efee02dea12141"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\references\\governor\\SKILL.md",
+      "archive_path": "shared/sire/references/governor/SKILL.md",
+      "size": 11905,
+      "sha256": "fc3fa8171785dbfb9cd16bf0355c07099fd37592c218a06b90b0c33b406eb6d7"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\references\\knowledge.md",
+      "archive_path": "shared/sire/references/knowledge.md",
+      "size": 3085,
+      "sha256": "f861e5b267d56030af9f2103a42e8ca7f7923085f810ba67b2fd36b0dc4bb871"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\references\\legacy-v5.1.md",
+      "archive_path": "shared/sire/references/legacy-v5.1.md",
+      "size": 7683,
+      "sha256": "6ba42556b8f169f3ac5bee51a5ee4b70e3cac9f726f02fc5e930ed1cc94982cf"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\references\\role-boundaries.md",
+      "archive_path": "shared/sire/references/role-boundaries.md",
+      "size": 3280,
+      "sha256": "c7c42e9cda407b3f4e0b007066227a8494e3a4cc58873282da251dc24af258d6"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\references\\roles.md",
+      "archive_path": "shared/sire/references/roles.md",
+      "size": 3262,
+      "sha256": "fd3e360d0797de02a4b8a7a5d15ee20388c634344954d4650883bed96b526677"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\references\\scheduler.md",
+      "archive_path": "shared/sire/references/scheduler.md",
+      "size": 1067,
+      "sha256": "7ed33893541d609cf6813fb4a9f8cf9589c1f1d2c8a77ef4c07f6568c9a09e34"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\references\\self-optimization.md",
+      "archive_path": "shared/sire/references/self-optimization.md",
+      "size": 5039,
+      "sha256": "e40538435eb339a4dcc07faa5c3cc635b2640860da4b1d5404332a3452f8dd4d"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\references\\supervisor.md",
+      "archive_path": "shared/sire/references/supervisor.md",
+      "size": 3557,
+      "sha256": "5382d798177c962966b4a3cff17d8fc2028b4a9ca66de37b215c2832375f7283"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\references\\vector-knowledge.md",
+      "archive_path": "shared/sire/references/vector-knowledge.md",
+      "size": 2249,
+      "sha256": "8b94ec530c2246dce1107218f9f8d2a6c2e9636800f5c80268dd1d1c1164f3cf"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\scripts\\sire_bundle.py",
+      "archive_path": "shared/sire/scripts/sire_bundle.py",
+      "size": 9179,
+      "sha256": "da3664f59f784db3f7cb08585ef79f88787ae3abad54123cd882b58652673e64"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\scripts\\sire_db_backup.py",
+      "archive_path": "shared/sire/scripts/sire_db_backup.py",
+      "size": 1860,
+      "sha256": "73bdf39d2496137717ef9d1ccacc9534be518bf01b1e114c1c2121d873737073"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\scripts\\sire_feedback.py",
+      "archive_path": "shared/sire/scripts/sire_feedback.py",
+      "size": 3176,
+      "sha256": "87074ff00f098742116c81055245127f3b90c2fa70d7952c971b5d783cfe7fb7"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\scripts\\sire_kb.py",
+      "archive_path": "shared/sire/scripts/sire_kb.py",
+      "size": 21933,
+      "sha256": "405c7a5cbb9c0030406399e77cb8ccd0382e125d0c9e9510e68a7504bb686cf1"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\scripts\\sire_knowledge_index.py",
+      "archive_path": "shared/sire/scripts/sire_knowledge_index.py",
+      "size": 20681,
+      "sha256": "20a3aed52b3fef87b86f6c8688b418ab756c579326e9fe038ac2c49a1b9d71c2"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\scripts\\sire_paths.py",
+      "archive_path": "shared/sire/scripts/sire_paths.py",
+      "size": 1200,
+      "sha256": "a7f931f4e6581498e10d5a5adf5ae415734af1b57d724089462adb826b181738"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\scripts\\sire_rsi.py",
+      "archive_path": "shared/sire/scripts/sire_rsi.py",
+      "size": 5156,
+      "sha256": "4cecd2421df7111a5cbfcca47673cef81ec5e3f323b7cf330e296db5919f1365"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\scripts\\sire_run.py",
+      "archive_path": "shared/sire/scripts/sire_run.py",
+      "size": 52232,
+      "sha256": "1e8f5c15197ba6126ba7f5f5b1b3b74b4db9e4eac05075681ed51fa2f799a081"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\scripts\\sire_supervisor.py",
+      "archive_path": "shared/sire/scripts/sire_supervisor.py",
+      "size": 19784,
+      "sha256": "4698dcc2b5d262575daec81b1827bdfcdbe5205de4d3dde92cce2bccae70335d"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\scripts\\sire_vector_db.py",
+      "archive_path": "shared/sire/scripts/sire_vector_db.py",
+      "size": 35383,
+      "sha256": "8b718951f504d80c6bcd27b0af88166ceaec140948611ebfdcaf8c26a20b3a93"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\SKILL.md",
+      "archive_path": "shared/sire/SKILL.md",
+      "size": 9513,
+      "sha256": "16da53366ec7e6f0489a2cc53ca65d393d15b6d498b4c0e1308c98188e3811da"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\templates\\units.template.json",
+      "archive_path": "shared/sire/templates/units.template.json",
+      "size": 592,
+      "sha256": "54b3524552e3fb98ab052fa95a49598909a38d0d7ec17d0efcd88226dc641665"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\support\\ai-workflow-governor\\agents\\openai.yaml",
+      "archive_path": "support/ai-workflow-governor/agents/openai.yaml",
+      "size": 332,
+      "sha256": "922ac24bf9872a6918574a2b15a4954919a8f92fc3f83e44ced14714e7945a4e"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\support\\ai-workflow-governor\\references\\templates.md",
+      "archive_path": "support/ai-workflow-governor/references/templates.md",
+      "size": 3794,
+      "sha256": "a206e6162774ee96a6fdd6052f5cc0735fae42bbb87be6424a868634891cc6ad"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\support\\ai-workflow-governor\\references\\workflow-spec.md",
+      "archive_path": "support/ai-workflow-governor/references/workflow-spec.md",
+      "size": 9338,
+      "sha256": "6ae7a9454dee74ca0e2842a0ae2384374ea1e06c90c1c31f04efee02dea12141"
+    },
+    {
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\support\\ai-workflow-governor\\SKILL.md",
+      "archive_path": "support/ai-workflow-governor/SKILL.md",
+      "size": 11905,
+      "sha256": "fc3fa8171785dbfb9cd16bf0355c07099fd37592c218a06b90b0c33b406eb6d7"
+    }
+  ],
+  "restore_notes": "完整迁移 = 本 ZIP + MIGRATION-README.md；按包内文档执行同步或覆盖；本包不含数据库，目标机对其现有数据库运行 index/migrate/preflight。",
+  "output": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\u02b\\t.zip",
+  "sha256": "4d0eb4286afc77f62404c39a7b5ccbb2c3b6a886a3320ced11a8d4248ee87f72"
+}
+PASS build 成功
+PASS 21 项均在 included
+PASS verify-zip 完整包 rc=0
+PASS verify-zip --against-current rc=0
+PASS 删除 shared/sire/SKILL.md rc=3 且 missing 含该项 | (3, 'package_omission')
+PASS 删除 shared/sire/references/global-contract.md rc=3 且 missing 含该项 | (3, 'package_omission')
+PASS 删除 shared/sire/scripts/sire_paths.py rc=3 且 missing 含该项 | (3, 'package_omission')
+PASS 删除 shared/sire/scripts/sire_bundle.py rc=3 且 missing 含该项 | (3, 'package_omission')
+PASS 删除 shared/sire/scripts/sire_supervisor.py rc=3 且 missing 含该项 | (3, 'package_omission')
+PASS 删除 shared/sire/scripts/sire_run.py rc=3 且 missing 含该项 | (3, 'package_omission')
+PASS 删除 shared/sire/scripts/sire_kb.py rc=3 且 missing 含该项 | (3, 'package_omission')
+PASS 删除 shared/knowledge/SIRE-MIGRATION.md rc=3 且 missing 含该项 | (3, 'package_omission')
+PASS 删除 shared/sire/agents/claude/sire-analyst.md rc=3 且 missing 含该项 | (3, 'package_omission')
+PASS 删除 shared/sire/agents/claude/sire-code-reviewer.md rc=3 且 missing 含该项 | (3, 'package_omission')
+PASS 删除 shared/sire/agents/claude/sire-code-reviewer-a.md rc=3 且 missing 含该项 | (3, 'package_omission')
+PASS 删除 shared/sire/agents/claude/sire-code-reviewer-b.md rc=3 且 missing 含该项 | (3, 'package_omission')
+PASS 删除 shared/sire/agents/claude/sire-code-reviewer-c.md rc=3 且 missing 含该项 | (3, 'package_omission')
+PASS 删除 shared/sire/agents/claude/sire-decomposer.md rc=3 且 missing 含该项 | (3, 'package_omission')
+PASS 删除 shared/sire/agents/claude/sire-implementer.md rc=3 且 missing 含该项 | (3, 'package_omission')
+PASS 删除 shared/sire/agents/claude/sire-integrator.md rc=3 且 missing 含该项 | (3, 'package_omission')
+PASS 删除 shared/sire/agents/claude/sire-librarian.md rc=3 且 missing 含该项 | (3, 'package_omission')
+PASS 删除 shared/sire/agents/claude/sire-qa-tester.md rc=3 且 missing 含该项 | (3, 'package_omission')
+PASS 删除 shared/sire/agents/claude/sire-spec-reviewer.md rc=3 且 missing 含该项 | (3, 'package_omission')
+PASS 删除 shared/sire/agents/claude/sire-supervisor.md rc=3 且 missing 含该项 | (3, 'package_omission')
+PASS 删除 shared/sire/agents/claude/sire-system-operator.md rc=3 且 missing 含该项 | (3, 'package_omission')
+PASS 追加 secrets/x.vault rc=3 package_sensitive_leak | (3, 'package_sensitive_leak', ['shared/knowledge/secrets/x.vault'])
+PASS 边界: zip 不存在 rc=3 | 3
+PASS grep -c -i pfx == 0
+ALL PASS
+
+  --- stderr ---
+
+
+===== [T7 --help] $ (cwd=D:\sire\AI\AI\sire\workflow\shared\sire\scripts) C:\Users\Administrator\AppData\Local\Programs\Python\Python312\python.exe D:\sire\AI\AI\sire\workflow\shared\sire\scripts\sire_supervisor.py --help
+  rc=0  elapsed=0.27s
+  --- stdout ---
+usage: sire_supervisor.py [-h]
+                          {preflight,start,check,finalize,rsi-check,verify-zip}
+                          ...
+
+SIRE R9 内容监督员
+
+positional arguments:
+  {preflight,start,check,finalize,rsi-check,verify-zip}
+
+options:
+  -h, --help            show this help message and exit
+
+  --- stderr ---
+
+>>> T7 回归：verify-zip qa_all + --help: PASS | {"qa_all": {"rc": 0, "all_pass_line": true, "fail_lines": [], "pass_count": 30}, "help": {"rc": 0, "lists_rsi_check": true, "usage_line": "usage: sire_supervisor.py [-h]"}}
+[qa] git rev-parse 探测: 系统临时目录 C:\Users\ADMINI~1\AppData\Local\Temp rc=128; tmp/nogit+CEILING rc=128; tmp/nogit 无 CEILING rc=0 top=D:/code/driverSoftware
+
+===== [T8 a 系统临时目录(真实非 Git)] $ (cwd=D:\code\driverSoftware\.sire\runs\R20260925-052105\evidence\U-01\qa) C:\Users\Administrator\AppData\Local\Programs\Python\Python312\python.exe D:\code\driverSoftware\.sire\runs\R20260925-052105\evidence\U-01\qa\t8_inproc.py C:\Users\ADMINI~1\AppData\Local\Temp
+  rc=0  elapsed=0.30s
+  --- stdout ---
+{
+  "skill_dir": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp",
+  "raised": false,
+  "result": {
+    "status": "SKIPPED",
+    "reason": "工作流目录不在 Git 仓库中或未找到 git",
+    "skill_dir": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp"
+  }
+}
+
+  --- stderr ---
+
+
+===== [T8 b tmp/nogit + GIT_CEILING_DIRECTORIES] $ (cwd=D:\code\driverSoftware\.sire\runs\R20260925-052105\evidence\U-01\qa) C:\Users\Administrator\AppData\Local\Programs\Python\Python312\python.exe D:\code\driverSoftware\.sire\runs\R20260925-052105\evidence\U-01\qa\t8_inproc.py D:\code\driverSoftware\.sire\runs\R20260925-052105\evidence\U-01\qa\tmp\nogit
+  env override: {"GIT_CEILING_DIRECTORIES": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp"}
+  rc=0  elapsed=0.29s
+  --- stdout ---
+{
+  "skill_dir": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\nogit",
+  "raised": false,
+  "result": {
+    "status": "SKIPPED",
+    "reason": "工作流目录不在 Git 仓库中或未找到 git",
+    "skill_dir": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\nogit"
+  }
+}
+
+  --- stderr ---
+
+>>> T8 非 Git 目录 rsi_gate 返回 SKIPPED: PASS | {"probe_sys_tmp_rc": 128, "probe_ceiling_rc": 128, "a 系统临时目录(真实非 Git)": {"rc": 0, "raised": false, "status": "SKIPPED", "reason": "工作流目录不在 Git 仓库中或未找到 git", "ok": true}, "b tmp/nogit + GIT_CEILING_DIRECTORIES": {"rc": 0, "raised": false, "status": "SKIPPED", "reason": "工作流目录不在 Git 仓库中或未找到 git", "ok": true}}
+
+===== [X3 PATH 无 git（额外观察）] $ (cwd=D:\code\driverSoftware\.sire\runs\R20260925-052105\evidence\U-01\qa) C:\Users\Administrator\AppData\Local\Programs\Python\Python312\python.exe D:\code\driverSoftware\.sire\runs\R20260925-052105\evidence\U-01\qa\t8_inproc.py D:\sire\AI\AI\sire\workflow\shared\sire
+  env override: {"PATH": "C:\\Windows\\System32"}
+  rc=0  elapsed=0.27s
+  --- stdout ---
+{
+  "skill_dir": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire",
+  "raised": false,
+  "result": {
+    "status": "SKIPPED",
+    "reason": "工作流目录不在 Git 仓库中或未找到 git",
+    "skill_dir": "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire"
+  }
+}
+
+  --- stderr ---
+
+
+===== [X4 skill_dir 不存在（额外观察）] $ (cwd=D:\code\driverSoftware\.sire\runs\R20260925-052105\evidence\U-01\qa) C:\Users\Administrator\AppData\Local\Programs\Python\Python312\python.exe D:\code\driverSoftware\.sire\runs\R20260925-052105\evidence\U-01\qa\t8_inproc.py D:\code\driverSoftware\.sire\runs\R20260925-052105\evidence\U-01\qa\tmp\does-not-exist
+  rc=0  elapsed=0.28s
+  --- stdout ---
+{
+  "skill_dir": "D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\tmp\\does-not-exist",
+  "raised": true,
+  "exc": "NotADirectoryError(20, '目录名称无效。', None, 267, None)",
+  "tb": "Traceback (most recent call last):\n  File \"D:\\code\\driverSoftware\\.sire\\runs\\R20260925-052105\\evidence\\U-01\\qa\\t8_inproc.py\", line 14, in <module>\n    result = sire_supervisor.rsi_gate(skill_dir=target)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\scripts\\sire_supervisor.py\", line 272, in rsi_gate\n    code, _ = git_output([\"rev-parse\", \"--show-toplevel\"], skill_dir)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\scripts\\sire_supervisor.py\", line 249, in git_output\n    result = subprocess.run([\"git\", *args], cwd=cwd, capture_output=True, text=True, encoding=\"utf-8\", errors=\"replace\")\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\Administrator\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\subprocess.py\", line 548, in run\n    with Popen(*popenargs, **kwargs) as process:\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\Administrator\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\subprocess.py\", line 1026, in __init__\n    self._execute_child(args, executable, preexec_fn, close_fds,\n  File \"C:\\Users\\Administrator\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\subprocess.py\", line 1538, in _execute_child\n    hp, ht, pid, tid = _winapi.CreateProcess(executable, args,\n                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nNotADirectoryError: [WinError 267] 目录名称无效。\n"
+}
+
+  --- stderr ---
+
+[qa] 后置核对: {
+  "workflow_dir_diff": {
+    "added": [],
+    "removed": [],
+    "modified": []
+  },
+  "real_kb_diff": {
+    "added": [],
+    "removed": [],
+    "modified": []
+  },
+  "data_dir_before": [
+    "sire_vectors.sqlite3",
+    "snapshot-manifest.json"
+  ],
+  "data_dir_end": [
+    "sire_vectors.sqlite3",
+    "snapshot-manifest.json"
+  ],
+  "real_db_sha_start": "cc4924ce0b309f846a1fcfa77664067e04afefc1c3ab34aa5c9abcf76afe9659",
+  "real_db_sha_end": "cc4924ce0b309f846a1fcfa77664067e04afefc1c3ab34aa5c9abcf76afe9659",
+  "workflow_commit_before": "31a3d7da0a5f7e6ef3de3ac3d1cde8a25315fd4b 2026-09-25T05:18:45+08:00",
+  "workflow_commit_after": "31a3d7da0a5f7e6ef3de3ac3d1cde8a25315fd4b 2026-09-25T05:18:45+08:00",
+  "workflow_status_unchanged": true
+}
+
+[qa] 汇总: T1=PASS, T5=PASS, T2=PASS, T3=PASS, T4=PASS, T6=PASS, T7=PASS, T8=PASS
+[qa] 额外观察: {"X1 非 sqlite 垃圾文件": {"rc": 1, "status": null, "traceback": true, "stderr_tail": ["sqlite3.DatabaseError: file is not a database"]}, "X2 SIRE_VECTOR_DB 指向目录": {"rc": 3, "status": "STOP", "classification": "rsi_unregistered_change", "traceback": false}, "T4 额外子项 e/f/g/h": {"e(额外) created_at 恰等于提交时间": true, "f(额外) created_at=not-a-date": true, "g(额外) status=EVALUATED_PASS": true, "h(额外) status=ACTIVE": true}, "X3 PATH 无 git": {"rc": 0, "raised": false, "exc": null, "status": "SKIPPED", "reason": "工作流目录不在 Git 仓库中或未找到 git"}, "X4 skill_dir 不存在": {"rc": 0, "raised": true, "exc": "NotADirectoryError(20, '目录名称无效。', None, 267, None)", "status": null, "reason": null}}
