@@ -1,0 +1,16 @@
+{
+  "new_knowledge_records": 22,
+  "task_records_for_run": 5,
+  "complete_task_records": 5,
+  "all_source_paths_exist": true,
+  "new_knowledge_fts_rows": 22,
+  "new_knowledge_vectors": 22,
+  "totals": {
+    "knowledge_records": 120,
+    "task_records": 578,
+    "chunks": 1372,
+    "emb": 1226,
+    "keywords": 5684
+  },
+  "integrity_check": "ok"
+}

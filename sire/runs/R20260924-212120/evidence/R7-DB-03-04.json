@@ -1,0 +1,16 @@
+{
+  "test_ids": [
+    "R7-DB-03",
+    "R7-DB-04"
+  ],
+  "result": "PASS",
+  "checks": {
+    "repository_snapshot_read_only_reopen": true,
+    "manifest_hash_matches_database": true,
+    "integrity_check": "ok",
+    "full_table_counts_recorded_in": "sire/data/snapshot-manifest.json",
+    "chunks_fts_kfts_cfts_searchable": true,
+    "privacy_patterns_found": 0,
+    "sqlite_sidecars": []
+  }
+}

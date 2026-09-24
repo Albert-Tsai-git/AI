@@ -1,0 +1,33 @@
+{
+  "status": "PASS",
+  "cases": [
+    {
+      "query": "EncoderPlotter IAP BIN Footer flash_layout 0903_01",
+      "expected_record": "K-REPO-ENCODERPLOTTER-0903-01-20260924",
+      "title": "EncoderPlotter_0903_01：新版 IAP BIN/Footer 解析",
+      "source_path": "@DRIVE_D@/\code\\EncoderPlotter_0903_01\\controller\\python\\Encoder.py",
+      "score": 0.92974,
+      "top_record_ids": [
+        "K-REPO-ENCODERPLOTTER-0903-01-20260924",
+        "F-022",
+        "F-026",
+        "F-017",
+        "K-REPO-ENCODERPLOTTER4-20260924"
+      ]
+    },
+    {
+      "query": "driverSoftware FastAPI Electron Analyzer protocol RS485 reader calibration build",
+      "expected_record": "K-REPO-DRIVERSOFTWARE-20260924",
+      "title": "driverSoftware：FastAPI/Electron 操作员桌面端",
+      "source_path": "@DRIVE_D@/\code\\driverSoftware\\server.py",
+      "score": 0.863834,
+      "top_record_ids": [
+        "K-REPO-DRIVERSOFTWARE-20260924",
+        "F-019",
+        "F-024",
+        "K-CODEBASE-MAP-20260924",
+        "K-REPO-ANALYZER-CODE-20260924"
+      ]
+    }
+  ]
+}

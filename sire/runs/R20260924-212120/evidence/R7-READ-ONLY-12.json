@@ -1,0 +1,37 @@
+{
+  "test_id": "R7-READ-ONLY-12",
+  "result": "PASS",
+  "database_bytes_unchanged": true,
+  "sidecars": [],
+  "aliases": {
+    "codex": {
+      "stats_exit": 0,
+      "knowledge_records": 124,
+      "task_records": 592,
+      "keyword_count": 5812,
+      "normal_search_exit": 0,
+      "normal_search_hits": 5,
+      "empty_search_exit": 0,
+      "empty_search_hits": 0,
+      "show_exit": 0,
+      "missing_show_exit": 1,
+      "missing_search_query_exit": 2
+    },
+    "claude": {
+      "stats_exit": 0,
+      "knowledge_records": 124,
+      "task_records": 592,
+      "keyword_count": 5812,
+      "normal_search_exit": 0,
+      "normal_search_hits": 5,
+      "empty_search_exit": 0,
+      "empty_search_hits": 0,
+      "show_exit": 0,
+      "missing_show_exit": 1,
+      "missing_search_query_exit": 2
+    }
+  },
+  "same_database_and_hit_ids": true,
+  "database_bytes_unchanged_during_test": true,
+  "counts_source": "sire/data/snapshot-manifest.json"
+}

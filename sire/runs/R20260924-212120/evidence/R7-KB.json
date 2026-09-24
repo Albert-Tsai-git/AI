@@ -1,0 +1,28 @@
+{
+  "R7-KB-01": {
+    "result": "PASS",
+    "exit_code": 0,
+    "canonical_fixture_records": 1,
+    "duplicate_snapshot_and_export_ignored": true
+  },
+  "R7-KB-03": {
+    "result": "PASS",
+    "exit_code": 1,
+    "canonical_duplicate_id_rejected": true,
+    "existing_index_preserved": true
+  },
+  "R7-KB-02": {
+    "result": "PASS",
+    "exit_code": 0,
+    "global_reindex_records": 17,
+    "record_types": {
+      "F": 6,
+      "H": 1,
+      "P": 10
+    },
+    "includes_P024": true,
+    "includes_P20260923": true,
+    "includes_P20260924": true,
+    "duplicate_id_warning": false
+  }
+}

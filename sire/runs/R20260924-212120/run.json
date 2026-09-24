@@ -1,0 +1,38 @@
+{
+  "run_id": "R20260924-212120",
+  "title": "分析当前目录仓库并将 SIRE 工作流、知识与 SQLite 数据库归档到 Git",
+  "project": ".",
+  "state": "BLOCKED",
+  "created": "2026-09-24 21:21:20 +08:00",
+  "updated": "2026-09-25T00:11:54+08:00",
+  "scope": [
+    "盘点当前目录下全部 Git 仓库与源码型项目并整理关键内容到数据库",
+    "将 Claude/Codex 唯一共享 SIRE 工作流、知识库与 SQLite 应用数据库纳入所选 Git 仓库",
+    "记录路径共享、只读保护、数据库快照及闭环归档流程"
+  ],
+  "exclusions": [
+    "远端推送",
+    "业务仓库改动",
+    "模型权重",
+    "SQLite WAL/SHM 与备份",
+    "密钥库、用户环境配置快照、缓存"
+  ],
+  "requirements": [
+    "REQ-001",
+    "REQ-002",
+    "REQ-003",
+    "REQ-004"
+  ],
+  "units": [
+    "UNIT-01",
+    "UNIT-02",
+    "UNIT-03",
+    "UNIT-04",
+    "UNIT-05",
+    "UNIT-06"
+  ],
+  "status": "BLOCKED-UI-unavailable",
+  "blockers": [
+    "Claude/Codex 原生桌面 UI 当前不可自动化访问；R7-UI-01/02 与 R10 UI 验收阻塞"
+  ]
+}

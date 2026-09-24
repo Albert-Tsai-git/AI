@@ -1,0 +1,22 @@
+[
+  {"q": "飞书自动化", "expect": ["F-027"]},
+  {"q": "claude 做完任务怎么发消息到飞书，回复后继续执行", "expect": ["F-027"]},
+  {"q": "CC-Switch 覆盖 settings.json 导致 hook 丢失", "expect": ["F-027"]},
+  {"q": "向量数据库体积太大 清理", "expect": ["P-021"]},
+  {"q": "寄存器读取失败", "expect": ["knowledge:why-reg-read-fails", "KB-SOL-20260921-REGREAD-ID15", "K-regread-batch-fallback", "K-fw-v345-regread-length", "K-regread-v345-batch-window"]},
+  {"q": "1M 波特率下批量读取显示 0/163", "expect": ["K-regread-batch-fallback", "K-regread-v345-batch-window"]},
+  {"q": "IAP 升级后 SN 丢失，怎么恢复并校验", "expect": ["F-017", "KB-SOL-20260923-IAP-SN-RESTORE-VERIFY", "F-009"]},
+  {"q": "electron 请求 localhost 连接被拒绝", "expect": ["P-001"]},
+  {"q": "npx 在子进程里卡住不动", "expect": ["P-003"]},
+  {"q": "uPlot 放大后上面的图空白", "expect": ["P-009"]},
+  {"q": "散点图太多 缩放卡顿 性能优化", "expect": ["P-010", "P-011"]},
+  {"q": "i18n 多语言 翻译缺失 硬编码中文", "expect": ["P-014", "P-016", "F-011"]},
+  {"q": "关掉子窗口后主窗口跑到别的程序后面", "expect": ["P-015"]},
+  {"q": "Windows 路径太长 WinError 206", "expect": ["P-017"]},
+  {"q": "位置读数卡在 804 rad 不变", "expect": ["P-019"]},
+  {"q": "诊断包怎么解密", "expect": ["F-025"]},
+  {"q": "发布正式版本 打 tag 触发 CI 构建", "expect": ["F-023", "E-007"]},
+  {"q": "舵机固件 Flash 分区 OTA 地址边界", "expect": ["K-driver-v345-layout-invariants", "K-driver-v345-ota-contract"]},
+  {"q": "中值霍尔检测时禁止退出", "expect": ["KB-SOL-20260923-MEDIAN-HALL-LOCK", "KB-SOL-20260923-SN-DIAGNOSTIC-MEDIAN-LOCK"]},
+  {"q": "新项目 AI 工程化 规则 打包 发布 模板", "expect": ["F-024"]}
+]

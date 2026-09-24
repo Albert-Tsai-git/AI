@@ -1,0 +1,1 @@
+R7-SHARE-01 actual path test: Get-Item reports both installed app paths are NTFS Junctions with identical target @SIRE_ROOT@\AI\AI\sire\workflow\shared\sire. Python pathlib.Path.resolve() for each also returns that target. SHA256 of both exposed SKILL.md paths is 9AA3826106436CC0C1D3146705C58D03955F53B2CB6F76DF944C26389EF5C0C0.

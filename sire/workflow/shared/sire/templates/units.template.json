@@ -1,0 +1,26 @@
+[
+  {
+    "id": "U-01",
+    "title": "动词开头的一句话",
+    "maps": "R-01",
+    "accept": "当[条件]时应[可观察结果]",
+    "files": "src/a.py,src/b.py",
+    "verify": "python -m pytest tests/test_a.py",
+    "deps": [],
+    "est": "20min",
+    "wave": 1,
+    "priority": "P0"
+  },
+  {
+    "id": "U-02",
+    "title": "依赖 U-01 的下一步",
+    "maps": "R-02",
+    "accept": "当[条件]时应[可观察结果]",
+    "files": "src/c.py",
+    "verify": "python -m pytest tests/test_c.py",
+    "deps": ["U-01"],
+    "est": "25min",
+    "wave": 2,
+    "priority": "P1"
+  }
+]

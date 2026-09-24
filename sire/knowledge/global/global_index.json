@@ -1,0 +1,1195 @@
+{
+  "records": [
+    {
+      "id": "F-026",
+      "type": "feature",
+      "title": "EncoderPlotter 烧录面板放开 DPB 锁定 — 型号/固件文件可重选",
+      "file": "global_dev_features.md",
+      "line": 3,
+      "date": "2026-09-23",
+      "project": "EncoderPlotter_0703_03 (分支 feature/flash-and-pcba，主仓 1f5c515a，子模块 sub_automation 30b1c3f)",
+      "status": "已归档 (可直接调用)",
+      "keywords": [
+        "烧录面板",
+        "flashPanel",
+        "DPB 锁定",
+        "型号选择",
+        "IAP",
+        "MPT-G",
+        "--mpt-g",
+        "flash_tool.py",
+        "CONFIGS extra_hex",
+        "localStorage 配置恢复",
+        "nuitka 重编"
+      ]
+    },
+    {
+      "id": "F-025",
+      "type": "feature",
+      "title": "舵机(KingKong)诊断包解密规则 — kkdiag + 本机私钥",
+      "file": "global_dev_features.md",
+      "line": 24,
+      "date": "2026-09-23",
+      "project": "driverSoftware (@CODE_ROOT@\\driverSoftware)",
+      "status": "已归档 (可直接调用)",
+      "keywords": [
+        "诊断包",
+        "diag",
+        "解密",
+        "kkdiag",
+        "diag_private.pem",
+        "私钥",
+        "黑匣子",
+        "blackbox",
+        "events.jrn",
+        "rings.json.enc",
+        "env.json.enc",
+        "key.bin",
+        "AES-GCM",
+        "RSA-4096"
+      ]
+    },
+    {
+      "id": "F-024",
+      "type": "feature",
+      "title": "AI工程化基建模板 — driverSoftware 全套工程/规则/打包/发布机制",
+      "file": "global_dev_features.md",
+      "line": 41,
+      "date": "2026-09-22",
+      "project": "driverSoftware (@CODE_ROOT@\\driverSoftware, v0.13.10, 分支 development) — 新项目搭建时直接照抄的参考实现",
+      "status": "已归档 (可复用模板)",
+      "keywords": [
+        "AI工程化",
+        "工程基建",
+        "项目模板",
+        "AGENTS.md",
+        "AI规则",
+        "打包",
+        "Nuitka",
+        "Electron",
+        "electron-builder",
+        "多SKU",
+        "发布",
+        "release.py",
+        "VERSION",
+        "CHANGELOG",
+        "GitLab CI",
+        "Runner",
+        "NAS",
+        "飞书通知",
+        "通讯架构",
+        "FastAPI",
+        "WebSocket",
+        "多进程",
+        "shared_memory",
+        "venv",
+        "lockfile",
+        "workspace.json",
+        "pytest",
+        "门禁",
+        "git flow",
+        "分支命名"
+      ]
+    },
+    {
+      "id": "F-027",
+      "type": "feature",
+      "title": "【飞书自动化】飞书 ⇄ Claude Code 双向闭环：完成通知、飞书回复续跑、桌面上下文同步",
+      "file": "global_dev_features.md",
+      "line": 100,
+      "date": "2026-09-23 ~ 2026-09-24",
+      "project": "全局工具 @USER_HOME@\\.feishu_bridge",
+      "status": "已完成",
+      "keywords": [
+        "飞书自动化",
+        "飞书",
+        "Feishu",
+        "Lark",
+        "lark-oapi",
+        "长连接",
+        "自建应用",
+        "机器人",
+        "消息卡片",
+        "Stop Hook",
+        "UserPromptSubmit",
+        "claude --resume",
+        "双向通知",
+        "远程续跑",
+        "上下文同步",
+        "feishu_turns",
+        "CLAUDE_CONFIG_DIR",
+        "CC-Switch",
+        "cc-switch.db",
+        "common_config_claude",
+        "proxy_live_backup",
+        "hosts",
+        "platform.claude.com"
+      ]
+    },
+    {
+      "id": "F-028",
+      "type": "feature",
+      "title": "【知识库优化】SIRE 知识检索 v2：bge 语义 + trigram 全文 + 复用要点，recall@3 0.45→1.00",
+      "file": "global_dev_features.md",
+      "line": 141,
+      "date": "2026-09-24",
+      "project": "SIRE 知识检索 v2 实施记录（历史闭环库为 `@SIRE_ARCHIVE_ROOT@\\sire_vectors.sqlite3`；Claude/Codex 当前工作库由 `sire_paths.py` 指向仓库 `data/sire_vectors.sqlite3`）",
+      "status": "已完成",
+      "keywords": [
+        "知识库优化",
+        "向量检索",
+        "语义检索",
+        "bge-small-zh",
+        "fastembed",
+        "trigram",
+        "FTS5",
+        "混合检索",
+        "BM25",
+        "复用要点",
+        "知识模板",
+        "sire_kb lint",
+        "sire_kb add",
+        "is_latest",
+        "只增不减",
+        "评测集",
+        "recall"
+      ]
+    },
+    {
+      "id": "F-041",
+      "type": "feature",
+      "title": "【飞书自动化】飞书多 AI 中转中间服务 feishu-hub（中间服务 + Claude/Codex 执行器，取代 F-027）",
+      "file": "global_dev_features.md",
+      "line": 182,
+      "date": "2026-09-24",
+      "project": "飞书多 AI 中转中间服务 feishu-hub —— @SIRE_ROOT@\\AI\\AI\\feishu-hub（GitHub Albert-Tsai-git/AI，分支 feature/feishu-hub，最新 ea704df）",
+      "status": "已完成（已上线运行；遗留：CX-3 测试偶发失败、手动 codex exec 也会推送卡片、需登录 Windows 才启动）",
+      "keywords": [
+        "飞书自动化",
+        "飞书中转",
+        "中间服务",
+        "feishu-hub",
+        "hub",
+        "多AI",
+        "Claude执行器",
+        "Codex执行器",
+        "执行器协议",
+        "PROTOCOL.md",
+        "租约",
+        "lease",
+        "心跳",
+        "长轮询",
+        "outbox",
+        "发送队列",
+        "幂等",
+        "uuid",
+        "任务状态机",
+        "NEEDS_RECOVERY",
+        "WAITING_EXTERNAL",
+        "desktop_queue",
+        "codex queue",
+        "codex exec resume",
+        "claude -p",
+        "claude --resume",
+        "Stop Hook",
+        "UserPromptSubmit",
+        "notify",
+        "--previous-notify",
+        "computer-use",
+        "计划任务",
+        "FeishuHub",
+        "lark-oapi",
+        "长连接",
+        "私聊建任务",
+        "项目列表",
+        "快捷操作",
+        "取代 F-027"
+      ]
+    },
+    {
+      "id": "H-004",
+      "type": "habit",
+      "title": "硬件联调排查纪律 (来自 v3.4.6 力矩无响应排查)",
+      "file": "global_dev_habits.md",
+      "line": 3,
+      "date": "2026-09-22",
+      "project": "driverSoftware (通用于上位机 + 固件联调)",
+      "status": "生效",
+      "keywords": [
+        "排查纪律",
+        "抓包",
+        "真机测试",
+        "固件档案",
+        "签名同步",
+        "波特率",
+        "并行会话",
+        "发布流程"
+      ]
+    },
+    {
+      "id": "P-018",
+      "type": "problem",
+      "title": "fw v3.4.6 使能态修改力矩舵机无响应 (四根因叠加)",
+      "file": "global_problem_solutions.md",
+      "line": 3,
+      "date": "2026-09-22",
+      "project": "driverSoftware (@CODE_ROOT@\\driverSoftware), 发布 v0.13.9",
+      "status": "已解决, 已发布 (a6848b6 + c8ad4e6, tag v0.13.9)",
+      "keywords": [
+        "v3.4.6",
+        "MIT",
+        "mit_scales",
+        "力矩无响应",
+        "hw_update_mit",
+        "500",
+        "baudrate",
+        "READER_MP",
+        "使能对齐",
+        "固件档案"
+      ]
+    },
+    {
+      "id": "P-019",
+      "type": "problem",
+      "title": "位置读数卡在 804.2477 rad (v3.4.x 多圈超量程饱和)",
+      "file": "global_problem_solutions.md",
+      "line": 35,
+      "date": "2026-09-22",
+      "project": "driverSoftware / driver 固件 v3.4.x",
+      "status": "已定位, 未修 (需设零或防护提示, 待决策)",
+      "keywords": [
+        "804.2477",
+        "位置饱和",
+        "INT32_MAX",
+        "Q8.24",
+        "多圈",
+        "kMitPosScale",
+        "0x18",
+        "0x67",
+        "设零"
+      ]
+    },
+    {
+      "id": "P-020",
+      "type": "problem",
+      "title": "使能态 Kp 从 0 调到 >0 时位置指令陈旧 (潜在猛拽, 既有问题)",
+      "file": "global_problem_solutions.md",
+      "line": 49,
+      "date": "2026-09-22",
+      "project": "driverSoftware frontend/js/pages/motion.js",
+      "status": "已识别, 未修 (新行为改动, 待用户决策)",
+      "keywords": [
+        "使能对齐",
+        "Kp",
+        "位置指令",
+        "猛拽",
+        "pos_err",
+        "motion.js"
+      ]
+    },
+    {
+      "id": "P-025",
+      "type": "problem",
+      "title": "运动页 <100Hz 使能时附加寄存器 (0x24/0x27/0x29/0x2A/0x2B) 示波器无曲线",
+      "file": "global_problem_solutions.md",
+      "line": 58,
+      "date": "2026-09-22",
+      "project": "driverSoftware (@CODE_ROOT@\\driverSoftware, development, 未提交)",
+      "status": "已修复, 真机验证通过 (id15 fw v3.4.6 @3Mbps), 代码未提交",
+      "keywords": [
+        "附加寄存器",
+        "extras",
+        "示波器",
+        "100Hz",
+        "软轮询",
+        "doSendMit",
+        "api.mit",
+        "flatExtras",
+        "TELEMETRY_DISPATCH",
+        "xNN"
+      ]
+    },
+    {
+      "id": "P-021",
+      "type": "problem",
+      "title": "【数据库清理】向量库 1.2GB 实为 driver 仓库全量导入，清理后 7.8MB",
+      "file": "global_problem_solutions.md",
+      "line": 76,
+      "date": "2026-09-24",
+      "project": "",
+      "status": "已完成",
+      "keywords": [
+        "向量库",
+        "sire_vectors.sqlite3",
+        "数据库体积",
+        "driver 仓库",
+        "全量索引",
+        "DONE_FULL_FILE_INDEXED",
+        "purge",
+        "VACUUM",
+        "删除密码",
+        "只增不减"
+      ]
+    },
+    {
+      "id": "P-022",
+      "type": "problem",
+      "title": "【飞书自动化】Claude 桌面版 MSIX 路径虚拟化导致续跑工作目录不存在",
+      "file": "global_problem_solutions.md",
+      "line": 92,
+      "date": "2026-09-24",
+      "project": "全局工具 @USER_HOME@\\.feishu_bridge（【飞书自动化】）",
+      "status": "已完成",
+      "keywords": [
+        "飞书自动化",
+        "MSIX",
+        "路径虚拟化",
+        "AppData Roaming",
+        "LocalCache",
+        "Packages",
+        "scratch-workspaces",
+        "工作目录不存在",
+        "cwd",
+        "os.path.isdir False",
+        "claude --resume",
+        "计划任务"
+      ]
+    },
+    {
+      "id": "P-023",
+      "type": "problem",
+      "title": "【飞书自动化】多 AI 中转切换踩坑合集（计划任务复活、CC-Switch 覆盖、Codex Hook 信任、.CMD 注入、Opus 5.5 CLI 版本）",
+      "file": "global_problem_solutions.md",
+      "line": 111,
+      "date": "2026-09-24",
+      "project": "飞书多 AI 中转 feishu-hub（@SIRE_ROOT@\\AI\\AI\\feishu-hub），配套 F 记录「【飞书自动化】飞书多 AI 中转中间服务 feishu-hub」",
+      "status": "已完成",
+      "keywords": [
+        "飞书自动化",
+        "踩坑",
+        "计划任务",
+        "Disable-ScheduledTask",
+        "重启复活",
+        "CC-Switch 覆盖",
+        "settings.json",
+        "config.toml",
+        "notify",
+        "--previous-notify",
+        "hooks.json",
+        "hook trust",
+        "dangerously-bypass-hook-trust",
+        "codex.CMD",
+        "cmd.exe 元字符",
+        "命令注入",
+        "Opus 5.5",
+        "unrecognized_model",
+        "2.1.280",
+        "桌面版自带 CLI",
+        "MSIX",
+        "单一写入者",
+        "两个 AI 同时改代码",
+        ".NET 相对路径",
+        "ReadAllText",
+        "os._exit 不刷新输出"
+      ]
+    },
+    {
+      "id": "P-024",
+      "type": "problem",
+      "title": "SIRE Git 归档应对 SQLite 快照做路径规范化与空闲页清理",
+      "file": "global_problem_solutions.md",
+      "line": 146,
+      "date": "2026-09-24",
+      "project": "SIRE v6",
+      "status": "",
+      "keywords": [
+        "SIRE",
+        "Git 归档",
+        "SQLite 快照",
+        "在线备份",
+        "路径脱敏",
+        "FTS",
+        "embedding",
+        "VACUUM"
+      ]
+    },
+    {
+      "id": "P-20260923",
+      "type": "problem",
+      "title": "SIRE 向量库检索必须使用只读 SQLite 连接保护 Git 快照",
+      "file": "global_problem_solutions.md",
+      "line": 173,
+      "date": "2026-09-24",
+      "project": "SIRE v6 Claude/Codex 共享工作流",
+      "status": "已修复",
+      "keywords": [
+        "Claude",
+        "Codex",
+        "SIRE",
+        "SQLite",
+        "read-only",
+        "WAL",
+        "Git 快照",
+        "hash",
+        "knowledge retrieval"
+      ]
+    },
+    {
+      "id": "P-20260924",
+      "type": "problem",
+      "title": "Claude/Codex 共用的 SIRE 工作流与 SQLite 应在单一 Git 源中归档",
+      "file": "global_problem_solutions.md",
+      "line": 199,
+      "date": "2026-09-24",
+      "project": "SIRE v6 Claude/Codex 共享工作流",
+      "status": "已验证；当前任务的真实桌面 UI 验收因无可用 UI 应用而阻塞",
+      "keywords": [
+        "SIRE",
+        "Claude",
+        "Codex",
+        "shared workflow",
+        "单一来源",
+        "Git",
+        "SQLite",
+        "WAL",
+        "writer lock",
+        "snapshot",
+        "database"
+      ]
+    }
+  ],
+  "features": {
+    "烧录面板": [
+      "F-026"
+    ],
+    "flashPanel": [
+      "F-026"
+    ],
+    "DPB 锁定": [
+      "F-026"
+    ],
+    "型号选择": [
+      "F-026"
+    ],
+    "IAP": [
+      "F-026"
+    ],
+    "MPT-G": [
+      "F-026"
+    ],
+    "--mpt-g": [
+      "F-026"
+    ],
+    "flash_tool.py": [
+      "F-026"
+    ],
+    "CONFIGS extra_hex": [
+      "F-026"
+    ],
+    "localStorage 配置恢复": [
+      "F-026"
+    ],
+    "nuitka 重编": [
+      "F-026"
+    ],
+    "诊断包": [
+      "F-025"
+    ],
+    "diag": [
+      "F-025"
+    ],
+    "解密": [
+      "F-025"
+    ],
+    "kkdiag": [
+      "F-025"
+    ],
+    "diag_private.pem": [
+      "F-025"
+    ],
+    "私钥": [
+      "F-025"
+    ],
+    "黑匣子": [
+      "F-025"
+    ],
+    "blackbox": [
+      "F-025"
+    ],
+    "events.jrn": [
+      "F-025"
+    ],
+    "rings.json.enc": [
+      "F-025"
+    ],
+    "env.json.enc": [
+      "F-025"
+    ],
+    "key.bin": [
+      "F-025"
+    ],
+    "AES-GCM": [
+      "F-025"
+    ],
+    "RSA-4096": [
+      "F-025"
+    ],
+    "AI工程化": [
+      "F-024"
+    ],
+    "工程基建": [
+      "F-024"
+    ],
+    "项目模板": [
+      "F-024"
+    ],
+    "AGENTS.md": [
+      "F-024"
+    ],
+    "AI规则": [
+      "F-024"
+    ],
+    "打包": [
+      "F-024"
+    ],
+    "Nuitka": [
+      "F-024"
+    ],
+    "Electron": [
+      "F-024"
+    ],
+    "electron-builder": [
+      "F-024"
+    ],
+    "多SKU": [
+      "F-024"
+    ],
+    "发布": [
+      "F-024"
+    ],
+    "release.py": [
+      "F-024"
+    ],
+    "VERSION": [
+      "F-024"
+    ],
+    "CHANGELOG": [
+      "F-024"
+    ],
+    "GitLab CI": [
+      "F-024"
+    ],
+    "Runner": [
+      "F-024"
+    ],
+    "NAS": [
+      "F-024"
+    ],
+    "飞书通知": [
+      "F-024"
+    ],
+    "通讯架构": [
+      "F-024"
+    ],
+    "FastAPI": [
+      "F-024"
+    ],
+    "WebSocket": [
+      "F-024"
+    ],
+    "多进程": [
+      "F-024"
+    ],
+    "shared_memory": [
+      "F-024"
+    ],
+    "venv": [
+      "F-024"
+    ],
+    "lockfile": [
+      "F-024"
+    ],
+    "workspace.json": [
+      "F-024"
+    ],
+    "pytest": [
+      "F-024"
+    ],
+    "门禁": [
+      "F-024"
+    ],
+    "git flow": [
+      "F-024"
+    ],
+    "分支命名": [
+      "F-024"
+    ],
+    "飞书自动化": [
+      "F-027",
+      "F-041"
+    ],
+    "飞书": [
+      "F-027"
+    ],
+    "Feishu": [
+      "F-027"
+    ],
+    "Lark": [
+      "F-027"
+    ],
+    "lark-oapi": [
+      "F-027",
+      "F-041"
+    ],
+    "长连接": [
+      "F-027",
+      "F-041"
+    ],
+    "自建应用": [
+      "F-027"
+    ],
+    "机器人": [
+      "F-027"
+    ],
+    "消息卡片": [
+      "F-027"
+    ],
+    "Stop Hook": [
+      "F-027",
+      "F-041"
+    ],
+    "UserPromptSubmit": [
+      "F-027",
+      "F-041"
+    ],
+    "claude --resume": [
+      "F-027",
+      "F-041"
+    ],
+    "双向通知": [
+      "F-027"
+    ],
+    "远程续跑": [
+      "F-027"
+    ],
+    "上下文同步": [
+      "F-027"
+    ],
+    "feishu_turns": [
+      "F-027"
+    ],
+    "CLAUDE_CONFIG_DIR": [
+      "F-027"
+    ],
+    "CC-Switch": [
+      "F-027"
+    ],
+    "cc-switch.db": [
+      "F-027"
+    ],
+    "common_config_claude": [
+      "F-027"
+    ],
+    "proxy_live_backup": [
+      "F-027"
+    ],
+    "hosts": [
+      "F-027"
+    ],
+    "platform.claude.com": [
+      "F-027"
+    ],
+    "知识库优化": [
+      "F-028"
+    ],
+    "向量检索": [
+      "F-028"
+    ],
+    "语义检索": [
+      "F-028"
+    ],
+    "bge-small-zh": [
+      "F-028"
+    ],
+    "fastembed": [
+      "F-028"
+    ],
+    "trigram": [
+      "F-028"
+    ],
+    "FTS5": [
+      "F-028"
+    ],
+    "混合检索": [
+      "F-028"
+    ],
+    "BM25": [
+      "F-028"
+    ],
+    "复用要点": [
+      "F-028"
+    ],
+    "知识模板": [
+      "F-028"
+    ],
+    "sire_kb lint": [
+      "F-028"
+    ],
+    "sire_kb add": [
+      "F-028"
+    ],
+    "is_latest": [
+      "F-028"
+    ],
+    "只增不减": [
+      "F-028"
+    ],
+    "评测集": [
+      "F-028"
+    ],
+    "recall": [
+      "F-028"
+    ],
+    "飞书中转": [
+      "F-041"
+    ],
+    "中间服务": [
+      "F-041"
+    ],
+    "feishu-hub": [
+      "F-041"
+    ],
+    "hub": [
+      "F-041"
+    ],
+    "多AI": [
+      "F-041"
+    ],
+    "Claude执行器": [
+      "F-041"
+    ],
+    "Codex执行器": [
+      "F-041"
+    ],
+    "执行器协议": [
+      "F-041"
+    ],
+    "PROTOCOL.md": [
+      "F-041"
+    ],
+    "租约": [
+      "F-041"
+    ],
+    "lease": [
+      "F-041"
+    ],
+    "心跳": [
+      "F-041"
+    ],
+    "长轮询": [
+      "F-041"
+    ],
+    "outbox": [
+      "F-041"
+    ],
+    "发送队列": [
+      "F-041"
+    ],
+    "幂等": [
+      "F-041"
+    ],
+    "uuid": [
+      "F-041"
+    ],
+    "任务状态机": [
+      "F-041"
+    ],
+    "NEEDS_RECOVERY": [
+      "F-041"
+    ],
+    "WAITING_EXTERNAL": [
+      "F-041"
+    ],
+    "desktop_queue": [
+      "F-041"
+    ],
+    "codex queue": [
+      "F-041"
+    ],
+    "codex exec resume": [
+      "F-041"
+    ],
+    "claude -p": [
+      "F-041"
+    ],
+    "notify": [
+      "F-041"
+    ],
+    "--previous-notify": [
+      "F-041"
+    ],
+    "computer-use": [
+      "F-041"
+    ],
+    "计划任务": [
+      "F-041"
+    ],
+    "FeishuHub": [
+      "F-041"
+    ],
+    "私聊建任务": [
+      "F-041"
+    ],
+    "项目列表": [
+      "F-041"
+    ],
+    "快捷操作": [
+      "F-041"
+    ],
+    "取代 F-027": [
+      "F-041"
+    ]
+  },
+  "problems": {
+    "v3.4.6": [
+      "P-018"
+    ],
+    "MIT": [
+      "P-018"
+    ],
+    "mit_scales": [
+      "P-018"
+    ],
+    "力矩无响应": [
+      "P-018"
+    ],
+    "hw_update_mit": [
+      "P-018"
+    ],
+    "500": [
+      "P-018"
+    ],
+    "baudrate": [
+      "P-018"
+    ],
+    "READER_MP": [
+      "P-018"
+    ],
+    "使能对齐": [
+      "P-018",
+      "P-020"
+    ],
+    "固件档案": [
+      "P-018"
+    ],
+    "804.2477": [
+      "P-019"
+    ],
+    "位置饱和": [
+      "P-019"
+    ],
+    "INT32_MAX": [
+      "P-019"
+    ],
+    "Q8.24": [
+      "P-019"
+    ],
+    "多圈": [
+      "P-019"
+    ],
+    "kMitPosScale": [
+      "P-019"
+    ],
+    "0x18": [
+      "P-019"
+    ],
+    "0x67": [
+      "P-019"
+    ],
+    "设零": [
+      "P-019"
+    ],
+    "Kp": [
+      "P-020"
+    ],
+    "位置指令": [
+      "P-020"
+    ],
+    "猛拽": [
+      "P-020"
+    ],
+    "pos_err": [
+      "P-020"
+    ],
+    "motion.js": [
+      "P-020"
+    ],
+    "附加寄存器": [
+      "P-025"
+    ],
+    "extras": [
+      "P-025"
+    ],
+    "示波器": [
+      "P-025"
+    ],
+    "100Hz": [
+      "P-025"
+    ],
+    "软轮询": [
+      "P-025"
+    ],
+    "doSendMit": [
+      "P-025"
+    ],
+    "api.mit": [
+      "P-025"
+    ],
+    "flatExtras": [
+      "P-025"
+    ],
+    "TELEMETRY_DISPATCH": [
+      "P-025"
+    ],
+    "xNN": [
+      "P-025"
+    ],
+    "向量库": [
+      "P-021"
+    ],
+    "sire_vectors.sqlite3": [
+      "P-021"
+    ],
+    "数据库体积": [
+      "P-021"
+    ],
+    "driver 仓库": [
+      "P-021"
+    ],
+    "全量索引": [
+      "P-021"
+    ],
+    "DONE_FULL_FILE_INDEXED": [
+      "P-021"
+    ],
+    "purge": [
+      "P-021"
+    ],
+    "VACUUM": [
+      "P-021",
+      "P-024"
+    ],
+    "删除密码": [
+      "P-021"
+    ],
+    "只增不减": [
+      "P-021"
+    ],
+    "飞书自动化": [
+      "P-022",
+      "P-023"
+    ],
+    "MSIX": [
+      "P-022",
+      "P-023"
+    ],
+    "路径虚拟化": [
+      "P-022"
+    ],
+    "AppData Roaming": [
+      "P-022"
+    ],
+    "LocalCache": [
+      "P-022"
+    ],
+    "Packages": [
+      "P-022"
+    ],
+    "scratch-workspaces": [
+      "P-022"
+    ],
+    "工作目录不存在": [
+      "P-022"
+    ],
+    "cwd": [
+      "P-022"
+    ],
+    "os.path.isdir False": [
+      "P-022"
+    ],
+    "claude --resume": [
+      "P-022"
+    ],
+    "计划任务": [
+      "P-022",
+      "P-023"
+    ],
+    "踩坑": [
+      "P-023"
+    ],
+    "Disable-ScheduledTask": [
+      "P-023"
+    ],
+    "重启复活": [
+      "P-023"
+    ],
+    "CC-Switch 覆盖": [
+      "P-023"
+    ],
+    "settings.json": [
+      "P-023"
+    ],
+    "config.toml": [
+      "P-023"
+    ],
+    "notify": [
+      "P-023"
+    ],
+    "--previous-notify": [
+      "P-023"
+    ],
+    "hooks.json": [
+      "P-023"
+    ],
+    "hook trust": [
+      "P-023"
+    ],
+    "dangerously-bypass-hook-trust": [
+      "P-023"
+    ],
+    "codex.CMD": [
+      "P-023"
+    ],
+    "cmd.exe 元字符": [
+      "P-023"
+    ],
+    "命令注入": [
+      "P-023"
+    ],
+    "Opus 5.5": [
+      "P-023"
+    ],
+    "unrecognized_model": [
+      "P-023"
+    ],
+    "2.1.280": [
+      "P-023"
+    ],
+    "桌面版自带 CLI": [
+      "P-023"
+    ],
+    "单一写入者": [
+      "P-023"
+    ],
+    "两个 AI 同时改代码": [
+      "P-023"
+    ],
+    ".NET 相对路径": [
+      "P-023"
+    ],
+    "ReadAllText": [
+      "P-023"
+    ],
+    "os._exit 不刷新输出": [
+      "P-023"
+    ],
+    "SIRE": [
+      "P-024",
+      "P-20260923",
+      "P-20260924"
+    ],
+    "Git 归档": [
+      "P-024"
+    ],
+    "SQLite 快照": [
+      "P-024"
+    ],
+    "在线备份": [
+      "P-024"
+    ],
+    "路径脱敏": [
+      "P-024"
+    ],
+    "FTS": [
+      "P-024"
+    ],
+    "embedding": [
+      "P-024"
+    ],
+    "Claude": [
+      "P-20260923",
+      "P-20260924"
+    ],
+    "Codex": [
+      "P-20260923",
+      "P-20260924"
+    ],
+    "SQLite": [
+      "P-20260923",
+      "P-20260924"
+    ],
+    "read-only": [
+      "P-20260923"
+    ],
+    "WAL": [
+      "P-20260923",
+      "P-20260924"
+    ],
+    "Git 快照": [
+      "P-20260923"
+    ],
+    "hash": [
+      "P-20260923"
+    ],
+    "knowledge retrieval": [
+      "P-20260923"
+    ],
+    "shared workflow": [
+      "P-20260924"
+    ],
+    "单一来源": [
+      "P-20260924"
+    ],
+    "Git": [
+      "P-20260924"
+    ],
+    "writer lock": [
+      "P-20260924"
+    ],
+    "snapshot": [
+      "P-20260924"
+    ],
+    "database": [
+      "P-20260924"
+    ]
+  },
+  "efficiency": {},
+  "habits": {
+    "排查纪律": [
+      "H-004"
+    ],
+    "抓包": [
+      "H-004"
+    ],
+    "真机测试": [
+      "H-004"
+    ],
+    "固件档案": [
+      "H-004"
+    ],
+    "签名同步": [
+      "H-004"
+    ],
+    "波特率": [
+      "H-004"
+    ],
+    "并行会话": [
+      "H-004"
+    ],
+    "发布流程": [
+      "H-004"
+    ]
+  },
+  "last_updated": "2026-09-24T16:16:22Z",
+  "total_records": 17
+}

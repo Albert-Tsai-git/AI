@@ -1,0 +1,67 @@
+{
+  "created_at": "2026-09-24T16:17:49.421604+00:00",
+  "source": "@SIRE_ARCHIVE_ROOT@\\sire_vectors.sqlite3",
+  "source_snapshot_sha256_before_sanitization": "9de4119daea7b8c1da199886c404c481e8d7d9b6c54df3d2b7def26d80321323",
+  "snapshot_sha256": "81f1ed035517fec5194733db2bb2389a3aea2b1e4c34f5388810ebbfbd77a467",
+  "privacy_transformations": {
+    "code_root": 1717,
+    "sire_root": 1369,
+    "user_home": 938,
+    "drive_root": 1762,
+    "email": 7,
+    "private_ip": 11
+  },
+  "records_by_table": {
+    "chunks": 1818,
+    "emb": 1942,
+    "improvement_metrics": 3,
+    "improvement_proposals": 2,
+    "keywords": 5900,
+    "knowledge_records": 124,
+    "knowledge_relations": 6,
+    "meta": 13,
+    "synonyms": 45,
+    "task_records": 599,
+    "workflow_versions": 1
+  },
+  "rebuilt_bge_embeddings": 1942,
+  "journal_mode": "delete",
+  "validation": {
+    "integrity_check": "ok",
+    "journal_mode": "delete",
+    "page_count": 11685,
+    "freelist_count": 0,
+    "fts_integrity": "ok",
+    "all_knowledge_and_chunk_embeddings_rebuilt": true,
+    "text_scan_scope": "SQLite TEXT and undeclared-type columns; specified path, email, private-IP, and credential patterns",
+    "text_scan_findings": {
+      "pem_private_key": 0,
+      "github_token": 0,
+      "aws_access_key": 0,
+      "bearer_credential": 0,
+      "credential_assignment": 0,
+      "url_embedded_credential": 0,
+      "windows_absolute_path": 0,
+      "email": 0,
+      "private_ip": 0
+    },
+    "printable_byte_scan_scope": "printable byte sequences; specified credential, email, private-IP, and known local-root patterns",
+    "printable_byte_scan_findings": {
+      "pem_private_key": 0,
+      "github_token": 0,
+      "aws_access_key": 0,
+      "bearer_credential": 0,
+      "credential_assignment": 0,
+      "url_embedded_credential": 0,
+      "user_home_root": 0,
+      "workspace_roots": 0,
+      "email": 0,
+      "private_ip": 0
+    },
+    "scan_limitations": "Pattern scans cannot prove unknown, encoded, mutated, or unrecognized credentials are absent; numeric/vector BLOBs are not semantically scanned.",
+    "source_read_mode": "read-only SQLite online backup; committed WAL content is visible; source main/WAL/rollback-journal hashes must remain stable",
+    "raw_staging": "OS temporary directory with owner/admin restricted ACL on Windows or mode 0700 elsewhere; crash leftovers are reaped after owner process exit",
+    "publication": "per-database SIRE lock serializes snapshot/index/migration; Windows file guards block database access during pair replacement; recovery marker and rollback copies repair interrupted publication",
+    "sqlite_sidecars": false
+  }
+}

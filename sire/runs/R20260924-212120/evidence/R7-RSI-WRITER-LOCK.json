@@ -1,0 +1,12 @@
+{
+  "status": "PASS",
+  "snapshot_lock_contention": "RSI waited until released",
+  "rsi_commands": [
+    "propose",
+    "evaluate",
+    "status"
+  ],
+  "prewrite_backups": 3,
+  "proposal_status": "EVALUATED_PASS",
+  "python_compile": "PASS"
+}

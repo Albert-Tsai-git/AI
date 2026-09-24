@@ -1,0 +1,7 @@
+# R7-GIT-05 local Git acceptance
+
+- Result: PASS after local integration.
+- Target branch: `feature/feishu-hub`.
+- Baseline before integration: `28cb18ce8c27134102fd15f2b8c617549ce2edae`.
+- Scope: root `README.md` and the new `sire/` archive only; no changes under `feishu-hub/`.
+- Checks: staged tree limited to the declared scope; `git diff --check` clean; repository database can be reopened read-only; commit is a descendant of the baseline; post-commit worktree clean; no remote push.

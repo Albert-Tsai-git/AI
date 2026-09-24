@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "sentinel": "SIRENEVEREXIST20260924205427ZXQ",
+  "fts_matches": 0,
+  "vector_cli_exit": 0,
+  "vector_cli_hits": 0,
+  "counts_unchanged": true,
+  "totals": {
+    "knowledge": 120,
+    "tasks": 578,
+    "chunks": 1372,
+    "emb": 1226,
+    "keywords": 5684
+  },
+  "new_knowledge_vectors": 22,
+  "run_files": 22,
+  "env_files_in_run": [],
+  "secret_assignment_pattern_matches": []
+}

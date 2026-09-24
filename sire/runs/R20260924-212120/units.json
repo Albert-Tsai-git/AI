@@ -1,0 +1,172 @@
+[
+  {
+    "unit_id": "UNIT-01",
+    "requirements": [
+      "REQ-001",
+      "REQ-002",
+      "REQ-003"
+    ],
+    "owner": "SIRE Orchestrator/Knowledge Curator",
+    "inputs": [
+      "@SIRE_ROOT@/AI/AI Git状态",
+      "SIRE源清单",
+      "向量库只读基线"
+    ],
+    "outputs": [
+      "KB-001",
+      "scope manifest",
+      "R7预检清单"
+    ],
+    "dependencies": [],
+    "parallel_safe": true,
+    "acceptance": [
+      "范围、来源和排除项有证据",
+      "需求到单元映射完整"
+    ],
+    "review": "独立 reviewer_u02 的范围审查；review_u01 数据库风险审查",
+    "test": "只读 inventory/schema/security pattern checks",
+    "status": "DONE"
+  },
+  {
+    "unit_id": "UNIT-02",
+    "requirements": [
+      "REQ-001",
+      "REQ-002"
+    ],
+    "owner": "Executor",
+    "inputs": [
+      "已审范围",
+      "Codex/Claude SIRE来源",
+      "知识/评测源"
+    ],
+    "outputs": [
+      "@SIRE_ROOT@/AI/AI/sire/workflow",
+      "sire/knowledge",
+      "sire/eval",
+      "sire/runs"
+    ],
+    "dependencies": [
+      "UNIT-01"
+    ],
+    "parallel_safe": false,
+    "acceptance": [
+      "源文件完整、排除项明确",
+      "路径规范化且 UTF-8 可读"
+    ],
+    "review": "独立文件清单/hash/内容抽查及 R6 review",
+    "test": "文件哈希比对、路径/凭据扫描",
+    "status": "DONE"
+  },
+  {
+    "unit_id": "UNIT-03",
+    "requirements": [
+      "REQ-003"
+    ],
+    "owner": "Executor/Database custodian",
+    "inputs": [
+      "原始 SQLite 只读库",
+      "备份工具",
+      "已审脱敏策略"
+    ],
+    "outputs": [
+      "sire/data/sire_vectors.sqlite3",
+      "snapshot-manifest.json"
+    ],
+    "dependencies": [
+      "UNIT-01"
+    ],
+    "parallel_safe": false,
+    "acceptance": [
+      "结构及数据行数不变",
+      "完整性、索引、embedding哈希和泄露检查通过"
+    ],
+    "review": "独立 reviewer_u01 对副本进行安全与完整性复核",
+    "test": "R7-DB清单、SQLite integrity、全文索引、PII/secret/sidecar扫描",
+    "status": "DONE"
+  },
+  {
+    "unit_id": "UNIT-04",
+    "requirements": [
+      "REQ-001",
+      "REQ-002",
+      "REQ-003"
+    ],
+    "owner": "Integrator/Closure Auditor",
+    "inputs": [
+      "UNIT-02",
+      "UNIT-03"
+    ],
+    "outputs": [
+      "README",
+      "任务/知识归档",
+      "本地 Git commit"
+    ],
+    "dependencies": [
+      "UNIT-02",
+      "UNIT-03"
+    ],
+    "parallel_safe": false,
+    "acceptance": [
+      "Git差异/跟踪清单、提交后工作区与基线正确",
+      "R6/R7/R9闭环证据完整"
+    ],
+    "review": "独立 staging/final review",
+    "test": "Git文件实际可读、DB从仓库重开验收、diff --check、commit state",
+    "status": "DONE"
+  },
+  {
+    "unit_id": "UNIT-05",
+    "requirements": [
+      "REQ-004"
+    ],
+    "owner": "Workflow maintainer",
+    "inputs": [
+      "Observed reindex warning",
+      "sire_kb.py md_files()"
+    ],
+    "outputs": [
+      "current and archived sire_kb.py discovery filter",
+      "global_index.json"
+    ],
+    "dependencies": [
+      "UNIT-01"
+    ],
+    "parallel_safe": false,
+    "acceptance": [
+      "integrity/secrets/exports and generated DB export are omitted",
+      "canonical duplicate identifiers absent"
+    ],
+    "review": "independent review_u02 or review_u03",
+    "test": "temporary KB fixture with canonical plus duplicate snapshot/export; then live reindex",
+    "status": "DONE"
+  },
+  {
+    "unit_id": "UNIT-06",
+    "requirements": [
+      "REQ-001",
+      "REQ-002"
+    ],
+    "owner": "Functional Tester / R10 Operator",
+    "inputs": [
+      "Claude 与 Codex 已安装桌面应用",
+      "真实原生 UI 自动化工具"
+    ],
+    "outputs": [
+      "R7-UI-01",
+      "R7-UI-02",
+      "R10 UI activation evidence"
+    ],
+    "dependencies": [
+      "UNIT-02",
+      "UNIT-03"
+    ],
+    "parallel_safe": false,
+    "acceptance": [
+      "两端真实 UI 查询同一共享数据库并验证边界路径"
+    ],
+    "review": "独立查看实际界面结果；CLI 不替代 UI 验收",
+    "test": "在 Codex 与 Claude 桌面应用执行正常和边界路径",
+    "status": "BLOCKED-无法真实验证",
+    "blocker": "当前 CUA 返回 apps=[]，仅有无标签 IAB；native app 控制接口不可用。需在 Claude/Codex 桌面应用可被 CUA 发现与控制后重跑 R7-UI-01/02 和 R10 UI 验收。"
+  }
+]

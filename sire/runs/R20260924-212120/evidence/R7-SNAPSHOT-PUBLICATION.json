@@ -1,0 +1,41 @@
+{
+  "tests": {
+    "R7-DB-06": {
+      "result": "PASS",
+      "missing_source_rejected": true,
+      "destination_and_sidecars_absent": true
+    },
+    "R7-DB-09": {
+      "result": "PASS",
+      "missing_source_rejected_before_destination_change": true,
+      "existing_database_and_manifest_hashes_unchanged": true
+    },
+    "R7-DB-10": {
+      "result": "PASS",
+      "injected_manifest_publication_failure": true,
+      "old_database_hash_restored": true,
+      "old_manifest_hash_restored": true,
+      "old_wal_journal_mode_preserved": true,
+      "logical_restore_verified": true,
+      "empty_sidecars_recreated_or_cleaned": true,
+      "prepublication_embedding_failure_left_database_manifest_and_sidecars_unchanged": true
+    },
+    "R7-DB-11": {
+      "result": "PASS",
+      "manifest_name_as_database_destination_rejected": true,
+      "source_and_sentinel_unchanged": true
+    },
+    "R7-DB-12": {
+      "result": "PASS",
+      "rsi_commands_share_snapshot_writer_lock": true,
+      "propose_evaluate_status_wait_for_lock_release": true,
+      "verified_prewrite_backups": 3,
+      "python_compile": true
+    },
+    "R7-DB-13": {
+      "result": "PASS",
+      "knowledge_task_keyword_metadata_equal_physical_table_counts": true
+    }
+  },
+  "review_note": "Independent snapshot review found no blocking data-safety issue. LOW: failed publication rollback restores database and manifest bytes and journal mode, but does not preserve the prior presence/hash of empty WAL/SHM files; SQLite recreates them as needed."
+}

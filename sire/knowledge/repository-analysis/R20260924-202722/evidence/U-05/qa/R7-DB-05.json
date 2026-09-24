@@ -1,0 +1,23 @@
+{
+  "exit_code": 2,
+  "stderr": "search 需要查询文本",
+  "before": {
+    "knowledge": 120,
+    "tasks": 578,
+    "chunks": 1372,
+    "emb": 1226,
+    "keywords": 5684,
+    "retrieval": "hybrid-bge-trigram-v2",
+    "db_sha256": "e207cf63db4d5ca745a77a9d4ead0674245a3935a93f870a5ebc778161ec1fa0"
+  },
+  "after": {
+    "knowledge": 120,
+    "tasks": 578,
+    "chunks": 1372,
+    "emb": 1226,
+    "keywords": 5684,
+    "retrieval": "hybrid-bge-trigram-v2",
+    "db_sha256": "e207cf63db4d5ca745a77a9d4ead0674245a3935a93f870a5ebc778161ec1fa0"
+  },
+  "unchanged": true
+}

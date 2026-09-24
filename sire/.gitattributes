@@ -1,0 +1,7 @@
+# Preserve intentional Markdown hard-break spacing in the imported knowledge archive.
+knowledge/archive/removed_20260924.md whitespace=-blank-at-eol,-blank-at-eof
+knowledge/global/SIRE-MIGRATION-legacy-v1.md whitespace=-blank-at-eol,-blank-at-eof
+knowledge/global/global_knowledge_records.md whitespace=-blank-at-eol,-blank-at-eof
+knowledge/global/sire_ai_rules.md whitespace=-blank-at-eol,-blank-at-eof
+knowledge/global/sire_multi_role_workflow.md whitespace=-blank-at-eol,-blank-at-eof
+knowledge/global/sire_sync_guide.md whitespace=-blank-at-eol,-blank-at-eof

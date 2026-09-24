@@ -1,0 +1,11 @@
+21:21:20 +08:00 INTAKE — user selected @SIRE_ROOT@\AI\AI.
+21:21:20 +08:00 KB_CHECKED — vector DB search reused repo overview, SIRE indexing and backup knowledge.
+21:22:00 +08:00 ANALYZED — clean branch feature/feishu-hub, ahead 1; root repo README only, feishu-hub untouched.
+21:23:00 +08:00 SECURITY — independent review found no high-confidence credentials but machine paths/PII and SQLite freelist; package a redacted clone only.
+21:40:00 +08:00 REM-001 — reindex warned about duplicate IDs from integrity snapshots/export copy. Added exclusions in md_files; temp CLI fixture passed and live reindex now reports 15 canonical records with no duplicate warnings.
+21:45:00 +08:00 REM-002 — R7-DB-07 首次运行在 raw-byte scan 将 bytes 正则用于 str，导致 TypeError；SQLite 临时副本未移动到目标、源库未变。已改为先从 bytes 提取 ASCII printable runs，再按字符串扫描。
+21:50:00 +08:00 REM-003 — raw DB byte scanner flagged generic drive-prefix sequences in encoded embedding BLOBs, although all SQLite text columns passed. Replaced that binary-level check with exact known machine roots plus high-confidence secret/PII patterns; generic drive-path scan remains across every text column.
+2026-09-24 23:48:03 +08:00 REM-004 — 独立快照复核发现 RSI 绕过数据库锁；已将 RSI 写命令接入 per-database lock，现有数据库变更前生成 verified backup；修复后的竞争测试通过。
+2026-09-24 23:48:03 +08:00 ARCHIVE — 新增 P-20260924 共享工作流/SQLite 归档知识；闭环库重新索引，最终归档等待 R7 与集成复核结果。
+2026-09-25T00:11:54+08:00 QA — 两端 CLI 共同数据库与正常/边界检索通过；目标快照 integrity/FTS/BGE text_hash/隐私及侧车检查通过；桌面 UI 验收保持 BLOCKED。
+2026-09-25T00:11:54+08:00 CLOSE — 任务状态 BLOCKED-UI-unavailable；可执行源码、知识、数据库、路径别名与本地 Git 闭环均已归档，未推送。

@@ -1,0 +1,22 @@
+# SQLite runtime sidecars; the checked-in snapshot itself is intentional.
+*.sqlite3-wal
+*.sqlite3-shm
+*.sqlite3-journal
+*.db-wal
+*.db-shm
+*.db-journal
+# Runtime/model/cache and secret material.
+**/__pycache__/
+*.py[cod]
+*.bak
+*.bak-*
+**/.cache/
+**/models/
+**/integrity/
+**/secrets/
+**/exports/
+*.pem
+*.key
+*.pfx
+*.p12
+*.vault

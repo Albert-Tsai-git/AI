@@ -1,0 +1,16 @@
+{
+  "test_ids": [
+    "R7-DB-07",
+    "R7-DB-08"
+  ],
+  "result": "PASS",
+  "checks": {
+    "source_opened_read_only": true,
+    "source_hashes_stable_during_snapshot": true,
+    "temporary_snapshot_reopened_and_cleaned": true,
+    "integrity_fts_privacy_checks_passed": true,
+    "all_knowledge_and_chunk_bge_embeddings_rebuilt": true,
+    "every_embedding_text_hash_matches_normalized_source_text": true,
+    "final_snapshot_counts_recorded_in": "sire/data/snapshot-manifest.json"
+  }
+}

@@ -1,0 +1,7 @@
+interface:
+  display_name: "SIRE Workflow"
+  short_description: "Claude 与 Codex 共用的工作流、知识库和数据库"
+  default_prompt: "Use $sire to complete this task with the shared workflow, knowledge base, SQLite database, verification, and archive."
+
+policy:
+  allow_implicit_invocation: true

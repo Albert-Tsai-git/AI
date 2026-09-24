@@ -1,0 +1,23 @@
+{
+  "test_ids": [
+    "R7-SHARE-02",
+    "R7-SHARE-03",
+    "R7-SHARE-04"
+  ],
+  "result": "PASS",
+  "canonical_db": "sire/data/sire_vectors.sqlite3",
+  "codex_and_claude_same_db": true,
+  "codex_and_claude_same_canonical_knowledge_root": true,
+  "shared_skill_source": "sire/workflow/shared/sire",
+  "stats_equal": true,
+  "normal_search_equal": true,
+  "normal_search_hits": 5,
+  "empty_search_hits": 0,
+  "show_valid_record": true,
+  "show_invalid_exit_code": 1,
+  "missing_query_exit_code": 2,
+  "read_only_sha256_unchanged": true,
+  "sqlite_sidecars": [],
+  "stats_match_current_repository_database": true,
+  "physical_table_counts_source": "sire/data/snapshot-manifest.json"
+}
