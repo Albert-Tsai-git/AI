@@ -11,6 +11,7 @@ import sys
 import tempfile
 import threading
 import time
+import tomllib
 from unittest.mock import patch
 
 
@@ -323,7 +324,11 @@ def _start_hub():
     fake_cmd = _write_fake_cli()
     _write_vendor_queue_exe(fake_cmd)
     executor_cfg = dict(codex_executor.DEFAULTS)
-    executor_cfg.update(codex_exe=fake_cmd, max_parallel=1)
+    codex_config_path = os.path.join(TMP, "codex-config.toml")
+    with open(codex_config_path, "w", encoding="utf-8") as f:
+        f.write('[features]\nflags = ["test"]\n')
+    executor_cfg.update(codex_exe=fake_cmd, max_parallel=1,
+                        codex_config_toml=codex_config_path)
     client = HubClient("codex", url=url, token=config.token())
     _EXECUTOR = codex_executor.CodexExecutor(executor_cfg, client)
     _EXECUTOR_STOP = threading.Event()
@@ -347,7 +352,8 @@ def _write_runner_config(fake_cmd):
     with open(path, "w", encoding="utf-8") as f:
         json.dump({"codex_exe": fake_cmd,
                    "codex_args": list(codex_executor.DEFAULTS["codex_args"]),
-                   "max_parallel": 1, "spool_flush_sec": 60}, f)
+                   "max_parallel": 1, "spool_flush_sec": 60,
+                   "codex_config_toml": os.path.join(TMP, "codex-config.toml")}, f)
     runner_path = os.path.join(TMP, "codex_runner.py")
     with open(runner_path, "w", encoding="utf-8") as f:
         f.write("import os, sys\n"
@@ -403,6 +409,61 @@ def run_tests():
     workspace = os.path.join(TMP, "workspace")
     os.makedirs(workspace, exist_ok=True)
     client = _EXECUTOR.client
+
+    # CFG-1：常驻执行器启动时在测试专用路径写入缺失的顶层 notify。
+    startup_path = os.path.join(TMP, "codex-config.toml")
+    startup_parsed = tomllib.loads(read_text_file(startup_path))
+    startup_notify = startup_parsed.get("notify") or []
+    startup_ok = (startup_notify[:1] == codex_executor._codex_notify_argv()[:1]
+                  and startup_notify[1:] == codex_executor._codex_notify_argv()[1:]
+                  and startup_parsed.get("features", {}).get("flags") == ["test"]
+                  and read_text_file(startup_path + ".bak") == '[features]\nflags = ["test"]\n')
+    check("CFG-1 执行器启动时补齐顶层 notify 并备份配置", startup_ok,
+          "notify=%s backup=%s" % (startup_notify, os.path.isfile(startup_path + ".bak")))
+
+    # CFG-2：保留 CC-Switch 命令与其他参数，替换旧链并重复检查保持幂等。
+    cc_dir = os.path.join(TMP, "ccswitch")
+    os.makedirs(cc_dir, exist_ok=True)
+    cc_path = os.path.join(cc_dir, "config.toml")
+    cc_notify = [r"C:\Program Files\Codex\codex-computer-use.exe", "--profile", "work",
+                 "--previous-notify", json.dumps(["python.exe", r"C:\old\hook.py"]), "turn-ended"]
+    cc_original = "notify = %s\n\n[features]\nflags = [\"keep\"]\n" % json.dumps(cc_notify)
+    with open(cc_path, "w", encoding="utf-8", newline="") as f:
+        f.write(cc_original)
+    cc_result = codex_executor.ensure_codex_notify_config(cc_path)
+    cc_parsed = tomllib.loads(read_text_file(cc_path))
+    cc_value = cc_parsed["notify"]
+    cc_flag = cc_value.index("--previous-notify") if "--previous-notify" in cc_value else -1
+    cc_previous = json.loads(cc_value[cc_flag + 1]) if cc_flag >= 0 else []
+    cc_params = cc_value[:cc_flag] + cc_value[cc_flag + 2:] if cc_flag >= 0 else cc_value
+    cc_snapshot = read_text_file(cc_path)
+    cc_repeat = codex_executor.ensure_codex_notify_config(cc_path)
+    check("CFG-2 computer-use 原命令保留、Hook 替换且重复检查幂等",
+          cc_result == "updated" and cc_repeat == "unchanged"
+          and cc_params == [cc_notify[0], "--profile", "work", "turn-ended"]
+          and cc_previous == codex_executor._codex_notify_argv()
+          and cc_value.count("--previous-notify") == 1 and read_text_file(cc_path) == cc_snapshot
+          and cc_parsed.get("features", {}).get("flags") == ["keep"]
+          and read_text_file(cc_path + ".bak") == cc_original,
+          "result=%s repeat=%s argv=%s" % (cc_result, cc_repeat, cc_value))
+
+    # CFG-3：未知程序告警并保留原配置；CFG-4：无法解析的 TOML 也绝不改写。
+    unknown_path = os.path.join(TMP, "unknown-config.toml")
+    unknown_text = 'notify = ["custom-notifier.exe", "turn-ended"]\n'
+    with open(unknown_path, "w", encoding="utf-8") as f:
+        f.write(unknown_text)
+    unknown_result = codex_executor.ensure_codex_notify_config(unknown_path)
+    check("CFG-3 未知 notify 程序不覆盖", unknown_result == "unknown"
+          and read_text_file(unknown_path) == unknown_text
+          and not os.path.exists(unknown_path + ".bak"), "result=%s" % unknown_result)
+    malformed_path = os.path.join(TMP, "malformed-config.toml")
+    malformed_text = 'notify = ["unterminated"\n'
+    with open(malformed_path, "w", encoding="utf-8") as f:
+        f.write(malformed_text)
+    malformed_result = codex_executor.ensure_codex_notify_config(malformed_path)
+    check("CFG-4 TOML 解析失败时配置保持原样", malformed_result == "invalid"
+          and read_text_file(malformed_path) == malformed_text
+          and not os.path.exists(malformed_path + ".bak"), "result=%s" % malformed_result)
 
     # CX-1：新会话收到可恢复 thread-id 与结果，并生成可回复的卡片。
     send_message("cx1-new", "codex %s CX1_NEW_PROMPT" % workspace)

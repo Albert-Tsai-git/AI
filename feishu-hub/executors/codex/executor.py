@@ -15,6 +15,7 @@ import sys
 import tempfile
 import threading
 import time
+import tomllib
 import uuid
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "common"))
@@ -74,7 +75,156 @@ DEFAULTS = {
     "codex_args": ["--dangerously-bypass-approvals-and-sandbox", "--skip-git-repo-check"],
     "max_parallel": 3,
     "spool_flush_sec": 60,
+    # 测试可覆盖为临时文件；常规运行使用用户的 Codex 配置。
+    "codex_config_toml": None,
 }
+
+
+def _codex_notify_argv():
+    """[Hook] 返回 notify 需要调用的无窗口 Python 和 Hook 路径。"""
+    pythonw = os.path.join(os.path.dirname(os.path.abspath(sys.executable)), "pythonw.exe")
+    hook = os.path.abspath(os.path.join(os.path.dirname(__file__), "hook_stop.py"))
+    return [pythonw, hook]
+
+
+def _is_hook_stop(path):
+    """[Hook] 比较规范化后的绝对路径，兼容 TOML 中的斜杠写法。"""
+    if not isinstance(path, str):
+        return False
+    expected = os.path.normcase(os.path.normpath(os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "hook_stop.py"))))
+    actual = os.path.normcase(os.path.normpath(path))
+    return actual == expected
+
+
+def _top_level_notify_span(text):
+    """[配置] 找到顶层 notify 赋值及其多行 TOML 值对应的行范围。"""
+    lines = text.splitlines(keepends=True)
+    in_table = False
+    for start, line in enumerate(lines):
+        stripped = line.lstrip()
+        if re.match(r"^\[\[?", stripped):
+            in_table = True
+        if in_table or not re.match(r"^\s*notify\s*=", line):
+            continue
+        statement = ""
+        for end in range(start, len(lines)):
+            statement += lines[end]
+            try:
+                tomllib.loads(statement)
+                return start, end + 1
+            except tomllib.TOMLDecodeError:
+                continue
+        return start, len(lines)
+    return None
+
+
+def _toml_notify_array(argv):
+    """[配置] 将 argv 编码为合法 TOML 字符串数组。"""
+    return json.dumps(argv, ensure_ascii=False)
+
+
+def ensure_codex_notify_config(config_path=None):
+    """[配置] 保留 computer-use notify 并串接桌面轮次 Hook。"""
+    path = config_path or DEFAULTS.get("codex_config_toml") or os.path.join(
+        os.path.expanduser("~"), ".codex", "config.toml")
+    path = os.path.abspath(os.fspath(path))
+    try:
+        with open(path, "r", encoding="utf-8", newline="") as f:
+            original = f.read()
+        parsed = tomllib.loads(original)
+    except FileNotFoundError:
+        original = ""
+        parsed = {}
+    except (OSError, UnicodeError, tomllib.TOMLDecodeError) as e:
+        LOG.warning("[Codex执行器] Codex 配置无法解析，未修改：%s", type(e).__name__)
+        return "invalid"
+
+    desired_previous = _codex_notify_argv()
+    current = parsed.get("notify")
+    if "notify" not in parsed or current == []:
+        updated_argv = desired_previous
+    elif (isinstance(current, list) and current and all(isinstance(arg, str) for arg in current)
+          and os.path.basename(current[0]).casefold() == "codex-computer-use.exe"
+          and "turn-ended" in current):
+        updated_argv = list(current)
+        flag_indexes = [i for i, arg in enumerate(updated_argv) if arg == "--previous-notify"]
+        already_chained = False
+        for index in flag_indexes:
+            if index + 1 >= len(updated_argv):
+                continue
+            try:
+                previous = json.loads(updated_argv[index + 1])
+            except (TypeError, ValueError):
+                previous = [updated_argv[index + 1]]
+            if isinstance(previous, list) and any(_is_hook_stop(item) for item in previous):
+                already_chained = True
+                break
+        if already_chained and len(flag_indexes) == 1:
+            LOG.info("[Codex执行器] Codex notify Hook 已串接")
+            return "unchanged"
+        # 清理旧值及重复开关后统一写入 JSON argv，保留其他 computer-use 参数。
+        cleaned = []
+        i = 0
+        while i < len(updated_argv):
+            if updated_argv[i] == "--previous-notify":
+                i += 1
+                if i < len(updated_argv) and not updated_argv[i].startswith("--"):
+                    i += 1
+                continue
+            cleaned.append(updated_argv[i])
+            i += 1
+        updated_argv = cleaned + ["--previous-notify", json.dumps(desired_previous, ensure_ascii=False)]
+    else:
+        LOG.warning("[Codex执行器] Codex notify 指向未知程序，保留原配置")
+        return "unknown"
+
+    span = _top_level_notify_span(original)
+    newline = "\r\n" if "\r\n" in original else "\n"
+    assignment = "notify = %s%s" % (_toml_notify_array(updated_argv), newline)
+    if span:
+        start, end = span
+        lines = original.splitlines(keepends=True)
+        updated = "".join(lines[:start]) + assignment + "".join(lines[end:])
+    else:
+        # 顶层键必须位于表格声明之前，避免被追加到某个子表中。
+        updated = assignment + original
+    try:
+        tomllib.loads(updated)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        backup = path + ".bak"
+        if os.path.exists(path):
+            shutil.copy2(path, backup)
+        else:
+            with open(backup, "wb") as f:
+                f.write(b"")
+        fd, temporary = tempfile.mkstemp(prefix=os.path.basename(path) + ".",
+                                         suffix=".tmp", dir=os.path.dirname(path))
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8", newline="") as f:
+                f.write(updated)
+                f.flush()
+                os.fsync(f.fileno())
+            # 先校验临时文件，确保非法结果绝不会替换原配置。
+            with open(temporary, "r", encoding="utf-8", newline="") as f:
+                tomllib.loads(f.read())
+            os.replace(temporary, path)
+            with open(path, "r", encoding="utf-8", newline="") as f:
+                tomllib.loads(f.read())
+        finally:
+            if os.path.exists(temporary):
+                os.remove(temporary)
+    except (OSError, UnicodeError, tomllib.TOMLDecodeError) as e:
+        LOG.warning("[Codex执行器] Codex notify 配置写入失败：%s", type(e).__name__)
+        return "error"
+    LOG.info("[Codex执行器] 已更新 Codex notify 串接并备份原配置")
+    return "updated"
+
+
+def _notify_guard_loop(stop_event, config_path=None):
+    """[常驻] 每分钟检查一次 CC-Switch 是否重写了 Codex notify。"""
+    while not stop_event.wait(60):
+        ensure_codex_notify_config(config_path)
 
 
 def load_config(path=None):
@@ -574,6 +724,10 @@ class CodexExecutor:
     def serve_forever(self, stop_event=None):
         """[常驻] hello 后长轮询 claim，空闲时等待并发槽，避免本地已领任务失租。"""
         stop_event = stop_event or threading.Event()
+        config_path = self.cfg.get("codex_config_toml")
+        ensure_codex_notify_config(config_path)
+        threading.Thread(target=_notify_guard_loop, args=(stop_event, config_path), daemon=True,
+                         name="codex-notify-guard").start()
         info = self.client.hello({"new_session": True, "resume": True, "desktop_queue": True}, "0.1.0")
         self.heartbeat_sec = max(1, int(info.get("heartbeat_sec", 30)))
         self.poll_wait_sec = max(1, int(info.get("poll_wait_sec", 25)))
