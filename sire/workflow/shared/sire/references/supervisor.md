@@ -23,6 +23,7 @@ Run `scripts/sire_supervisor.py preflight`, `start --run-id <RUN_ID>`, `check --
 5. Inspect source manifests and package manifests for missing or duplicate SIRE rule sources.
 6. Verify database integrity, core table counts, FTS search, embedding references/hashes, and last-run metadata.
 7. Review staged blobs for credentials, private keys, machine-specific absolute paths, and database sidecars.
+8. Run `scripts/sire_supervisor.py rsi-check` (also enforced by `finalize`): uncommitted changes in the shared skill directory require a `PROPOSED`/`EVALUATED_PASS`/`ACTIVE` RSI proposal created after that directory's last commit; otherwise `STOP` with `rsi_unregistered_change` and do not advance the baseline. If the last commit time is unavailable, `ACTIVE` proposals do not count. An unreadable, missing, or non-SQLite database counts as no proposal. Only a missing directory or one outside any Git repository yields `SKIPPED` (rc 0); if `git` is unavailable or its status/log cannot be read, the result is `STOP` with `rsi_git_undetermined`. The check reads the database read-only; `finalize` also writes the result to the run's `rsi-report.json`.
 
 If a required source file is missing, a link points to a divergent copy, or the database is corrupt, record `STOP` with the exact artifact and last known state. Do not silently reconstruct private materials or erase prior evidence. Declared changes are recorded with before/after hashes and reason.
 

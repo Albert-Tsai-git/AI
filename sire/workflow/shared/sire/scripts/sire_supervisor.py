@@ -8,13 +8,16 @@ import hashlib
 import json
 import os
 import shutil
+import sqlite3
 import stat
+import subprocess
 import sys
 import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
 
 from sire_bundle import files_for, historical_specs, is_sensitive, kb_dir, target_specs
+from sire_paths import DATABASE_PATH, SHARED_SKILL_DIR
 
 
 INTEGRITY_DIR = kb_dir() / "integrity"
@@ -237,10 +240,105 @@ def check(run_id: str, unit_id: str | None) -> int:
     return fail_if_loss(payload) if status == "STOP" else (print(json.dumps(payload, ensure_ascii=False, indent=2)) or 0)
 
 
+# 这些状态的提案才算"已登记且未失败"；EVALUATED_FAIL / ROLLED_BACK 的改动不应留在工作区
+RSI_OPEN_STATUSES = ("PROPOSED", "EVALUATED_PASS", "ACTIVE")
+
+
+def git_output(args: list[str], cwd: Path) -> tuple[int, str]:
+    try:
+        result = subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=60)
+    except (OSError, subprocess.SubprocessError):
+        # git 不存在、超时或 cwd 无效：由调用方按 fail-closed 处理
+        return 127, ""
+    return result.returncode, result.stdout + result.stderr if result.returncode else result.stdout
+
+
+def rsi_proposals(db_path: Path) -> list[dict[str, str]]:
+    """只读读取 RSI 提案；库或表不存在时返回空列表，不建表、不切换日志模式。"""
+    if not db_path.is_file():
+        return []
+    try:
+        conn = sqlite3.connect(db_path.resolve().as_uri() + "?mode=ro", uri=True, timeout=30)
+    except sqlite3.Error:
+        return []
+    try:
+        conn.execute("PRAGMA query_only=ON")
+        rows = conn.execute("SELECT proposal_id, status, created_at FROM improvement_proposals").fetchall()
+    except sqlite3.Error:
+        # 非 SQLite 文件、表缺失等都视为无提案，由门禁 fail-closed 判 STOP
+        return []
+    finally:
+        conn.close()
+    return [{"proposal_id": row[0], "status": row[1], "created_at": row[2]} for row in rows]
+
+
+def rsi_gate(db_path: Path = DATABASE_PATH, skill_dir: Path = SHARED_SKILL_DIR) -> dict[str, object]:
+    """R9 RSI 门禁：共享工作流目录有未提交改动时，必须存在该目录最后一次提交之后登记、且未失败的 RSI 提案。"""
+    if not skill_dir.is_dir():
+        return {"status": "SKIPPED", "reason": "工作流目录不存在", "skill_dir": str(skill_dir)}
+    code, output = git_output(["rev-parse", "--show-toplevel"], skill_dir)
+    if code != 0 and "not a git repository" in output.lower():
+        return {"status": "SKIPPED", "reason": "工作流目录不在 Git 仓库中", "skill_dir": str(skill_dir)}
+    # 其余无法确定 Git 状态的情况一律 fail-closed，不推进基线
+    undetermined = {"status": "STOP", "classification": "rsi_git_undetermined", "skill_dir": str(skill_dir)}
+    if code != 0:
+        return {**undetermined, "reason": "git 不可用或 rev-parse 失败，无法判定工作流改动", "git_rc": code}
+    code, porcelain = git_output(["--no-optional-locks", "status", "--porcelain", "--untracked-files=normal", "--", "."], skill_dir)
+    if code != 0:
+        return {**undetermined, "reason": "git status 执行失败，无法判定工作流改动", "git_rc": code}
+    changed = [line[3:] for line in porcelain.splitlines() if line.strip()]
+    if not changed:
+        return {"status": "PASS", "reason": "工作流目录无未提交改动", "changed": []}
+    code, last_commit = git_output(["log", "-1", "--format=%cI", "--", "."], skill_dir)
+    if code != 0 and "does not have any commits" in last_commit:
+        # 仓库尚无任何提交：按"从未提交"处理，下方只认评估流程中的提案
+        code, last_commit = 0, ""
+    if code != 0:
+        return {**undetermined, "reason": "git log 执行失败，无法取得最后一次工作流提交时间", "git_rc": code, "changed": changed}
+    last_commit = last_commit.strip()
+    try:
+        since = datetime.fromisoformat(last_commit) if last_commit else None
+    except ValueError:
+        return {**undetermined, "reason": "无法解析最后一次工作流提交时间", "last_workflow_commit": last_commit, "changed": changed}
+    # 取不到最后提交时间时，不让早已激活的旧版本（ACTIVE）放行，只认尚在评估流程中的提案
+    allowed = RSI_OPEN_STATUSES if since is not None else ("PROPOSED", "EVALUATED_PASS")
+    matched = []
+    for item in rsi_proposals(db_path):
+        if item["status"] not in allowed:
+            continue
+        try:
+            created = datetime.fromisoformat(item["created_at"])
+        except (TypeError, ValueError):
+            continue
+        if created.tzinfo is None:
+            created = created.replace(tzinfo=timezone.utc)
+        if since is None or created >= since:
+            matched.append(item)
+    payload = {"changed": changed, "last_workflow_commit": last_commit or None, "db": str(db_path), "matched_proposals": matched}
+    if matched:
+        return {"status": "PASS", "reason": "工作流改动已登记 RSI 提案", **payload}
+    return {"status": "STOP", "classification": "rsi_unregistered_change",
+            "reason": "工作流目录有未提交改动，但最后一次工作流提交之后没有登记未失败的 RSI 提案；先运行 sire_rsi.py propose",
+            **payload}
+
+
+def rsi_check(run_id: str | None = None) -> int:
+    result = rsi_gate()
+    if run_id:
+        # 写入运行目录，避免 check 已写的 PASS 报告误导事后审计
+        write_json(RUNS_DIR / run_id / "rsi-report.json", {"checked_at": now(), **result})
+    stream = sys.stderr if result["status"] == "STOP" else sys.stdout
+    print(json.dumps(result, ensure_ascii=False, indent=2), file=stream)
+    return 3 if result["status"] == "STOP" else 0
+
+
 def finalize(run_id: str) -> int:
     result = check(run_id, None)
     if result != 0:
         return result
+    # RSI 门禁失败时不推进基线，保证下次仍能发现同一批未登记改动
+    if rsi_check(run_id) != 0:
+        return 3
     manifest_path, payload = snapshot("baseline-next")
     write_json(BASELINE_MANIFEST, payload)
     print(json.dumps({"status": "FINALIZED", "run_id": run_id, "manifest": str(BASELINE_MANIFEST), "entries": payload["entry_count"]}, ensure_ascii=False))
@@ -329,6 +427,7 @@ def main() -> int:
     check_parser.add_argument("--unit-id")
     finalize_parser = sub.add_parser("finalize")
     finalize_parser.add_argument("--run-id", required=True)
+    sub.add_parser("rsi-check")
     verify_parser = sub.add_parser("verify-zip")
     verify_parser.add_argument("--zip", required=True, type=Path)
     verify_parser.add_argument("--against-current", action="store_true")
@@ -341,6 +440,8 @@ def main() -> int:
         return check(args.run_id, args.unit_id)
     if args.command == "finalize":
         return finalize(args.run_id)
+    if args.command == "rsi-check":
+        return rsi_check()
     return verify_zip(args.zip, args.against_current)
 
 

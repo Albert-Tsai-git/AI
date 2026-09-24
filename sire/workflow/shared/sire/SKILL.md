@@ -73,6 +73,10 @@ python <SHARED_SKILL_DIR>\scripts\sire_vector_db.py stats
 
 On completion, archive reusable facts, search terms, decisions, limitations, validation results, and the task record to the shared database; update the shared Markdown index; and set `meta.sire_last_project`, `meta.sire_last_run`, and `meta.sire_last_status`. Commit the changed database, knowledge, workflow, and evidence to this Git repository. Do not push unless explicitly asked. Database migrations/indexing must keep a recoverable backup and verify row counts, FTS, vectors, and `integrity_check`.
 
+## Workflow changes (RSI)
+
+Any change to files in this shared skill directory is a workflow mechanism change. Before the first edit, register a proposal with `scripts/sire_rsi.py propose`; after verification, record metrics with `evaluate`, and `activate` only an `EVALUATED_PASS` proposal; `rollback` on regression. R9 `sire_supervisor.py finalize` (and the read-only `rsi-check`) returns `STOP` (`rsi_unregistered_change`) when this directory has uncommitted changes but no `PROPOSED`/`EVALUATED_PASS`/`ACTIVE` proposal was created after its last commit. Full rules: [references/self-optimization.md](references/self-optimization.md) §5.1.
+
 ## Supporting references
 
 - Role and output details: [references/roles.md](references/roles.md)
@@ -80,6 +84,7 @@ On completion, archive reusable facts, search terms, decisions, limitations, val
 - Gates and test evidence: [references/gates.md](references/gates.md)
 - Vector database design: [references/vector-knowledge.md](references/vector-knowledge.md)
 - Integrity and final review: [references/supervisor.md](references/supervisor.md)
+- Learning, self-optimization, and RSI gate: [references/self-optimization.md](references/self-optimization.md)
 - Claude adapter role files: [agents/claude/](agents/claude/)
 - Codex discovery metadata: [agents/openai.yaml](agents/openai.yaml)
 
