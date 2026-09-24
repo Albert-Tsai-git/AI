@@ -17,7 +17,8 @@ def build_turn(payload):
     """[事件] 从 Codex Stop Hook 输入构造只包含可见最终回复的轮次。"""
     session_id = payload.get("session_id") or payload.get("thread_id") or payload.get("thread-id")
     cwd = payload.get("cwd") or os.environ.get("FEISHU_HUB_CWD")
-    text = payload.get("last_assistant_message") or payload.get("final_response") or payload.get("text") or ""
+    text = (payload.get("last_assistant_message") or payload.get("last-assistant-message")
+            or payload.get("final_response") or payload.get("text") or "")
     if not session_id or not cwd or not text:
         return None
     turn_id = payload.get("turn_id") or payload.get("turn-id")
@@ -74,7 +75,22 @@ def handle_payload(payload, client=None):
 
 
 def main():
-    """[入口] 接收 Codex hooks.json 通过 stdin 传入的 Stop JSON。"""
+    """[入口] 接收 stdin Stop JSON 或 notify 参数中的轮次 JSON。"""
+    # notify 把 JSON 放在最后一个参数；仅接受轮次完成事件。
+    if len(sys.argv) > 1:
+        try:
+            payload = json.loads(sys.argv[-1])
+        except (ValueError, TypeError):
+            return 0
+        if not isinstance(payload, dict) or payload.get("type") != "agent-turn-complete":
+            return 0
+        if os.environ.get("FEISHU_HUB_TASK_ID"):
+            return 0
+        try:
+            handle_payload(payload)
+        except Exception as e:  # noqa: BLE001
+            LOG.exception("[Codex执行器] notify Hook 异常 %s", type(e).__name__)
+        return 0
     if os.environ.get("FEISHU_HUB_TASK_ID"):
         sys.stdout.write("{}\n")
         return 0

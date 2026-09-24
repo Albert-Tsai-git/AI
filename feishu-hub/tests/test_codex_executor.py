@@ -2,6 +2,7 @@
 """[测试] Codex 执行器 CX-1～CX-10：临时 Hub、飞书打桩与假 Codex CLI。"""
 import ctypes
 from ctypes import wintypes
+import io
 import json
 import os
 import shutil
@@ -10,6 +11,7 @@ import sys
 import tempfile
 import threading
 import time
+from unittest.mock import patch
 
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -679,6 +681,60 @@ def run_tests():
     check("CX-9 FEISHU_HUB_TASK_ID 存在时 Hook 不调用 /sessions/turns",
           cx9_result == "suppressed" and counting.calls == 0,
           "request_calls=%d" % counting.calls)
+
+    # N1：notify 参数格式使用连字符字段，通过 main 上报并保持 stdout 静默。
+    n1_payload = {"type": "agent-turn-complete", "thread-id": "THREAD-N1",
+                  "turn-id": "n1-turn", "cwd": workspace,
+                  "last-assistant-message": "notify 的最终回复"}
+    n1_argv = ["hook_stop.py", "--previous-notify", json.dumps(n1_payload, ensure_ascii=False)]
+    n1_stdout = io.StringIO()
+    with patch.object(hook_stop.sys, "argv", n1_argv), patch.object(hook_stop.sys, "stdin", io.StringIO("")), \
+            patch.object(hook_stop.sys, "stdout", n1_stdout), patch.object(hook_stop, "HubClient", lambda *a, **kw: client):
+        n1_rc = hook_stop.main()
+    service.flush_outbox()
+    n1_turn = store._conn().execute(
+        "SELECT session_id, turn_id FROM turns WHERE executor='codex' AND session_id=? AND turn_id=?",
+        ("THREAD-N1", "n1-turn")).fetchone()
+    n1_card = next((row for row in SENT if row[0] == "send" and row[1] == "ou_test"
+                    and "workspace" in row[3]), None)
+    n1_cards = len(SENT)
+    with patch.object(hook_stop.sys, "argv", n1_argv), patch.object(hook_stop.sys, "stdin", io.StringIO("")), \
+            patch.object(hook_stop.sys, "stdout", io.StringIO()), patch.object(hook_stop, "HubClient", lambda *a, **kw: client):
+        hook_stop.main()
+    service.flush_outbox()
+    n1_rows_after = store._conn().execute(
+        "SELECT COUNT(*) FROM turns WHERE executor='codex' AND session_id=? AND turn_id=?",
+        ("THREAD-N1", "n1-turn")).fetchone()[0]
+    check("N1 notify 参数映射字段、成功上报、静默输出且重复 turn-id 去重",
+          bool(n1_rc == 0 and n1_stdout.getvalue() == "" and n1_turn == ("THREAD-N1", "n1-turn")
+               and n1_card and n1_rows_after == 1 and len(SENT) == n1_cards),
+          "turn=%s card=%s duplicate_rows=%d stdout=%r" % (n1_turn, bool(n1_card), n1_rows_after, n1_stdout.getvalue()))
+
+    # N2：非完成事件不读取 stdin、不上报，也不向 notify stdout 写内容。
+    n2_stdout = io.StringIO()
+    with patch.object(hook_stop.sys, "argv", ["hook_stop.py", json.dumps({"type": "other"})]), \
+            patch.object(hook_stop.sys, "stdin", io.StringIO("invalid")), \
+            patch.object(hook_stop.sys, "stdout", n2_stdout), patch.object(hook_stop, "HubClient", lambda *a, **kw: counting):
+        n2_rc = hook_stop.main()
+    check("N2 notify 忽略非 agent-turn-complete 類型", n2_rc == 0 and n2_stdout.getvalue() == ""
+          and counting.calls == 0, "stdout=%r requests=%d" % (n2_stdout.getvalue(), counting.calls))
+
+    # N3：notify 入口在任务环境变量存在时直接退出，不创建客户端或上报。
+    n3_stdout = io.StringIO()
+    prior_task_id = os.environ.get("FEISHU_HUB_TASK_ID")
+    os.environ["FEISHU_HUB_TASK_ID"] = "T-N3"
+    try:
+        with patch.object(hook_stop.sys, "argv", n1_argv), patch.object(hook_stop.sys, "stdin", io.StringIO("")), \
+                patch.object(hook_stop.sys, "stdout", n3_stdout), patch.object(hook_stop, "HubClient", lambda *a, **kw: counting):
+            n3_rc = hook_stop.main()
+    finally:
+        if prior_task_id is None:
+            os.environ.pop("FEISHU_HUB_TASK_ID", None)
+        else:
+            os.environ["FEISHU_HUB_TASK_ID"] = prior_task_id
+    check("N3 notify 存在 FEISHU_HUB_TASK_ID 时直接退出不上报",
+          n3_rc == 0 and n3_stdout.getvalue() == "" and counting.calls == 0,
+          "stdout=%r requests=%d" % (n3_stdout.getvalue(), counting.calls))
 
     # CX-10：Hook 离线落盘，执行器重新连上临时 Hub 后补发并删除 spool 项。
     class OfflineClient:
