@@ -17,14 +17,35 @@ metadata:
 
 `ai-workflow-governor` 只提供通用的角色分离、证据和闭环思想；不得创建第二个状态机、账本或知识索引。
 
+## 路径约定（环境变量）
+
+| 变量 | 含义 | 本机示例 |
+|---|---|---|
+| `SIRE_HOME` | 全局知识、运行记录、完整性证据、导出物根目录 | `%USERPROFILE%\sire_global` |
+| `SIRE_SCRIPTS` | SIRE 脚本目录（`sire_run.py`、`sire_kb.py`、`sire_vector_db.py` 等统一放此处） | `%USERPROFILE%\.codex\skills\ai-dev-sire-workflow\scripts` |
+| `SIRE_DB` | 向量知识库文件 | `%SIRE_HOME%\vector_db\sire_vectors.sqlite3` |
+
+旧版 `.claude\skills\sire-global-workflow\scripts` 中的 `sire_run.py`、`sire_kb.py` 须迁入 `SIRE_SCRIPTS`，旧目录仅保留前缀转发。
+
 ## 触发与通道
 
-- 全局入口：所有用户消息均加载本 Skill；`sire` 前缀仅作为兼容标记，不是进入 SIRE 的必要条件。
+- 触发范围：与 frontmatter `description` 一致，仅开发类任务（功能、修复、重构、配置、测试、CI/CD、方案设计）加载本 Skill；`sire` 前缀可显式强制进入。纯问答不加载。
+- 通道按风险分三档（见下节“通道分级”），不是所有任务都走完整通道。
 - `sire-global-workflow` 只负责前缀转发，不再执行旧版 SIRE 流程；本 Skill 是新的实际执行入口。
 - `sire` 后的功能开发、Bug 修复、重构、配置、测试、CI/CD 和开发方案设计，走本 Skill 的完整开发通道。
 - 一行无逻辑修改，走 SIRE 轻量通道。
 - 纯问答和概念解释，不创建开发台账。
 - 删除、回滚、强制推送、生产部署、外部提交、发消息和凭据使用，按本 Skill 的危险/升级规则处理。
+
+## 通道分级
+
+| 通道 | 适用 | 必经环节 | 可跳过 |
+|---|---|---|---|
+| 轻量 | 单文件、≤30 行、无接口/安全影响 | G0 检索、R5 执行、R7 基础验证、G6 归档 | R3/R4 拆解复核、R6 三路盲审（改为单路 R6A）、R9 单元级检查 |
+| 标准 | 常规功能/修复，单模块 | 完整 G0→G6；R6 三路盲审 | R9 只在 Run 开始/结束检查；R10 仅 UI 相关时启用 |
+| 完整 | 跨模块、安全/权限、数据/发布、生产相关 | 全部角色与门禁，R9 每个 UNIT 前后检查 | 无 |
+
+R0 在 G1 判定通道并写入台账；执行中风险升高必须升档，不得降档。跳过的环节按“跳过”格式记录原因。
 
 ## 开发时的执行顺序
 
@@ -46,8 +67,8 @@ R3 必须进行两层拆解：先按前端、后端、数据、验证等方向�
 R4 复核通过后，R0 必须把完整 UNIT 列表展示给用户，并将执行确认状态设为 `PENDING`。在用户确认前，禁止 R5 进入 `READY` 或 `IN_PROGRESS`，禁止执行代码、配置、文档或测试变更。`sire_run.py add-units` 会保留 `PENDING`，确认命令为：
 
 ```powershell
-python "$env:USERPROFILE\.claude\skills\sire-global-workflow\scripts\sire_run.py" show-units
-python "$env:USERPROFILE\.claude\skills\sire-global-workflow\scripts\sire_run.py" approve-units --mode user-confirmed --note "用户确认以上任务列表"
+python "$env:SIRE_SCRIPTS\sire_run.py" show-units
+python "$env:SIRE_SCRIPTS\sire_run.py" approve-units --mode user-confirmed --note "用户确认以上任务列表"
 ```
 
 只有用户明确表达“不需确认”“自行完成”“直接执行”“按计划执行”等授权时，才允许使用 `--mode autonomous`，并把用户原话记录到台账。新增或修改任务列表后必须重新确认；拒绝或要求调整时，退回 R3/R4，不得擅自执行。
@@ -61,7 +82,7 @@ python "$env:USERPROFILE\.claude\skills\sire-global-workflow\scripts\sire_run.py
 每个任务开始、任何实现单元进入 `EXECUTING` 前，R1 必须先运行本地向量知识库的快速查询：
 
 ```powershell
-python "$env:USERPROFILE\.codex\skills\ai-dev-sire-workflow\scripts\sire_vector_db.py" search --query "<任务摘要>" --json --limit 5 --run "$env:SIRE_RUN_DIR"
+python "$env:SIRE_SCRIPTS\sire_vector_db.py" search --query "<任务摘要>" --json --limit 5 --run "$env:SIRE_RUN_DIR"
 ```
 
 命中后读取关联 chunk，判断 `reuse`、`adapt`、`reference-only`、`avoid` 或 `none`，把命中、复用理由和限制写入当前 run 的 G0/KB 回执。数据库不存在或为空时先运行一次 `index`；无命中不是失败，继续既有 `sire_kb.py` 检索。详细 schema 和迁移约束见 [references/vector-knowledge.md](references/vector-knowledge.md)。
@@ -83,7 +104,7 @@ R10 是独立 Agent，负责已确认 UNIT 中的 Windows 原生系统与桌面�
 当用户反对当前执行方向或计划时，先确认具体原因，再暂停受影响的计划分支；如果用户已经给出原因，不重复追问。记录用户原话、原计划、用户偏好、调整动作、阶段和标签：
 
 ```powershell
-python "$env:USERPROFILE\.codex\skills\ai-dev-sire-workflow\scripts\sire_feedback.py" record --reason "<用户原因>" --proposed "<原方向>" --preference "<用户偏好>" --changed-action "<调整动作>" --phase "<阶段>" --tags "scope,risk,cost"
+python "$env:SIRE_SCRIPTS\sire_feedback.py" record --reason "<用户原因>" --proposed "<原方向>" --preference "<用户偏好>" --changed-action "<调整动作>" --phase "<阶段>" --tags "scope,risk,cost"
 ```
 
 定期用 `sire_feedback.py report` 汇总边界模式。单次反对只记录为 observation/candidate，不自动改写全局默认；涉及触发范围、权限、门禁、成本或安全的固化仍需用户明确确认。
@@ -93,10 +114,10 @@ python "$env:USERPROFILE\.codex\skills\ai-dev-sire-workflow\scripts\sire_feedbac
 仅当用户明确说出完整短语“打包工作流”时，才执行本地打包脚本；未明确说出该短语时不得主动打包：
 
 ```powershell
-python "$env:USERPROFILE\.codex\skills\ai-dev-sire-workflow\scripts\sire_bundle.py"
+python "$env:SIRE_SCRIPTS\sire_bundle.py"
 ```
 
-默认输出到 `%USERPROFILE%\sire_global\exports\sire-workflow-<timestamp>.zip`，同时生成 SHA-256 校验文件。打包前先过 R9 `preflight`；包包含新版 SIRE、兼容入口、相关全局规则/Hook、`ai-workflow-governor`、全局知识库、向量数据库和已发现的全部历史 SIRE 产物；仅排除缓存、pyc 和本次正在生成的 zip/校验文件，已有历史 zip 也必须纳入。打包后由 R9 执行 `verify-zip --against-current`，发现清单遗漏立即 STOP。迁移到新主机后，恢复文件并运行向量库 `index` 重建路径索引。该本地打包是可逆动作，不需要额外确认。
+默认输出到 `%SIRE_HOME%\exports\sire-workflow-<timestamp>.zip`，同时生成 SHA-256 校验文件。打包前先过 R9 `preflight`；包包含新版 SIRE、兼容入口、相关全局规则/Hook、`ai-workflow-governor`、全局知识库、向量数据库和已发现的全部历史 SIRE 产物；排除缓存、pyc、本次正在生成的 zip/校验文件以及历史 zip 本体；历史 zip 只在清单中记录路径、大小和 SHA-256，避免包体逐次嵌套膨胀。打包后由 R9 执行 `verify-zip --against-current`，发现清单遗漏立即 STOP。迁移到新主机后，恢复文件并运行向量库 `index` 重建路径索引。该本地打包是可逆动作，不需要额外确认。
 
 ## 反馈与测试简约规则
 

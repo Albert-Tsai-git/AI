@@ -8,6 +8,6 @@ SIRE 知识库（本地 SQLite `sire_vectors.sqlite3`）的精选导出，不是
 | `knowledge/records.jsonl` | 导出的知识记录（E-007、F-028） |
 | `eval/queries.json` | 检索评测集（20 条） |
 | `eval/results.jsonl` | 评测结果（recall@1 0.95 / @3 1.00） |
-| `eval/run_eval.py` | 评测脚本（依赖本机 SIRE 脚本与 `D:\sire` 库，仅在本机可运行） |
+| `eval/run_eval.py` | 评测脚本；需设置 `SIRE_SCRIPTS`、`SIRE_DB` 后在本机运行 |
 | `export-manifest.json` | 导出计数与排除项 |
 | `migrations/`、`seeds/` | 预留 |

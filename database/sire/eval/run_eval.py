@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
 """[评测] SIRE 知识检索评测：recall@1/@3/@5 与平均耗时。用法: python run_eval.py [标签]"""
 import json
+import os
 import re
 import sys
 import time
 from pathlib import Path
 
-sys.path.insert(0, str(Path.home() / ".codex/skills/ai-dev-sire-workflow/scripts"))
+sys.path.insert(0, os.environ.get("SIRE_SCRIPTS", str(Path.home() / ".codex/skills/ai-dev-sire-workflow/scripts")))
 import sire_vector_db as v  # noqa: E402
 
-DB = Path(r"D:\sire\sire_vectors.sqlite3")
+DB = Path(os.environ["SIRE_DB"]) if os.environ.get("SIRE_DB") else Path.home() / "sire_global/vector_db/sire_vectors.sqlite3"
 QUERIES = json.loads((Path(__file__).parent / "queries.json").read_text(encoding="utf-8"))
 ID_RE = re.compile(r"\b([FPEHK]-\d+(?:#\d+)?)\b")
 

@@ -12,7 +12,7 @@ R9 的清单覆盖：
 - `sire_global` 全部知识、运行记录、反馈、向量数据库、完整性证据和导出物。
 - `Documents/Codex` 下被识别为 SIRE 相关的历史任务根目录中的全部产物；识别依据是目录/文件名、`.sire` 路径或文本内容中的 `sire`/`ai-workflow-governor` 标记。
 
-缓存、`__pycache__`、`.pyc`、`.git` 和 `node_modules` 不属于业务/历史产物；已有历史 zip 不得排除，打包时必须纳入。
+缓存、`__pycache__`、`.pyc`、`.git` 和 `node_modules` 不属于业务/历史产物；历史 zip 以“路径 + 大小 + SHA-256”记入清单，不打入新包；清单中的历史 zip 丢失仍按 `deleted_or_missing` STOP。
 
 ## 强制检查点
 
@@ -27,10 +27,10 @@ R9 的清单覆盖：
 R9 使用 `scripts/sire_supervisor.py`：
 
 ```powershell
-python "$env:USERPROFILE\.codex\skills\ai-dev-sire-workflow\scripts\sire_supervisor.py" preflight
-python "$env:USERPROFILE\.codex\skills\ai-dev-sire-workflow\scripts\sire_supervisor.py" start --run-id RUN_ID
-python "$env:USERPROFILE\.codex\skills\ai-dev-sire-workflow\scripts\sire_supervisor.py" check --run-id RUN_ID --unit-id UNIT_ID
-python "$env:USERPROFILE\.codex\skills\ai-dev-sire-workflow\scripts\sire_supervisor.py" finalize --run-id RUN_ID
+python "$env:SIRE_SCRIPTS\sire_supervisor.py" preflight
+python "$env:SIRE_SCRIPTS\sire_supervisor.py" start --run-id RUN_ID
+python "$env:SIRE_SCRIPTS\sire_supervisor.py" check --run-id RUN_ID --unit-id UNIT_ID
+python "$env:SIRE_SCRIPTS\sire_supervisor.py" finalize --run-id RUN_ID
 ```
 
 ## 清单与证据
