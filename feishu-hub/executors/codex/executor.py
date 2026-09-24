@@ -72,7 +72,8 @@ def resolve_cwd(cwd):
 
 DEFAULTS = {
     "codex_exe": find_default_codex_exe(),
-    "codex_args": ["--dangerously-bypass-approvals-and-sandbox", "--skip-git-repo-check"],
+    "codex_args": ["--model", "gpt-6-luna", "--dangerously-bypass-approvals-and-sandbox",
+                   "--skip-git-repo-check"],
     "max_parallel": 3,
     "spool_flush_sec": 60,
     # 测试可覆盖为临时文件；常规运行使用用户的 Codex 配置。

@@ -483,6 +483,8 @@ def run_tests():
                and order_ok
                and first_exec.get("prompt") == "CX1_NEW_PROMPT"
                and first_exec.get("args", [])[-1:] == ["-"]
+               and "--model" in first_exec.get("args", [])
+               and first_exec.get("args", [])[first_exec.get("args", []).index("--model") + 1] == "gpt-6-luna"
                and "--dangerously-bypass-approvals-and-sandbox" in first_exec.get("args", [])
                and "--skip-git-repo-check" in first_exec.get("args", [])
                and first_exec.get("task_id") == cx1["task_id"]),
@@ -500,6 +502,8 @@ def run_tests():
                and cx2_done["session_id"] == cx1_done["session_id"]
                and resume_call.get("prompt") == "CX2_RESUME_IDLE"
                and "resume" in resume_call.get("args", [])
+               and "--model" in resume_call.get("args", [])
+               and resume_call.get("args", [])[resume_call.get("args", []).index("--model") + 1] == "gpt-6-luna"
                and resume_call.get("args", [])[-2:] == [cx1_done["session_id"], "-"]),
           "mode=%s session=%s" % (cx2["mode"] if cx2 else "", cx2_done["session_id"] if cx2_done else ""))
 
