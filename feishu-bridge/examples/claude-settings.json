@@ -1,0 +1,56 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:7788/hooks/claude",
+            "timeout": 3,
+            "headers": { "x-bridge-origin": "$AI_BRIDGE_ORIGIN" },
+            "allowedEnvVars": ["AI_BRIDGE_ORIGIN"]
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:7788/hooks/claude",
+            "timeout": 3,
+            "headers": { "x-bridge-origin": "$AI_BRIDGE_ORIGIN" },
+            "allowedEnvVars": ["AI_BRIDGE_ORIGIN"]
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:7788/hooks/claude",
+            "timeout": 3,
+            "headers": { "x-bridge-origin": "$AI_BRIDGE_ORIGIN" },
+            "allowedEnvVars": ["AI_BRIDGE_ORIGIN"]
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:7788/hooks/claude",
+            "timeout": 3,
+            "headers": { "x-bridge-origin": "$AI_BRIDGE_ORIGIN" },
+            "allowedEnvVars": ["AI_BRIDGE_ORIGIN"]
+          }
+        ]
+      }
+    ]
+  }
+}
