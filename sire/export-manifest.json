@@ -1,0 +1,20 @@
+{
+  "source": "local SIRE SQLite database (sire_vectors.sqlite3)",
+  "schema_version": 2,
+  "snapshot_read_only": true,
+  "counts": {
+    "knowledge_records_exported": 2,
+    "task_records_exported": 0,
+    "eval_queries": 20,
+    "eval_result_lines": 1
+  },
+  "excluded": [
+    "raw SQLite database and WAL/SHM files",
+    "embedding/vector blobs and model cache",
+    "keyword/synonym/index internals beyond row-count summary",
+    "project-specific task/run logs and technical notes",
+    "records with personal machine paths or session/message identifiers",
+    "removed-record archive"
+  ],
+  "note": "Curated review export, not a restorable database backup."
+}
