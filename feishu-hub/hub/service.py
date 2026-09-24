@@ -166,6 +166,8 @@ def _handle(mid, sender, chat_type, chat_id, msg_type, content, parent, source):
             if t["owner"] and t["owner"] != sender:
                 say(mid, "这条提示属于其他人发起的任务，只有发起人可以处理。")
                 return False
+            if t["status"] in ("HINT", "PROJECTS"):
+                return _on_shortcut_reply(t, text, mid)
             return _on_notice_reply(t, text, mid)
         m = store.find_mapping(parent)
         if m:
@@ -201,13 +203,6 @@ def _collab(mid, text):
     return True
 
 
-FORMAT_HINT = ("请录入正确格式：\n"
-               "【执行者 目录 内容】\n"
-               "· 执行者：claude 或 codex\n"
-               "· 目录：默认目录 / 项目名（如 AI项目）/ 完整路径（如 D:\\code\\A）\n"
-               "· 例：claude 默认目录 告诉我通讯是否正常\n"
-               "· 例：codex AI项目 检查最近的改动\n"
-               "查看项目：claude 项目列表")
 STRICT_TASK = re.compile(r"^(claude|codex)\s+(\S+)\s+(\S.*)$", re.I | re.S)
 PROJECT_LIST = re.compile(r"^(claude|codex)\s*项目列表$", re.I)
 
@@ -242,27 +237,104 @@ def _resolve_dir_token(token):
     return None, "未找到项目「%s」。发送「claude 项目列表」查看可用项目。" % name
 
 
-def _new_task(mid, text, sender=""):
-    """[路由] 私聊新任务：必须严格按「执行者 目录 内容」格式（可带【】），否则只提示格式，不建任务。
-    「claude/codex 项目列表」由中间服务直接列出项目，不调用 AI。"""
-    body = text.strip()
+def _normalize(text):
+    """格式宽容处理：去掉【】、全角空格转半角、合并空白；「claude默认目录」这类执行者后缺空格的补上空格。"""
+    body = (text or "").strip()
     if body.startswith("【") and body.endswith("】"):
         body = body[1:-1].strip()
-    if PROJECT_LIST.match(body):
-        items = list_projects()
-        lines = ["%d. %s　%s" % (i, n, p) for i, (n, p) in enumerate(items, 1)] or ["（没有找到项目）"]
-        say(mid, "📂 项目列表（共 %d 个）\n%s\n\n用法：claude <项目名>项目 <内容>" % (len(items), "\n".join(lines)))
+    body = re.sub(r"[ 　\t]+", " ", body).strip()
+    return re.sub(r"^(claude|codex)(?=[^\s:：])", r"\1 ", body, flags=re.I)
+
+
+def _suggest(body):
+    """[提示] 根据错误输入推测用户意图，返回纠正后的完整指令（最多 3 条）。"""
+    m = re.match(r"^(claude|codex)\b\s*(.*)$", body, re.I | re.S)
+    if not m:
+        content = body or "告诉我通讯是否正常"
+        return ["claude 默认目录 %s" % content, "codex 默认目录 %s" % content]
+    ex, rest = m.group(1).lower(), m.group(2).strip()
+    if not rest or rest.startswith("项目"):
+        return ["%s 项目列表" % ex]
+    parts = rest.split(" ", 1)
+    if len(parts) == 1:
+        # 只有一段：是项目名就补内容，否则当内容补默认目录
+        cwd, _ = _resolve_dir_token(parts[0])
+        if cwd and parts[0] not in ("默认目录", "默认"):
+            return ["%s %s 告诉我这个项目的当前状态" % (ex, parts[0]), "%s 项目列表" % ex]
+        return ["%s 默认目录 %s" % (ex, parts[0]), "%s 项目列表" % ex]
+    return ["%s 默认目录 %s" % (ex, rest), "%s 项目列表" % ex]
+
+
+def _hint(mid, reason, suggestions, sender, extra=None):
+    """[提示] 发送格式提示 + 编号快捷操作；回复这条提示的数字即执行对应指令（记录为 HINT 任务，不会执行 AI）。
+    extra 为附加的快捷项（如「查看项目列表」），与 suggestions 合并去重。"""
+    opts = []
+    for s in list(suggestions) + list(extra or ["claude 项目列表", "codex 项目列表"]):
+        if s not in opts:
+            opts.append(s)
+    opts = opts[:5]
+    tid = store.create_task(mid, "", "new", "", "", json.dumps({"options": opts}, ensure_ascii=False), "HINT",
+                            owner=sender)
+    lines = ["%d. %s" % (i, s) for i, s in enumerate(opts, 1)]
+    say(mid, "%s\n\n正确格式：【执行者 目录 内容】\n· 执行者：claude / codex\n· 目录：默认目录 / 项目名（如 AI项目）/ 完整路径\n\n"
+             "⚡ 快捷操作（回复本条的数字即可）：\n%s" % (reason, "\n".join(lines)), notice_task=tid or "")
+
+
+def _project_list(mid, executor, sender):
+    """[项目] 列出项目；回复本条「序号 内容」即在该项目下用对应执行者建任务。"""
+    items = list_projects()
+    lines = ["%d. %s　%s" % (i, n, p) for i, (n, p) in enumerate(items, 1)] or ["（没有找到项目）"]
+    tid = store.create_task(mid, executor, "new", "", "",
+                            json.dumps({"projects": [p for _n, p in items]}, ensure_ascii=False), "PROJECTS",
+                            owner=sender)
+    say(mid, "📂 项目列表（共 %d 个）\n%s\n\n⚡ 快捷操作：回复本条「序号 内容」，例如「%s 检查最近的改动」，"
+             "即用 %s 在该项目执行。" % (len(items), "\n".join(lines), 1 if items else "序号", executor.title()),
+        notice_task=tid or "")
+
+
+def _on_shortcut_reply(t, text, mid):
+    """[提示] 回复快捷提示 / 项目列表。返回 True 表示已处理。"""
+    data = json.loads(t["prompt"] or "{}")
+    body = _normalize(text)
+    if t["status"] == "HINT":
+        opts = data.get("options") or []
+        if body.isdigit() and 1 <= int(body) <= len(opts):
+            log.info("[提示] 快捷操作 %s -> %s", t["task_id"], opts[int(body) - 1])
+            return _new_task(mid, opts[int(body) - 1], t["owner"])
+        return _new_task(mid, body, t["owner"])  # 回复的不是数字：当作一条新指令重新解析
+    m = re.match(r"^(\d+)\s+(\S.*)$", body, re.S)
+    projects = data.get("projects") or []
+    if m and 1 <= int(m.group(1)) <= len(projects):
+        return _new_task(mid, "%s %s %s" % (t["executor"], projects[int(m.group(1)) - 1], m.group(2)), t["owner"])
+    _hint(mid, "❓ 请回复「序号 内容」，例如「1 检查最近的改动」。", [], t["owner"])
+    return False
+
+
+def _new_task(mid, text, sender=""):
+    """[路由] 私聊新任务：必须严格按「执行者 目录 内容」格式（可带【】），否则给出纠正示例和快捷操作，不建任务。
+    「claude/codex 项目列表」由中间服务直接列出项目，不调用 AI。"""
+    body = _normalize(text)
+    pm = PROJECT_LIST.match(body)
+    if pm:
+        _project_list(mid, pm.group(1).lower(), sender)
         return False
     if _collab(mid, body):
         return False
     m = STRICT_TASK.match(body)
     if not m:
-        say(mid, FORMAT_HINT)
+        sugs = _suggest(body)
+        _hint(mid, "⚠️ 格式不正确：「%s」\n👉 你可能想要：%s" % (text.strip()[:40], sugs[0]), sugs, sender)
         return False
     executor, token, prompt = m.group(1).lower(), m.group(2), m.group(3).strip()
     cwd, err = _resolve_dir_token(token)
     if err:
-        say(mid, err)
+        import difflib
+        name = token[:-2] if token.endswith("项目") else token
+        close = difflib.get_close_matches(name.lower(), [n.lower() for n, _p in list_projects()], n=3, cutoff=0.4)
+        names = {n.lower(): n for n, _p in list_projects()}
+        sugs = ["%s %s项目 %s" % (executor, names[c], prompt) for c in close]
+        _hint(mid, "⚠️ %s" % err + ("\n👉 相近的项目：%s" % "、".join(names[c] for c in close) if close else ""),
+              sugs, sender, extra=["%s 项目列表" % executor, "%s 默认目录 %s" % (executor, prompt)])
         return False
     # 用户在格式里明确写了目录（含「默认目录」），视为已确认；目录不存在时仍会转入目录确认
     tid = store.create_task(mid, executor, "new", "", cwd, prompt, "RECEIVED", owner=sender)

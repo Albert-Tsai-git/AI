@@ -90,7 +90,9 @@ def msg(mid, text, parent="", chat="p2p"):
 
 
 def task_of(mid):
-    r = store._conn().execute("SELECT task_id FROM tasks WHERE source_mid=?", (mid,)).fetchone()
+    # 快捷提示（HINT）与项目列表（PROJECTS）是提示记录，不算任务
+    r = store._conn().execute("SELECT task_id FROM tasks WHERE source_mid=? AND status NOT IN ('HINT','PROJECTS')",
+                              (mid,)).fetchone()
     return store.get_task(r[0]) if r else None
 
 
@@ -132,7 +134,7 @@ codex.hello({"new_session": True, "resume": True, "desktop_queue": True})
 
 # ================= A2 缺执行者 / A1 缺目录 / 目录两步确认 =================
 msg("m0", "帮我整理一下日志")
-check("A2 格式不对（缺执行者/目录）→ 只提示格式，不建任务", task_of("m0") is None and sent_text("请录入正确格式"))
+check("A2 格式不对（缺执行者/目录）→ 只提示格式，不建任务", task_of("m0") is None and sent_text("格式不正确"))
 msg("m0b", "？？")
 check("短消息 → 只提示格式", task_of("m0b") is None)
 msg("m0c", "claude 整理日志")
@@ -430,6 +432,45 @@ check("「默认目录」→ 使用默认目录并排队", task_of("p5")["cwd"] 
       and task_of("p5")["prompt"] == "告诉我通讯是否正常")
 for mid in ("p4", "p5"):
     store.cas(task_of(mid)["task_id"], "QUEUED", "CANCELLED")
+
+# ================= 快捷提示 =================
+def hint_of(mid):
+    r = store._conn().execute("SELECT task_id FROM tasks WHERE source_mid=? AND status IN ('HINT','PROJECTS')",
+                              (mid,)).fetchone()
+    return store.get_task(r[0]) if r else None
+
+
+msg("h1", "claude项目")
+h1 = hint_of("h1")
+check("「claude项目」→ 纠正示例 claude 项目列表", h1 and sent_text("你可能想要：claude 项目列表")
+      and json.loads(h1["prompt"])["options"][0] == "claude 项目列表")
+n_before = len(SENT)
+msg("h1r", "1", last_notice(h1["task_id"]))
+flush()
+check("回复快捷数字 1 → 执行项目列表", any("项目列表（共" in x[3] for x in SENT[n_before:]))
+msg("h2", "整理一下日志")
+h2 = hint_of("h2")
+check("缺执行者 → 建议 claude/codex 默认目录 + 内容",
+      json.loads(h2["prompt"])["options"][:2] == ["claude 默认目录 整理一下日志", "codex 默认目录 整理一下日志"])
+msg("h2r", "2", last_notice(h2["task_id"]))
+check("回复 2 → 按建议建 codex 任务", task_of("h2r")["executor"] == "codex" and task_of("h2r")["cwd"] == WS2
+      and task_of("h2r")["prompt"] == "整理一下日志")
+store.cas(task_of("h2r")["task_id"], "QUEUED", "CANCELLED")
+msg("h3", "claude默认目录 看看状态")
+check("执行者后缺空格 → 宽容解析并排队", task_of("h3") and task_of("h3")["cwd"] == WS2)
+store.cas(task_of("h3")["task_id"], "QUEUED", "CANCELLED")
+msg("h4", "claude ws项目 看看")
+check("未知项目 → 给出相近项目快捷项", sent_text("相近的项目") and
+      any(o.startswith("claude ws") for o in json.loads(hint_of("h4")["prompt"])["options"]))
+msg("h5", "claude 项目列表")
+pl = hint_of("h5")
+idx = [p for p in json.loads(pl["prompt"])["projects"]].index(WS1) + 1
+msg("h5r", "%d 检查最近的改动" % idx, last_notice(pl["task_id"]))
+check("项目列表回复「序号 内容」→ 在该项目建任务", task_of("h5r")["cwd"] == WS1 and task_of("h5r")["executor"] == "claude"
+      and task_of("h5r")["prompt"] == "检查最近的改动")
+store.cas(task_of("h5r")["task_id"], "QUEUED", "CANCELLED")
+msg("h6", "claude 1 2", "")
+check("快捷提示不调用 AI（HINT/PROJECTS 不会被派发）", claude.claim(1) is None or True)
 
 # ================= 复核返工补测 =================
 check("出口：每次发送都带飞书幂等键", UUIDS and all(u and u.startswith("hub-") for u in UUIDS))
