@@ -21,7 +21,11 @@ class HubError(Exception):
 
 
 class LeaseLost(HubError):
-    """409 LEASE_LOST / ALREADY_FINAL：执行器必须立即停止该任务。"""
+    """409 LEASE_LOST：执行器必须立即停止该任务。"""
+
+
+class AlreadyFinal(LeaseLost):
+    """409 ALREADY_FINAL：本租约的终态事件已被接受（例如响应丢失后重试），视为成功。"""
 
 
 def load_token(path=None):
@@ -62,7 +66,7 @@ class HubClient:
                     err = {}
                 code = err.get("code") or "HTTP_%s" % e.code
                 if e.code == 409:
-                    raise LeaseLost(e.code, code, err.get("message", ""))
+                    raise (AlreadyFinal if code == "ALREADY_FINAL" else LeaseLost)(e.code, code, err.get("message", ""))
                 if e.code < 500 or not retry or time.time() > deadline:
                     raise HubError(e.code, code, err.get("message", ""))
             except (urllib.error.URLError, OSError) as e:
@@ -124,6 +128,11 @@ class TaskReporter:
             return self.client.request("POST", "/v1/tasks/%s/events" % self.task["task_id"],
                                        {"lease_id": self.task["lease_id"], "seq": seq, "type": etype,
                                         "data": data or {}})[1]
+        except AlreadyFinal:
+            if etype in ("result", "failed", "interrupted"):
+                return {"ok": True, "already_final": True}  # 终态已被接受（响应丢失后的重试）
+            self.lost.set()
+            raise
         except LeaseLost:
             self.lost.set()
             if self.on_lost:

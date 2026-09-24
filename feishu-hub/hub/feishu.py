@@ -34,19 +34,23 @@ def _token(cfg):
     return _token_cache["token"]
 
 
-def send(cfg, open_id, kind, payload):
-    """私聊发送 text / card，返回 message_id。"""
+def send(cfg, open_id, kind, payload, uuid=None):
+    """私聊发送 text / card，返回 message_id。uuid 为飞书幂等键（1 小时内同一 uuid 只发送一次）。"""
     msg_type, content = _content(kind, payload)
-    data = _post(API + "/im/v1/messages?receive_id_type=open_id",
-                 {"receive_id": open_id, "msg_type": msg_type, "content": content}, _token(cfg))
+    body = {"receive_id": open_id, "msg_type": msg_type, "content": content}
+    if uuid:
+        body["uuid"] = uuid
+    data = _post(API + "/im/v1/messages?receive_id_type=open_id", body, _token(cfg))
     return data["data"]["message_id"]
 
 
-def reply(cfg, message_id, kind, payload):
-    """在指定消息下回复 text / card，返回 message_id。"""
+def reply(cfg, message_id, kind, payload, uuid=None):
+    """在指定消息下回复 text / card，返回 message_id。uuid 为飞书幂等键。"""
     msg_type, content = _content(kind, payload)
-    data = _post(API + "/im/v1/messages/%s/reply" % message_id, {"msg_type": msg_type, "content": content},
-                 _token(cfg))
+    body = {"msg_type": msg_type, "content": content}
+    if uuid:
+        body["uuid"] = uuid
+    data = _post(API + "/im/v1/messages/%s/reply" % message_id, body, _token(cfg))
     return data["data"]["message_id"]
 
 

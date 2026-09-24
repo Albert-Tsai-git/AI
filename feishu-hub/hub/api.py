@@ -50,6 +50,8 @@ def make_handler(token):
             if method == "POST":
                 try:
                     n = int(self.headers.get("Content-Length") or 0)
+                    if n > 1024 * 1024:
+                        return self._err(413, "BAD_REQUEST", "请求体超过 1MB")
                     body = json.loads(self.rfile.read(n).decode("utf-8") or "{}") if n else {}
                 except ValueError:
                     return self._err(400, "BAD_REQUEST", "JSON 解析失败")

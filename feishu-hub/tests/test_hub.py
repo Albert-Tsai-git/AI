@@ -43,14 +43,19 @@ def _desc(kind, payload):
     return payload
 
 
-def fake_reply(cfg, mid, kind, payload):
+UUIDS = []
+
+
+def fake_reply(cfg, mid, kind, payload, uuid=None):
+    UUIDS.append(uuid)
     if FAIL["on"]:
         raise RuntimeError("net down")
     SENT.append(("reply", mid, kind, _desc(kind, payload)))
     return _mid()
 
 
-def fake_send(cfg, oid, kind, payload):
+def fake_send(cfg, oid, kind, payload, uuid=None):
+    UUIDS.append(uuid)
     if FAIL["on"]:
         raise RuntimeError("net down")
     SENT.append(("send", oid, kind, _desc(kind, payload)))
@@ -401,6 +406,68 @@ spooled = os.listdir(os.path.join(config.HOME_DIR, "spool"))
 n = flush_spool({"claude": HubClient("claude", url=URL)})
 check("Hook 离线落盘 → 执行器补发", len(spooled) == 1 and n == 1
       and store._conn().execute("SELECT 1 FROM turns WHERE session_id='D-2'").fetchone())
+
+# ================= 复核返工补测 =================
+check("出口：每次发送都带飞书幂等键", UUIDS and all(u and u.startswith("hub-") for u in UUIDS))
+# 结果已落库但卡片未入队（崩溃窗口）→ 回收时补建
+msg("m30", "Claude执行：崩溃窗口 @%s" % WS1)
+e30 = claude.claim(1)
+store.cas(e30["task_id"], "LEASED", "RESULT_SAVED", result_text="已存的结果", session_id="S-30")
+service.reap()
+check("回收：RESULT_SAVED 无发送记录 → 按已存结果补建并送达",
+      wait(lambda: (flush(), store.get_task(e30["task_id"])["status"] == "DONE")[1]) and sent_text("已存的结果"))
+# 终态事件响应丢失后重试（新 seq）→ ALREADY_FINAL 视为成功
+msg("m31", "Claude执行：重试结果 @%s" % WS1)
+e31 = claude.claim(1)
+r31 = TaskReporter(claude, e31)
+r31.send("result", {"text": "一次", "session_id": "S-31"})
+r31b = TaskReporter(claude, e31)
+r31b.seq = 5
+check("终态重试 → ALREADY_FINAL 视为成功，不重复发卡片",
+      r31b.send("result", {"text": "一次", "session_id": "S-31"}).get("already_final") is True)
+flush()
+check("结果卡片只发一张", store._conn().execute("SELECT COUNT(*) FROM outbox WHERE task_id=?",
+                                            (e31["task_id"],)).fetchone()[0] == 1)
+# 桌面队列后旧租约失效
+msg("m32", "继续", "card_codex")
+e32 = codex.claim(1)
+r32 = TaskReporter(codex, e32)
+r32.send("started", {"delivery": "desktop_queue", "queue_id": "Q2"})
+try:
+    r32.send("heartbeat")
+    check("排入桌面队列后旧租约事件 → LEASE_LOST", False)
+except LeaseLost:
+    check("排入桌面队列后旧租约事件 → LEASE_LOST", True)
+codex.session_turn("TH-1", WS2, "队列完成", turn_id="turn-q2")
+flush()
+# 提示只允许发起人回复
+cfg_ids = service.CFG["allowed_open_ids"]
+service.CFG["allowed_open_ids"] = ["ou_me", "ou_other"]
+msg("m33", "帮我看看")
+n33 = last_notice(task_of("m33")["task_id"])
+service.handle_message("m33x", "ou_other", "p2p", "oc_1", "text", json.dumps({"text": "Claude"}), n33)
+check("其他白名单用户不能代答提示", task_of("m33")["status"] == "NEED_EXECUTOR" and sent_text("只有发起人可以处理"))
+service.CFG["allowed_open_ids"] = cfg_ids
+# 重启：有效租约给宽限期，不立即判失联
+msg("m34", "Claude执行：长任务 @%s" % WS2)
+e34 = claude.claim(1)
+store.update(e34["task_id"], lease_expires=time.time() - 1)
+service.recover()
+check("重启：过期租约先给宽限期，执行器可恢复心跳",
+      store.get_task(e34["task_id"])["status"] == "LEASED" and TaskReporter(claude, e34).send("heartbeat")["ok"])
+# 卡在 SENDING 的发送记录自动复位
+oid = store.enqueue("text", "卡住的消息")
+store._conn().execute("UPDATE outbox SET status='SENDING', next_try=? WHERE id=?", (time.time() - 400, oid))
+service.reap()
+flush()
+check("发送中卡住超过 5 分钟 → 复位并发出", store._conn().execute("SELECT status FROM outbox WHERE id=?",
+                                                         (oid,)).fetchone()[0] == "SENT")
+# 未知执行器
+try:
+    HubClient("gpt", url=URL).hello({})
+    check("未知执行器 → 400", False)
+except Exception as e:  # noqa: BLE001
+    check("未知执行器 → 400", getattr(e, "http", 0) == 400)
 
 # ================= 重启恢复 =================
 store._conn().execute("UPDATE outbox SET status='SENDING' WHERE id=(SELECT MAX(id) FROM outbox)")

@@ -18,7 +18,7 @@ FINAL = (DONE, FAILED, CANCELLED)
 TASK_COLS = ("task_id", "conversation_id", "executor", "mode", "session_id", "cwd", "proposed_cwd",
              "prompt", "status", "attempt", "lease_id", "lease_expires", "instance_id", "delivery",
              "queue_id", "notice_mid", "source_mid", "result_text", "error", "busy_retries",
-             "not_before", "resume_hint", "danger_ok", "created", "updated", "started", "finished")
+             "not_before", "resume_hint", "danger_ok", "owner", "created", "updated", "started", "finished")
 OUTBOX_COLS = ("id", "kind", "payload", "reply_to", "executor", "session_id", "cwd", "task_id",
                "conversation_id", "notice_task", "status", "attempts", "next_try", "mid", "error",
                "created", "sent")
@@ -59,7 +59,7 @@ def init():
         cwd TEXT, proposed_cwd TEXT, prompt TEXT, status TEXT NOT NULL, attempt INTEGER DEFAULT 0,
         lease_id TEXT, lease_expires REAL, instance_id TEXT, delivery TEXT, queue_id TEXT,
         notice_mid TEXT, source_mid TEXT, result_text TEXT, error TEXT, busy_retries INTEGER DEFAULT 0,
-        not_before REAL DEFAULT 0, resume_hint TEXT, danger_ok INTEGER DEFAULT 0, created REAL, updated REAL, started REAL, finished REAL);
+        not_before REAL DEFAULT 0, resume_hint TEXT, danger_ok INTEGER DEFAULT 0, owner TEXT, created REAL, updated REAL, started REAL, finished REAL);
     CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
     CREATE INDEX IF NOT EXISTS idx_tasks_notice ON tasks(notice_mid);
     CREATE UNIQUE INDEX IF NOT EXISTS idx_tasks_source ON tasks(source_mid);
@@ -97,15 +97,15 @@ def _row(cols, r):
 
 # ---------------- 任务 ----------------
 
-def create_task(source_mid, executor, mode, session_id, cwd, prompt, status, conversation_id=None):
-    """[账本] 以飞书消息 ID 为幂等键建任务；重复投递返回 None。"""
+def create_task(source_mid, executor, mode, session_id, cwd, prompt, status, conversation_id=None, owner=""):
+    """[账本] 以飞书消息 ID 为幂等键建任务；重复投递返回 None。owner 为发起人 open_id。"""
     tid = new_id("T")
     now = time.time()
     with _tx() as c:
         cur = c.execute("INSERT OR IGNORE INTO tasks(task_id, conversation_id, executor, mode, session_id, cwd, "
-                        "prompt, status, source_mid, created, updated) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+                        "prompt, status, source_mid, owner, created, updated) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
                         (tid, conversation_id or new_id("C"), executor, mode, session_id or "", cwd or "",
-                         prompt, status, source_mid, now, now))
+                         prompt, status, source_mid, owner or "", now, now))
         return tid if cur.rowcount == 1 else None
 
 
@@ -247,6 +247,11 @@ def unmark_seen(event_id):
         c.execute("DELETE FROM seen WHERE event_id=?", (event_id,))
 
 
+def turn_unsee(executor, session_id, turn_id):
+    with _tx() as c:
+        c.execute("DELETE FROM turns WHERE executor=? AND session_id=? AND turn_id=?", (executor, session_id, turn_id))
+
+
 def turn_seen(executor, session_id, turn_id):
     """桌面独立轮次去重：首次返回 True。"""
     with _tx() as c:
@@ -266,7 +271,7 @@ def enqueue(kind, payload, reply_to="", executor="", session_id="", cwd="", task
                           conversation_id or "", notice_task or "", time.time())).lastrowid
 
 
-def outbox_pending(limit=50):
+def outbox_pending(limit=500):
     rows = _conn().execute("SELECT %s FROM outbox WHERE status='PENDING' ORDER BY id LIMIT ?"
                            % ",".join(OUTBOX_COLS), (limit,)).fetchall()
     return [_row(OUTBOX_COLS, r) for r in rows]
@@ -274,7 +279,9 @@ def outbox_pending(limit=50):
 
 def outbox_claim(oid):
     with _tx() as c:
-        return c.execute("UPDATE outbox SET status='SENDING' WHERE id=? AND status='PENDING'", (oid,)).rowcount == 1
+        # 领取时把 next_try 记为领取时间，用于识别卡在 SENDING 的记录
+        return c.execute("UPDATE outbox SET status='SENDING', next_try=? WHERE id=? AND status='PENDING'",
+                         (time.time(), oid)).rowcount == 1
 
 
 def outbox_sent(oid, mid):
@@ -291,6 +298,17 @@ def outbox_retry(oid, err, delay):
 def outbox_reset_sending():
     with _tx() as c:
         return c.execute("UPDATE outbox SET status='PENDING' WHERE status='SENDING'").rowcount
+
+
+def outbox_reset_stale(age=300):
+    """发送线程异常退出等原因卡在 SENDING 超过 age 秒的记录复位为待发（飞书侧按 uuid 幂等，不会重复）。"""
+    with _tx() as c:
+        return c.execute("UPDATE outbox SET status='PENDING' WHERE status='SENDING' AND next_try<?",
+                         (time.time() - age,)).rowcount
+
+
+def outbox_count_for_task(task_id):
+    return _conn().execute("SELECT COUNT(*) FROM outbox WHERE task_id=?", (task_id,)).fetchone()[0]
 
 
 def outbox_unsent_for_task(task_id):

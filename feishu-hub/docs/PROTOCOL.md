@@ -167,21 +167,21 @@ hello → claim(长轮询) → 校验 cwd → 启动 CLI → started → [sessio
 
 1. **校验目录**：`cwd` 不存在（Claude 执行器会先做 MSIX 虚拟路径映射）时，上报 `failed{code: CWD_MISSING}`，**绝不**换目录执行。Hub 会向用户重新确认目录。
 2. **启动**：`mode=new` 时新建会话；`mode=resume` 时续跑 `session_id`。prompt 通过 stdin 传入，防止以 `-` 开头的文本被当成命令行参数。
-3. **给子进程的环境变量**（子进程内的 Hook 可以直接上报事件）：
-   `FEISHU_HUB_URL`、`FEISHU_HUB_TOKEN_FILE`、`FEISHU_HUB_TASK_ID`、`FEISHU_HUB_LEASE_ID`、`FEISHU_HUB_CWD`。
-   Hook 看到 `FEISHU_HUB_TASK_ID` 时，要把结果作为该任务的 `result` 上报，**不要**再调用 `/v1/sessions/turns`，避免重复发卡片。
+3. **给子进程的环境变量**：`FEISHU_HUB_URL`、`FEISHU_HUB_TASK_ID`、`FEISHU_HUB_LEASE_ID`、`FEISHU_HUB_CWD`（令牌文件可选 `FEISHU_HUB_TOKEN_FILE`）。
+   子进程内的桌面 Hook 看到 `FEISHU_HUB_TASK_ID` 时**直接退出**：该任务的结果由执行器统一上报，Hook 既不上报 `result` 也不调用 `/v1/sessions/turns`，避免重复发卡片。
 4. **心跳**：每 `heartbeat_sec` 上报一次；收到 `409` 就结束子进程树。
 5. **结束**：进程正常退出且已经上报过 `result`，任务结束。进程退出了却没有 `result`，上报 `failed{code: NO_RESULT}`。执行器自身异常时，**先结束子进程树**，再上报 `interrupted`。
 
 ### 5.2 执行器重启
 
 - 执行器重启后，未完成的租约自然过期。Hub 发现租约过期且没有终态事件时，把任务置为 `NEEDS_RECOVERY`，由用户在飞书选择「续跑 / 放弃」，**不会自动重派**。
-- 执行器可以在本地记录「task_id → pid, pid_ctime」。重启后如果发现旧进程仍在运行，可以重新 `hello` 并继续为旧租约上报心跳；租约已丢失（409）就结束该进程。
+- （可选）执行器可以在本地记录「task_id → pid, pid_ctime」。重启后如果发现旧进程仍在运行，可以重新 `hello` 并继续为旧租约上报心跳；租约已丢失（409）就结束该进程。v1 的 Claude 执行器未实现此项：执行器重启即由用户决定续跑或放弃。
+- Hub 自身重启时，会把仍为 `LEASED` 的租约延长 `2 × lease_ttl_sec`，给执行器恢复心跳的时间，而不是立即判为失联。
 
 ### 5.3 桌面队列方式（`desktop_queue`，供 Codex 使用）
 
 当目标会话由桌面端持有写入权（再开一个写入者会冲突）时：
-1. 执行器把消息排入桌面会话（例如 `codex queue --thread <session_id> --message …`），成功后上报 `started{delivery: "desktop_queue", queue_id}`。Hub 把任务置为 `WAITING_EXTERNAL`，**此后不再要求心跳**，租约也不再过期。
+1. 执行器把消息排入桌面会话（例如 `codex queue --thread <session_id> --message …`），成功后上报 `started{delivery: "desktop_queue", queue_id}`。Hub 把任务置为 `WAITING_EXTERNAL`，**该租约随即失效**：执行器停止心跳，之后对该租约的任何事件都返回 `409 LEASE_LOST`（结果只能经桌面 Hook 回报）。
 2. 桌面端执行完这一轮后，桌面 Hook 调用 `/v1/sessions/turns`，Hub 按 §3.5 把它匹配给该会话最早的 `WAITING_EXTERNAL` 任务。
 3. 投递确认丢失（超时）时，执行器上报 `started{delivery: "desktop_queue", queue_id: null}`，**不得重复投递**；Hub 同样进入等待，超过 `timeout_sec` 仍无回报就转 `NEEDS_RECOVERY`。
 
@@ -220,9 +220,9 @@ RECEIVED ─┬─ NEED_EXECUTOR ─┐
 | 401 | `UNAUTHORIZED` | 令牌错误，停止并告警 |
 | 404 | `TASK_NOT_FOUND` | 任务不存在，放弃 |
 | 409 | `LEASE_LOST` | 租约失效，**立即结束子进程**，不再上报 |
-| 409 | `ALREADY_FINAL` | 任务已是终态，忽略 |
+| 409 | `ALREADY_FINAL` | 本租约的终态事件已被接受（例如响应丢失后用新 seq 重试）：终态事件视为成功，其他事件忽略 |
 | 426 | `PROTOCOL_UNSUPPORTED` | 协议版本不兼容，停止并告警 |
-| 5xx | `HUB_ERROR` | 指数退避重试（1s→30s），事件在本地排队，**不要**丢弃 |
+| 5xx | `HUB_ERROR` | 同一 `seq` 指数退避重试（1s→30s，约 5 分钟）；仍失败时停止上报，由租约过期转人工恢复（Hub 重启时会给有效租约宽限期）。Hook 上报失败则落盘，执行器上线后补发 |
 
 `failed.data.code`（执行器上报）：`CWD_MISSING`、`SESSION_NOT_FOUND`、`SESSION_BUSY`、`CLI_NOT_FOUND`、`AUTH_REQUIRED`、`NO_RESULT`、`TIMEOUT`、`EXEC_ERROR`。
 

@@ -28,6 +28,8 @@ def init(cfg):
     CFG.clear()
     CFG.update(cfg)
     store.init()
+    if not store.kv_get("install_id"):
+        store.kv_set("install_id", os.urandom(4).hex())
 
 
 # ======================= 目录 =======================
@@ -74,13 +76,15 @@ def _send_row(r):
     target = config.notify_target(CFG)
     try:
         mid = ""
+        # 飞书幂等键：崩溃后重发同一条 outbox 不会产生重复消息（回帖与私聊各用一个键）
+        key = "hub-%s-%s" % (store.kv_get("install_id") or "0", r["id"])
         if r["reply_to"]:
             try:
-                mid = feishu.reply(CFG, r["reply_to"], r["kind"], r["payload"])
+                mid = feishu.reply(CFG, r["reply_to"], r["kind"], r["payload"], uuid=key + "-r")
             except Exception as e:  # noqa: BLE001
                 log.warning("[出口] 回帖失败，改为私聊 outbox=%s: %s", r["id"], e)
         if not mid:
-            mid = feishu.send(CFG, target, r["kind"], r["payload"])
+            mid = feishu.send(CFG, target, r["kind"], r["payload"], uuid=key + "-s")
     except Exception as e:  # noqa: BLE001
         delay = min(300, 5 * (2 ** min(int(r["attempts"] or 0), 6)))
         store.outbox_retry(r["id"], str(e), delay)
@@ -159,16 +163,19 @@ def _handle(mid, sender, chat_type, chat_id, msg_type, content, parent, source):
     if parent:
         t = store.find_task_by_notice(parent)
         if t:
+            if t["owner"] and t["owner"] != sender:
+                say(mid, "这条提示属于其他人发起的任务，只有发起人可以处理。")
+                return False
             return _on_notice_reply(t, text, mid)
         m = store.find_mapping(parent)
         if m:
-            return _on_card_reply(m, text, mid)
+            return _on_card_reply(m, text, mid, sender)
         say(mid, "找不到这条消息对应的任务。可以回复任务卡片续接，或直接私聊我创建新任务。")
         return False
     if chat_type != "p2p":
         say(mid, "群聊里请回复某条任务卡片；新任务请私聊我。")
         return False
-    return _new_task(mid, text)
+    return _new_task(mid, text, sender)
 
 
 def _requested_executor(text):
@@ -194,7 +201,7 @@ def _collab(mid, text):
     return True
 
 
-def _new_task(mid, text):
+def _new_task(mid, text, sender=""):
     """[路由] 私聊新任务：执行者、目录缺一不可，缺什么问什么，信息齐全且确认前不启动。"""
     if _collab(mid, text):
         return False
@@ -203,7 +210,7 @@ def _new_task(mid, text):
     if not body.strip():
         say(mid, "新任务格式：Claude执行：<内容> @<工作目录>\n只写内容也可以，我会依次询问执行者和目录。")
         return False
-    tid = store.create_task(mid, executor or "", "new", "", cwd, body.strip(), "RECEIVED")
+    tid = store.create_task(mid, executor or "", "new", "", cwd, body.strip(), "RECEIVED", owner=sender)
     if not tid:
         return False
     log.info("[路由] 新任务 %s executor=%s cwd=%s", tid, executor or "?", cwd or "-")
@@ -211,7 +218,7 @@ def _new_task(mid, text):
     return True
 
 
-def _on_card_reply(m, text, mid):
+def _on_card_reply(m, text, mid, sender=""):
     """[路由] 回复任务卡片：沿用该卡片的执行者、会话与目录（方案 §3.2）；显式指定其他执行者时切换。"""
     if _collab(mid, text):
         return False
@@ -229,7 +236,7 @@ def _on_card_reply(m, text, mid):
             sid = cands[0] if cands else ""
         executor, text = req, body
     tid = store.create_task(mid, executor, "resume" if sid else "new", sid, cwd, text, "RECEIVED",
-                            conversation_id=m.get("conversation_id") or None)
+                            conversation_id=m.get("conversation_id") or None, owner=sender)
     if tid:
         advance(tid)
     return bool(tid)
@@ -341,10 +348,16 @@ class ProtoError(Exception):
         self.http, self.code, self.message = http, code, message or code
 
 
+def _check_executor(ex):
+    if ex not in CFG.get("executors", []):
+        raise ProtoError(400, "BAD_REQUEST", "未知执行器 %s" % ex)
+
+
 def hello(body):
     ex, inst = body.get("executor"), body.get("instance_id")
     if not ex or not inst:
         raise ProtoError(400, "BAD_REQUEST", "executor/instance_id 必填")
+    _check_executor(ex)
     store.executor_seen(ex, inst, body.get("version"), body.get("capabilities") or {})
     log.info("[协议] 执行器上线 %s/%s caps=%s", ex, inst, body.get("capabilities"))
     return {"ok": True, "lease_ttl_sec": CFG["lease_ttl_sec"], "heartbeat_sec": CFG["heartbeat_sec"],
@@ -363,6 +376,7 @@ def claim(body):
     ex, inst = body.get("executor"), body.get("instance_id")
     if not ex or not inst:
         raise ProtoError(400, "BAD_REQUEST", "executor/instance_id 必填")
+    _check_executor(ex)
     caps = store.executor_caps(ex, inst)
     deadline = time.time() + max(0, min(float(body.get("wait_sec", CFG["poll_wait_sec"])), 55))
     while True:
@@ -381,14 +395,15 @@ def claim(body):
             _work.wait(min(left, 2.0))
 
 
-def _check_lease(tid, lease_id, allow_waiting=False):
+def _check_lease(tid, lease_id):
+    """只有 LEASED 且租约匹配、未过期才接受事件。排入桌面队列（WAITING_EXTERNAL）后租约即失效，
+    结果只能经 /v1/sessions/turns 回报。本租约已产生终态时返回 ALREADY_FINAL（客户端视为成功）。"""
     t = store.get_task(tid)
     if not t:
         raise ProtoError(404, "TASK_NOT_FOUND")
-    if t["status"] in store.FINAL or t["status"] == store.RESULT_SAVED:
+    if t["lease_id"] == lease_id and (t["status"] in store.FINAL or t["status"] == store.RESULT_SAVED):
         raise ProtoError(409, "ALREADY_FINAL")
-    ok_status = (store.LEASED, store.WAITING_EXTERNAL) if allow_waiting else (store.LEASED,)
-    if t["lease_id"] != lease_id or t["status"] not in ok_status:
+    if t["lease_id"] != lease_id or t["status"] != store.LEASED:
         raise ProtoError(409, "LEASE_LOST")
     if t["status"] == store.LEASED and (t["lease_expires"] or 0) < time.time():
         raise ProtoError(409, "LEASE_LOST", "租约已过期")
@@ -403,7 +418,7 @@ def event(tid, body):
     prev = store.event_lookup(tid, lease, int(seq))
     if prev is not None:
         return prev
-    t = _check_lease(tid, lease, allow_waiting=True)
+    t = _check_lease(tid, lease)
     now = time.time()
     resp = {"ok": True, "lease_expires": now + CFG["lease_ttl_sec"]}
     if t["status"] == store.LEASED:
@@ -424,19 +439,17 @@ def event(tid, body):
     elif etype == "result":
         sid = data.get("session_id") or t["session_id"]
         text = (data.get("text") or "")[:256 * 1024]
-        if store.cas(tid, (store.LEASED, store.WAITING_EXTERNAL), store.RESULT_SAVED, result_text=text,
-                     session_id=sid, lease_id=None):
+        if store.cas(tid, store.LEASED, store.RESULT_SAVED, result_text=text, session_id=sid):
             deliver_result(store.get_task(tid), text, sid)
     elif etype == "failed":
         code, msg = data.get("code") or "EXEC_ERROR", data.get("message") or ""
         if code == "CWD_MISSING":
-            if store.cas(tid, (store.LEASED, store.WAITING_EXTERNAL), store.NEED_DIR, lease_id=None, proposed_cwd=None):
+            if store.cas(tid, store.LEASED, store.NEED_DIR, lease_id=None, proposed_cwd=None):
                 ask_dir(store.get_task(tid))
-        elif store.cas(tid, (store.LEASED, store.WAITING_EXTERNAL), store.FAILED, error="%s: %s" % (code, msg[:300]),
-                       lease_id=None):
+        elif store.cas(tid, store.LEASED, store.FAILED, error="%s: %s" % (code, msg[:300])):
             say(t["source_mid"], "❌ %s 执行失败（%s）\n%s" % (t["executor"].title(), code, msg[-500:]))
     elif etype == "interrupted":
-        if store.cas(tid, (store.LEASED, store.WAITING_EXTERNAL), store.NEEDS_RECOVERY,
+        if store.cas(tid, store.LEASED, store.NEEDS_RECOVERY,
                      error="interrupted: %s" % (data.get("reason") or "")[:200], lease_id=None):
             notify_recovery(store.get_task(tid), data.get("reason") or "执行中断")
     else:
@@ -471,6 +484,14 @@ def session_turn(body):
     turn = body.get("turn_id") or hashlib.sha256(text.encode("utf-8")).hexdigest()
     if not store.turn_seen(ex, sid, turn):
         return {"ok": True, "duplicate": True}
+    try:
+        return _session_turn(ex, sid, turn, text, body)
+    except Exception:
+        store.turn_unsee(ex, sid, turn)  # 处理失败撤销去重，允许 Hook 重试
+        raise
+
+
+def _session_turn(ex, sid, turn, text, body):
     w = store.oldest_waiting(ex, sid)
     if w and store.cas(w["task_id"], store.WAITING_EXTERNAL, store.RESULT_SAVED, result_text=text, lease_id=None):
         deliver_result(store.get_task(w["task_id"]), text, sid)
@@ -507,8 +528,13 @@ def reap():
                 t["task_id"], store.WAITING_EXTERNAL, store.NEEDS_RECOVERY, error="external_timeout", lease_id=None):
             notify_recovery(store.get_task(t["task_id"]), "桌面会话长时间未回报结果")
     for t in store.list_tasks(store.RESULT_SAVED):
-        if store.outbox_unsent_for_task(t["task_id"]) == 0:
+        if store.outbox_count_for_task(t["task_id"]) == 0:
+            # 结果已落库但卡片未入队（写入中途崩溃）：按已存结果补建，绝不重跑
+            log.warning("[回收] 结果未入发送队列，补建 %s", t["task_id"])
+            deliver_result(t, t["result_text"] or "", t["session_id"])
+        elif store.outbox_unsent_for_task(t["task_id"]) == 0:
             store.cas(t["task_id"], store.RESULT_SAVED, store.DONE)
+    store.outbox_reset_stale()
 
 
 def backfill():
@@ -539,6 +565,11 @@ def backfill():
 def recover():
     """[恢复] 启动：复位发送中的消息；有效租约保留（执行器可继续心跳），过期的交给回收；补拉离线消息。"""
     resent = store.outbox_reset_sending()
+    # 中间服务停机期间执行器的心跳会失败：给有效租约宽限期，让执行器恢复心跳，而不是立刻判失联
+    grace = time.time() + 2 * CFG["lease_ttl_sec"]
+    for t in store.list_tasks(store.LEASED):
+        if (t["lease_expires"] or 0) < grace:
+            store.update(t["task_id"], lease_expires=grace)
     reap()
     n, err = backfill()
     if err and store.kv_get("backfill_hint_day") != time.strftime("%Y-%m-%d"):

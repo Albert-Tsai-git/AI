@@ -176,6 +176,10 @@ class ClaudeExecutor:
             rep.send("result", {"text": res.get("result") or "", "session_id": sid})
             return
         detail = ((res or {}).get("result") or err or raw)[-800:]
+        if rc == 0 and res is None:
+            rep.send("failed", {"code": "NO_RESULT", "message": "进程正常退出但没有结果输出 %s" % detail[-300:],
+                                "retryable": False})
+            return
         code = "SESSION_NOT_FOUND" if "no conversation found" in (err + raw).lower() else \
             "AUTH_REQUIRED" if ("login" in err.lower() or "401" in err) else "EXEC_ERROR"
         rep.send("failed", {"code": code, "message": "rc=%s %s" % (rc, detail), "retryable": False})
