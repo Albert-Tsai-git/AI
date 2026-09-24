@@ -201,19 +201,74 @@ def _collab(mid, text):
     return True
 
 
+FORMAT_HINT = ("请录入正确格式：\n"
+               "【执行者 目录 内容】\n"
+               "· 执行者：claude 或 codex\n"
+               "· 目录：默认目录 / 项目名（如 AI项目）/ 完整路径（如 D:\\code\\A）\n"
+               "· 例：claude 默认目录 告诉我通讯是否正常\n"
+               "· 例：codex AI项目 检查最近的改动\n"
+               "查看项目：claude 项目列表")
+STRICT_TASK = re.compile(r"^(claude|codex)\s+(\S+)\s+(\S.*)$", re.I | re.S)
+PROJECT_LIST = re.compile(r"^(claude|codex)\s*项目列表$", re.I)
+
+
+def list_projects():
+    """[项目] 项目列表：project_roots 下的一级子目录 + projects 显式登记；返回 [(名称, 路径)]，按名称排序。"""
+    found = {}
+    for root in CFG.get("project_roots", []):
+        try:
+            names = sorted(os.listdir(root))
+        except OSError:
+            continue
+        for n in names:
+            p = os.path.join(root, n)
+            if os.path.isdir(p) and not n.startswith("."):
+                found.setdefault(n.lower(), (n, p))
+    for n, p in (CFG.get("projects") or {}).items():
+        found[n.lower()] = (n, p)
+    return sorted(found.values(), key=lambda x: x[0].lower())
+
+
+def _resolve_dir_token(token):
+    """[项目] 目录字段：默认目录 → 建议目录；完整路径 → 原样；「xxx项目」或项目名 → 查项目列表。返回 (路径, 错误)。"""
+    if token in ("默认目录", "默认"):
+        return CFG.get("suggest_cwd", ""), None
+    if re.match(r"^(?:[A-Za-z]:[\\/]|\\\\)", token):
+        return token, None
+    name = token[:-2] if token.endswith("项目") and len(token) > 2 else token
+    for n, p in list_projects():
+        if n.lower() == name.lower():
+            return p, None
+    return None, "未找到项目「%s」。发送「claude 项目列表」查看可用项目。" % name
+
+
 def _new_task(mid, text, sender=""):
-    """[路由] 私聊新任务：执行者、目录缺一不可，缺什么问什么，信息齐全且确认前不启动。"""
-    if _collab(mid, text):
+    """[路由] 私聊新任务：必须严格按「执行者 目录 内容」格式（可带【】），否则只提示格式，不建任务。
+    「claude/codex 项目列表」由中间服务直接列出项目，不调用 AI。"""
+    body = text.strip()
+    if body.startswith("【") and body.endswith("】"):
+        body = body[1:-1].strip()
+    if PROJECT_LIST.match(body):
+        items = list_projects()
+        lines = ["%d. %s　%s" % (i, n, p) for i, (n, p) in enumerate(items, 1)] or ["（没有找到项目）"]
+        say(mid, "📂 项目列表（共 %d 个）\n%s\n\n用法：claude <项目名>项目 <内容>" % (len(items), "\n".join(lines)))
         return False
-    executor, body = _requested_executor(text)
-    cwd, body = _extract_dir(body)
-    if not body.strip():
-        say(mid, "新任务格式：Claude执行：<内容> @<工作目录>\n只写内容也可以，我会依次询问执行者和目录。")
+    if _collab(mid, body):
         return False
-    tid = store.create_task(mid, executor or "", "new", "", cwd, body.strip(), "RECEIVED", owner=sender)
+    m = STRICT_TASK.match(body)
+    if not m:
+        say(mid, FORMAT_HINT)
+        return False
+    executor, token, prompt = m.group(1).lower(), m.group(2), m.group(3).strip()
+    cwd, err = _resolve_dir_token(token)
+    if err:
+        say(mid, err)
+        return False
+    # 用户在格式里明确写了目录（含「默认目录」），视为已确认；目录不存在时仍会转入目录确认
+    tid = store.create_task(mid, executor, "new", "", cwd, prompt, "RECEIVED", owner=sender)
     if not tid:
         return False
-    log.info("[路由] 新任务 %s executor=%s cwd=%s", tid, executor or "?", cwd or "-")
+    log.info("[路由] 新任务 %s executor=%s cwd=%s", tid, executor, cwd)
     advance(tid)
     return True
 

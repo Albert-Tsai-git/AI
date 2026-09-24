@@ -33,6 +33,9 @@ DEFAULTS = {
     "session_busy_max_retries": 3,
     # 目录缺失时展示给用户的建议目录（仍需用户确认，绝不自动使用）
     "suggest_cwd": r"D:\sire\AI\SESSION",
+    # 项目列表来源：这些目录下的一级子目录各算一个项目（项目名=目录名）；另可在 projects 里显式登记 名称→路径
+    "project_roots": [r"D:\code", r"D:\sire\AI"],
+    "projects": {},
     # 单张卡片正文上限（超出拆分为多张）
     "card_max_chars": 2800,
     # 离线补拉：从上次存活时间往前多拉的秒数

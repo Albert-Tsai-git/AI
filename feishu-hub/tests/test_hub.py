@@ -131,12 +131,16 @@ claude.hello({"new_session": True, "resume": True})
 codex.hello({"new_session": True, "resume": True, "desktop_queue": True})
 
 # ================= A2 缺执行者 / A1 缺目录 / 目录两步确认 =================
-msg("m1", "帮我整理一下日志")
+msg("m0", "帮我整理一下日志")
+check("A2 格式不对（缺执行者/目录）→ 只提示格式，不建任务", task_of("m0") is None and sent_text("请录入正确格式"))
+msg("m0b", "？？")
+check("短消息 → 只提示格式", task_of("m0b") is None)
+msg("m0c", "claude 整理日志")
+check("缺内容或缺目录字段 → 只提示格式", task_of("m0c") is None)
+GONE_DIR = os.path.join(TMP, "not_exist_dir")
+msg("m1", "【claude %s 整理一下日志】" % GONE_DIR)
 t = task_of("m1")
-check("A2 执行者不明确 → 询问，不启动", t["status"] == "NEED_EXECUTOR" and sent_text("用哪个 AI 执行"))
-msg("m1a", "Claude", last_notice(t["task_id"]))
-t = task_of("m1")
-check("A1 缺少工作目录 → 询问，不启动", t["status"] == "NEED_DIR" and sent_text("需要指定工作目录"))
+check("A1 目录不存在 → 询问目录，不启动", t["status"] == "NEED_DIR" and sent_text("工作目录不存在"))
 msg("m1b", r"Z:\不存在的目录", last_notice(t["task_id"]))
 check("目录不存在 → 拒绝", task_of("m1")["status"] == "NEED_DIR" and sent_text("目录不存在"))
 msg("m1c", WS1, last_notice(t["task_id"]))
@@ -200,7 +204,7 @@ TaskReporter(claude, env2b).send("result", {"text": "补充完成"})
 check("续跑结果送达", wait(lambda: (flush(), store.get_task(env2["task_id"])["status"] == "DONE")[1]))
 
 # ================= A8 飞书发送失败只重发，不重跑 =================
-msg("m3", "Claude执行：写个总结 @%s" % WS1)
+msg("m3", "claude %s 写个总结" % WS1)
 env3 = claude.claim(1)
 FAIL["on"] = True
 TaskReporter(claude, env3).send("result", {"text": "总结如下", "session_id": "S-3"})
@@ -212,12 +216,12 @@ check("A8 恢复后补发 → DONE，且任务未被再次派发",
       wait(lambda: (flush(), store.get_task(env3["task_id"])["status"] == "DONE")[1]) and claude.claim(1) is None)
 
 # ================= 危险指令确认 =================
-msg("m4", "Claude执行：删除 build 目录 @%s" % WS1)
+msg("m4", "claude %s 删除 build 目录" % WS1)
 t4 = task_of("m4")
 check("危险指令 → NEED_CONFIRM", t4["status"] == "NEED_CONFIRM")
 msg("m4a", "算了", last_notice(t4["task_id"]))
 check("非确认 → 取消", task_of("m4")["status"] == "CANCELLED")
-msg("m5", "Claude执行：删除 dist @%s" % WS1)
+msg("m5", "claude %s 删除 dist" % WS1)
 msg("m5a", "确认", last_notice(task_of("m5")["task_id"]))
 check("确认 → 排队", task_of("m5")["status"] == "QUEUED")
 e5 = claude.claim(1)
@@ -225,9 +229,9 @@ TaskReporter(claude, e5).send("failed", {"code": "EXEC_ERROR", "message": "boom"
 check("failed → FAILED 并通知", store.get_task(e5["task_id"])["status"] == "FAILED" and sent_text("执行失败"))
 
 # ================= A10 并发：不同目录并行、同目录串行 =================
-msg("m6", "Claude执行：任务甲 @%s" % WS1)
-msg("m7", "Claude执行：任务乙 @%s" % WS1)
-msg("m8", "Claude执行：任务丙 @%s" % WS2)
+msg("m6", "claude %s 任务甲" % WS1)
+msg("m7", "claude %s 任务乙" % WS1)
+msg("m8", "claude %s 任务丙" % WS2)
 a, b = claude.claim(1), claude.claim(1)
 c = claude.claim(1)
 check("A10 同目录串行、不同目录并行", {a["cwd"], b["cwd"]} == {WS1, WS2} and c is None)
@@ -241,7 +245,7 @@ check("A10 各任务结果卡片互不串线",
       all(store.find_mapping(card_mid_for(e["task_id"]))["session_id"] == "S-" + e["task_id"] for e in (a, b)))
 
 # ================= CWD_MISSING → 重新确认目录 =================
-msg("m9", "Claude执行：跑一下 @%s" % WS2)
+msg("m9", "claude %s 跑一下" % WS2)
 e9 = claude.claim(1)
 TaskReporter(claude, e9).send("failed", {"code": "CWD_MISSING", "message": WS2})
 check("执行器报 CWD_MISSING → 转 NEED_DIR 询问", store.get_task(e9["task_id"])["status"] == "NEED_DIR")
@@ -326,7 +330,7 @@ def calls():
     return [json.loads(x) for x in open(p, encoding="utf-8")] if os.path.exists(p) else []
 
 
-msg("m20", "Claude执行：新建会话测试 @%s" % WS3)
+msg("m20", "claude %s 新建会话测试" % WS3)
 t20 = task_of("m20")
 check("执行器：新任务执行完成", wait(lambda: (flush(), store.get_task(t20["task_id"])["status"] == "DONE")[1], 20))
 check("执行器：新会话不带 --resume，prompt 走 stdin", calls()[-1]["args"][0] == "-p" and "新建会话测试" in calls()[-1]["prompt"])
@@ -345,7 +349,7 @@ store.save_mapping("card_ws_gone", "claude", "S-9", os.path.join(TMP, "gone"))
 msg("m23", "继续", "card_ws_gone")
 check("执行器：目录消失 → 中间服务询问目录", task_of("m23")["status"] == "NEED_DIR")
 # 执行中执行器被停止 → 租约过期 → 等用户决定
-msg("m24", "Claude执行：SLEEP 很久 @%s" % WS3)
+msg("m24", "claude %s SLEEP 很久" % WS3)
 t24 = task_of("m24")
 wait(lambda: store.get_task(t24["task_id"])["status"] == "LEASED", 10)
 time.sleep(1.5)
@@ -407,17 +411,37 @@ n = flush_spool({"claude": HubClient("claude", url=URL)})
 check("Hook 离线落盘 → 执行器补发", len(spooled) == 1 and n == 1
       and store._conn().execute("SELECT 1 FROM turns WHERE session_id='D-2'").fetchone())
 
+# ================= 严格格式 / 项目列表 =================
+service.CFG["project_roots"] = [TMP]
+service.CFG["suggest_cwd"] = WS2
+n_before = len(SENT)
+msg("p1", "claude项目列表")
+flush()
+check("「claude项目列表」→ 中间服务直接列出项目，不建任务",
+      task_of("p1") is None and any("项目列表" in x[3] and "ws1" in x[3] and "ws2" in x[3] for x in SENT[n_before:]))
+msg("p2", "【codex 项目列表】")
+check("「【codex 项目列表】」同样生效", task_of("p2") is None and sent_text("项目列表（共"))
+msg("p3", "claude 不存在项目 看看")
+check("未知项目 → 提示，不建任务", task_of("p3") is None and sent_text("未找到项目「不存在」"))
+msg("p4", "claude ws1项目 查看状态")
+check("「ws1项目」→ 解析为项目路径并排队", task_of("p4")["cwd"] == WS1 and task_of("p4")["status"] == "QUEUED")
+msg("p5", "【claude 默认目录 告诉我通讯是否正常】")
+check("「默认目录」→ 使用默认目录并排队", task_of("p5")["cwd"] == WS2 and task_of("p5")["status"] == "QUEUED"
+      and task_of("p5")["prompt"] == "告诉我通讯是否正常")
+for mid in ("p4", "p5"):
+    store.cas(task_of(mid)["task_id"], "QUEUED", "CANCELLED")
+
 # ================= 复核返工补测 =================
 check("出口：每次发送都带飞书幂等键", UUIDS and all(u and u.startswith("hub-") for u in UUIDS))
 # 结果已落库但卡片未入队（崩溃窗口）→ 回收时补建
-msg("m30", "Claude执行：崩溃窗口 @%s" % WS1)
+msg("m30", "claude %s 崩溃窗口" % WS1)
 e30 = claude.claim(1)
 store.cas(e30["task_id"], "LEASED", "RESULT_SAVED", result_text="已存的结果", session_id="S-30")
 service.reap()
 check("回收：RESULT_SAVED 无发送记录 → 按已存结果补建并送达",
       wait(lambda: (flush(), store.get_task(e30["task_id"])["status"] == "DONE")[1]) and sent_text("已存的结果"))
 # 终态事件响应丢失后重试（新 seq）→ ALREADY_FINAL 视为成功
-msg("m31", "Claude执行：重试结果 @%s" % WS1)
+msg("m31", "claude %s 重试结果" % WS1)
 e31 = claude.claim(1)
 r31 = TaskReporter(claude, e31)
 r31.send("result", {"text": "一次", "session_id": "S-31"})
@@ -443,13 +467,13 @@ flush()
 # 提示只允许发起人回复
 cfg_ids = service.CFG["allowed_open_ids"]
 service.CFG["allowed_open_ids"] = ["ou_me", "ou_other"]
-msg("m33", "帮我看看")
+msg("m33", "claude %s 帮我看看" % GONE_DIR)
 n33 = last_notice(task_of("m33")["task_id"])
-service.handle_message("m33x", "ou_other", "p2p", "oc_1", "text", json.dumps({"text": "Claude"}), n33)
-check("其他白名单用户不能代答提示", task_of("m33")["status"] == "NEED_EXECUTOR" and sent_text("只有发起人可以处理"))
+service.handle_message("m33x", "ou_other", "p2p", "oc_1", "text", json.dumps({"text": WS1}), n33)
+check("其他白名单用户不能代答提示", task_of("m33")["status"] == "NEED_DIR" and not task_of("m33")["proposed_cwd"] and sent_text("只有发起人可以处理"))
 service.CFG["allowed_open_ids"] = cfg_ids
 # 重启：有效租约给宽限期，不立即判失联
-msg("m34", "Claude执行：长任务 @%s" % WS2)
+msg("m34", "claude %s 长任务" % WS2)
 e34 = claude.claim(1)
 store.update(e34["task_id"], lease_expires=time.time() - 1)
 service.recover()
