@@ -18,11 +18,16 @@ NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0)
 HERE = os.path.dirname(os.path.abspath(__file__))
 CFG_PATH = os.path.join(HUB_HOME, "executor_claude.json")
 DEFAULTS = {
-    "claude_exe": r"C:\nvm4w\nodejs\node_modules\@anthropic-ai\claude-code\bin\claude.exe",
+    # auto：优先使用 Claude 桌面版自带的最新 CLI（与桌面同版本，支持最新模型），找不到再用 fallback
+    "claude_exe": "auto",
+    "claude_exe_fallback": r"C:\nvm4w\nodejs\node_modules\@anthropic-ai\claude-code\bin\claude.exe",
     # 独立配置目录：不经过 CC-Switch 代理，单独登录；projects 与桌面共享
     "claude_config_dir": os.path.join(os.path.expanduser("~"), ".claude-feishu"),
     # 用户选择方案 C：无确认模式运行，不实施目录外授权
     "permission_mode": "bypassPermissions",
+    # 默认模型与推理强度（用户指定 Opus 5.5 + high）；置空则沿用 CLI 自身默认
+    "model": "claude-opus-5-5",
+    "effort": "high",
     "max_parallel": 3,
     # 守护 ~/.claude/settings.json 中的桌面 Hook（CC-Switch 会整体重写该文件）
     "manage_hooks": False,
@@ -54,6 +59,33 @@ def resolve_cwd(cwd):
             if os.path.isdir(cand):
                 return cand
     return None
+
+
+def _ver_key(name):
+    try:
+        return tuple(int(x) for x in name.split("."))
+    except ValueError:
+        return (-1,)
+
+
+def find_desktop_cli():
+    """[CLI] 查找 Claude 桌面版自带的 claude.exe，返回版本号最高的路径；找不到返回 None。
+    桌面版（MSIX）写在 %APPDATA%/Claude/claude-code/<版本>/，包外进程看到的真实位置是
+    %LOCALAPPDATA%/Packages/Claude_*/LocalCache/Roaming/Claude/claude-code/<版本>/。"""
+    bases = [os.path.join(os.environ.get("APPDATA", ""), "Claude", "claude-code")]
+    pkgs = os.path.join(os.environ.get("LOCALAPPDATA", ""), "Packages")
+    if os.path.isdir(pkgs):
+        bases += [os.path.join(pkgs, n, "LocalCache", "Roaming", "Claude", "claude-code")
+                  for n in os.listdir(pkgs) if n.lower().startswith("claude_")]
+    best = None
+    for base in bases:
+        if not os.path.isdir(base):
+            continue
+        for ver in os.listdir(base):
+            exe = os.path.join(base, ver, "claude.exe")
+            if os.path.isfile(exe) and (best is None or _ver_key(ver) > best[0]):
+                best = (_ver_key(ver), exe)
+    return best[1] if best else None
 
 
 def _proc_ctime(pid):
@@ -88,10 +120,21 @@ class ClaudeExecutor:
         self.slots = threading.Semaphore(int(cfg["max_parallel"]))
         self.heartbeat_sec = 30
 
+    def claude_exe(self):
+        """每次执行时解析，桌面版升级后自动使用新版本。"""
+        exe = self.cfg.get("claude_exe") or "auto"
+        if exe == "auto":
+            exe = find_desktop_cli() or self.cfg["claude_exe_fallback"]
+        return exe
+
     def build_cmd(self, task):
-        cmd = [self.cfg["claude_exe"]]
+        cmd = [self.claude_exe()]
         if task["mode"] == "resume" and task.get("session_id"):
             cmd += ["--resume", task["session_id"]]
+        if self.cfg.get("model"):
+            cmd += ["--model", self.cfg["model"]]
+        if self.cfg.get("effort"):
+            cmd += ["--effort", self.cfg["effort"]]
         return cmd + ["-p", "--output-format", "json", "--permission-mode", self.cfg["permission_mode"]]
 
     def build_env(self, task):
@@ -240,7 +283,8 @@ class ClaudeExecutor:
             if not task:
                 self.slots.release()
                 continue
-            LOG.info("[Claude执行器] 领取 %s mode=%s cwd=%s", task["task_id"], task["mode"], task["cwd"])
+            LOG.info("[Claude执行器] 领取 %s mode=%s cwd=%s cli=%s model=%s effort=%s", task["task_id"], task["mode"],
+                     task["cwd"], self.claude_exe(), self.cfg.get("model") or "-", self.cfg.get("effort") or "-")
 
             def _run(t=task):
                 try:

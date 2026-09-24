@@ -335,7 +335,10 @@ def calls():
 msg("m20", "claude %s 新建会话测试" % WS3)
 t20 = task_of("m20")
 check("执行器：新任务执行完成", wait(lambda: (flush(), store.get_task(t20["task_id"])["status"] == "DONE")[1], 20))
-check("执行器：新会话不带 --resume，prompt 走 stdin", calls()[-1]["args"][0] == "-p" and "新建会话测试" in calls()[-1]["prompt"])
+check("执行器：新会话不带 --resume，prompt 走 stdin", "--resume" not in calls()[-1]["args"] and "新建会话测试" in calls()[-1]["prompt"])
+check("执行器：默认 --model claude-opus-5-5 --effort high",
+      calls()[-1]["args"][calls()[-1]["args"].index("--model") + 1] == "claude-opus-5-5"
+      and calls()[-1]["args"][calls()[-1]["args"].index("--effort") + 1] == "high")
 check("执行器：上报新会话 ID", store.get_task(t20["task_id"])["session_id"] == "NEW-SID")
 msg("m21", "接着做", card_mid_for(t20["task_id"]))
 t21 = task_of("m21")
