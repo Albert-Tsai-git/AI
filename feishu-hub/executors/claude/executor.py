@@ -25,9 +25,9 @@ DEFAULTS = {
     "claude_config_dir": os.path.join(os.path.expanduser("~"), ".claude-feishu"),
     # 用户选择方案 C：无确认模式运行，不实施目录外授权
     "permission_mode": "bypassPermissions",
-    # 默认模型与推理强度（用户指定 Opus 5.5 + high）；置空则沿用 CLI 自身默认
+    # 默认模型与推理强度（用户指定 Opus 5.5 + low）；置空则沿用 CLI 自身默认
     "model": "claude-opus-5-5",
-    "effort": "high",
+    "effort": "low",
     "max_parallel": 3,
     # 守护 ~/.claude/settings.json 中的桌面 Hook（CC-Switch 会整体重写该文件）
     "manage_hooks": False,
