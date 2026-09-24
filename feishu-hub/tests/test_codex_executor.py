@@ -19,6 +19,7 @@ os.environ["FEISHU_HUB_HOME"] = HUB_HOME
 # 即使 Hook 意外漏传测试客户端，也不会碰到默认的真实 Hub 端口。
 os.environ["FEISHU_HUB_URL"] = "http://127.0.0.1:1"
 os.environ["FAKE_CODEX_CALL_LOG"] = os.path.join(TMP, "fake-codex-calls.jsonl")
+os.environ["FAKE_QUEUE_ARGV_LOG"] = os.path.join(TMP, "fake-queue-argv.json")
 sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.join(ROOT, "executors", "common"))
 sys.path.insert(0, os.path.join(ROOT, "executors", "codex"))
@@ -145,6 +146,22 @@ def read_calls():
     return calls
 
 
+def read_queue_argv():
+    try:
+        with open(os.environ["FAKE_QUEUE_ARGV_LOG"], "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return None
+
+
+def read_text_file(path):
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return f.read()
+    except OSError:
+        return ""
+
+
 def _write_fake_cli():
     """[假 CLI] 记录参数与 stdin，模拟 exec、active-writer、queue 和长任务。"""
     fake_py = os.path.join(TMP, "fake_codex.py")
@@ -238,6 +255,40 @@ raise SystemExit(0)
     return fake_cmd
 
 
+def _write_vendor_queue_exe(fake_cmd):
+    """[假原生 CLI] 让 queue 经 Windows CreateProcess 启动 Python 副本，回收真实 argv。"""
+    vendor_dir = os.path.join(
+        os.path.dirname(os.path.abspath(fake_cmd)), "node_modules", "@openai", "codex",
+        "node_modules", "@openai", "codex-win32-x64", "vendor",
+        "x86_64-pc-windows-msvc", "bin")
+    os.makedirs(vendor_dir, exist_ok=True)
+    fake_exe = os.path.join(vendor_dir, "codex.exe")
+    shutil.copy2(sys.executable, fake_exe)
+    if os.name == "nt":
+        dll_name = "python%d%d.dll" % sys.version_info[:2]
+        dll_source = os.path.join(sys.base_prefix, dll_name)
+        if os.path.isfile(dll_source):
+            shutil.copy2(dll_source, os.path.join(vendor_dir, dll_name))
+    source = r'''# -*- coding: utf-8 -*-
+import json
+import os
+import sys
+
+if sys.argv and sys.argv[0] == "queue":
+    with open(os.environ["FAKE_QUEUE_ARGV_LOG"], "w", encoding="utf-8") as f:
+        json.dump(sys.argv, f, ensure_ascii=False)
+    sys.stdout.write("Queued message ID: Q-CX3-ARGV-0001\n")
+    sys.stdout.flush()
+    os._exit(0)
+'''
+    with open(os.path.join(TMP, "sitecustomize.py"), "w", encoding="utf-8") as f:
+        f.write(source)
+    os.environ["FAKE_CODEX_EXE"] = fake_exe
+    os.environ["PYTHONHOME"] = sys.base_prefix
+    os.environ["PYTHONPATH"] = TMP
+    return fake_exe
+
+
 def _start_hub():
     global _SERVER, _SERVER_THREAD, _BACKGROUND_STOP, _BACKGROUND_THREAD
     global _EXECUTOR, _EXECUTOR_STOP, _EXECUTOR_THREAD
@@ -268,6 +319,7 @@ def _start_hub():
     _BACKGROUND_THREAD.start()
 
     fake_cmd = _write_fake_cli()
+    _write_vendor_queue_exe(fake_cmd)
     executor_cfg = dict(codex_executor.DEFAULTS)
     executor_cfg.update(codex_exe=fake_cmd, max_parallel=1)
     client = HubClient("codex", url=url, token=config.token())
@@ -298,8 +350,8 @@ def _write_runner_config(fake_cmd):
     with open(runner_path, "w", encoding="utf-8") as f:
         f.write("import os, sys\n"
                 "sys.path.insert(0, %r)\n" % os.path.join(ROOT, "executors", "codex") +
-                "from executor import CodexExecutor, load_config\n"
-                "CodexExecutor(load_config()).serve_forever()\n")
+                "from executor import main\n"
+                "main()\n")
     return runner_path
 
 
@@ -390,15 +442,17 @@ def run_tests():
 
     # CX-3：慢速 active-writer 拒绝只投递一次，桌面 Hook 回报后匹配 WAITING_EXTERNAL。
     busy_sid = "THREAD-CX3-BUSY"
+    cx3_prompt = 'CX3_ACTIVE_WRITER_DELAY 元字符：& | 100% ^ " < >\n第二行：逐字往返'
     store.save_mapping("cx3-card", "codex", busy_sid, workspace)
-    send_message("cx3-queue", "CX3_ACTIVE_WRITER_DELAY", "cx3-card")
+    send_message("cx3-queue", "codex %s %s" % (workspace, cx3_prompt), "cx3-card")
     cx3 = task_for_source("cx3-queue")
     waiting = wait_for(lambda: (t if (t := store.get_task(cx3["task_id"]))["status"] == "WAITING_EXTERNAL" else None)
                        if cx3 else None, 15)
     calls = read_calls()
     cx3_exec = [c for c in calls if c["command"] == "exec" and "CX3_ACTIVE_WRITER_DELAY" in c["prompt"]]
-    cx3_queue = [c for c in calls if c["command"] == "queue" and "CX3_ACTIVE_WRITER_DELAY" in c["prompt"]]
-    queue_args = cx3_queue[0].get("args", []) if cx3_queue else []
+    queue_argv = wait_for(read_queue_argv, 5)
+    queue_message = (queue_argv[queue_argv.index("--message") + 1]
+                     if queue_argv and "--message" in queue_argv else None)
     queue_events = [json.loads(r[0]) for r in store._conn().execute(
         "SELECT data FROM events WHERE task_id=? AND type='started' ORDER BY seq", (cx3["task_id"],)).fetchall()] if cx3 else []
     hook_payload = {"session_id": busy_sid, "cwd": workspace, "turn_id": "cx3-desktop-turn",
@@ -407,13 +461,35 @@ def run_tests():
     cx3_done = wait_for(lambda: flush_and_task(cx3["task_id"])
                         if cx3 and flush_and_task(cx3["task_id"])["status"] == "DONE" else None, 10)
     check("CX-3 active-writer 队列只投递一次，Hook 将等待任务完成",
-          bool(waiting and waiting["queue_id"] == "Q-CX3-0001" and len(cx3_exec) == 1 and len(cx3_queue) == 1
-               and "--skip-git-repo-check" not in queue_args
-               and "--dangerously-bypass-approvals-and-sandbox" in queue_args
+          bool(waiting and waiting["queue_id"] == "Q-CX3-ARGV-0001" and len(cx3_exec) == 1
+               and queue_argv and queue_argv[0] == "queue" and queue_message == cx3["prompt"]
+               and queue_argv[queue_argv.index("--thread") + 1] == busy_sid
+               and "--skip-git-repo-check" not in queue_argv
+               and "--dangerously-bypass-approvals-and-sandbox" in queue_argv
+               and os.path.samefile(codex_executor.queue_codex_exe(fake_cmd),
+                                    os.environ["FAKE_CODEX_EXE"])
+               and cx3_exec[0].get("prompt") == cx3["prompt"]
                and hook_result == "sent" and cx3_done and cx3_done["result_text"] == "CX3 桌面端完成"
                and queue_events and queue_events[-1].get("delivery") == "desktop_queue"),
-          "exec=%d queue=%d status=%s" % (len(cx3_exec), len(cx3_queue),
-                                           cx3_done["status"] if cx3_done else "missing"))
+          "exec=%d expected=%r actual=%r argv=%r status=%s" % (len(cx3_exec), cx3["prompt"], queue_message,
+                                                                 queue_argv,
+                                                                 cx3_done["status"] if cx3_done else "missing"))
+
+    # Q1：绕过飞书文本规范化，直接验证 Windows 原生进程收到的 --message 完全不变。
+    q1_prompt = '特殊字符 & | 100% ^ " < >\n第二行\n第三行末尾'
+    q1_task = {"session_id": busy_sid, "cwd": workspace, "task_id": "Q1", "lease_id": "LQ1"}
+    q1_ref = {"proc": None, "kind": None}
+    try:
+        os.remove(os.environ["FAKE_QUEUE_ARGV_LOG"])
+    except FileNotFoundError:
+        pass
+    q1_outcome = _EXECUTOR._run_queue_once(q1_task, q1_prompt, 10, q1_ref)
+    q1_argv = wait_for(read_queue_argv, 5)
+    q1_message = (q1_argv[q1_argv.index("--message") + 1]
+                  if q1_argv and "--message" in q1_argv else None)
+    check("Q1 原生 codex.exe 保持特殊字符与多行 prompt 逐字一致",
+          q1_outcome["status"] == "accepted" and q1_message == q1_prompt,
+          "message_exact=%s" % (q1_message == q1_prompt))
 
     # 停止常驻领取循环，后续单元使用同一执行器的 run_task 直接跑已领取信封。
     _stop_executor_loop()
@@ -436,6 +512,29 @@ def run_tests():
                and cx4_prompt
                and len(read_calls()) == before_calls),
           "status=%s" % (cx4_state["status"] if cx4_state else "missing"))
+
+    # M1：与 Claude 执行器一致，将 MSIX 虚拟 APPDATA 路径映射到真实 LocalCache/Roaming。
+    virtual_appdata = os.path.join(TMP, "virtual", "Roaming")
+    virtual_cwd = os.path.join(virtual_appdata, "Codex", "project")
+    local_appdata = os.path.join(TMP, "local")
+    real_cwd = os.path.join(local_appdata, "Packages", "OpenAI.Codex_test", "LocalCache",
+                            "Roaming", "Codex", "project")
+    os.makedirs(real_cwd, exist_ok=True)
+    prior_appdata, prior_localappdata = os.environ.get("APPDATA"), os.environ.get("LOCALAPPDATA")
+    os.environ["APPDATA"], os.environ["LOCALAPPDATA"] = virtual_appdata, local_appdata
+    try:
+        mapped_cwd = codex_executor.resolve_cwd(virtual_cwd)
+    finally:
+        if prior_appdata is None:
+            os.environ.pop("APPDATA", None)
+        else:
+            os.environ["APPDATA"] = prior_appdata
+        if prior_localappdata is None:
+            os.environ.pop("LOCALAPPDATA", None)
+        else:
+            os.environ["LOCALAPPDATA"] = prior_localappdata
+    check("M1 MSIX 虚拟 APPDATA cwd 映射到真实 LocalCache/Roaming",
+          mapped_cwd == real_cwd, "mapped=%s" % mapped_cwd)
 
     # CX-5：任务运行超过租约时限，心跳持续续租直到正常完成。
     send_message("cx5-heartbeat", "codex %s CX5_HEARTBEAT" % workspace)
@@ -489,6 +588,11 @@ def run_tests():
         except subprocess.TimeoutExpired:
             _RUNNER.kill()
             _RUNNER.wait(timeout=5)
+    runner_log = os.path.join(HUB_HOME, "executor_codex.log")
+    cx6_log_ok = wait_for(lambda: read_text_file(runner_log), 3)
+    check("L1 执行器 main 将启动日志写入临时 HUB_HOME 文件",
+          "[Codex执行器] 已上线" in cx6_log_ok,
+          "log_exists=%s" % os.path.isfile(runner_log))
     cx6_pid_stopped = bool(cx6_call and wait_for(lambda: not _pid_running(cx6_call.get("pid")), 5))
     cx6_recovery = wait_for_recovery(cx6["task_id"], 8) if cx6 else None
     no_auto_retry = client.claim(0) is None

@@ -25,8 +25,52 @@ LOG = logging.getLogger("feishu_hub.codex")
 NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0)
 ACTIVE_WRITER_TEXT = "already has an active writer"
 RESULT_LIMIT_BYTES = 256 * 1024
+
+
+def _vendor_codex_exe(shim):
+    """[CLI] 从 npm 的 codex 启动脚本定位 Windows 原生可执行文件。"""
+    if not shim:
+        return None
+    candidate = os.path.join(os.path.dirname(os.path.abspath(shim)), "node_modules", "@openai", "codex",
+                             "node_modules", "@openai", "codex-win32-x64", "vendor",
+                             "x86_64-pc-windows-msvc", "bin", "codex.exe")
+    return candidate if os.path.isfile(candidate) else None
+
+
+def find_default_codex_exe():
+    """[CLI] 优先使用 npm 包内的 codex.exe，找不到时回退到 PATH。"""
+    shim = shutil.which("codex") or "codex"
+    return _vendor_codex_exe(shim) or shim
+
+
+def queue_codex_exe(configured):
+    """[队列] 带用户 prompt 的命令只能直接启动 .exe，不能交给 cmd.exe 解析。"""
+    resolved = shutil.which(configured) or configured
+    if os.path.splitext(resolved)[1].casefold() == ".exe":
+        return resolved
+    return _vendor_codex_exe(resolved)
+
+
+def resolve_cwd(cwd):
+    """[目录] 将 MSIX 的虚拟 %APPDATA% 路径映射到真实 LocalCache/Roaming 目录。"""
+    if not cwd:
+        return None
+    if os.path.isdir(cwd):
+        return cwd
+    roaming = os.environ.get("APPDATA", "")
+    norm = os.path.normcase(os.path.normpath(cwd))
+    if roaming and norm.startswith(os.path.normcase(os.path.normpath(roaming)) + os.sep):
+        rel = os.path.normpath(cwd)[len(os.path.normpath(roaming)) + 1:]
+        pkgs = os.path.join(os.environ.get("LOCALAPPDATA", ""), "Packages")
+        for name in sorted(os.listdir(pkgs)) if os.path.isdir(pkgs) else []:
+            candidate = os.path.join(pkgs, name, "LocalCache", "Roaming", rel)
+            if os.path.isdir(candidate):
+                return candidate
+    return None
+
+
 DEFAULTS = {
-    "codex_exe": shutil.which("codex") or "codex",
+    "codex_exe": find_default_codex_exe(),
     "codex_args": ["--dangerously-bypass-approvals-and-sandbox", "--skip-git-repo-check"],
     "max_parallel": 3,
     "spool_flush_sec": 60,
@@ -182,10 +226,13 @@ class CodexExecutor:
 
     def build_queue_cmd(self, task, prompt):
         """[队列] queue CLI 只提供 --message 文本参数，按其帮助格式投递一次。"""
+        exe = queue_codex_exe(self.cfg["codex_exe"])
+        if not exe:
+            raise FileNotFoundError("codex queue 需要直接可执行的 codex.exe")
         # queue 不支持 exec 专属的 --skip-git-repo-check，只传其帮助列出的危险模式开关。
         queue_args = [arg for arg in self.cfg["codex_args"]
                       if arg == "--dangerously-bypass-approvals-and-sandbox"]
-        return [self.cfg["codex_exe"], "queue"] + queue_args + [
+        return [exe, "queue"] + queue_args + [
             "--thread", str(task.get("session_id") or ""), "--message", prompt, "-C", str(task["cwd"])
         ]
 
@@ -393,10 +440,11 @@ class CodexExecutor:
         reporter.on_lost = lambda: kill_tree(process_ref["proc"])
         queue_attempted = False
         try:
-            cwd = str(task.get("cwd") or "")
-            if not os.path.isdir(cwd):
+            real_cwd = resolve_cwd(str(task.get("cwd") or ""))
+            if not real_cwd:
                 self._send_failed(reporter, "CWD_MISSING", "工作目录不存在；未启动 Codex。")
                 return
+            task = dict(task, cwd=real_cwd)
             if task.get("mode") == "resume" and not task.get("session_id"):
                 self._send_failed(reporter, "SESSION_NOT_FOUND", "续跑任务缺少会话 ID。")
                 return
@@ -564,7 +612,9 @@ def main():
     parser = argparse.ArgumentParser(description="飞书多 AI 中转 Codex 执行器")
     parser.add_argument("--config", help="执行器 JSON 配置文件")
     args = parser.parse_args()
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    os.makedirs(HUB_HOME, exist_ok=True)
+    logging.basicConfig(filename=os.path.join(HUB_HOME, "executor_codex.log"), encoding="utf-8",
+                        level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", force=True)
     executor = CodexExecutor(load_config(args.config))
     executor.serve_forever()
 

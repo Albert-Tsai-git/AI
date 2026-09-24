@@ -18,7 +18,7 @@ python .\feishu-hub\executors\codex\executor.py
 
 ```json
 {
-  "codex_exe": "C:\\nvm4w\\nodejs\\codex.cmd",
+  "codex_exe": "C:\\nvm4w\\nodejs\\node_modules\\@openai\\codex\\node_modules\\@openai\\codex-win32-x64\\vendor\\x86_64-pc-windows-msvc\\bin\\codex.exe",
   "codex_args": [
     "--dangerously-bypass-approvals-and-sandbox",
     "--skip-git-repo-check"
@@ -30,12 +30,14 @@ python .\feishu-hub\executors\codex\executor.py
 
 | 配置项 | 默认值 | 作用 |
 |---|---|---|
-| `codex_exe` | PATH 中的 `codex` | Codex CLI 可执行文件或 `.cmd` 包装器 |
+| `codex_exe` | 优先 npm 包内的原生 `codex.exe`，找不到再使用 PATH 中的 `codex` | Codex CLI 可执行文件；队列分支必须解析为原生 `.exe` |
 | `codex_args` | `--dangerously-bypass-approvals-and-sandbox`、`--skip-git-repo-check` | 传给 `codex exec` 和 `exec resume`；`queue` 只传其支持的危险模式开关 |
 | `max_parallel` | `3` | 同时处理的任务数；执行器只在有空闲槽位时 claim |
 | `spool_flush_sec` | `60` | Hook 离线轮次补发间隔（秒） |
 
-`exec` 与 `exec resume` 的 prompt 通过 stdin 传入。Codex CLI 的 `queue` 子命令只提供 `--message <TEXT>` 输入，没有 stdin 形式，因此桌面队列分支按 CLI 接口把消息作为参数传递；队列命令不会附加 `--skip-git-repo-check` 这类 exec 专属参数。新会话的 `thread.started.thread_id` 是 Hub 使用的 `session_id`；最终可见回复取自 `--output-last-message` 文件。执行器原样使用任务的 `cwd`，目录不存在就报告 `CWD_MISSING`。
+`exec` 与 `exec resume` 的 prompt 通过 stdin 传入。Codex CLI 的 `queue` 子命令只提供 `--message <TEXT>` 输入，没有 stdin 形式，因此桌面队列分支把消息作为参数传给原生 `.exe`，避免 `.cmd` 的 `cmd.exe` 元字符解析和 8191 字符限制。若配置为 `.cmd`，执行器会先查找同一 npm 安装中的原生 `codex.exe`；找不到时拒绝队列投递并报告失败，不会把 prompt 交给 `.cmd`。队列命令不会附加 `--skip-git-repo-check` 这类 exec 专属参数。新会话的 `thread.started.thread_id` 是 Hub 使用的 `session_id`；最终可见回复取自 `--output-last-message` 文件。执行器会按 Claude 执行器相同的规则把 MSIX 虚拟 `%APPDATA%` 目录映射到真实 `Packages/*/LocalCache/Roaming` 路径；两处都不存在才报告 `CWD_MISSING`。
+
+常驻执行器日志写入 `~/.feishu_hub/executor_codex.log`，使用 `pythonw.exe` 启动时也能查看关键状态与错误。
 
 Hub 启动 `codex` 子进程时会设置 `FEISHU_HUB_URL`、`FEISHU_HUB_TASK_ID`、`FEISHU_HUB_LEASE_ID` 和 `FEISHU_HUB_CWD`。Stop Hook 检测到 `FEISHU_HUB_TASK_ID` 会直接退出，避免重复报告。
 
@@ -80,6 +82,7 @@ Codex 执行器测试使用临时 HTTP 服务和 `.cmd` 假 CLI，不连接真�
 
 - 桌面队列回执只代表 CLI 接受了消息，不代表桌面端已开始或完成执行。队列结果取决于目标会话后续运行并触发 Stop Hook；未加载或未唤醒的桌面会话可能保留已接受消息而不自动执行。
 - `queue` 请求超时或回执无法确认时只上报一次 `desktop_queue`，`queue_id` 为 `null`。执行器不会自动重投；之后由桌面 Hook 或 Hub 的恢复流程处理。
+- `queue` 的 `--message` 仍受 Windows 原生命令行长度上限约束；超长消息无法通过当前 Codex CLI 的队列接口传送。
 - Stop Hook 只发送 Codex 提供的最后一条助手回复，不解析 transcript，也不收集工具输出、推理或完整多消息对话。Hook 必须已在桌面端获信任才会运行。
 - CLI 登录失效、会话不存在、无最终回复和普通执行错误分别报告为 `AUTH_REQUIRED`、`SESSION_NOT_FOUND`、`NO_RESULT` 和 `EXEC_ERROR`。执行器重启后的未完成租约由 Hub 交给用户恢复，不会自动重跑。
 - 使用 `--dangerously-bypass-approvals-and-sandbox` 时，任务按用户选定的无确认模式运行；协议 v1 的 `grants` 仍为空，执行器不额外限制目录外访问。
