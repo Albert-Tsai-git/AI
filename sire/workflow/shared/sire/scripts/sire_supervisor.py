@@ -29,6 +29,9 @@ REQUIRED_AGENT_NAMES = (
 )
 REQUIRED_ARCHIVE_ENTRIES = (
     "shared/sire/SKILL.md",
+    "shared/sire/references/global-contract.md",
+    "shared/sire/scripts/sire_paths.py",
+    "shared/sire/scripts/sire_bundle.py",
     "shared/sire/scripts/sire_supervisor.py",
     "shared/sire/scripts/sire_run.py",
     "shared/sire/scripts/sire_kb.py",

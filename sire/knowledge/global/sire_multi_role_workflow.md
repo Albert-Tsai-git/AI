@@ -388,8 +388,8 @@ logger.debug(f"意图识别结果: {intent}")
 
 ### 9. 设备迁移支持（当前规则由 R9 覆盖）
 - 仅当用户明确说出“打包工作流”时，先执行 R9 `sire_supervisor.py preflight`；未明确说出该短语时不得主动打包。
-- 使用 `sire_bundle.py` 打包新版 SIRE、兼容入口、规则/Hook、工作流依赖、全局知识、向量数据库和已发现的全部历史 SIRE 产物；已有历史 zip 也必须纳入。
-- 仅排除缓存、`__pycache__`、`.pyc`、`.git`、`node_modules` 和本次正在生成的 zip/校验文件；完成后执行 R9 `verify-zip --against-current`。
+- 使用 `sire_bundle.py` 打包“打包工作流”轻量包：只含共享 SIRE 源、工作流依赖和全局知识正文；向量库 `sire_vectors.sqlite3`、历史 run 产物、敏感文件和 exports 旧包都不进入 ZIP。
+- 除上述不进入 ZIP 的内容外，另排除缓存、`__pycache__`、`.pyc`、`.git`、`node_modules` 和本次正在生成的 zip/校验文件；完成后执行 R9 `verify-zip --against-current`。
 - 发现清单缺失、移动、疑似覆盖丢失或打包遗漏，立即 STOP 并分类原因，不自动掩盖。
 - 新设备恢复后运行 `sire_vector_db.py index` 重建新主机路径索引。
 

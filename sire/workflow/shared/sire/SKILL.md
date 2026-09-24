@@ -85,4 +85,4 @@ On completion, archive reusable facts, search terms, decisions, limitations, val
 
 ## ZIP packages
 
-The Git repository holds the complete shared database and history. A light ZIP, when explicitly requested, may omit the database and run history; it must still include exactly one `shared/sire/` workflow source and clearly state the omitted data. Restoring a ZIP must reconnect both client aliases to the same repository copy.
+The Git repository holds the complete shared database and history. A light ZIP, when explicitly requested, does not include the SQLite database or run history; it must still include exactly one `shared/sire/` workflow source and clearly state the omitted data. Sensitive files (`secrets` directories and `.pem/.key/.pfx/.p12/.vault`) and old packages under the knowledge `exports` directory are never packaged. After packaging, R9 `verify-zip` checks its own required-entry list (a missing entry is `package_omission`) and rejects any sensitive file in the ZIP (`package_sensitive_leak`). Restoring a ZIP must reconnect both client aliases to the same repository copy.

@@ -29,3 +29,5 @@ If a required source file is missing, a link points to a divergent copy, or the 
 ## ZIP scope
 
 Only package a ZIP when the user explicitly requests “打包工作流”. A light ZIP includes one `shared/sire/` source and shared knowledge, but intentionally excludes the tracked SQLite database and history; the Git repository remains the complete archive. The ZIP manifest must name those omissions and restore both app links to the same shared directory.
+
+Sensitive files (`secrets` directories and `.pem/.key/.pfx/.p12/.vault`, judged only by `sire_bundle.is_sensitive`) are not included in the ZIP; R9 snapshots record only their hash and size and never copy them, while deletion or truncation is still detected. Old packages under the knowledge `exports` directory are excluded from both the ZIP and the R9 inventory. `verify-zip` checks R9's own required-entry list, independent of the packaging scope: any missing entry is `package_omission`, and any sensitive file found in the ZIP is `package_sensitive_leak`.

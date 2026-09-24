@@ -29,7 +29,7 @@ last_updated: 2026-09-15
 - SIRE 角色扩展为 R0–R10；R9 是独立监督员，只维护关联内容清单、快照、差异分类、打包完整性和 STOP 信号，不修改业务、规则或知识正文；R10 是独立原生系统操作员，只执行已确认的系统/桌面应用 UNIT。
 - 每个任务和实现单元进入执行前，R9 先运行 `sire_supervisor.py preflight`，R1 再运行 `sire_vector_db.py search`；每个单元前后都要执行 R9 检查。
 - 发现关联内容缺失、移动、疑似被覆盖导致内容丢失或 zip 清单遗漏，立即 STOP、提醒用户，并排查分类为删除、覆盖/修改、移动、打包遗漏或其他原因；禁止自动重建或用新内容掩盖缺失。
-- 仅当用户明确说出“打包工作流”时，R9 先验收，再运行 `sire_bundle.py`；未明确说出该短语时不得主动打包。打包必须包含全部历史 SIRE 产物和已有历史 zip，仅排除缓存、pyc 及本次正在生成的 zip/校验文件；完成后执行 `verify-zip --against-current`。
+- 仅当用户明确说出“打包工作流”时，R9 先验收，再运行 `sire_bundle.py`；未明确说出该短语时不得主动打包。ZIP 为轻量包：向量库 `sire_vectors.sqlite3`、历史 run 产物、敏感文件和 exports 下的旧包都不进入 ZIP（数据库由 Git 仓库保留）；另排除缓存、pyc 及本次正在生成的 zip/校验文件；完成后执行 `verify-zip --against-current`。
 - 用户反对方向或计划时，先确认原因（已说明原因则直接记录），用 `sire_feedback.py` 保存原话、原计划、偏好、调整动作、阶段和标签。
 - 所有角色严格遵守各自边界；越界必须停止并退回 R0 重新派工。未明确要求专门测试用例时，R7 只做基础验证；每个阶段/角色反馈一行写明“完成事项；隐患/阻塞”。
 - 当前输出契约：每个阶段/角色必须返回核心产物；无需执行时必须显示“跳过”、原因和跳过记录，详细日志只写入 Run 目录。格式和最低产物以 `<SIRE_ROOT>/knowledge/global/SIRE-MIGRATION.md` 为准。
@@ -699,8 +699,8 @@ logger.error("====================================")
 
 ### 9. 设备迁移支持
 - 仅当用户明确说出“打包工作流”时，先执行 R9 `sire_supervisor.py preflight`；未明确说出该短语时不得主动打包。
-- 通过 `sire_bundle.py` 打包新版 SIRE、兼容入口、规则/Hook、工作流依赖、全局知识、向量数据库和 `Documents/Codex` 中全部历史 SIRE 产物；已有历史 zip 也必须纳入。
-- 仅排除缓存、`__pycache__`、`.pyc`、`.git`、`node_modules` 和本次正在生成的 zip/校验文件；完成后执行 R9 `verify-zip --against-current`。
+- 通过 `sire_bundle.py` 打包“打包工作流”轻量包：只含共享 SIRE 源、工作流依赖和全局知识正文；向量库 `sire_vectors.sqlite3`、历史 run 产物、敏感文件和 exports 旧包都不进入 ZIP。
+- 除上述不进入 ZIP 的内容外，另排除缓存、`__pycache__`、`.pyc`、`.git`、`node_modules` 和本次正在生成的 zip/校验文件；完成后执行 R9 `verify-zip --against-current`。
 - 发现缺失或打包遗漏必须立即 STOP 并提醒用户，同时分类删除、覆盖/修改、移动、打包遗漏或其他原因；不得自动掩盖问题。
 - 新设备恢复后运行 `sire_vector_db.py index` 重建绝对路径索引。
 
