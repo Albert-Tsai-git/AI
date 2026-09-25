@@ -1,8 +1,8 @@
 {
-  "created_at": "2026-09-25T04:13:01.122450+00:00",
+  "created_at": "2026-09-25T04:37:46.875433+00:00",
   "source": "@SIRE_ROOT@\\sire_vectors.sqlite3",
-  "source_snapshot_sha256_before_sanitization": "611224f34cee0254524867f948bcc98c8973cbfaa4c3724f4b0745a43ac5f465",
-  "snapshot_sha256": "b501c8d3966caff23c4265c9eecd3b5c228d9b5dbe05d394aa61f1c7b9d10679",
+  "source_snapshot_sha256_before_sanitization": "978c739810c1ea0b0ec67145b8d59fd64abebcb4b9f3391073d64f3a3e6ce949",
+  "snapshot_sha256": "94ade7c47d53eb43b56290b8e02596d81bdb89a8270311cc2d26b414e93e0e22",
   "privacy_transformations": {
     "code_root": 0,
     "sire_root": 1,
@@ -29,7 +29,7 @@
   "validation": {
     "integrity_check": "ok",
     "journal_mode": "delete",
-    "page_count": 17629,
+    "page_count": 17631,
     "freelist_count": 0,
     "fts_integrity": "ok",
     "all_knowledge_and_chunk_embeddings_rebuilt": true,
