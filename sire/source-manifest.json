@@ -1127,26 +1127,6 @@
         "bytes": 5415
       },
       {
-        "path": "sire/workflow/shared/sire/references/governor/SKILL.md",
-        "sha256": "fc3fa8171785dbfb9cd16bf0355c07099fd37592c218a06b90b0c33b406eb6d7",
-        "bytes": 11905
-      },
-      {
-        "path": "sire/workflow/shared/sire/references/governor/agents/openai.yaml",
-        "sha256": "922ac24bf9872a6918574a2b15a4954919a8f92fc3f83e44ced14714e7945a4e",
-        "bytes": 332
-      },
-      {
-        "path": "sire/workflow/shared/sire/references/governor/references/templates.md",
-        "sha256": "a206e6162774ee96a6fdd6052f5cc0735fae42bbb87be6424a868634891cc6ad",
-        "bytes": 3794
-      },
-      {
-        "path": "sire/workflow/shared/sire/references/governor/references/workflow-spec.md",
-        "sha256": "6ae7a9454dee74ca0e2842a0ae2384374ea1e06c90c1c31f04efee02dea12141",
-        "bytes": 9338
-      },
-      {
         "path": "sire/workflow/shared/sire/references/knowledge.md",
         "sha256": "f861e5b267d56030af9f2103a42e8ca7f7923085f810ba67b2fd36b0dc4bb871",
         "bytes": 3085

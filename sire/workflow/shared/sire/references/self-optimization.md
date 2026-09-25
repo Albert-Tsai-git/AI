@@ -75,7 +75,7 @@ R1 收集观察
 
 每个改进提案至少记录：提案编号、改进假设、变更摘要、父版本、基线指标、目标指标、实际指标、证据、评估结论、激活版本和回滚原因。评估未达到目标时不得激活；激活后出现回归时必须恢复上一版并保留失败证据。
 
-本地数据库表 `improvement_proposals`、`improvement_metrics` 和 `workflow_versions` 是 RSI 审计记录的权威来源，可通过 `scripts/sire_rsi.py` 执行提案、评估、激活、状态查询和回滚。
+本地数据库表 `improvement_proposals`、`improvement_metrics` 和 `workflow_versions` 是 RSI 审计记录的权威来源，可通过 `scripts/sire_rsi.py` 执行提案、评估、激活、状态查询和回滚。写命令先写机器级归档库（`SIRE_ARCHIVE_DB` 或 `SIRE_ARCHIVE_ROOT`，或 `--archive-db`），再写仓库库；解析不到归档库时拒绝写入（仅测试可用 `--repo-only`）。`status` 只读。`snapshot_db.py` 发现仓库库有而归档库缺失的 RSI 记录时拒绝发布。
 
 ## 6. SIRE 知识归档映射
 

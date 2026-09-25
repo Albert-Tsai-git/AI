@@ -13,6 +13,15 @@ KNOWLEDGE_DIR = Path(os.environ.get("SIRE_KB_DIR") or SIRE_ROOT / "knowledge" / 
 MODEL_DIR = Path(os.environ.get("SIRE_EMBED_DIR") or Path.home() / "sire" / "models").expanduser()
 
 
+def archive_database_path() -> Path | None:
+    """机器级收尾归档库：SIRE_ARCHIVE_DB 优先，其次 SIRE_ARCHIVE_ROOT；都未设置时返回 None（不猜测）。"""
+    explicit = os.environ.get("SIRE_ARCHIVE_DB")
+    if explicit:
+        return Path(explicit).expanduser()
+    root = os.environ.get("SIRE_ARCHIVE_ROOT")
+    return Path(root).expanduser() / "sire_vectors.sqlite3" if root else None
+
+
 def task_roots() -> list[Path]:
     configured = os.environ.get("SIRE_TASK_ROOTS")
     if configured:

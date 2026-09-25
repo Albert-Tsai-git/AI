@@ -37,7 +37,7 @@
 - 两端检索都使用同一 SQLite。更新后复核知识 ID、FTS、`integrity_check`、计数和 embedding 文本哈希。
 - SIRE 修改共享数据库后，应按本仓库快照流程备份、检查并提交数据库与知识/工作流改动。
 - 数据库备份放到仓库外；不要将 WAL/SHM、私有密钥、模型缓存或整份个人配置写入 Git。
-- 修改共享 skill 目录（`sire/workflow/shared/sire/`）前先运行 `sire_rsi.py propose` 登记 RSI 提案；R9 `sire_supervisor.py finalize` / `rsi-check` 会拦截未登记的未提交改动（`rsi_unregistered_change`）。RSI 记录须写入机器级归档库后再用 `snapshot_db.py` 重建仓库库，否则只写仓库库的记录会在快照时丢失。
+- 修改共享 skill 目录（`sire/workflow/shared/sire/`）前先运行 `sire_rsi.py propose` 登记 RSI 提案；R9 `sire_supervisor.py finalize` / `rsi-check` 会拦截未登记的未提交改动（`rsi_unregistered_change`）。`sire_rsi.py` 写命令同时写机器级归档库（`SIRE_ARCHIVE_ROOT`/`SIRE_ARCHIVE_DB`/`--archive-db`）与仓库库；`snapshot_db.py` 发现仓库库独有的 RSI 记录时拒绝发布。
 
 ## Git 快照与轻量 ZIP
 
@@ -59,3 +59,4 @@
 | 日期 | run | 变更 | 验证 |
 |---|---|---|---|
 | 2026-09-25 | R20260925-052105 | RSI 接入入口（SKILL.md、supervisor.md 检查项 8）与 R9 `rsi-check`/`finalize` 门禁；RSI-20260925-R9GATE → v6.2 | R6A/R6B/R6C 复核、R7 T1–T8 及复测，见 run evidence/U-01 |
+| 2026-09-25 | R20260925-SYNC（本会话） | governor 收敛为 `sire/workflow/support/ai-workflow-governor/` 单份（删除 `shared/sire/references/governor/`；Codex 不再安装独立 governor skill）；RSI 双库写入、只读 status、快照 RSI 丢失保护；RSI-20260925-SYNC | 见 run evidence |

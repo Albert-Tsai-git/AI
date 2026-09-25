@@ -329,6 +329,51 @@ def validate_regular_file_state(path: Path, expected: dict[str, object]) -> None
         raise RuntimeError("snapshot manifest changed while the snapshot was being built")
 
 
+# RSI 审计表的主键：快照会整体替换仓库库，仓库库独有的 RSI 记录必须先进归档库，否则拒绝发布
+RSI_KEYS = {
+    "improvement_proposals": ("proposal_id",),
+    "workflow_versions": ("version",),
+    "improvement_metrics": ("proposal_id", "metric", "created_at"),
+}
+
+
+def rsi_records_missing(dest: Path, snapshot_conn: sqlite3.Connection) -> dict[str, list[list[str]]]:
+    """返回目标库中存在、但快照中缺失的 RSI 记录键；目标库不存在或无表时返回空。"""
+    if not dest.is_file():
+        return {}
+    try:
+        conn = sqlite3.connect(dest.resolve().as_uri() + "?mode=ro", uri=True)
+    except sqlite3.Error as exc:
+        raise RuntimeError("cannot open destination to verify RSI records: " + str(exc)) from exc
+    try:
+        conn.execute("PRAGMA query_only=ON")
+        missing: dict[str, list[list[str]]] = {}
+        for table, keys in RSI_KEYS.items():
+            cols = ",".join(keys)
+            try:
+                before = {tuple(r) for r in conn.execute(f"SELECT {cols} FROM {table}")}
+            except sqlite3.OperationalError as exc:
+                # 只有"表不存在"可放行；损坏、被锁等其他错误必须拒绝发布（fail-closed）
+                if "no such table" in str(exc).lower():
+                    continue
+                raise RuntimeError("cannot verify destination RSI records: " + str(exc)) from exc
+            except sqlite3.Error as exc:
+                raise RuntimeError("cannot verify destination RSI records: " + str(exc)) from exc
+            try:
+                # 仓库库是隐私替换后的快照，这里对来源键做同样替换，避免路径/邮箱类键被误判缺失
+                scratch = collections.Counter()
+                after = {tuple(redact(v, scratch) if isinstance(v, str) else v for v in r)
+                         for r in snapshot_conn.execute(f"SELECT {cols} FROM {table}")}
+            except sqlite3.Error:
+                after = set()
+            gone = sorted(before - after)
+            if gone:
+                missing[table] = [list(map(str, k)) for k in gone]
+        return missing
+    finally:
+        conn.close()
+
+
 def publish_file(staged: Path, target: Path, replace_existing: bool) -> None:
     if replace_existing:
         os.replace(staged, target)
@@ -416,6 +461,9 @@ def _snapshot_locked(source_path: Path, dest: Path, lock_root: Path, pending_pat
             raise RuntimeError("source database state changed during read-only snapshot: " + ", ".join(changed_source_files))
         source_snapshot_hash = sha256(tmp)
         source_counts = counts(tmp_conn)
+        lost = rsi_records_missing(dest, tmp_conn)
+        if lost:
+            raise RuntimeError("destination has RSI records missing from the archive source; write them to the archive first (sire_rsi.py writes both): " + json.dumps(lost, ensure_ascii=False))
         journal_mode = tmp_conn.execute("PRAGMA journal_mode=DELETE").fetchone()[0].lower()
         if journal_mode != 'delete':
             raise RuntimeError('could not switch snapshot to DELETE journal mode')

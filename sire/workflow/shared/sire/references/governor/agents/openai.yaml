@@ -1,6 +1,0 @@
-interface:
-  display_name: "AI Workflow Governor"
-  short_description: "角色化拆解、复核、测试与知识沉淀闭环"
-  default_prompt: "Use $ai-workflow-governor to execute this request through knowledge reuse, role-based decomposition, review gates, and verified task closure."
-policy:
-  allow_implicit_invocation: true

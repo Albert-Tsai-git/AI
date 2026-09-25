@@ -75,7 +75,7 @@ On completion, archive reusable facts, search terms, decisions, limitations, val
 
 ## Workflow changes (RSI)
 
-Any change to files in this shared skill directory is a workflow mechanism change. Before the first edit, register a proposal with `scripts/sire_rsi.py propose`; after verification, record metrics with `evaluate`, and `activate` only an `EVALUATED_PASS` proposal; `rollback` on regression. R9 `sire_supervisor.py finalize` (and the read-only `rsi-check`) returns `STOP` (`rsi_unregistered_change`) when this directory has uncommitted changes but no `PROPOSED`/`EVALUATED_PASS`/`ACTIVE` proposal was created after its last commit. Full rules: [references/self-optimization.md](references/self-optimization.md) §5.1.
+Any change to files in this shared skill directory is a workflow mechanism change. Before the first edit, register a proposal with `scripts/sire_rsi.py propose`; after verification, record metrics with `evaluate`, and `activate` only an `EVALUATED_PASS` proposal; `rollback` on regression. R9 `sire_supervisor.py finalize` (and the read-only `rsi-check`) returns `STOP` (`rsi_unregistered_change`) when this directory has uncommitted changes but no `PROPOSED`/`EVALUATED_PASS`/`ACTIVE` proposal was created after its last commit. `sire_rsi.py` write commands update both the machine-level archive database (set `SIRE_ARCHIVE_ROOT` or `SIRE_ARCHIVE_DB`, or pass `--archive-db`) and the repository database, archive first; `status` is read-only. `sire/tools/snapshot_db.py` refuses to publish when the repository database holds RSI records missing from the archive. Full rules: [references/self-optimization.md](references/self-optimization.md) §5.1.
 
 ## Supporting references
 
