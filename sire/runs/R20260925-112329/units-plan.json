@@ -1,0 +1,44 @@
+{
+ "units": [
+  {
+   "id": "U-01",
+   "title": "RSI 双库写入、只读 status 与快照 RSI 丢失保护",
+   "maps": "REQ-RSI",
+   "owner": "R5",
+   "accept": "当 sire_rsi.py 执行写命令且解析到归档库时，应先写归档库再写仓库库且两库 created_at 相同；当解析不到归档库且未给 --repo-only 时应拒绝写入；当 activate 的前置状态在任一库不是 EVALUATED_PASS 时两库都不应被写；当执行 status 时库文件哈希应不变且不生成边车；当仓库库存在归档库缺失的 RSI 记录时 snapshot_db.py 应拒绝发布",
+   "files": [
+    "D:/sire/AI/AI/sire/workflow/shared/sire/scripts/sire_paths.py",
+    "D:/sire/AI/AI/sire/workflow/shared/sire/scripts/sire_rsi.py",
+    "D:/sire/AI/AI/sire/tools/snapshot_db.py"
+   ],
+   "verify": "在临时目录的库副本上 CLI 实测：无归档拒绝、双写、activate 前置失败两库不变、status 哈希不变、快照保护拒绝与正常发布；回归 python sire_supervisor.py rsi-check 可运行",
+   "deps": [],
+   "wave": 1,
+   "risk": "写一半失败时只会归档有仓库无",
+   "stop": "需改数据库结构时退回 R0"
+  },
+  {
+   "id": "U-02",
+   "title": "governor 收敛为 support 单份并移除 Codex 独立副本，同步文档",
+   "maps": "REQ-GOV",
+   "owner": "R5",
+   "accept": "当检查仓库时 references/governor 目录应不存在且 support/ai-workflow-governor 应含 4 个文件；source-manifest.json 中 'references/governor' 应零命中；~/.codex/skills 下非隐藏项应只有 ai-dev-sire-workflow 且 ~/.codex/skills-backup/ai-workflow-governor-20260925 应存在；SKILL.md、self-optimization.md、README.md、SIRE-MIGRATION.md 应各含 'archive' 或 '归档库' 与 'snapshot_db.py'，且 sire_rsi.py 中应逐字存在 --archive-db、--repo-only、SIRE_ARCHIVE_DB、SIRE_ARCHIVE_ROOT",
+   "files": [
+    "D:/sire/AI/AI/sire/workflow/shared/sire/references/governor",
+    "D:/sire/AI/AI/sire/source-manifest.json",
+    "C:/Users/Administrator/.codex/skills/ai-workflow-governor",
+    "D:/sire/AI/AI/sire/workflow/shared/sire/SKILL.md",
+    "D:/sire/AI/AI/sire/workflow/shared/sire/references/self-optimization.md",
+    "D:/sire/AI/AI/sire/README.md",
+    "D:/sire/AI/AI/sire/knowledge/global/SIRE-MIGRATION.md"
+   ],
+   "verify": "ls/grep 核对；sire_bundle.py --dry-run 仍含 support/ai-workflow-governor；R9 preflight 结果与删除一致",
+   "deps": [
+    "U-01"
+   ],
+   "wave": 2,
+   "risk": "R9 基线会把删除识别为缺失",
+   "stop": "发现其他代码引用 references/governor 时停止"
+  }
+ ]
+}

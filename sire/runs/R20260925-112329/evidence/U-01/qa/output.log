@@ -1,0 +1,262 @@
+== 测试脚本 t.py (位于 scratchpad/r7-sync) ==
+import os,sys,json,sqlite3,hashlib,shutil,subprocess,importlib
+from pathlib import Path
+S=Path(sys.argv[1]); SC=Path('D:/sire/AI/AI/sire/workflow/shared/sire/scripts'); TOOLS=Path('D:/sire/AI/AI/sire/tools')
+REAL=[Path('D:/sire/sire_vectors.sqlite3'),Path('D:/sire/AI/AI/sire/data/sire_vectors.sqlite3')]
+def h(p):
+    p=Path(p); return hashlib.sha256(p.read_bytes()).hexdigest() if p.exists() else None
+realh0=[h(p) for p in REAL]
+R={}
+def env(**kw):
+    e=dict(os.environ); [e.pop(k,None) for k in ('SIRE_ARCHIVE_ROOT','SIRE_ARCHIVE_DB')]
+    e['SIRE_DB_BACKUP_DIR']=str(S/'bk'); e['PYTHONIOENCODING']='utf-8'; e.update(kw); return e
+def rsi(*a):
+    r=subprocess.run([sys.executable,str(SC/'sire_rsi.py'),*a],capture_output=True,text=True,encoding='utf-8',env=env())
+    print('$ sire_rsi',' '.join(a),'\n rc=',r.returncode,'\n out=',r.stdout.strip()[-600:],'\n err=',r.stderr.strip()[-400:]); return r
+def q(p,sql):
+    c=sqlite3.connect(p); x=c.execute(sql).fetchall(); c.close(); return x
+def fresh(n):
+    d=S/n; shutil.rmtree(d,ignore_errors=True); d.mkdir(parents=True); a=d/'A.sqlite3'; b=d/'B.sqlite3'; shutil.copy(REAL[1],a); shutil.copy(REAL[0],b); return a,b
+def ok(k,c,msg=''):
+    R[k]=R.get(k,True) and bool(c); print(f'[{k}] {"OK" if c else "FAIL"} {msg}')
+# T1
+a,b=fresh('t1'); ha,hb=h(a),h(b)
+r=rsi('--db',str(a),'propose','RSI-T1','--title','t','--hypothesis','h','--change','c')
+ok('T1',r.returncode!=0 and '归档库' in (r.stderr+r.stdout),'拒绝'); ok('T1',h(a)==ha and h(b)==hb,'副本不变')
+# T2
+a,b=fresh('t2')
+r=rsi('--db',str(a),'--archive-db',str(b),'propose','RSI-T2','--title','t','--hypothesis','h','--change','c')
+d=json.loads(r.stdout.strip().splitlines()[-1])['databases']; ok('T2',r.returncode==0 and Path(d[0])==b and Path(d[1])==a,f'order {d}')
+sq="select created_at,status from improvement_proposals where proposal_id='RSI-T2'"
+ca=q(a,sq); cb=q(b,sq); ok('T2',ca and ca==cb,f'A={ca} B={cb}')
+# T3
+r=rsi('--db',str(a),'--archive-db',str(b),'evaluate','RSI-T2','--metric','m1,0,1,1,ev.txt')
+qs="select status,evaluated_at,evaluation from improvement_proposals where proposal_id='RSI-T2'"
+qm="select metric,before_value,after_value,target_value,passed,evidence,created_at from improvement_metrics where proposal_id='RSI-T2'"
+ok('T3',r.returncode==0 and q(a,qs)==q(b,qs) and q(a,qs)[0][0]=='EVALUATED_PASS',str(q(a,qs)))
+ok('T3',q(a,qm)==q(b,qm) and len(q(a,qm))==1,str(q(a,qm)))
+r=rsi('--db',str(a),'--archive-db',str(b),'activate','RSI-T2','--version','vT2','--config-hash','abc')
+qv="select * from workflow_versions order by version"
+row=q(a,"select version,proposal_id,status from workflow_versions where version='vT2'")
+ok('T3',r.returncode==0 and q(a,qv)==q(b,qv) and row==[('vT2','RSI-T2','ACTIVE')],str(q(a,qv)))
+ok('T3',q(a,qs)[0][0]=='ACTIVE' and q(a,qs)==q(b,qs),'提案状态 ACTIVE 一致')
+# T4
+a,b=fresh('t4')
+rsi('--db',str(a),'--archive-db',str(b),'propose','RSI-T4','--title','t','--hypothesis','h','--change','c')
+rsi('--db',str(a),'--repo-only','evaluate','RSI-T4','--metric','m,0,1,1,e')
+ha,hb=h(a),h(b)
+r=rsi('--db',str(a),'--archive-db',str(b),'activate','RSI-T4','--version','v4','--config-hash','x')
+ok('T4',r.returncode!=0 and h(a)==ha and h(b)==hb,f'仅A PASS 拒绝且两库sha256不变 {ha[:12]} {hb[:12]}')
+r=rsi('--db',str(b),'--archive-db',str(a),'activate','RSI-T4','--version','v4','--config-hash','x')
+ok('T4',r.returncode!=0 and h(a)==ha and h(b)==hb,'交换 db/archive 也拒绝且不变')
+# T5
+d=S/'t4'; before=sorted(os.listdir(d)); ha=h(a)
+r=rsi('--db',str(a),'status')
+ok('T5',r.returncode==0 and h(a)==ha and sorted(os.listdir(d))==before and 'RSI-T4' in r.stdout,f'哈希/目录不变 {before}')
+r=rsi('--db',str(S/'nope'/'x.sqlite3'),'status'); j=json.loads(r.stdout)
+ok('T5',r.returncode==0 and j['proposals']==[] and j['versions']==[] and not (S/'nope').exists(),'不存在库返回空且未建库')
+e=S/'t5empty.sqlite3'; e.unlink(missing_ok=True); sqlite3.connect(e).close(); he=h(e)
+r=rsi('--db',str(e),'status'); ok('T5',r.returncode==0 and json.loads(r.stdout)['proposals']==[] and h(e)==he,'无表库返回空且不变')
+# T7
+sys.path.insert(0,str(SC)); import sire_paths
+os.environ.pop('SIRE_ARCHIVE_DB',None); os.environ['SIRE_ARCHIVE_ROOT']=str(S/'arch'); importlib.reload(sire_paths)
+ok('T7',sire_paths.archive_database_path()==S/'arch'/'sire_vectors.sqlite3',str(sire_paths.archive_database_path()))
+os.environ['SIRE_ARCHIVE_DB']=str(S/'x.db'); ok('T7',sire_paths.archive_database_path()==S/'x.db','SIRE_ARCHIVE_DB 优先')
+os.environ.pop('SIRE_ARCHIVE_DB'); os.environ.pop('SIRE_ARCHIVE_ROOT'); ok('T7',sire_paths.archive_database_path() is None,'都未设=None')
+# T6
+sys.path.insert(0,str(TOOLS)); import snapshot_db, sire_rsi
+d=S/'t6'; shutil.rmtree(d,ignore_errors=True); d.mkdir(); src=d/'src.sqlite3'; shutil.copy(REAL[0],src)
+od=d/'out'; od.mkdir(); dest=od/'sire_vectors.sqlite3'; shutil.copy(REAL[1],dest)
+INS="INSERT OR REPLACE INTO improvement_proposals VALUES('RSI-T6-ONLY','t','h','c','PROPOSED','cur','2026-09-25',NULL,NULL,NULL,'{}')"
+cc=sire_rsi.db(dest); cc.execute(INS); cc.commit(); cc.close()
+(od/'snapshot-manifest.json').write_text('{"marker":"orig-manifest-for-T6"}\n'); hd,hm=h(dest),h(od/'snapshot-manifest.json'); ld=sorted(os.listdir(od))
+try:
+    snapshot_db.snapshot_main(src,dest); ok('T6',False,'未拒绝')
+except RuntimeError as ex:
+    print('RuntimeError:',str(ex)[:400]); ok('T6','RSI-T6-ONLY' in str(ex),'RuntimeError 且点名缺失提案')
+ok('T6',h(dest)==hd and h(od/'snapshot-manifest.json')==hm,'dest/manifest sha256 不变')
+cs=sire_rsi.db(src); cs.execute(INS); cs.commit(); cs.close()
+res=snapshot_db.snapshot_main(src,dest); print('snapshot ok',json.dumps(res,ensure_ascii=False)[:300])
+ok('T6',q(dest,"select count(*) from improvement_proposals where proposal_id='RSI-T6-ONLY'")[0][0]==1 and h(od/'snapshot-manifest.json')!=hm,'source 含全部时成功发布')
+nd=d/'new'; nd.mkdir(); res=snapshot_db.snapshot_main(src,nd/'sire_vectors.sqlite3')
+ok('T6',(nd/'sire_vectors.sqlite3').exists() and (nd/'snapshot-manifest.json').exists(),'dest 不存在时成功')
+# T9
+a,b=fresh('t9')
+rsi('--db',str(a),'--archive-db',str(b),'propose','RSI-T9','--title','t','--hypothesis','h','--change','c')
+ha,hb=h(a),h(b)
+r=rsi('--db',str(a),'--archive-db',str(b),'propose','RSI-T9','--title','t2','--hypothesis','h2','--change','c2')
+ok('T9',r.returncode!=0 and h(a)==ha and h(b)==hb,'重复 propose 拒绝且两库不变')
+# T10
+d=S/'t10'; shutil.rmtree(d,ignore_errors=True); d.mkdir(); bad=d/'sire_vectors.sqlite3'; bad.write_text('this is not a sqlite database file at all. '*4); hbad=h(bad)
+try:
+    snapshot_db.snapshot_main(src,bad); ok('T10',False,'未拒绝')
+except Exception as ex:
+    print('T10 exc:',type(ex).__name__,str(ex)[:200]); ok('T10',isinstance(ex,RuntimeError),type(ex).__name__)
+ok('T10',h(bad)==hbad and not (d/'snapshot-manifest.json').exists(),'dest 不变且无 manifest')
+ok('REAL',[h(p) for p in REAL]==realh0,'真实库哈希未变')
+print('SUMMARY',json.dumps(R))
+
+== 运行输出 T1-T7,T9,T10 ==
+$ sire_rsi --db C:\Users\ADMINI~1\AppData\Local\Temp\claude\D--code-driverSoftware\cf61fd01-38cb-47e9-bb50-00b26b934feb\scratchpad\r7-sync\t1\A.sqlite3 propose RSI-T1 --title t --hypothesis h --change c 
+ rc= 1 
+ out=  
+ err= 未解析到归档库：设置 SIRE_ARCHIVE_ROOT / SIRE_ARCHIVE_DB 或传 --archive-db；仅测试时可用 --repo-only
+[T1] OK 拒绝
+[T1] OK 副本不变
+$ sire_rsi --db C:\Users\ADMINI~1\AppData\Local\Temp\claude\D--code-driverSoftware\cf61fd01-38cb-47e9-bb50-00b26b934feb\scratchpad\r7-sync\t2\A.sqlite3 --archive-db C:\Users\ADMINI~1\AppData\Local\Temp\claude\D--code-driverSoftware\cf61fd01-38cb-47e9-bb50-00b26b934feb\scratchpad\r7-sync\t2\B.sqlite3 propose RSI-T2 --title t --hypothesis h --change c 
+ rc= 0 
+ out= cb-47e9-bb50-00b26b934feb\\scratchpad\\r7-sync\\bk\\sire_vectors-20260925-112605-555797.sqlite3", "bytes": 51855360, "integrity": "ok", "counts": {"chunks": 2052, "knowledge_records": 125, "task_records": 692, "keywords": 6742}, "retained": 13}
+{"status": "ok", "command": "propose", "databases": ["C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\claude\\D--code-driverSoftware\\cf61fd01-38cb-47e9-bb50-00b26b934feb\\scratchpad\\r7-sync\\t2\\B.sqlite3", "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\claude\\D--code-driverSoftware\\cf61fd01-38cb-47e9-bb50-00b26b934feb\\scratchpad\\r7-sync\\t2\\A.sqlite3"]} 
+ err= 
+[T2] OK order ['C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\claude\\D--code-driverSoftware\\cf61fd01-38cb-47e9-bb50-00b26b934feb\\scratchpad\\r7-sync\\t2\\B.sqlite3', 'C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\claude\\D--code-driverSoftware\\cf61fd01-38cb-47e9-bb50-00b26b934feb\\scratchpad\\r7-sync\\t2\\A.sqlite3']
+[T2] OK A=[('2026-09-25T03:26:04.906251+00:00', 'PROPOSED')] B=[('2026-09-25T03:26:04.906251+00:00', 'PROPOSED')]
+$ sire_rsi --db C:\Users\ADMINI~1\AppData\Local\Temp\claude\D--code-driverSoftware\cf61fd01-38cb-47e9-bb50-00b26b934feb\scratchpad\r7-sync\t2\A.sqlite3 --archive-db C:\Users\ADMINI~1\AppData\Local\Temp\claude\D--code-driverSoftware\cf61fd01-38cb-47e9-bb50-00b26b934feb\scratchpad\r7-sync\t2\B.sqlite3 evaluate RSI-T2 --metric m1,0,1,1,ev.txt 
+ rc= 0 
+ out= b-47e9-bb50-00b26b934feb\\scratchpad\\r7-sync\\bk\\sire_vectors-20260925-112606-733881.sqlite3", "bytes": 51855360, "integrity": "ok", "counts": {"chunks": 2052, "knowledge_records": 125, "task_records": 692, "keywords": 6742}, "retained": 14}
+{"status": "ok", "command": "evaluate", "databases": ["C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\claude\\D--code-driverSoftware\\cf61fd01-38cb-47e9-bb50-00b26b934feb\\scratchpad\\r7-sync\\t2\\B.sqlite3", "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\claude\\D--code-driverSoftware\\cf61fd01-38cb-47e9-bb50-00b26b934feb\\scratchpad\\r7-sync\\t2\\A.sqlite3"]} 
+ err= 
+[T3] OK [('EVALUATED_PASS', '2026-09-25T03:26:06.112294+00:00', '{"passed": true, "metrics": 1}')]
+[T3] OK [('m1', 0.0, 1.0, 1.0, 1, 'ev.txt', '2026-09-25T03:26:06.112294+00:00')]
+$ sire_rsi --db C:\Users\ADMINI~1\AppData\Local\Temp\claude\D--code-driverSoftware\cf61fd01-38cb-47e9-bb50-00b26b934feb\scratchpad\r7-sync\t2\A.sqlite3 --archive-db C:\Users\ADMINI~1\AppData\Local\Temp\claude\D--code-driverSoftware\cf61fd01-38cb-47e9-bb50-00b26b934feb\scratchpad\r7-sync\t2\B.sqlite3 activate RSI-T2 --version vT2 --config-hash abc 
+ rc= 0 
+ out= b-47e9-bb50-00b26b934feb\\scratchpad\\r7-sync\\bk\\sire_vectors-20260925-112608-006061.sqlite3", "bytes": 51855360, "integrity": "ok", "counts": {"chunks": 2052, "knowledge_records": 125, "task_records": 692, "keywords": 6742}, "retained": 14}
+{"status": "ok", "command": "activate", "databases": ["C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\claude\\D--code-driverSoftware\\cf61fd01-38cb-47e9-bb50-00b26b934feb\\scratchpad\\r7-sync\\t2\\B.sqlite3", "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\claude\\D--code-driverSoftware\\cf61fd01-38cb-47e9-bb50-00b26b934feb\\scratchpad\\r7-sync\\t2\\A.sqlite3"]} 
+ err= 
+[T3] OK [('v6.1', 'RSI-20260921-DB', 'RETIRED', 'local-db-rsi-v1', '2026-09-21T00:50:32.020639+00:00', '2026-09-21T00:50:32.020639+00:00', '2026-09-24T22:42:54.210204+00:00'), ('v6.2', 'RSI-20260925-R9GATE', 'RETIRED', 'ad38036a68f10c191e3ebc8ae85a57c6005b313f', '2026-09-24T22:42:54.210204+00:00', '2026-09-24T22:42:54.210204+00:00', '2026-09-25T03:26:07.331821+00:00'), ('vT2', 'RSI-T2', 'ACTIVE', 'abc', '2026-09-25T03:26:07.331821+00:00', '2026-09-25T03:26:07.331821+00:00', None)]
+[T3] OK 提案状态 ACTIVE 一致
+$ sire_rsi --db C:\Users\ADMINI~1\AppData\Local\Temp\claude\D--code-driverSoftware\cf61fd01-38cb-47e9-bb50-00b26b934feb\scratchpad\r7-sync\t4\A.sqlite3 --archive-db C:\Users\ADMINI~1\AppData\Local\Temp\claude\D--code-driverSoftware\cf61fd01-38cb-47e9-bb50-00b26b934feb\scratchpad\r7-sync\t4\B.sqlite3 propose RSI-T4 --title t --hypothesis h --change c 
+ rc= 0 
+ out= cb-47e9-bb50-00b26b934feb\\scratchpad\\r7-sync\\bk\\sire_vectors-20260925-112609-411402.sqlite3", "bytes": 51855360, "integrity": "ok", "counts": {"chunks": 2052, "knowledge_records": 125, "task_records": 692, "keywords": 6742}, "retained": 14}
+{"status": "ok", "command": "propose", "databases": ["C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\claude\\D--code-driverSoftware\\cf61fd01-38cb-47e9-bb50-00b26b934feb\\scratchpad\\r7-sync\\t4\\B.sqlite3", "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\claude\\D--code-driverSoftware\\cf61fd01-38cb-47e9-bb50-00b26b934feb\\scratchpad\\r7-sync\\t4\\A.sqlite3"]} 
+ err= 
+$ sire_rsi --db C:\Users\ADMINI~1\AppData\Local\Temp\claude\D--code-driverSoftware\cf61fd01-38cb-47e9-bb50-00b26b934feb\scratchpad\r7-sync\t4\A.sqlite3 --repo-only evaluate RSI-T4 --metric m,0,1,1,e 
+ rc= 0 
+ out= {"backup": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\claude\\D--code-driverSoftware\\cf61fd01-38cb-47e9-bb50-00b26b934feb\\scratchpad\\r7-sync\\bk\\sire_vectors-20260925-112610-179138.sqlite3", "bytes": 51855360, "integrity": "ok", "counts": {"chunks": 2052, "knowledge_records": 125, "task_records": 692, "keywords": 6742}, "retained": 14}
+{"status": "ok", "command": "evaluate", "databases": ["C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\claude\\D--code-driverSoftware\\cf61fd01-38cb-47e9-bb50-00b26b934feb\\scratchpad\\r7-sync\\t4\\A.sqlite3"]} 
+ err= 
+$ sire_rsi --db C:\Users\ADMINI~1\AppData\Local\Temp\claude\D--code-driverSoftware\cf61fd01-38cb-47e9-bb50-00b26b934feb\scratchpad\r7-sync\t4\A.sqlite3 --archive-db C:\Users\ADMINI~1\AppData\Local\Temp\claude\D--code-driverSoftware\cf61fd01-38cb-47e9-bb50-00b26b934feb\scratchpad\r7-sync\t4\B.sqlite3 activate RSI-T4 --version v4 --config-hash x 
+ rc= 1 
+ out=  
+ err= 两库提案状态不一致，先人工核对修复后再执行：{"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\claude\\D--code-driverSoftware\\cf61fd01-38cb-47e9-bb50-00b26b934feb\\scratchpad\\r7-sync\\t4\\B.sqlite3": "PROPOSED", "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\claude\\D--code-driverSoftware\\cf61fd01-38cb-47e9-bb50-00b26b934feb\\scratchpad\\r7-sync\\t4\\A.sqlite3": "EVALUATED_PASS"}
+[T4] OK 仅A PASS 拒绝且两库sha256不变 0f384a466478 969804fc4527
+$ sire_rsi --db C:\Users\ADMINI~1\AppData\Local\Temp\claude\D--code-driverSoftware\cf61fd01-38cb-47e9-bb50-00b26b934feb\scratchpad\r7-sync\t4\B.sqlite3 --archive-db C:\Users\ADMINI~1\AppData\Local\Temp\claude\D--code-driverSoftware\cf61fd01-38cb-47e9-bb50-00b26b934feb\scratchpad\r7-sync\t4\A.sqlite3 activate RSI-T4 --version v4 --config-hash x 
+ rc= 1 
+ out=  
+ err= 两库提案状态不一致，先人工核对修复后再执行：{"C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\claude\\D--code-driverSoftware\\cf61fd01-38cb-47e9-bb50-00b26b934feb\\scratchpad\\r7-sync\\t4\\A.sqlite3": "EVALUATED_PASS", "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\claude\\D--code-driverSoftware\\cf61fd01-38cb-47e9-bb50-00b26b934feb\\scratchpad\\r7-sync\\t4\\B.sqlite3": "PROPOSED"}
+[T4] OK 交换 db/archive 也拒绝且不变
+$ sire_rsi --db C:\Users\ADMINI~1\AppData\Local\Temp\claude\D--code-driverSoftware\cf61fd01-38cb-47e9-bb50-00b26b934feb\scratchpad\r7-sync\t4\A.sqlite3 status 
+ rc= 0 
+ out= 
+      "proposal_id": "RSI-20260925-R9GATE",
+      "status": "ACTIVE",
+      "config_hash": "ad38036a68f10c191e3ebc8ae85a57c6005b313f",
+      "created_at": "2026-09-24T22:42:54.210204+00:00",
+      "activated_at": "2026-09-24T22:42:54.210204+00:00",
+      "retired_at": null
+    },
+    {
+      "version": "v6.1",
+      "proposal_id": "RSI-20260921-DB",
+      "status": "RETIRED",
+      "config_hash": "local-db-rsi-v1",
+      "created_at": "2026-09-21T00:50:32.020639+00:00",
+      "activated_at": "2026-09-21T00:50:32.020639+00:00",
+      "retired_at": "2026-09-24T22:42:54.210204+00:00"
+    }
+  ]
+} 
+ err= 
+[T5] OK 哈希/目录不变 ['A.sqlite3', 'B.sqlite3']
+$ sire_rsi --db C:\Users\ADMINI~1\AppData\Local\Temp\claude\D--code-driverSoftware\cf61fd01-38cb-47e9-bb50-00b26b934feb\scratchpad\r7-sync\nope\x.sqlite3 status 
+ rc= 0 
+ out= {
+  "db": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\claude\\D--code-driverSoftware\\cf61fd01-38cb-47e9-bb50-00b26b934feb\\scratchpad\\r7-sync\\nope\\x.sqlite3",
+  "proposals": [],
+  "versions": []
+} 
+ err= 
+[T5] OK 不存在库返回空且未建库
+$ sire_rsi --db C:\Users\ADMINI~1\AppData\Local\Temp\claude\D--code-driverSoftware\cf61fd01-38cb-47e9-bb50-00b26b934feb\scratchpad\r7-sync\t5empty.sqlite3 status 
+ rc= 0 
+ out= {
+  "db": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\claude\\D--code-driverSoftware\\cf61fd01-38cb-47e9-bb50-00b26b934feb\\scratchpad\\r7-sync\\t5empty.sqlite3",
+  "proposals": [],
+  "versions": []
+} 
+ err= 
+[T5] OK 无表库返回空且不变
+[T7] OK C:\Users\ADMINI~1\AppData\Local\Temp\claude\D--code-driverSoftware\cf61fd01-38cb-47e9-bb50-00b26b934feb\scratchpad\r7-sync\arch\sire_vectors.sqlite3
+[T7] OK SIRE_ARCHIVE_DB 优先
+[T7] OK 都未设=None
+RuntimeError: destination has RSI records missing from the archive source; write them to the archive first (sire_rsi.py writes both): {"improvement_proposals": [["RSI-T6-ONLY"]]}
+[T6] OK RuntimeError 且点名缺失提案
+[T6] OK dest/manifest sha256 不变
+snapshot ok {"snapshot": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\claude\\D--code-driverSoftware\\cf61fd01-38cb-47e9-bb50-00b26b934feb\\scratchpad\\r7-sync\\t6\\out\\sire_vectors.sqlite3", "manifest": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\claude\\D--code-driverSoftware\\cf61fd01-38cb-47e9-bb5
+[T6] OK source 含全部时成功发布
+[T6] OK dest 不存在时成功
+$ sire_rsi --db C:\Users\ADMINI~1\AppData\Local\Temp\claude\D--code-driverSoftware\cf61fd01-38cb-47e9-bb50-00b26b934feb\scratchpad\r7-sync\t9\A.sqlite3 --archive-db C:\Users\ADMINI~1\AppData\Local\Temp\claude\D--code-driverSoftware\cf61fd01-38cb-47e9-bb50-00b26b934feb\scratchpad\r7-sync\t9\B.sqlite3 propose RSI-T9 --title t --hypothesis h --change c 
+ rc= 0 
+ out= cb-47e9-bb50-00b26b934feb\\scratchpad\\r7-sync\\bk\\sire_vectors-20260925-112851-023891.sqlite3", "bytes": 51855360, "integrity": "ok", "counts": {"chunks": 2052, "knowledge_records": 125, "task_records": 692, "keywords": 6742}, "retained": 14}
+{"status": "ok", "command": "propose", "databases": ["C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\claude\\D--code-driverSoftware\\cf61fd01-38cb-47e9-bb50-00b26b934feb\\scratchpad\\r7-sync\\t9\\B.sqlite3", "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\claude\\D--code-driverSoftware\\cf61fd01-38cb-47e9-bb50-00b26b934feb\\scratchpad\\r7-sync\\t9\\A.sqlite3"]} 
+ err= 
+$ sire_rsi --db C:\Users\ADMINI~1\AppData\Local\Temp\claude\D--code-driverSoftware\cf61fd01-38cb-47e9-bb50-00b26b934feb\scratchpad\r7-sync\t9\A.sqlite3 --archive-db C:\Users\ADMINI~1\AppData\Local\Temp\claude\D--code-driverSoftware\cf61fd01-38cb-47e9-bb50-00b26b934feb\scratchpad\r7-sync\t9\B.sqlite3 propose RSI-T9 --title t2 --hypothesis h2 --change c2 
+ rc= 1 
+ out=  
+ err= 提案 RSI-T9 已存在于 ['C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\claude\\D--code-driverSoftware\\cf61fd01-38cb-47e9-bb50-00b26b934feb\\scratchpad\\r7-sync\\t9\\B.sqlite3', 'C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\claude\\D--code-driverSoftware\\cf61fd01-38cb-47e9-bb50-00b26b934feb\\scratchpad\\r7-sync\\t9\\A.sqlite3']，不得重复 propose（会覆盖原 created_at）
+[T9] OK 重复 propose 拒绝且两库不变
+T10 exc: RuntimeError destination is not a supported SQLite database
+[T10] OK RuntimeError
+[T10] OK dest 不变且无 manifest
+[REAL] OK 真实库哈希未变
+SUMMARY {"T1": true, "T2": true, "T3": true, "T4": true, "T5": true, "T7": true, "T6": true, "T9": true, "T10": true, "REAL": true}
+
+== T8 回归 ==
+$ python sire_supervisor.py rsi-check
+{
+  "status": "PASS",
+  "reason": "工作流改动已登记 RSI 提案",
+  "changed": [
+    "sire/workflow/shared/sire/SKILL.md",
+    "sire/workflow/shared/sire/references/governor/SKILL.md",
+    "sire/workflow/shared/sire/references/governor/agents/openai.yaml",
+    "sire/workflow/shared/sire/references/governor/references/templates.md",
+    "sire/workflow/shared/sire/references/governor/references/workflow-spec.md",
+    "sire/workflow/shared/sire/references/self-optimization.md",
+    "sire/workflow/shared/sire/scripts/sire_paths.py",
+    "sire/workflow/shared/sire/scripts/sire_rsi.py"
+  ],
+  "last_workflow_commit": "2026-09-25T06:42:33+08:00",
+  "db": "D:\\sire\\AI\\AI\\sire\\data\\sire_vectors.sqlite3",
+  "matched_proposals": [
+    {
+      "proposal_id": "RSI-20260925-SYNC",
+      "status": "PROPOSED",
+      "created_at": "2026-09-25T03:20:40.211688+00:00"
+    }
+  ]
+}
+rc=0
+$ python sire_bundle.py --dry-run | grep governor
+rc=0
+8
+references/governor hits: 0
+$ ls -A ~/.codex/skills
+.system
+ai-dev-sire-workflow
+$ ls backup
+SKILL.md
+agents
+references
+== bundle dry-run governor 行 ==
+    "support/ai-workflow-governor/agents/openai.yaml",
+    "support/ai-workflow-governor/references/templates.md",
+    "support/ai-workflow-governor/references/workflow-spec.md",
+    "support/ai-workflow-governor/SKILL.md"
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\support\\ai-workflow-governor\\agents\\openai.yaml",
+      "archive_path": "support/ai-workflow-governor/agents/openai.yaml",
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\support\\ai-workflow-governor\\references\\templates.md",
+      "archive_path": "support/ai-workflow-governor/references/templates.md",
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\support\\ai-workflow-governor\\references\\workflow-spec.md",
+      "archive_path": "support/ai-workflow-governor/references/workflow-spec.md",
+      "source": "D:\\sire\\AI\\AI\\sire\\workflow\\support\\ai-workflow-governor\\SKILL.md",
+      "archive_path": "support/ai-workflow-governor/SKILL.md",

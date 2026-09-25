@@ -1,6 +1,33 @@
 {
   "records": [
     {
+      "id": "E-008",
+      "type": "efficiency",
+      "title": "SIRE 单一来源收敛与 RSI 双库写入",
+      "file": "global_dev_efficiency.md",
+      "line": 3,
+      "date": "2026-09-25",
+      "project": "SIRE v6 Claude/Codex 共享工作流",
+      "status": "已验证（run R20260925-112329，RSI-20260925-SYNC → v6.3）",
+      "keywords": [
+        "SIRE",
+        "单一来源",
+        "governor",
+        "ai-workflow-governor",
+        "Codex skill",
+        "目录联接",
+        "RSI",
+        "sire_rsi",
+        "归档库",
+        "SIRE_ARCHIVE_ROOT",
+        "SIRE_ARCHIVE_DB",
+        "snapshot_db",
+        "RSI 丢失保护",
+        "fail-closed",
+        "WAL"
+      ]
+    },
+    {
       "id": "F-026",
       "type": "feature",
       "title": "EncoderPlotter 烧录面板放开 DPB 锁定 — 型号/固件文件可重选",
@@ -1241,7 +1268,53 @@
       "P-20260925"
     ]
   },
-  "efficiency": {},
+  "efficiency": {
+    "SIRE": [
+      "E-008"
+    ],
+    "单一来源": [
+      "E-008"
+    ],
+    "governor": [
+      "E-008"
+    ],
+    "ai-workflow-governor": [
+      "E-008"
+    ],
+    "Codex skill": [
+      "E-008"
+    ],
+    "目录联接": [
+      "E-008"
+    ],
+    "RSI": [
+      "E-008"
+    ],
+    "sire_rsi": [
+      "E-008"
+    ],
+    "归档库": [
+      "E-008"
+    ],
+    "SIRE_ARCHIVE_ROOT": [
+      "E-008"
+    ],
+    "SIRE_ARCHIVE_DB": [
+      "E-008"
+    ],
+    "snapshot_db": [
+      "E-008"
+    ],
+    "RSI 丢失保护": [
+      "E-008"
+    ],
+    "fail-closed": [
+      "E-008"
+    ],
+    "WAL": [
+      "E-008"
+    ]
+  },
   "habits": {
     "排查纪律": [
       "H-004"
@@ -1268,6 +1341,6 @@
       "H-004"
     ]
   },
-  "last_updated": "2026-09-24T23:56:10Z",
-  "total_records": 18
+  "last_updated": "2026-09-25T03:30:05Z",
+  "total_records": 19
 }

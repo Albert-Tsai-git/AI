@@ -59,4 +59,4 @@
 | 日期 | run | 变更 | 验证 |
 |---|---|---|---|
 | 2026-09-25 | R20260925-052105 | RSI 接入入口（SKILL.md、supervisor.md 检查项 8）与 R9 `rsi-check`/`finalize` 门禁；RSI-20260925-R9GATE → v6.2 | R6A/R6B/R6C 复核、R7 T1–T8 及复测，见 run evidence/U-01 |
-| 2026-09-25 | R20260925-SYNC（本会话） | governor 收敛为 `sire/workflow/support/ai-workflow-governor/` 单份（删除 `shared/sire/references/governor/`；Codex 不再安装独立 governor skill）；RSI 双库写入、只读 status、快照 RSI 丢失保护；RSI-20260925-SYNC | 见 run evidence |
+| 2026-09-25 | R20260925-SYNC（本会话） | governor 收敛为 `sire/workflow/support/ai-workflow-governor/` 单份（删除 `shared/sire/references/governor/`；Codex 不再安装独立 governor skill）；RSI 双库写入、只读 status、快照 RSI 丢失保护；RSI-20260925-SYNC → v6.3 ACTIVE（78e25b4）| run R20260925-112329：R4/R6A/R6B/R6C/R7 PASS；知识 E-008 |

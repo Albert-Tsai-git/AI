@@ -1,0 +1,571 @@
+{
+  "run_id": "R20260925-112329",
+  "title": "governor 单一来源与 RSI 双库写入",
+  "project": "SIRE 共享工作流",
+  "channel": "light",
+  "created": "2026-09-25 11:23:29",
+  "state": "CLOSED",
+  "gates": {
+    "G0": {
+      "verdict": "PASS",
+      "at": "2026-09-25 11:23:37",
+      "note": "kb"
+    },
+    "G1": {
+      "verdict": "PASS",
+      "at": "2026-09-25 11:23:37",
+      "note": "用户：A和C 一起修RSI写库"
+    },
+    "G3": {
+      "verdict": "PASS",
+      "at": "2026-09-25 11:24:47",
+      "note": "R4 第2轮 PASS"
+    },
+    "G5": {
+      "verdict": "PASS",
+      "at": "2026-09-25 11:30:05",
+      "note": "U-01/U-02 DONE；78e25b4；v6.3 两库一致"
+    },
+    "G6": {
+      "verdict": "PASS",
+      "at": "2026-09-25 11:30:13",
+      "note": "records=E-008"
+    }
+  },
+  "execution_approval": {
+    "status": "APPROVED",
+    "mode": "autonomous",
+    "at": "2026-09-25 11:24:47",
+    "note": "用户原话：A和C 一起修RSI写库"
+  },
+  "stage_outputs": {
+    "R0": {
+      "stage": "R0",
+      "status": "DONE",
+      "artifacts": [
+        "见台账"
+      ],
+      "reason": "",
+      "risk": "",
+      "note": "",
+      "updated": "2026-09-25 11:30:06"
+    },
+    "R1": {
+      "stage": "R1",
+      "status": "DONE",
+      "artifacts": [
+        "见台账"
+      ],
+      "reason": "",
+      "risk": "",
+      "note": "",
+      "updated": "2026-09-25 11:30:06"
+    },
+    "R2": {
+      "stage": "R2",
+      "status": "DONE",
+      "artifacts": [
+        "见台账"
+      ],
+      "reason": "",
+      "risk": "",
+      "note": "",
+      "updated": "2026-09-25 11:30:06"
+    },
+    "R3": {
+      "stage": "R3",
+      "status": "DONE",
+      "artifacts": [
+        "见台账"
+      ],
+      "reason": "",
+      "risk": "",
+      "note": "",
+      "updated": "2026-09-25 11:30:06"
+    },
+    "R4": {
+      "stage": "R4",
+      "status": "DONE",
+      "artifacts": [
+        "见台账"
+      ],
+      "reason": "",
+      "risk": "",
+      "note": "",
+      "updated": "2026-09-25 11:30:06"
+    },
+    "R5": {
+      "stage": "R5",
+      "status": "DONE",
+      "artifacts": [
+        "见台账"
+      ],
+      "reason": "",
+      "risk": "",
+      "note": "",
+      "updated": "2026-09-25 11:30:06"
+    },
+    "R6": {
+      "stage": "R6",
+      "status": "DONE",
+      "artifacts": [
+        "见台账"
+      ],
+      "reason": "",
+      "risk": "",
+      "note": "",
+      "updated": "2026-09-25 11:30:06"
+    },
+    "R7": {
+      "stage": "R7",
+      "status": "DONE",
+      "artifacts": [
+        "见台账"
+      ],
+      "reason": "",
+      "risk": "",
+      "note": "",
+      "updated": "2026-09-25 11:30:06"
+    },
+    "R8": {
+      "stage": "R8",
+      "status": "DONE",
+      "artifacts": [
+        "见台账"
+      ],
+      "reason": "",
+      "risk": "",
+      "note": "",
+      "updated": "2026-09-25 11:30:06"
+    },
+    "R9": {
+      "stage": "R9",
+      "status": "DONE",
+      "artifacts": [
+        "见台账"
+      ],
+      "reason": "",
+      "risk": "",
+      "note": "",
+      "updated": "2026-09-25 11:30:06"
+    },
+    "R10": {
+      "stage": "R10",
+      "status": "DONE",
+      "artifacts": [
+        "Codex governor 移至 skills-backup"
+      ],
+      "reason": "",
+      "risk": "",
+      "note": "",
+      "updated": "2026-09-25 11:30:07"
+    },
+    "G6": {
+      "stage": "G6",
+      "status": "DONE",
+      "artifacts": [
+        "知识归档：E-008"
+      ],
+      "reason": "",
+      "risk": "",
+      "note": "records=E-008",
+      "updated": "2026-09-25 11:30:13"
+    }
+  },
+  "workflow_baseline": {
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\SKILL.md": {
+      "sha256": "a07d4655455f5dfe7a73725553e54bc3891f40e3d313c8d42ca567e63394987b",
+      "mtime_ns": 1790306504138578600,
+      "size": 9940
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\agents\\openai.yaml": {
+      "sha256": "dcc47bfc37a26d1088b3e2a6caf7c762ce5c711ae30598d2baa3c5258d309692",
+      "mtime_ns": 1790260059319085400,
+      "size": 307
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\agents\\claude\\sire-analyst.md": {
+      "sha256": "c375580c0777372c583b45600ab1f160530062004f2780fe704ec4f9576b7ef0",
+      "mtime_ns": 1790260242502221800,
+      "size": 1267
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\agents\\claude\\sire-code-reviewer-a.md": {
+      "sha256": "59942a7d63ef0b1fdcfbc8b88ec411de9f3f64a0778048a5b36668f604a01d08",
+      "mtime_ns": 1789431690000000000,
+      "size": 2525
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\agents\\claude\\sire-code-reviewer-b.md": {
+      "sha256": "54bbe0df841d6a27cb6635ccb2c264ded9ed9e79a7f582f2aef5ba9a4a803e53",
+      "mtime_ns": 1789431690000000000,
+      "size": 2783
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\agents\\claude\\sire-code-reviewer-c.md": {
+      "sha256": "2a9377683727d72c6b1480f16351b78275896b73aba1f45e2e4803bbbc46ff02",
+      "mtime_ns": 1789431690000000000,
+      "size": 2757
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\agents\\claude\\sire-code-reviewer.md": {
+      "sha256": "8ee987e2a7ce0e53c5993c94f6013614688c3174e59a1eeb04e2b27f371afb2e",
+      "mtime_ns": 1789431798000000000,
+      "size": 2245
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\agents\\claude\\sire-decomposer.md": {
+      "sha256": "79b3529d44b0e17c1bc21d1eb781d50f683667a54844f3a99d54e774a1c7b36c",
+      "mtime_ns": 1789178814000000000,
+      "size": 1965
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\agents\\claude\\sire-implementer.md": {
+      "sha256": "2c85a511883b82fcec873227aeeb11a66e2579f30fea4bb26924f833f418be13",
+      "mtime_ns": 1790260242502221800,
+      "size": 1824
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\agents\\claude\\sire-integrator.md": {
+      "sha256": "d062219e179789513b8aa0966b3da846deac6d5041923b4051f3d7d269bb9069",
+      "mtime_ns": 1789177954000000000,
+      "size": 1434
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\agents\\claude\\sire-librarian.md": {
+      "sha256": "9d219771f9d60a4f9179fa7168cb375f7c0444519ebe50b931dcfe13db2c1957",
+      "mtime_ns": 1790260206975954500,
+      "size": 1500
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\agents\\claude\\sire-qa-tester.md": {
+      "sha256": "7be823edd67aaac908eef77d386a179d8e6bd0d7ab35b38e6852cc04755debe7",
+      "mtime_ns": 1789177954000000000,
+      "size": 1518
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\agents\\claude\\sire-spec-reviewer.md": {
+      "sha256": "e22ee4de21df5dde22c406e99411919b9f9a9cdf7a0741083f781ae1b112fff6",
+      "mtime_ns": 1789178814000000000,
+      "size": 1463
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\agents\\claude\\sire-supervisor.md": {
+      "sha256": "f147fd197e1245efcc6f6fcca1121b3dbe59d5815b88137c04b58e1a4904df2d",
+      "mtime_ns": 1790260195343332400,
+      "size": 1668
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\agents\\claude\\sire-system-operator.md": {
+      "sha256": "f155105e0902fc6dc49cc13535c27cdac1d812af5426736f055540414eda8b13",
+      "mtime_ns": 1789433698000000000,
+      "size": 2897
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\references\\autonomy.md": {
+      "sha256": "c42d544076e5130ae64fab5e63173ef18a59885077dd06e26a3e624301a2f15c",
+      "mtime_ns": 1790256956539431300,
+      "size": 3371
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\references\\development-overlay.md": {
+      "sha256": "ccaf4dd98255f657922bab9fff316eebb66f41358d39c1956b42114fcd7126ca",
+      "mtime_ns": 1790260242503726800,
+      "size": 7927
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\references\\domain-tests.md": {
+      "sha256": "b097e73512f1cd2519a6ddeb55861abe7160b09d265baa0b946151b92153ecce",
+      "mtime_ns": 1790256956539431300,
+      "size": 2354
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\references\\gates.md": {
+      "sha256": "3ebb84947bbedc6ea0b871c43bc72b9ad64e3d9c44eb3dca86bc689e24dca093",
+      "mtime_ns": 1790260115049748800,
+      "size": 3227
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\references\\global-contract.md": {
+      "sha256": "2dffe352676701e2af1f860de0a4b7541d26d8d5286ced11d77aa0e98ce9e1da",
+      "mtime_ns": 1790263224699471400,
+      "size": 5415
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\references\\knowledge.md": {
+      "sha256": "f861e5b267d56030af9f2103a42e8ca7f7923085f810ba67b2fd36b0dc4bb871",
+      "mtime_ns": 1790260227133563300,
+      "size": 3085
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\references\\legacy-v5.1.md": {
+      "sha256": "6ba42556b8f169f3ac5bee51a5ee4b70e3cac9f726f02fc5e930ed1cc94982cf",
+      "mtime_ns": 1790256956541931800,
+      "size": 7683
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\references\\role-boundaries.md": {
+      "sha256": "c7c42e9cda407b3f4e0b007066227a8494e3a4cc58873282da251dc24af258d6",
+      "mtime_ns": 1790256956529869000,
+      "size": 3280
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\references\\roles.md": {
+      "sha256": "fd3e360d0797de02a4b8a7a5d15ee20388c634344954d4650883bed96b526677",
+      "mtime_ns": 1790260160872040400,
+      "size": 3262
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\references\\scheduler.md": {
+      "sha256": "7ed33893541d609cf6813fb4a9f8cf9589c1f1d2c8a77ef4c07f6568c9a09e34",
+      "mtime_ns": 1790260184814392300,
+      "size": 1067
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\references\\self-optimization.md": {
+      "sha256": "16637fad68b45e1213ad29d81cec29b1b398577017a27a78a0596a1a292f5dd0",
+      "mtime_ns": 1790306504138578600,
+      "size": 5424
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\references\\supervisor.md": {
+      "sha256": "e69fe12f6c518bc72561b1b6ae50ea1d57d64f9473b0f11f9e90dd6117b08835",
+      "mtime_ns": 1790285461695471200,
+      "size": 3958
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\references\\vector-knowledge.md": {
+      "sha256": "8b94ec530c2246dce1107218f9f8d2a6c2e9636800f5c80268dd1d1c1164f3cf",
+      "mtime_ns": 1790262077051245800,
+      "size": 2249
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\scripts\\sire_bundle.py": {
+      "sha256": "da3664f59f784db3f7cb08585ef79f88787ae3abad54123cd882b58652673e64",
+      "mtime_ns": 1790260730919033000,
+      "size": 9179
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\scripts\\sire_db_backup.py": {
+      "sha256": "73bdf39d2496137717ef9d1ccacc9534be518bf01b1e114c1c2121d873737073",
+      "mtime_ns": 1790264953608970400,
+      "size": 1860
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\scripts\\sire_feedback.py": {
+      "sha256": "87074ff00f098742116c81055245127f3b90c2fa70d7952c971b5d783cfe7fb7",
+      "mtime_ns": 1790259562216106700,
+      "size": 3176
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\scripts\\sire_kb.py": {
+      "sha256": "405c7a5cbb9c0030406399e77cb8ccd0382e125d0c9e9510e68a7504bb686cf1",
+      "mtime_ns": 1790259657177710600,
+      "size": 21933
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\scripts\\sire_knowledge_index.py": {
+      "sha256": "20a3aed52b3fef87b86f6c8688b418ab756c579326e9fe038ac2c49a1b9d71c2",
+      "mtime_ns": 1790261711130261800,
+      "size": 20681
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\scripts\\sire_paths.py": {
+      "sha256": "64072c93c6627385fa092e1ca3ee997f2af78f424628350d0752fc661e81c89d",
+      "mtime_ns": 1790306447886048500,
+      "size": 1614
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\scripts\\sire_rsi.py": {
+      "sha256": "064377602e79e54b422948a21254d18ec21a1752b042b12e29e67a44329b88cf",
+      "mtime_ns": 1790306475472902500,
+      "size": 7110
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\scripts\\sire_run.py": {
+      "sha256": "1e8f5c15197ba6126ba7f5f5b1b3b74b4db9e4eac05075681ed51fa2f799a081",
+      "mtime_ns": 1790260730920538900,
+      "size": 52232
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\scripts\\sire_supervisor.py": {
+      "sha256": "88f7946f08826340252984cfd03636fc3f0fdb91a780010e4c72a9c77e38024a",
+      "mtime_ns": 1790285472872448200,
+      "size": 21642
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\scripts\\sire_vector_db.py": {
+      "sha256": "8b718951f504d80c6bcd27b0af88166ceaec140948611ebfdcaf8c26a20b3a93",
+      "mtime_ns": 1790265763417766600,
+      "size": 35383
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\templates\\units.template.json": {
+      "sha256": "54b3524552e3fb98ab052fa95a49598909a38d0d7ec17d0efcd88226dc641665",
+      "mtime_ns": 1790256956543937700,
+      "size": 592
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\support\\ai-workflow-governor\\SKILL.md": {
+      "sha256": "fc3fa8171785dbfb9cd16bf0355c07099fd37592c218a06b90b0c33b406eb6d7",
+      "mtime_ns": 1790256956535908200,
+      "size": 11905
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\support\\ai-workflow-governor\\agents\\openai.yaml": {
+      "sha256": "922ac24bf9872a6918574a2b15a4954919a8f92fc3f83e44ced14714e7945a4e",
+      "mtime_ns": 1790256956535908200,
+      "size": 332
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\support\\ai-workflow-governor\\references\\templates.md": {
+      "sha256": "a206e6162774ee96a6fdd6052f5cc0735fae42bbb87be6424a868634891cc6ad",
+      "mtime_ns": 1790256956536908200,
+      "size": 3794
+    },
+    "D:\\sire\\AI\\AI\\sire\\workflow\\support\\ai-workflow-governor\\references\\workflow-spec.md": {
+      "sha256": "6ae7a9454dee74ca0e2842a0ae2384374ea1e06c90c1c31f04efee02dea12141",
+      "mtime_ns": 1790256956536908200,
+      "size": 9338
+    },
+    "C:\\Users\\Administrator\\.claude\\agents\\sire-analyst.md": {
+      "sha256": "c375580c0777372c583b45600ab1f160530062004f2780fe704ec4f9576b7ef0",
+      "mtime_ns": 1790260242502221800,
+      "size": 1267
+    },
+    "C:\\Users\\Administrator\\.claude\\agents\\sire-analyst.md.legacy-backup-20260924": {
+      "sha256": "cb6fb7bc565b0f4f0a94b6d0ac981d16820c1ecb3b64e6d56d466be05ad43079",
+      "mtime_ns": 1789177032000000000,
+      "size": 1204
+    },
+    "C:\\Users\\Administrator\\.claude\\agents\\sire-code-reviewer-a.md": {
+      "sha256": "59942a7d63ef0b1fdcfbc8b88ec411de9f3f64a0778048a5b36668f604a01d08",
+      "mtime_ns": 1789431690000000000,
+      "size": 2525
+    },
+    "C:\\Users\\Administrator\\.claude\\agents\\sire-code-reviewer-a.md.legacy-backup-20260924": {
+      "sha256": "59942a7d63ef0b1fdcfbc8b88ec411de9f3f64a0778048a5b36668f604a01d08",
+      "mtime_ns": 1789431690000000000,
+      "size": 2525
+    },
+    "C:\\Users\\Administrator\\.claude\\agents\\sire-code-reviewer-b.md": {
+      "sha256": "54bbe0df841d6a27cb6635ccb2c264ded9ed9e79a7f582f2aef5ba9a4a803e53",
+      "mtime_ns": 1789431690000000000,
+      "size": 2783
+    },
+    "C:\\Users\\Administrator\\.claude\\agents\\sire-code-reviewer-b.md.legacy-backup-20260924": {
+      "sha256": "54bbe0df841d6a27cb6635ccb2c264ded9ed9e79a7f582f2aef5ba9a4a803e53",
+      "mtime_ns": 1789431690000000000,
+      "size": 2783
+    },
+    "C:\\Users\\Administrator\\.claude\\agents\\sire-code-reviewer-c.md": {
+      "sha256": "2a9377683727d72c6b1480f16351b78275896b73aba1f45e2e4803bbbc46ff02",
+      "mtime_ns": 1789431690000000000,
+      "size": 2757
+    },
+    "C:\\Users\\Administrator\\.claude\\agents\\sire-code-reviewer-c.md.legacy-backup-20260924": {
+      "sha256": "2a9377683727d72c6b1480f16351b78275896b73aba1f45e2e4803bbbc46ff02",
+      "mtime_ns": 1789431690000000000,
+      "size": 2757
+    },
+    "C:\\Users\\Administrator\\.claude\\agents\\sire-code-reviewer.md": {
+      "sha256": "8ee987e2a7ce0e53c5993c94f6013614688c3174e59a1eeb04e2b27f371afb2e",
+      "mtime_ns": 1789431798000000000,
+      "size": 2245
+    },
+    "C:\\Users\\Administrator\\.claude\\agents\\sire-code-reviewer.md.legacy-backup-20260924": {
+      "sha256": "8ee987e2a7ce0e53c5993c94f6013614688c3174e59a1eeb04e2b27f371afb2e",
+      "mtime_ns": 1789431798000000000,
+      "size": 2245
+    },
+    "C:\\Users\\Administrator\\.claude\\agents\\sire-decomposer.md": {
+      "sha256": "79b3529d44b0e17c1bc21d1eb781d50f683667a54844f3a99d54e774a1c7b36c",
+      "mtime_ns": 1789178814000000000,
+      "size": 1965
+    },
+    "C:\\Users\\Administrator\\.claude\\agents\\sire-decomposer.md.legacy-backup-20260924": {
+      "sha256": "79b3529d44b0e17c1bc21d1eb781d50f683667a54844f3a99d54e774a1c7b36c",
+      "mtime_ns": 1789178814000000000,
+      "size": 1965
+    },
+    "C:\\Users\\Administrator\\.claude\\agents\\sire-implementer.md": {
+      "sha256": "2c85a511883b82fcec873227aeeb11a66e2579f30fea4bb26924f833f418be13",
+      "mtime_ns": 1790260242502221800,
+      "size": 1824
+    },
+    "C:\\Users\\Administrator\\.claude\\agents\\sire-implementer.md.legacy-backup-20260924": {
+      "sha256": "0497d552d10aa808b0c1dc60c028d8d19d294cb36f14ee4f46186379eb91afb6",
+      "mtime_ns": 1789430280000000000,
+      "size": 1787
+    },
+    "C:\\Users\\Administrator\\.claude\\agents\\sire-integrator.md": {
+      "sha256": "d062219e179789513b8aa0966b3da846deac6d5041923b4051f3d7d269bb9069",
+      "mtime_ns": 1789177954000000000,
+      "size": 1434
+    },
+    "C:\\Users\\Administrator\\.claude\\agents\\sire-integrator.md.legacy-backup-20260924": {
+      "sha256": "d062219e179789513b8aa0966b3da846deac6d5041923b4051f3d7d269bb9069",
+      "mtime_ns": 1789177954000000000,
+      "size": 1434
+    },
+    "C:\\Users\\Administrator\\.claude\\agents\\sire-librarian.md": {
+      "sha256": "9d219771f9d60a4f9179fa7168cb375f7c0444519ebe50b931dcfe13db2c1957",
+      "mtime_ns": 1790260206975954500,
+      "size": 1500
+    },
+    "C:\\Users\\Administrator\\.claude\\agents\\sire-librarian.md.legacy-backup-20260924": {
+      "sha256": "693690babf69a2520ea6a86a2751bce338bf0e3148ff40cbb60a6cdc23439083",
+      "mtime_ns": 1789430280000000000,
+      "size": 1901
+    },
+    "C:\\Users\\Administrator\\.claude\\agents\\sire-qa-tester.md": {
+      "sha256": "7be823edd67aaac908eef77d386a179d8e6bd0d7ab35b38e6852cc04755debe7",
+      "mtime_ns": 1789177954000000000,
+      "size": 1518
+    },
+    "C:\\Users\\Administrator\\.claude\\agents\\sire-qa-tester.md.legacy-backup-20260924": {
+      "sha256": "7be823edd67aaac908eef77d386a179d8e6bd0d7ab35b38e6852cc04755debe7",
+      "mtime_ns": 1789177954000000000,
+      "size": 1518
+    },
+    "C:\\Users\\Administrator\\.claude\\agents\\sire-spec-reviewer.md": {
+      "sha256": "e22ee4de21df5dde22c406e99411919b9f9a9cdf7a0741083f781ae1b112fff6",
+      "mtime_ns": 1789178814000000000,
+      "size": 1463
+    },
+    "C:\\Users\\Administrator\\.claude\\agents\\sire-spec-reviewer.md.legacy-backup-20260924": {
+      "sha256": "e22ee4de21df5dde22c406e99411919b9f9a9cdf7a0741083f781ae1b112fff6",
+      "mtime_ns": 1789178814000000000,
+      "size": 1463
+    },
+    "C:\\Users\\Administrator\\.claude\\agents\\sire-supervisor.md": {
+      "sha256": "f147fd197e1245efcc6f6fcca1121b3dbe59d5815b88137c04b58e1a4904df2d",
+      "mtime_ns": 1790260195343332400,
+      "size": 1668
+    },
+    "C:\\Users\\Administrator\\.claude\\agents\\sire-supervisor.md.legacy-backup-20260924": {
+      "sha256": "2527e6e80f343033482fce219fd78da0403d6c125bb4a1ea4b0385a8ef177cf8",
+      "mtime_ns": 1789440066000000000,
+      "size": 4071
+    },
+    "C:\\Users\\Administrator\\.claude\\agents\\sire-system-operator.md": {
+      "sha256": "f155105e0902fc6dc49cc13535c27cdac1d812af5426736f055540414eda8b13",
+      "mtime_ns": 1789433698000000000,
+      "size": 2897
+    },
+    "C:\\Users\\Administrator\\.claude\\agents\\sire-system-operator.md.legacy-backup-20260924": {
+      "sha256": "f155105e0902fc6dc49cc13535c27cdac1d812af5426736f055540414eda8b13",
+      "mtime_ns": 1789433698000000000,
+      "size": 2897
+    },
+    "C:\\Users\\Administrator\\.claude\\CLAUDE.md": {
+      "sha256": "9fa6518cfb2ee9c61ccf3bca8d8d4810fd7c5ea8687e80703f2991b0da8873be",
+      "mtime_ns": 1790283621057440600,
+      "size": 970
+    },
+    "C:\\Users\\Administrator\\.claude\\sire-reminder.txt": {
+      "sha256": "22bacee918ce487a72d800016bfed43e54d3b7cb3111d49b8f9bfa14b3c71a48",
+      "mtime_ns": 1790260618383618800,
+      "size": 321
+    },
+    "D:\\sire\\AI\\AI\\sire\\knowledge\\global\\sire_ai_rules.md": {
+      "sha256": "8625f5282b17f118c7ff48499fbbd76359836030cc90ffafc80870050664a6bf",
+      "mtime_ns": 1790284217289371200,
+      "size": 37241
+    },
+    "D:\\sire\\AI\\AI\\sire\\knowledge\\global\\sire_multi_role_workflow.md": {
+      "sha256": "0bec92061c041f727f5ed32d7f1bb33174fbe8acf1b66dbe1118d8daa55da1a9",
+      "mtime_ns": 1790284218819195900,
+      "size": 21792
+    }
+  },
+  "migration_baseline": {
+    "sha256": "99a9b5555c33f8127c5b88d69754ef87a9234355b3b1770414e2bc35327e85ee",
+    "mtime_ns": 1790306504138578600,
+    "size": 4690
+  },
+  "kb_records": [
+    "E-008"
+  ],
+  "kb_baseline": [
+    "F-024",
+    "F-025",
+    "F-026",
+    "F-027",
+    "F-028",
+    "F-041",
+    "H-004",
+    "P-018",
+    "P-019",
+    "P-020",
+    "P-021",
+    "P-022",
+    "P-023",
+    "P-024",
+    "P-025",
+    "P-20260923",
+    "P-20260924",
+    "P-20260925"
+  ],
+  "closed": "2026-09-25 11:30:13"
+}

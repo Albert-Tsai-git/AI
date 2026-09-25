@@ -1,0 +1,806 @@
+diff --git a/sire/README.md b/sire/README.md
+index 4dc7e3d..c4b2d3b 100644
+--- a/sire/README.md
++++ b/sire/README.md
+@@ -22,7 +22,7 @@ The initial Codex/Claude source copies are preserved outside this repository; `s
+ 
+ Both applications use `scripts/sire_paths.py` to resolve the same values. The repository database is the one shared by Claude and Codex and the database tracked by Git. It holds knowledge records, task records, chunks, embeddings, keyword data, FTS data, and last-run metadata. Do not create app-profile databases. Read commands (`search`, `show`, and `stats`) use read-only SQLite connections and must leave the database file unchanged. Database write entry points, including index, migration, and RSI, create a verified backup before mutation and share a per-database lock with snapshot publication, so they cannot race a Git snapshot.
+ 
+-The machine-level archive database (`@SIRE_ARCHIVE_ROOT@\sire_vectors.sqlite3`) remains a closure archive required by the shared global contract, not a second application database. In PowerShell, `$env:SIRE_ARCHIVE_ROOT` names the local directory represented by `@SIRE_ARCHIVE_ROOT@`, and `$env:SIRE_ARCHIVE_DB` is `Join-Path $env:SIRE_ARCHIVE_ROOT 'sire_vectors.sqlite3'`. At task close, sync reusable knowledge and the run ledger there, then refresh the tracked repository database from that archive through the snapshot tool. This ordering keeps the repository snapshot and its manifest in sync.
++The machine-level archive database (`@SIRE_ARCHIVE_ROOT@\sire_vectors.sqlite3`) remains a closure archive required by the shared global contract, not a second application database. In PowerShell, `$env:SIRE_ARCHIVE_ROOT` names the local directory represented by `@SIRE_ARCHIVE_ROOT@`, and `$env:SIRE_ARCHIVE_DB` is `Join-Path $env:SIRE_ARCHIVE_ROOT 'sire_vectors.sqlite3'`. At task close, sync reusable knowledge and the run ledger there, then refresh the tracked repository database from that archive through the snapshot tool. This ordering keeps the repository snapshot and its manifest in sync. `sire_rsi.py` writes RSI records to both databases (archive first) and `snapshot_db.py` refuses to publish if the repository database holds RSI records missing from the archive.
+ 
+ ## Privacy and snapshot boundary
+ 
+diff --git a/sire/data/sire_vectors.sqlite3 b/sire/data/sire_vectors.sqlite3
+index b1d19ce..8a81481 100644
+Binary files a/sire/data/sire_vectors.sqlite3 and b/sire/data/sire_vectors.sqlite3 differ
+diff --git a/sire/knowledge/global/SIRE-MIGRATION.md b/sire/knowledge/global/SIRE-MIGRATION.md
+index cd27969..dba4866 100644
+--- a/sire/knowledge/global/SIRE-MIGRATION.md
++++ b/sire/knowledge/global/SIRE-MIGRATION.md
+@@ -37,7 +37,7 @@
+ - 两端检索都使用同一 SQLite。更新后复核知识 ID、FTS、`integrity_check`、计数和 embedding 文本哈希。
+ - SIRE 修改共享数据库后，应按本仓库快照流程备份、检查并提交数据库与知识/工作流改动。
+ - 数据库备份放到仓库外；不要将 WAL/SHM、私有密钥、模型缓存或整份个人配置写入 Git。
+-- 修改共享 skill 目录（`sire/workflow/shared/sire/`）前先运行 `sire_rsi.py propose` 登记 RSI 提案；R9 `sire_supervisor.py finalize` / `rsi-check` 会拦截未登记的未提交改动（`rsi_unregistered_change`）。RSI 记录须写入机器级归档库后再用 `snapshot_db.py` 重建仓库库，否则只写仓库库的记录会在快照时丢失。
++- 修改共享 skill 目录（`sire/workflow/shared/sire/`）前先运行 `sire_rsi.py propose` 登记 RSI 提案；R9 `sire_supervisor.py finalize` / `rsi-check` 会拦截未登记的未提交改动（`rsi_unregistered_change`）。`sire_rsi.py` 写命令同时写机器级归档库（`SIRE_ARCHIVE_ROOT`/`SIRE_ARCHIVE_DB`/`--archive-db`）与仓库库；`snapshot_db.py` 发现仓库库独有的 RSI 记录时拒绝发布。
+ 
+ ## Git 快照与轻量 ZIP
+ 
+@@ -59,3 +59,4 @@
+ | 日期 | run | 变更 | 验证 |
+ |---|---|---|---|
+ | 2026-09-25 | R20260925-052105 | RSI 接入入口（SKILL.md、supervisor.md 检查项 8）与 R9 `rsi-check`/`finalize` 门禁；RSI-20260925-R9GATE → v6.2 | R6A/R6B/R6C 复核、R7 T1–T8 及复测，见 run evidence/U-01 |
++| 2026-09-25 | R20260925-SYNC（本会话） | governor 收敛为 `sire/workflow/support/ai-workflow-governor/` 单份（删除 `shared/sire/references/governor/`；Codex 不再安装独立 governor skill）；RSI 双库写入、只读 status、快照 RSI 丢失保护；RSI-20260925-SYNC | 见 run evidence |
+diff --git a/sire/source-manifest.json b/sire/source-manifest.json
+index 749def8..68009d2 100644
+--- a/sire/source-manifest.json
++++ b/sire/source-manifest.json
+@@ -1126,26 +1126,6 @@
+         "sha256": "2dffe352676701e2af1f860de0a4b7541d26d8d5286ced11d77aa0e98ce9e1da",
+         "bytes": 5415
+       },
+-      {
+-        "path": "sire/workflow/shared/sire/references/governor/SKILL.md",
+-        "sha256": "fc3fa8171785dbfb9cd16bf0355c07099fd37592c218a06b90b0c33b406eb6d7",
+-        "bytes": 11905
+-      },
+-      {
+-        "path": "sire/workflow/shared/sire/references/governor/agents/openai.yaml",
+-        "sha256": "922ac24bf9872a6918574a2b15a4954919a8f92fc3f83e44ced14714e7945a4e",
+-        "bytes": 332
+-      },
+-      {
+-        "path": "sire/workflow/shared/sire/references/governor/references/templates.md",
+-        "sha256": "a206e6162774ee96a6fdd6052f5cc0735fae42bbb87be6424a868634891cc6ad",
+-        "bytes": 3794
+-      },
+-      {
+-        "path": "sire/workflow/shared/sire/references/governor/references/workflow-spec.md",
+-        "sha256": "6ae7a9454dee74ca0e2842a0ae2384374ea1e06c90c1c31f04efee02dea12141",
+-        "bytes": 9338
+-      },
+       {
+         "path": "sire/workflow/shared/sire/references/knowledge.md",
+         "sha256": "f861e5b267d56030af9f2103a42e8ca7f7923085f810ba67b2fd36b0dc4bb871",
+diff --git a/sire/tools/snapshot_db.py b/sire/tools/snapshot_db.py
+index 4fb7360..6a4e1bb 100644
+--- a/sire/tools/snapshot_db.py
++++ b/sire/tools/snapshot_db.py
+@@ -329,6 +329,40 @@ def validate_regular_file_state(path: Path, expected: dict[str, object]) -> None
+         raise RuntimeError("snapshot manifest changed while the snapshot was being built")
+ 
+ 
++# RSI 审计表的主键：快照会整体替换仓库库，仓库库独有的 RSI 记录必须先进归档库，否则拒绝发布
++RSI_KEYS = {
++    "improvement_proposals": ("proposal_id",),
++    "workflow_versions": ("version",),
++    "improvement_metrics": ("proposal_id", "metric", "created_at"),
++}
++
++
++def rsi_records_missing(dest: Path, snapshot_conn: sqlite3.Connection) -> dict[str, list[list[str]]]:
++    """返回目标库中存在、但快照中缺失的 RSI 记录键；目标库不存在或无表时返回空。"""
++    if not dest.is_file():
++        return {}
++    conn = sqlite3.connect(dest.resolve().as_uri() + "?mode=ro", uri=True)
++    try:
++        conn.execute("PRAGMA query_only=ON")
++        missing: dict[str, list[list[str]]] = {}
++        for table, keys in RSI_KEYS.items():
++            cols = ",".join(keys)
++            try:
++                before = {tuple(r) for r in conn.execute(f"SELECT {cols} FROM {table}")}
++            except sqlite3.Error:
++                continue
++            try:
++                after = {tuple(r) for r in snapshot_conn.execute(f"SELECT {cols} FROM {table}")}
++            except sqlite3.Error:
++                after = set()
++            gone = sorted(before - after)
++            if gone:
++                missing[table] = [list(map(str, k)) for k in gone]
++        return missing
++    finally:
++        conn.close()
++
++
+ def publish_file(staged: Path, target: Path, replace_existing: bool) -> None:
+     if replace_existing:
+         os.replace(staged, target)
+@@ -416,6 +450,9 @@ def _snapshot_locked(source_path: Path, dest: Path, lock_root: Path, pending_pat
+             raise RuntimeError("source database state changed during read-only snapshot: " + ", ".join(changed_source_files))
+         source_snapshot_hash = sha256(tmp)
+         source_counts = counts(tmp_conn)
++        lost = rsi_records_missing(dest, tmp_conn)
++        if lost:
++            raise RuntimeError("destination has RSI records missing from the archive source; write them to the archive first (sire_rsi.py writes both): " + json.dumps(lost, ensure_ascii=False))
+         journal_mode = tmp_conn.execute("PRAGMA journal_mode=DELETE").fetchone()[0].lower()
+         if journal_mode != 'delete':
+             raise RuntimeError('could not switch snapshot to DELETE journal mode')
+diff --git a/sire/workflow/shared/sire/SKILL.md b/sire/workflow/shared/sire/SKILL.md
+index 5361600..af35379 100644
+--- a/sire/workflow/shared/sire/SKILL.md
++++ b/sire/workflow/shared/sire/SKILL.md
+@@ -75,7 +75,7 @@ On completion, archive reusable facts, search terms, decisions, limitations, val
+ 
+ ## Workflow changes (RSI)
+ 
+-Any change to files in this shared skill directory is a workflow mechanism change. Before the first edit, register a proposal with `scripts/sire_rsi.py propose`; after verification, record metrics with `evaluate`, and `activate` only an `EVALUATED_PASS` proposal; `rollback` on regression. R9 `sire_supervisor.py finalize` (and the read-only `rsi-check`) returns `STOP` (`rsi_unregistered_change`) when this directory has uncommitted changes but no `PROPOSED`/`EVALUATED_PASS`/`ACTIVE` proposal was created after its last commit. Full rules: [references/self-optimization.md](references/self-optimization.md) §5.1.
++Any change to files in this shared skill directory is a workflow mechanism change. Before the first edit, register a proposal with `scripts/sire_rsi.py propose`; after verification, record metrics with `evaluate`, and `activate` only an `EVALUATED_PASS` proposal; `rollback` on regression. R9 `sire_supervisor.py finalize` (and the read-only `rsi-check`) returns `STOP` (`rsi_unregistered_change`) when this directory has uncommitted changes but no `PROPOSED`/`EVALUATED_PASS`/`ACTIVE` proposal was created after its last commit. `sire_rsi.py` write commands update both the machine-level archive database (set `SIRE_ARCHIVE_ROOT` or `SIRE_ARCHIVE_DB`, or pass `--archive-db`) and the repository database, archive first; `status` is read-only. `sire/tools/snapshot_db.py` refuses to publish when the repository database holds RSI records missing from the archive. Full rules: [references/self-optimization.md](references/self-optimization.md) §5.1.
+ 
+ ## Supporting references
+ 
+diff --git a/sire/workflow/shared/sire/references/governor/SKILL.md b/sire/workflow/shared/sire/references/governor/SKILL.md
+deleted file mode 100644
+index a5e9927..0000000
+--- a/sire/workflow/shared/sire/references/governor/SKILL.md
++++ /dev/null
+@@ -1,124 +0,0 @@
+----
+-name: ai-workflow-governor
+-description: Orchestrate non-trivial AI work through knowledge reuse, role-separated requirement decomposition, executable task units, mandatory per-unit review and functional tests, parallel lanes, remediation, and evidence-based closure. Use for multi-step builds, changes, analyses, research, and deliverables; skip only for trivial one-step requests.
+-metadata:
+-  short-description: 角色化拆解、复核、测试与知识沉淀闭环
+----
+-
+-# AI Workflow Governor
+-
+-Use this skill as an execution protocol for any non-trivial request. The goal is to reduce routine human analysis and coordination while increasing quality through explicit roles, small verifiable units, immediate gates, and reusable knowledge.
+-
+-Read [references/workflow-spec.md](references/workflow-spec.md) when the task needs the full role charter, state machine, evidence schema, or operating metrics. Read [references/templates.md](references/templates.md) when creating the task ledger, review records, test records, or knowledge-base entries.
+-
+-## Non-negotiable invariants
+-
+-1. Check for existing implementations, decisions, constraints, and tests before proposing work. Record the search and its result; do not silently reuse or ignore prior work.
+-2. Convert the request into atomic requirements with observable acceptance criteria, then decompose those requirements again into executable task units. Do not execute an unreviewed decomposition.
+-3. Every executable unit must have an owner role, inputs, output artifact, dependencies, acceptance criteria, review method, and functional test.
+-4. Immediately after each unit executes, run an independent review and a functional test. A unit is not complete until both pass and evidence is recorded.
+-5. An executor cannot be the sole approver of its own work. If only one model/agent is available, use separate labelled passes with fresh scrutiny and do not treat the execution narrative as review evidence.
+-6. Independent units may run in parallel, but every lane uses the same execute → review → test → remediate loop. A blocked lane must not stop independent lanes.
+-7. When review or testing fails, classify the defect, change the implementation or plan, and repeat the gates. After three materially identical failures, stop repeating the same approach, record an actionable blocker, and continue all unblocked work.
+-8. Mark the overall request complete only when every requirement maps to a passed unit and integration/end-to-end checks pass. Capture reusable knowledge and update the index before closing.
+-9. Never invent authorization for external, irreversible, sensitive, or high-impact actions. Escalate only the specific decision or permission that cannot be safely inferred; continue independent work.
+-
+-## Roles as people
+-
+-Treat these as distinct accountable roles, even when one model performs multiple passes. Each role must produce its stated output before the next gate.
+-
+-- **Orchestrator** — owns scope, risk, dependency graph, ready queue, retries, and final closure; keeps work moving around blockers.
+-- **Knowledge Curator/Indexer** — searches existing knowledge and implementations before analysis, identifies reusable assets, and records new durable knowledge with an index entry.
+-- **Requirement Analyst** — extracts intent, constraints, non-goals, stakeholders, risks, and observable acceptance criteria.
+-- **Task Decomposer** — maps requirements into small executable units and dependencies; makes each unit independently verifiable.
+-- **Requirement Reviewer** — challenges coverage, ambiguity, sizing, ordering, and testability; rejects weak decomposition before execution.
+-- **Executor** — performs one approved unit and produces the requested artifact plus a concise change/decision record.
+-- **Work Reviewer** — checks the artifact against the unit contract, requirements, conventions, security/safety constraints, and regression risks.
+-- **Functional Tester/Validator** — runs the narrowest meaningful checks first, then broader checks as justified; records commands, inputs, expected result, actual result, and evidence.
+-- **Integrator/Closure Auditor** — verifies cross-unit contracts, end-to-end behavior, requirement coverage, and final evidence completeness.
+-
+-If delegation is available, use separate workers for analysis, execution, and review. If not, simulate role separation with explicit headings and a fresh review pass. Do not let convenience remove a required gate.
+-
+-## Mandatory operating sequence
+-
+-### 0. Intake, scope, and risk
+-
+-Classify the request as trivial or governed. For governed work, state the desired outcome, in-scope systems/files, out-of-scope items, constraints, and whether any action changes external state. Preserve existing user permissions and do not widen the task.
+-
+-### Lightweight path and sparse-input rule
+-
+-For a single-step, reversible, low-risk request with no material ambiguity, answer or edit directly and perform a quick semantic/syntax sanity check; do not manufacture a full KB/REQ/UNIT ledger just to add ceremony. If a short prompt is governed, infer only low-impact, reversible defaults and list them. When missing information would prevent a meaningful test, change scope, select a target, or authorize an external/high-impact action, create a blocker or decision packet and request only the exact missing input. Never invent files, data, credentials, targets, or acceptance criteria.
+-
+-### 1. Knowledge-first check
+-
+-The Knowledge Curator searches the workspace's established knowledge locations first, then relevant source/configuration/history and prior deliverables. Use fast local search such as `rg --files` and `rg` where appropriate. If the answer depends on current or niche external facts, browse only as needed and record sources.
+-
+-Produce a `KB-Check` record containing:
+-
+-- search scope and queries;
+-- matched implementations, decisions, templates, tests, or prior failures;
+-- what can be reused, adapted, or must be avoided;
+-- confidence and unresolved gaps.
+-
+-If no knowledge base exists, create or nominate one under the task's workspace convention; do not hide the absence. At minimum maintain an index file and one structured entry per reusable decision or solution.
+-
+-### 2. Requirement analysis
+-
+-The Requirement Analyst creates `REQ-*` items. Each item must include: user outcome, business/technical intent, constraints, non-goals, inputs, observable acceptance criteria, risk, and evidence needed to prove acceptance. Resolve contradictions from available context; escalate only decisions that materially change scope, risk, or expected outcome.
+-
+-### 3. Second decomposition into executable units
+-
+-The Task Decomposer creates `UNIT-*` cards from the `REQ-*` items. A good unit has one primary outcome, bounded scope, explicit inputs and outputs, a named role owner, dependencies, an implementation approach, a review method, a functional test, and a recovery/rollback note when state can change.
+-
+-The Requirement Reviewer must check the mapping `REQ → UNIT → evidence` and reject any unit that is too large, non-verifiable, missing a test, missing a dependency, or hiding multiple unrelated decisions. Return rejected work to analysis/decomposition; do not execute it.
+-
+-### 4. Scheduling and parallel lanes
+-
+-Build a dependency DAG and a ready queue. Run independent units concurrently when the environment and side effects permit it. Serialize units that share mutable state, conflict on files/resources, or depend on an unresolved decision. Each lane has its own unit card and evidence record. When one lane is blocked, mark the exact dependency and move to the next ready unit.
+-
+-### 5. Per-unit closed loop
+-
+-For every ready unit, perform exactly this gate sequence:
+-
+-1. **Context load** — read the unit card and relevant `KB-Check` results; confirm assumptions and boundaries.
+-2. **Execute** — make the change, analysis, or artifact; record the output and notable decisions.
+-3. **Immediate independent review** — the Work Reviewer checks the result against the unit contract and risks. A pass must cite the inspected artifact or evidence.
+-4. **Immediate functional test** — the Functional Tester runs the unit's test and records reproducible evidence. For non-code work, use an equivalent validation such as schema check, source verification, render inspection, sample evaluation, or acceptance walkthrough.
+-5. **Remediate** — on either failure, record the defect, suspected cause, changed approach, and rerun both review and test. Do not close a unit on a partial pass.
+-6. **Unit closure** — set `UNIT-*` to `DONE` only when review and test both pass; attach the evidence and update downstream readiness.
+-
+-Choose the unit test by domain, not by habit: games test rules, state transitions, input boundaries, and win/lose paths; music tests timing, duration, note/event structure, and render/playback where available; parsers test valid, missing, malformed, and boundary inputs; literature tests required motifs, length, structure, and consistency while a reviewer assesses voice and meaning; creative work tests its output schema, constraints, and internal consistency while a reviewer assesses originality and fit. Never use a structural test as proof of subjective quality.
+-
+-### 6. Integration and final closure
+-
+-The Integrator runs cross-unit contract checks, regression checks, and end-to-end acceptance. The Closure Auditor verifies that every `REQ-*` is covered, every `UNIT-*` is `DONE`, all failures are resolved or explicitly escalated, and the final artifact is usable in the requested context.
+-
+-The Knowledge Curator then extracts only durable, reusable information: decision, context, solution, verification, limitations, and tags. Update the knowledge index with links to the entry and relevant artifact. Avoid recording secrets or transient noise.
+-
+-## Decision and escalation policy
+-
+-AI may decide implementation details, ordering, tool choice, test depth, and remediation strategy when they stay within the stated scope and constraints. Escalate a compact decision packet only for:
+-
+-- ambiguous or contradictory acceptance criteria;
+-- missing authorization or a proposed irreversible/external action;
+-- privacy, security, legal, financial, medical, or safety impact requiring human judgment;
+-- a subjective trade-off with no inferable preference;
+-- an unavailable environment or repeated blocker that prevents meaningful verification.
+-
+-The packet must state the blocker, why it cannot be inferred, 2–3 options, a recommendation, impact, and the exact input needed. Continue all safe independent units while waiting.
+-
+-## Required evidence and status vocabulary
+-
+-Maintain a task ledger using the templates in `references/templates.md`. Minimum fields are `REQ-*`, `UNIT-*`, role owner, dependency, artifact, review verdict, test verdict, retry history, blocker/escalation, and knowledge links.
+-
+-Use these states consistently:
+-
+-`INTAKE → KB_CHECKED → ANALYZED → DECOMPOSED → DECOMPOSITION_REVIEWED → READY → EXECUTING → REVIEWED → TESTED → DONE`
+-
+-Failure returns to `EXECUTING` with a remediation record. A true external or human dependency uses `BLOCKED` with a next action and does not erase prior evidence. Overall `DONE` requires no uncovered requirement, no unverified unit, and a passing integration check.
+-
+-An individual safe artifact may be `DONE` while another lane is `BLOCKED`. The overall task must remain `BLOCKED` or `NEEDS_INPUT` whenever a required requirement cannot be satisfied; do not report a partially blocked task as fully complete.
+-
+-## Response contract
+-
+-For governed work, expose a compact progress summary organized by: scope, KB reuse, requirement map, ready/blocked lanes, unit evidence, decisions/escalations, and final verification. Do not claim completion from intent or from a successful command alone; cite the concrete artifact and test result.
+diff --git a/sire/workflow/shared/sire/references/governor/agents/openai.yaml b/sire/workflow/shared/sire/references/governor/agents/openai.yaml
+deleted file mode 100644
+index 077a780..0000000
+--- a/sire/workflow/shared/sire/references/governor/agents/openai.yaml
++++ /dev/null
+@@ -1,6 +0,0 @@
+-interface:
+-  display_name: "AI Workflow Governor"
+-  short_description: "角色化拆解、复核、测试与知识沉淀闭环"
+-  default_prompt: "Use $ai-workflow-governor to execute this request through knowledge reuse, role-based decomposition, review gates, and verified task closure."
+-policy:
+-  allow_implicit_invocation: true
+diff --git a/sire/workflow/shared/sire/references/governor/references/templates.md b/sire/workflow/shared/sire/references/governor/references/templates.md
+deleted file mode 100644
+index 0eb9fc7..0000000
+--- a/sire/workflow/shared/sire/references/governor/references/templates.md
++++ /dev/null
+@@ -1,182 +0,0 @@
+-# AI Workflow Governor：记录模板
+-
+-以下模板是最小字段集合。可以扩展，但不能删除能证明闭环的字段。
+-
+-## 任务总账
+-
+-```yaml
+-task_id: TASK-YYYYMMDD-###
+-title: ""
+-scope:
+-  in: []
+-  out: []
+-risk: low|medium|high|critical
+-roles:
+-  orchestrator: ""
+-  knowledge_curator: ""
+-  requirement_analyst: ""
+-  decomposer: ""
+-  requirement_reviewer: ""
+-  integrator: ""
+-status: INTAKE
+-kb_check_id: KB-###
+-requirements: [REQ-001]
+-units: [UNIT-001]
+-decisions: []
+-blockers: []
+-integration_evidence: []
+-knowledge_entries: []
+-```
+-
+-## KB-Check
+-
+-```yaml
+-kb_check_id: KB-###
+-scope: "搜索了哪些目录、仓库、历史任务或外部来源"
+-queries: []
+-matches:
+-  - source: "绝对路径、任务 ID 或 URL"
+-    relevance: high|medium|low
+-    status: reusable|adaptable|reference-only|not-applicable
+-reuse_decision: reuse|adapt|new|avoid
+-reason: ""
+-gaps: []
+-checked_by: Knowledge Curator/Indexer
+-checked_at: "YYYY-MM-DD"
+-```
+-
+-## REQ 需求项
+-
+-```yaml
+-req_id: REQ-001
+-statement: "可观察的用户/业务结果"
+-intent: "为什么需要"
+-constraints: []
+-non_goals: []
+-inputs: []
+-acceptance:
+-  - id: AC-001
+-    criterion: ""
+-    evidence_type: artifact|test|source|inspection|approval
+-risk: ""
+-open_decisions: []
+-derived_from: "用户请求或既有决策"
+-review: pending|passed|rejected
+-```
+-
+-## UNIT 执行单元
+-
+-```yaml
+-unit_id: UNIT-001
+-req_ids: [REQ-001]
+-objective: "一个主要、可验证的结果"
+-owner_role: Executor
+-inputs: []
+-outputs: []
+-dependencies: []
+-parallel_safe: true
+-approach: ""
+-acceptance_ids: [AC-001]
+-review_method: "由谁检查什么"
+-test_plan:
+-  command_or_steps: []
+-  expected: ""
+-recovery: "失败时如何回滚或换策略"
+-status: READY
+-artifact: "绝对路径或外部资源标识"
+-```
+-
+-## 复核记录
+-
+-```yaml
+-review_id: REVIEW-###
+-unit_id: UNIT-001
+-reviewer_role: Work Reviewer
+-independent_of_executor: true
+-scope_checked: []
+-findings: []
+-verdict: passed|failed|needs-input
+-evidence: []
+-remediation_id: null
+-```
+-
+-## 测试记录
+-
+-```yaml
+-test_id: TEST-###
+-unit_id: UNIT-001
+-tester_role: Functional Tester/Validator
+-checks:
+-  - step: "命令、输入或检查动作"
+-    expected: ""
+-    actual: ""
+-    result: passed|failed|skipped
+-evidence: []
+-verdict: passed|failed|needs-environment
+-failure_class: none|implementation|requirement|environment|permission|data
+-```
+-
+-## Remediation
+-
+-```yaml
+-remediation_id: REM-###
+-unit_id: UNIT-001
+-attempt: 1
+-defect: "复核或测试观察到的问题"
+-root_cause_hypothesis: ""
+-change_made: ""
+-strategy_changed: true|false
+-rerun_review: REVIEW-###
+-rerun_test: TEST-###
+-result: resolved|repeated|blocked
+-next_action: ""
+-```
+-
+-## 人工决策包
+-
+-```yaml
+-decision_id: DEC-###
+-blocker: "不能安全推断的具体问题"
+-why_human_input_is_required: "权限、业务取舍或高影响风险"
+-options:
+-  - option: A
+-    impact: ""
+-  - option: B
+-    impact: ""
+-recommendation: A
+-exact_input_needed: ""
+-independent_work_continues: []
+-```
+-
+-## 知识条目
+-
+-```yaml
+-knowledge_id: KB-SOL-###
+-title: "可被未来搜索命中的标题"
+-type: decision|solution|failure|test-pattern|reference
+-context: "何时适用"
+-problem: ""
+-solution_or_decision: ""
+-constraints: []
+-verification: []
+-limitations: []
+-tags: []
+-source_artifacts: []
+-related_tasks: []
+-updated_at: "YYYY-MM-DD"
+-```
+-
+-## 最终关闭清单
+-
+-```text
+-[ ] 已完成 KB-Check，且说明了复用/不复用理由
+-[ ] 每个 REQ 有验收标准和至少一个 UNIT
+-[ ] 拆分已由 Requirement Reviewer 通过
+-[ ] 每个 UNIT 都有产物、独立复核证据和功能测试证据
+-[ ] 失败单元有 remediation，未重复无效策略
+-[ ] 并行 lane 的冲突和依赖已处理
+-[ ] 集成/端到端验证通过
+-[ ] 权限和外部副作用均在授权范围内
+-[ ] 可复用知识已创建并进入索引
+-[ ] Closure Auditor 已确认无遗漏需求
+-```
+diff --git a/sire/workflow/shared/sire/references/governor/references/workflow-spec.md b/sire/workflow/shared/sire/references/governor/references/workflow-spec.md
+deleted file mode 100644
+index 3a69423..0000000
+--- a/sire/workflow/shared/sire/references/governor/references/workflow-spec.md
++++ /dev/null
+@@ -1,171 +0,0 @@
+-# AI Workflow Governor：实施规范
+-
+-## 1. 目标与适用范围
+-
+-本规范把一次 AI 请求管理成一个“可验证交付项目”，目标是：
+-
+-1. 由 AI 自动承担检索、分析、拆分、调度、执行、复核、测试和知识沉淀，尽量减少人工协调。
+-2. 通过角色分离、可追溯证据和质量门禁提高交付质量。
+-3. 允许并行推进独立任务，同时让每个任务保持完整闭环。
+-4. 只在权限、业务取舍、主观验收或不可验证的高风险问题上请求人工决策。
+-
+-适用于多步骤的软件变更、文档/表格/演示文稿交付、研究分析、数据处理、方案设计、配置变更和其他需要验收的工作。单一事实问答、简单改名或一处无风险格式修改可走轻量路径，但只要存在多个目标、依赖、外部副作用或验收要求，就必须走本规范。
+-
+-## 2. 核心控制原则
+-
+-### 2.1 “完成”的定义
+-
+-完成不是“生成了结果”，而是同时满足：
+-
+-`需求覆盖 + 执行产物存在 + 独立复核通过 + 功能/可用性测试通过 + 集成验收通过 + 知识已沉淀`
+-
+-任意一项缺失，状态只能是 `INCOMPLETE`、`BLOCKED` 或 `NEEDS_INPUT`。
+-
+-### 2.2 角色分离
+-
+-角色是责任边界，不要求一定启动多个模型。可由同一模型在不同上下文/阶段模拟，但必须明确标注角色并重新审视结果。执行者不能作为唯一复核者；如果资源允许，优先把需求复核、执行和测试分配给不同 worker。
+-
+-### 2.3 最小人工介入
+-
+-AI 默认自行完成可推断的技术决策。人工只接收结构化决策包，不被要求重新阅读全部过程。决策包仅针对无法安全推断的一个或几个问题，并包含推荐选项和影响。
+-
+-### 2.4 证据优先
+-
+-每一个状态跃迁都需要证据。命令成功不等于功能正确；评审意见不等于测试通过；测试通过也不等于需求完整。三类证据需要分别记录。
+-
+-### 2.5 轻量路径与稀疏输入
+-
+-单一步骤、可逆、低风险且无实质歧义的请求走轻量路径：直接处理并做语义/语法自检，不强行创建完整账本。短描述本身不代表可以猜测关键事实。对于受治理任务，只能推断低影响、可逆的默认值并显式列出；凡缺失信息会影响测试、范围、目标选择、权限或高影响结论，必须形成 blocker/decision packet，只索取确切缺口。不得虚构文件、数据、凭据、目标或验收标准。
+-
+-## 3. 角色职责与交付物
+-
+-| 角色 | 必须回答的问题 | 交付物 | 是否可批准自己的产物 |
+-|---|---|---|---|
+-| Orchestrator 流程编排者 | 做什么、先做什么、哪些可并行、哪里被阻塞？ | 范围声明、依赖图、队列、状态汇总 | 否，最终关闭需 Closure Auditor |
+-| Knowledge Curator/Indexer 知识管理员 | 是否做过？能否复用？新知识如何被找到？ | KB-Check、知识条目、索引 | 否，条目需可追溯到验证证据 |
+-| Requirement Analyst 需求分析者 | 用户真正要的结果和验收标准是什么？ | REQ 清单、约束、非目标、风险 | 否，需求需经 Requirement Reviewer |
+-| Task Decomposer 需求拆分者 | 如何变成独立、可执行、可验证的小单元？ | UNIT 卡、依赖 DAG、执行顺序 | 否，拆分需经 Requirement Reviewer |
+-| Requirement Reviewer 需求复核者 | 是否漏项、歧义、过大、不可测或顺序错误？ | 拆分复核结论、缺陷清单 | 是，复核结论本身需有理由 |
+-| Executor 执行者 | 如何在范围内产出结果？ | 代码、文档、数据、配置或分析结果 | 否 |
+-| Work Reviewer 工作复核者 | 产物是否满足 UNIT 和约束，是否引入回归？ | 复核报告、通过/失败、修复建议 | 否，不能替代测试 |
+-| Functional Tester 功能测试者 | 结果是否在真实使用路径上工作？ | 测试记录、输入、期望/实际、证据 | 否 |
+-| Integrator 集成者 | 单元组合后是否仍满足整体需求？ | 集成测试、回归结论、发布前清单 | 否 |
+-| Closure Auditor 闭环审计者 | 是否每条需求、每个单元和每道门都有证据？ | 关闭结论、未决项、交付摘要 | 是，负责最终审计 |
+-
+-## 4. 状态机与门禁
+-
+-```text
+-INTAKE
+-  → KB_CHECKED
+-  → ANALYZED
+-  → DECOMPOSED
+-  → DECOMPOSITION_REVIEWED
+-  → READY
+-  → EXECUTING
+-  → REVIEWED
+-  → TESTED
+-  → DONE
+-
+-REVIEWED/TESTED 失败 → EXECUTING（带 remediation_id）
+-任何阶段遇到外部/人工依赖 → BLOCKED（继续其他可行分支）
+-```
+-
+-### 门禁 A：知识门
+-
+-- 必须列出搜索范围、关键词/路径和命中结果。
+-- 必须明确“复用、改造、避免、无匹配”之一。
+-- 发现已有实现时，先验证其适用性和测试状态，再决定是否重做。
+-
+-### 门禁 B：需求门
+-
+-- 每条 REQ 都有可观察的验收标准。
+-- 约束、非目标、风险和输入输出清楚。
+-- 不能从上下文推断的高影响决策进入决策包。
+-
+-### 门禁 C：拆分门
+-
+-- 每个 UNIT 只有一个主要可验收结果。
+-- UNIT 可在有限上下文内执行，有明确产物和测试。
+-- 依赖、并行安全性、共享资源冲突和失败恢复已记录。
+-- 存在 `REQ → UNIT` 覆盖关系，不能有孤儿需求。
+-
+-### 门禁 D：单元质量门
+-
+-- 执行后立即复核和测试。
+-- 复核与测试必须分别给出 verdict 和证据。
+-- 失败必须产生缺陷与 remediation，不得用文字解释替代修复。
+-- 三次相同失败后换策略并形成 blocker；仍可推进其他 lane。
+-
+-### 门禁 E：集成关闭门
+-
+-- 所有 UNIT 为 DONE 或有明确人工决策的 BLOCKED。
+-- 所有 REQ 有证据映射。
+-- 集成/端到端测试通过。
+-- 知识条目和索引已更新。
+-
+-允许某个安全产物已 `DONE` 而另一条 lane 为 `BLOCKED`；但只要仍有必需需求无法满足，总体任务必须保持 `BLOCKED` 或 `NEEDS_INPUT`，不能把部分完成报告为整体完成。
+-
+-## 5. 并行调度算法
+-
+-1. 将 UNIT 表示为有向无环图：边 `A → B` 表示 B 依赖 A。
+-2. 将无未完成依赖的单元放入 `READY` 队列。
+-3. 对每个 READY 单元检查共享文件、数据库、外部系统和权限；有冲突则串行化。
+-4. 为每个 lane 分配 Executor、Reviewer、Tester 或其明确的模拟角色。
+-5. 任一 lane 完成闭环后，解除其后继依赖；失败只影响依赖它的 lane。
+-6. 被阻塞的 lane 必须记录阻塞原因、解除条件、下一次动作和可继续的旁路工作。
+-7. 当所有剩余工作都依赖同一个 blocker，才暂停主流程并请求人工输入。
+-
+-## 6. 复核与测试标准
+-
+-复核至少检查：
+-
+-- 对应 UNIT 和 REQ 是否完整实现；
+-- 约束、格式、项目约定和安全边界；
+-- 失败路径、边界条件和回归风险；
+-- 产物是否可被下游任务实际消费。
+-
+-测试按风险选择最小充分集合：
+-
+-- 软件：单元/静态检查 → 目标功能测试 → 回归/集成测试；
+-- 游戏：规则/状态转移 → 输入边界 → 胜负与异常路径；
+-- 音乐：拍数/时值/音符事件结构 → 渲染或播放检查 → 听感复核；
+-- 解析：合法输入 → 缺失/非法输入 → 边界结构与错误信息；
+-- 文学：主题/意象/篇幅/结构约束 → 一致性检查 → 文风与意义复核；
+-- 创意：输出 schema/约束 → 内部一致性 → 新颖性与适配度复核；
+-- 文档/演示：结构检查 → 渲染或页面检查 → 关键内容抽样；
+-- 表格/数据：模式/公式检查 → 样例计算 → 汇总和边界校验；
+-- 研究/分析：来源核验 → 方法/计算重现 → 结论与需求对照；
+-- 配置/运营：差异检查 → 模拟/沙盒验证 → 实际验收（需授权）。
+-
+-结构、数值、格式和状态可以自动验证；音乐听感、文学感染力、创意新颖性等主观质量必须保留独立 Work Reviewer 或人工验收，不能被自动化断言替代。
+-
+-## 7. 知识库与索引规范
+-
+-如果项目已有知识库，遵循项目约定。没有时，建议在工作区建立：
+-
+-```text
+-knowledge-base/
+-├─ index.md
+-├─ decisions/
+-├─ solutions/
+-├─ failures/
+-└─ templates/
+-```
+-
+-每个条目必须包含：标题、类型、适用场景、问题、决策/方案、关键约束、验证证据、局限、标签、创建/更新时间和关联 artifact。索引至少按主题、关键词、技术/业务域和关联任务链接组织。
+-
+-知识管理员不应把过程日志全部倒入知识库，只提炼未来任务能复用的判断、方案、测试方式、失败模式和限制。禁止记录凭据、隐私数据和无必要的原始敏感内容。
+-
+-## 8. 质量与效率指标
+-
+-建议持续记录以下指标来改进流程：
+-
+-- 首次通过率：单元首次复核和测试同时通过的比例；
+-- 返工率：发生 remediation 的单元比例；
+-- 需求覆盖率：有通过证据的 REQ / REQ 总数；
+-- 自动闭环率：无需人工决策即可 DONE 的任务比例；
+-- 并行效率：关键路径耗时 / 实际墙钟耗时；
+-- 知识复用率：使用既有 KB 条目的任务比例；
+-- 阻塞恢复时间和相同失败重复次数。
+-
+-指标用于发现流程问题，不得替代验收，也不能为了提高数字而省略测试。
+diff --git a/sire/workflow/shared/sire/references/self-optimization.md b/sire/workflow/shared/sire/references/self-optimization.md
+index b9e266d..ecf78d1 100644
+--- a/sire/workflow/shared/sire/references/self-optimization.md
++++ b/sire/workflow/shared/sire/references/self-optimization.md
+@@ -75,7 +75,7 @@ R1 收集观察
+ 
+ 每个改进提案至少记录：提案编号、改进假设、变更摘要、父版本、基线指标、目标指标、实际指标、证据、评估结论、激活版本和回滚原因。评估未达到目标时不得激活；激活后出现回归时必须恢复上一版并保留失败证据。
+ 
+-本地数据库表 `improvement_proposals`、`improvement_metrics` 和 `workflow_versions` 是 RSI 审计记录的权威来源，可通过 `scripts/sire_rsi.py` 执行提案、评估、激活、状态查询和回滚。
++本地数据库表 `improvement_proposals`、`improvement_metrics` 和 `workflow_versions` 是 RSI 审计记录的权威来源，可通过 `scripts/sire_rsi.py` 执行提案、评估、激活、状态查询和回滚。写命令先写机器级归档库（`SIRE_ARCHIVE_DB` 或 `SIRE_ARCHIVE_ROOT`，或 `--archive-db`），再写仓库库；解析不到归档库时拒绝写入（仅测试可用 `--repo-only`）。`status` 只读。`snapshot_db.py` 发现仓库库有而归档库缺失的 RSI 记录时拒绝发布。
+ 
+ ## 6. SIRE 知识归档映射
+ 
+diff --git a/sire/workflow/shared/sire/scripts/sire_paths.py b/sire/workflow/shared/sire/scripts/sire_paths.py
+index f70bb1e..25546c6 100644
+--- a/sire/workflow/shared/sire/scripts/sire_paths.py
++++ b/sire/workflow/shared/sire/scripts/sire_paths.py
+@@ -13,6 +13,15 @@ KNOWLEDGE_DIR = Path(os.environ.get("SIRE_KB_DIR") or SIRE_ROOT / "knowledge" /
+ MODEL_DIR = Path(os.environ.get("SIRE_EMBED_DIR") or Path.home() / "sire" / "models").expanduser()
+ 
+ 
++def archive_database_path() -> Path | None:
++    """机器级收尾归档库：SIRE_ARCHIVE_DB 优先，其次 SIRE_ARCHIVE_ROOT；都未设置时返回 None（不猜测）。"""
++    explicit = os.environ.get("SIRE_ARCHIVE_DB")
++    if explicit:
++        return Path(explicit).expanduser()
++    root = os.environ.get("SIRE_ARCHIVE_ROOT")
++    return Path(root).expanduser() / "sire_vectors.sqlite3" if root else None
++
++
+ def task_roots() -> list[Path]:
+     configured = os.environ.get("SIRE_TASK_ROOTS")
+     if configured:
+diff --git a/sire/workflow/shared/sire/scripts/sire_rsi.py b/sire/workflow/shared/sire/scripts/sire_rsi.py
+index bbe9937..ff46a1c 100644
+--- a/sire/workflow/shared/sire/scripts/sire_rsi.py
++++ b/sire/workflow/shared/sire/scripts/sire_rsi.py
+@@ -1,9 +1,13 @@
+-"""SIRE 受控 RSI：记录改进提案、指标、评估、激活与回滚。"""
++"""SIRE 受控 RSI：记录改进提案、指标、评估、激活与回滚。
++
++写命令同时写仓库库（DATABASE_PATH，供 R9 rsi-check 读取）和机器级归档库（收尾快照的来源），
++保证快照从归档库重建仓库库时不会丢失 RSI 记录。status 只读。
++"""
+ from __future__ import annotations
+-import argparse, json, os, sqlite3
++import argparse, json, sqlite3
+ from datetime import datetime, timezone
+ from pathlib import Path
+-from sire_paths import DATABASE_PATH
++from sire_paths import DATABASE_PATH, archive_database_path
+ from sire_vector_db import backup_before_mutation, database_mutation_lock
+ 
+ def now(): return datetime.now(timezone.utc).isoformat()
+@@ -22,8 +26,47 @@ def db(p):
+       version TEXT PRIMARY KEY, proposal_id TEXT, status TEXT NOT NULL,
+       config_hash TEXT NOT NULL, created_at TEXT NOT NULL, activated_at TEXT, retired_at TEXT)""")
+     return c
++
++def apply(c, args, ts):
++    """在单个库上执行写命令；ts 由调用方统一给出，保证两库时间戳一致。"""
++    if args.cmd=='propose':
++        c.execute('INSERT OR REPLACE INTO improvement_proposals VALUES(?,?,?,?,?,?,?,?,?,?,?)',(args.proposal_id,args.title,args.hypothesis,args.change,'PROPOSED',args.parent_version,ts,None,None,None,'{}'))
++    elif args.cmd=='evaluate':
++        passed=True
++        for raw in args.metric:
++            name,before,after,target,evidence=raw.split(',',4); ok=float(after)>=float(target); passed &= ok
++            c.execute('INSERT INTO improvement_metrics(proposal_id,metric,before_value,after_value,target_value,passed,evidence,created_at) VALUES(?,?,?,?,?,?,?,?)',(args.proposal_id,name,float(before),float(after),float(target),int(ok),evidence,ts))
++        result=json.dumps({'passed':passed,'metrics':len(args.metric)},ensure_ascii=False)
++        c.execute("UPDATE improvement_proposals SET status=?,evaluated_at=?,evaluation=? WHERE proposal_id=?",('EVALUATED_PASS' if passed else 'EVALUATED_FAIL',ts,result,args.proposal_id))
++    elif args.cmd=='activate':
++        row=c.execute('SELECT status FROM improvement_proposals WHERE proposal_id=?',(args.proposal_id,)).fetchone()
++        if not row or row['status']!='EVALUATED_PASS': raise SystemExit('只能激活评估通过的提案')
++        c.execute("UPDATE workflow_versions SET status='RETIRED',retired_at=? WHERE status='ACTIVE'",(ts,))
++        c.execute('INSERT OR REPLACE INTO workflow_versions VALUES(?,?,?,?,?,?,?)',(args.version,args.proposal_id,'ACTIVE',args.config_hash,ts,ts,None))
++        c.execute("UPDATE improvement_proposals SET status='ACTIVE',activated_at=? WHERE proposal_id=?",(ts,args.proposal_id))
++    elif args.cmd=='rollback':
++        c.execute("UPDATE workflow_versions SET status='ROLLED_BACK',retired_at=? WHERE proposal_id=? AND status='ACTIVE'",(ts,args.proposal_id))
++        c.execute("UPDATE improvement_proposals SET status='ROLLED_BACK',rollback_at=?,evaluation=? WHERE proposal_id=?",(ts,json.dumps({'reason':args.reason},ensure_ascii=False),args.proposal_id))
++
++def status(path: Path):
++    """只读查询：库或表不存在时返回空列表，不建表、不备份。"""
++    out={'db':str(path),'proposals':[],'versions':[]}
++    if not path.is_file(): return out
++    c=sqlite3.connect(path.resolve().as_uri()+'?mode=ro',uri=True); c.row_factory=sqlite3.Row
++    try:
++        c.execute('PRAGMA query_only=ON')
++        out['proposals']=[dict(x) for x in c.execute('SELECT * FROM improvement_proposals ORDER BY created_at DESC')]
++        out['versions']=[dict(x) for x in c.execute('SELECT * FROM workflow_versions ORDER BY created_at DESC')]
++    except sqlite3.Error:
++        pass
++    finally:
++        c.close()
++    return out
++
+ def main():
+     ap=argparse.ArgumentParser(); ap.add_argument('--db',type=Path,default=DATABASE_PATH)
++    ap.add_argument('--archive-db',type=Path,default=archive_database_path(),help='机器级归档库；默认取 SIRE_ARCHIVE_DB 或 SIRE_ARCHIVE_ROOT')
++    ap.add_argument('--repo-only',action='store_true',help='只写 --db（例如临时库测试）；正式 RSI 记录不要使用')
+     sub=ap.add_subparsers(dest='cmd',required=True)
+     p=sub.add_parser('propose'); p.add_argument('proposal_id'); p.add_argument('--title',required=True); p.add_argument('--hypothesis',required=True); p.add_argument('--change',required=True); p.add_argument('--parent-version',default='current')
+     e=sub.add_parser('evaluate'); e.add_argument('proposal_id'); e.add_argument('--metric',action='append',required=True,help='name,before,after,target,evidence')
+@@ -31,35 +74,32 @@ def main():
+     r=sub.add_parser('rollback'); r.add_argument('proposal_id'); r.add_argument('--reason',required=True)
+     sub.add_parser('status')
+     args=ap.parse_args()
+-    with database_mutation_lock(args.db):
+-        # RSI creates and updates its own schema, so preserve an existing shared
+-        # database before any command (including status, which initializes tables).
+-        if args.db.is_file():
+-            backup_before_mutation(args.db)
+-        c=db(args.db)
+-        try:
+-            if args.cmd=='propose':
+-                c.execute('INSERT OR REPLACE INTO improvement_proposals VALUES(?,?,?,?,?,?,?,?,?,?,?)',(args.proposal_id,args.title,args.hypothesis,args.change,'PROPOSED',args.parent_version,now(),None,None,None,'{}'))
+-            elif args.cmd=='evaluate':
+-                passed=True
+-                for raw in args.metric:
+-                    name,before,after,target,evidence=raw.split(',',4); ok=float(after)>=float(target); passed &= ok
+-                    c.execute('INSERT INTO improvement_metrics(proposal_id,metric,before_value,after_value,target_value,passed,evidence,created_at) VALUES(?,?,?,?,?,?,?,?)',(args.proposal_id,name,float(before),float(after),float(target),int(ok),evidence,now()))
+-                result=json.dumps({'passed':passed,'metrics':len(args.metric)},ensure_ascii=False)
+-                c.execute("UPDATE improvement_proposals SET status=?,evaluated_at=?,evaluation=? WHERE proposal_id=?",('EVALUATED_PASS' if passed else 'EVALUATED_FAIL',now(),result,args.proposal_id))
+-            elif args.cmd=='activate':
+-                row=c.execute('SELECT status FROM improvement_proposals WHERE proposal_id=?',(args.proposal_id,)).fetchone()
+-                if not row or row['status']!='EVALUATED_PASS': raise SystemExit('只能激活评估通过的提案')
+-                c.execute("UPDATE workflow_versions SET status='RETIRED',retired_at=? WHERE status='ACTIVE'",(now(),))
+-                c.execute('INSERT OR REPLACE INTO workflow_versions VALUES(?,?,?,?,?,?,?)',(args.version,args.proposal_id,'ACTIVE',args.config_hash,now(),now(),None))
+-                c.execute("UPDATE improvement_proposals SET status='ACTIVE',activated_at=? WHERE proposal_id=?",(now(),args.proposal_id))
+-            elif args.cmd=='rollback':
+-                c.execute("UPDATE workflow_versions SET status='ROLLED_BACK',retired_at=? WHERE proposal_id=? AND status='ACTIVE'",(now(),args.proposal_id))
+-                c.execute("UPDATE improvement_proposals SET status='ROLLED_BACK',rollback_at=?,evaluation=? WHERE proposal_id=?",(now(),json.dumps({'reason':args.reason},ensure_ascii=False),args.proposal_id))
+-            else:
+-                print(json.dumps({'proposals':[dict(x) for x in c.execute('SELECT * FROM improvement_proposals ORDER BY created_at DESC')], 'versions':[dict(x) for x in c.execute('SELECT * FROM workflow_versions ORDER BY created_at DESC')]},ensure_ascii=False,indent=2))
+-            c.commit()
+-        finally:
+-            c.close()
+-    print(json.dumps({'status':'ok','command':args.cmd},ensure_ascii=False))
++    if args.cmd=='status':
++        print(json.dumps(status(args.db),ensure_ascii=False,indent=2)); return
++    targets=[args.db]
++    if not args.repo_only:
++        if args.archive_db is None:
++            raise SystemExit('未解析到归档库：设置 SIRE_ARCHIVE_ROOT / SIRE_ARCHIVE_DB 或传 --archive-db；仅测试时可用 --repo-only')
++        if args.archive_db.resolve()!=args.db.resolve():
++            # 先写归档库（快照来源）：中途失败时只会"归档有、仓库无"，快照可补齐，不会丢记录
++            targets.insert(0,args.archive_db)
++    ts=now()
++    # 先在所有目标库上校验前置条件（activate 需 EVALUATED_PASS），任何一库不满足则都不写
++    if args.cmd=='activate':
++        for path in targets:
++            if not path.is_file(): raise SystemExit(f'库不存在：{path}')
++            ro=status(path)
++            st=[x['status'] for x in ro['proposals'] if x['proposal_id']==args.proposal_id]
++            if st!=['EVALUATED_PASS']: raise SystemExit(f'只能激活评估通过的提案（{path} 中状态为 {st or "缺失"}）')
++    for path in targets:
++        with database_mutation_lock(path):
++            # RSI 可能建表，写前按规则备份已有库
++            if path.is_file():
++                backup_before_mutation(path)
++            c=db(path)
++            try:
++                apply(c,args,ts); c.commit()
++            finally:
++                c.close()
++    print(json.dumps({'status':'ok','command':args.cmd,'databases':[str(t) for t in targets]},ensure_ascii=False))
+ if __name__=='__main__': main()

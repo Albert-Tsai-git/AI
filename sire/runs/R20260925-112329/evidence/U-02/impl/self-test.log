@@ -1,0 +1,17 @@
+ls: cannot access 'workflow/shared/sire/references/governor': No such file or directory
+workflow/support/ai-workflow-governor:
+SKILL.md
+agents
+references
+
+workflow/support/ai-workflow-governor/agents:
+openai.yaml
+
+workflow/support/ai-workflow-governor/references:
+templates.md
+0
+C:\Users\Administrator/.codex/skills:
+ai-dev-sire-workflow
+
+C:\Users\Administrator/.codex/skills-backup:
+ai-workflow-governor-20260925
