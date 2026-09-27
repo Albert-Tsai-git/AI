@@ -28,6 +28,36 @@
       ]
     },
     {
+      "id": "E-009",
+      "type": "efficiency",
+      "title": "Claude×Codex 同机本地通讯与协作机制（msg.py 信箱/进度/锁 + 路径所有权 + 接口文档）",
+      "file": "global_dev_efficiency.md",
+      "line": 26,
+      "date": "2026-09-27",
+      "project": "MetalMax 同人（Unity 6）/ D:\\code\\GAME（GitHub Albert-Tsai-git/MetalMax）",
+      "status": "已完成（运行中）",
+      "keywords": [
+        "Claude Codex 本地通讯",
+        "双 AI 协作",
+        "消息信箱",
+        "msg.py",
+        "comms",
+        "messages.jsonl",
+        "进度同步",
+        "status.json",
+        "资源锁",
+        "unity.lock",
+        "接收到 Codex 消息",
+        "路径所有权",
+        "ownership.py",
+        "commit-msg 钩子",
+        "INTERFACE.md",
+        "工作副本",
+        "git worktree",
+        "multi-agent local messaging"
+      ]
+    },
+    {
       "id": "F-026",
       "type": "feature",
       "title": "EncoderPlotter 烧录面板放开 DPB 锁定 — 型号/固件文件可重选",
@@ -276,6 +306,28 @@
         "完整原文",
         "Markdown",
         "SIRE知识库"
+      ]
+    },
+    {
+      "id": "F-044",
+      "type": "feature",
+      "title": "Unity/Blender 战车 RPG 的美术启动约定",
+      "file": "global_dev_features.md",
+      "line": 405,
+      "date": "2026-09-27",
+      "project": "GAME（原创废土战车 RPG）",
+      "status": "已归档（视觉方案仍需实景验收）",
+      "keywords": [
+        "Unity 美术",
+        "Blender",
+        "战车",
+        "模块化武器",
+        "挂点",
+        "俯视 2.5D",
+        "Low-poly",
+        "Toon",
+        "废土",
+        "资产生产"
       ]
     },
     {
@@ -1004,6 +1056,36 @@
     ],
     "SIRE知识库": [
       "F-043"
+    ],
+    "Unity 美术": [
+      "F-044"
+    ],
+    "Blender": [
+      "F-044"
+    ],
+    "战车": [
+      "F-044"
+    ],
+    "模块化武器": [
+      "F-044"
+    ],
+    "挂点": [
+      "F-044"
+    ],
+    "俯视 2.5D": [
+      "F-044"
+    ],
+    "Low-poly": [
+      "F-044"
+    ],
+    "Toon": [
+      "F-044"
+    ],
+    "废土": [
+      "F-044"
+    ],
+    "资产生产": [
+      "F-044"
     ]
   },
   "problems": {
@@ -1413,6 +1495,60 @@
     ],
     "WAL": [
       "E-008"
+    ],
+    "Claude Codex 本地通讯": [
+      "E-009"
+    ],
+    "双 AI 协作": [
+      "E-009"
+    ],
+    "消息信箱": [
+      "E-009"
+    ],
+    "msg.py": [
+      "E-009"
+    ],
+    "comms": [
+      "E-009"
+    ],
+    "messages.jsonl": [
+      "E-009"
+    ],
+    "进度同步": [
+      "E-009"
+    ],
+    "status.json": [
+      "E-009"
+    ],
+    "资源锁": [
+      "E-009"
+    ],
+    "unity.lock": [
+      "E-009"
+    ],
+    "接收到 Codex 消息": [
+      "E-009"
+    ],
+    "路径所有权": [
+      "E-009"
+    ],
+    "ownership.py": [
+      "E-009"
+    ],
+    "commit-msg 钩子": [
+      "E-009"
+    ],
+    "INTERFACE.md": [
+      "E-009"
+    ],
+    "工作副本": [
+      "E-009"
+    ],
+    "git worktree": [
+      "E-009"
+    ],
+    "multi-agent local messaging": [
+      "E-009"
     ]
   },
   "habits": {
@@ -1441,6 +1577,6 @@
       "H-004"
     ]
   },
-  "last_updated": "2026-09-25T07:52:31Z",
-  "total_records": 21
+  "last_updated": "2026-09-27T12:16:33Z",
+  "total_records": 23
 }
