@@ -1,0 +1,2 @@
+37:### 模型选择门禁（R4 放行后、R5 执行前）
+42:   **Model-selection gate (after R4, before R5):** for each unit, decide whether it runs on a lower-cost model (simple, mechanically verifiable, no design decisions) or stays on the current model (design, cross-module, high-risk, debugging). Record unit / difficulty / model / reason in the ledger. Full rules: `references/global-contract.md` § 模型选择门禁.

@@ -39,6 +39,7 @@ Every task uses the SIRE workflow, including analysis and simple requests. Befor
 3. **R2 — Requirements analyst:** define observable outcomes, scope, inputs, outputs, acceptance, dependencies, and authorization.
 4. **R3 — Decomposer:** split work into smallest independently executable units with owner, read/write sets, dependencies, outputs, review, tests, and recovery.
 5. **R4 — Plan reviewer:** independently check requirement coverage, unit overlap, dependency closure, testability, and read/write conflicts.
+   **Model-selection gate (after R4, before R5):** for each unit, decide whether it runs on a lower-cost model (simple, mechanically verifiable, no design decisions) or stays on the current model (design, cross-module, high-risk, debugging). Record unit / difficulty / model / reason in the ledger. Full rules: `references/global-contract.md` § 模型选择门禁.
 6. **R5 — Executor:** execute assigned units; state “执行中” and “执行完毕”; report artifacts, verification, assumptions, and blockers.
 7. **R6 — Independent reviewer:** review each completed unit independently; reject failures and record the cause and repair. The author cannot approve their own work.
 8. **R7 — Functional tester:** run the prelisted tests against real user paths and record actual behavior, evidence, and conclusions.
