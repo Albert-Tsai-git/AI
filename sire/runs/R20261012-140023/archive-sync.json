@@ -1,0 +1,53 @@
+{
+  "mode": "增量索引与任务迁移，保留既有记录",
+  "snapshot_blockers": [
+    "只读打开 WAL 库引起 -wal 变化",
+    "快照路径清理触发 chunks.path/chunk_index 唯一键冲突"
+  ],
+  "databases": {
+    "D:\\sire\\AI\\AI\\sire\\data\\sire_vectors.sqlite3": {
+      "integrity": "ok",
+      "record": [
+        "F-052",
+        "下线检测信息确认人工决定与订单号录入"
+      ],
+      "task_records_this_run": 8,
+      "counts": {
+        "chunks": 7688,
+        "knowledge_records": 148,
+        "task_records": 2790,
+        "keywords": 24866
+      },
+      "vectors": 7688,
+      "fts_tables": {
+        "chunks_fts": 7688,
+        "kfts": 148,
+        "cfts": 6334
+      },
+      "sha256": "2af3d1282bbc0c35c4801e38b088561b3b605a7146c6bbb71026591da5a04e72",
+      "prior_manifest": "D:\\sire\\AI\\AI\\sire\\data\\snapshot-manifest.json"
+    },
+    "D:\\sire\\sire_vectors.sqlite3": {
+      "integrity": "ok",
+      "record": [
+        "F-052",
+        "下线检测信息确认人工决定与订单号录入"
+      ],
+      "task_records_this_run": 8,
+      "counts": {
+        "chunks": 7149,
+        "knowledge_records": 147,
+        "task_records": 2749,
+        "keywords": 24770
+      },
+      "vectors": 7149,
+      "fts_tables": {
+        "chunks_fts": 7149,
+        "kfts": 147,
+        "cfts": 6211
+      },
+      "sha256": "29e0eac983123e6d201137ce5951488538a697f0a58345b4cb46f9a8cc6dd557",
+      "prior_manifest": "D:\\sire\\snapshot-manifest.json"
+    }
+  }
+}
