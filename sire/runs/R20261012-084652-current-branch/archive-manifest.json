@@ -1,0 +1,21 @@
+{
+  "run_id": "R20261012-084652-current-branch",
+  "results": [
+    {
+      "db": "D:\\sire\\AI\\AI\\sire\\data\\sire_vectors.sqlite3",
+      "backup": "C:\\Users\\Administrator\\sire\\db-backups\\R20261012-084652-current-branch\\sire_vectors-20261012-084652-182369.sqlite3",
+      "backup_integrity": "ok",
+      "integrity": "ok",
+      "records": 3,
+      "sha256": "5c0803ca022871a1853d5a8b81000bb7d389e0fbe3494595f3bb7ad3339b4794"
+    },
+    {
+      "db": "D:\\sire\\sire_vectors.sqlite3",
+      "backup": "C:\\Users\\Administrator\\sire\\db-backups\\R20261012-084652-current-branch\\sire_vectors-20261012-084655-680722.sqlite3",
+      "backup_integrity": "ok",
+      "integrity": "ok",
+      "records": 3,
+      "sha256": "be31fe866d871cc65cf1c27a9d738bcff80cfc3c5e1854135106cb13d5b64ba6"
+    }
+  ]
+}
