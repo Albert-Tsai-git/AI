@@ -77,6 +77,10 @@ R1 收集观察
 
 本地数据库表 `improvement_proposals`、`improvement_metrics` 和 `workflow_versions` 是 RSI 审计记录的权威来源，可通过 `scripts/sire_rsi.py` 执行提案、评估、激活、状态查询和回滚。写命令先写机器级归档库（`SIRE_ARCHIVE_DB` 或 `SIRE_ARCHIVE_ROOT`，或 `--archive-db`），再写仓库库；解析不到归档库时拒绝写入（仅测试可用 `--repo-only`）。`status` 只读。`snapshot_db.py` 发现仓库库有而归档库缺失的 RSI 记录时拒绝发布。
 
+## 5.2 遥测驱动的自动发现
+
+`scripts/sire_telemetry.py` 是 RSI 的自动观察来源：钩子记录每个任务各阶段耗时（遥测库 `DATA_DIR/sire_telemetry.sqlite3`，保留 60 天，不进 Git），任务结束后后台 `analyze` 按 `RULES` 中的规则与阈值累计命中，状态流转为 `OPEN → PROPOSED →（修复）FIXED`；修复后同类问题再次累积到阈值记为 `REGRESSED`，提示回滚或重做；不适合自动修复的记为 `IGNORED`。7 天内未再出现的 `OPEN` 发现重新计数。处理流程见 `global-contract.md` § RSI 自动发现与自我优化；新增检测规则同样是工作流改动，须走 5.1 门禁。
+
 ## 6. SIRE 知识归档映射
 
 - 用户工作习惯和编码习惯 → `global_dev_habits.md`，编号 `H-xxx`。

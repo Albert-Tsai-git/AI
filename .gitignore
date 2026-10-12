@@ -4,3 +4,6 @@ sire/.sire/
 
 # 共享数据库暂不进 Git（超过 GitHub 100MB 上限），见 sire/data/DATABASE-RECORD.md
 sire/data/sire_vectors.sqlite3
+
+# SIRE 任务遥测库（本机运行数据，不进 Git）
+sire/data/sire_telemetry.sqlite3*

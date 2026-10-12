@@ -48,7 +48,7 @@ Every task uses the SIRE workflow, including analysis and simple requests. Excep
 7. **R6 — Independent reviewer:** review each completed unit independently; reject failures and record the cause and repair. The author cannot approve their own work.
 8. **R7 — Functional tester:** run the prelisted tests against real user paths and record actual behavior, evidence, and conclusions.
 9. **R8 — Integrator:** verify cross-unit contracts, regressions, requirement coverage, and final usability.
-10. **R9 — Closure auditor:** inspect scope coverage, privacy/security, related risks, archive completeness, and remaining optimizations. Fix related in-scope issues; report unrelated ones.
+10. **R9 — Closure auditor:** inspect scope coverage, privacy/security, related risks, archive completeness, and remaining optimizations. Fix related in-scope issues; report unrelated ones. Then run `scripts/sire_telemetry.py pending` and, if it prints anything, fix the first finding through RSI (see `references/global-contract.md` § RSI 自动发现与自我优化).
 11. **R10 — Native computer operator:** perform authorized native-app/system operations when required. R10 does not review code or decide R7 results. If no UI/system action is needed, record “跳过” and why.
 
 Parallelize units only when their read/write sets do not conflict and their dependencies are satisfied. After every unit, perform independent review and functional acceptance. A failed unit returns for repair. After three materially identical failures, stop that affected branch and report the reason; continue independent branches.
@@ -79,6 +79,9 @@ python <SHARED_SKILL_DIR>\scripts\sire_vector_db.py stats
 On completion, archive reusable facts, search terms, decisions, limitations, validation results, and the task record to the shared database; update the shared Markdown index; and set `meta.sire_last_project`, `meta.sire_last_run`, and `meta.sire_last_status`. Commit the changed knowledge, workflow, and evidence to this Git repository (not the database; see `sire/data/DATABASE-RECORD.md`). Do not push unless explicitly asked. Database migrations/indexing must keep a recoverable backup and verify row counts, FTS, vectors, and `integrity_check`.
 
 ## Workflow changes (RSI)
+
+RSI also finds problems on its own: Claude and Codex hooks call `scripts/sire_telemetry.py hook` to record per-phase task timings in the local `sire_telemetry.sqlite3`; after each task the Stop hook runs `analyze` in the background and turns repeated issues into pending findings, which the next full-workflow task fixes during R9. No user scheduling is needed.
+
 
 Any change to files in this shared skill directory is a workflow mechanism change. Before the first edit, register a proposal with `scripts/sire_rsi.py propose`; after verification, record metrics with `evaluate`, and `activate` only an `EVALUATED_PASS` proposal; `rollback` on regression. R9 `sire_supervisor.py finalize` (and the read-only `rsi-check`) returns `STOP` (`rsi_unregistered_change`) when this directory has uncommitted changes but no `PROPOSED`/`EVALUATED_PASS`/`ACTIVE` proposal was created after its last commit. `sire_rsi.py` write commands update both the machine-level archive database (set `SIRE_ARCHIVE_ROOT` or `SIRE_ARCHIVE_DB`, or pass `--archive-db`) and the repository database, archive first; `status` is read-only. `sire/tools/snapshot_db.py` refuses to publish when the repository database holds RSI records missing from the archive. Full rules: [references/self-optimization.md](references/self-optimization.md) §5.1.
 
