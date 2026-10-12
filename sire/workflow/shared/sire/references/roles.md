@@ -16,7 +16,7 @@ The shared [`SKILL.md`](../SKILL.md) is the canonical execution contract. This r
 | R9 Closure auditor | Check privacy/security, omissions, evidence completeness, and overall archive integrity. | Review status, findings, repairs, and unresolved unrelated items. |
 | R10 Native computer operator | Operate authorized desktop/native system paths when required. | Before/after state and operation evidence; otherwise explicit skip reason. |
 
-Every role records “执行中” and “执行完毕”. A skipped role records “跳过” and a reason. Each record lists artifacts, verification, and blockers. Keep full evidence in the run directory and repeat the complete role/stage log in the final answer.
+Every role records “执行中” and “执行完毕”. A skipped role records “跳过” and a reason. Each record lists artifacts, verification, and blockers. Keep these records and full evidence in the run directory; the chat and final answer give only the result, risks, and suggestions (see the output contract in `global-contract.md`).
 
 ## Independence and handoff
 

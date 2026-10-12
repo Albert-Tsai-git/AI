@@ -44,7 +44,7 @@ Every task uses the SIRE workflow, including analysis and simple requests. Excep
 4. **R3 — Decomposer:** split work into smallest independently executable units with owner, read/write sets, dependencies, outputs, review, tests, and recovery.
 5. **R4 — Plan reviewer:** independently check requirement coverage, unit overlap, dependency closure, testability, and read/write conflicts.
    **Model-selection gate (after R4, before R5):** for each unit, decide whether it runs on a lower-cost model (simple, mechanically verifiable, no design decisions) or stays on the current model (design, cross-module, high-risk, debugging). Record unit / difficulty / model / reason in the ledger. Full rules: `references/global-contract.md` § 模型选择门禁.
-6. **R5 — Executor:** execute assigned units; state “执行中” and “执行完毕”; report artifacts, verification, assumptions, and blockers.
+6. **R5 — Executor:** execute assigned units; record “执行中” and “执行完毕”, artifacts, verification, assumptions, and blockers in the run ledger.
 7. **R6 — Independent reviewer:** review each completed unit independently; reject failures and record the cause and repair. The author cannot approve their own work.
 8. **R7 — Functional tester:** run the prelisted tests against real user paths and record actual behavior, evidence, and conclusions.
 9. **R8 — Integrator:** verify cross-unit contracts, regressions, requirement coverage, and final usability.
@@ -59,7 +59,7 @@ Before R7 starts, list each test ID, real user operation steps, expected behavio
 
 ## Output and evidence contract
 
-Each stage and role must visibly report “执行中” and “执行完毕”. If skipped, say “跳过” and give the reason. At each stage boundary, list artifacts, verification results, and blockers. Keep the run ledger/evidence under the current run directory and repeat the complete stage/role log in the final report so users do not need to open it to learn the outcome.
+Each stage and role records “执行中”, “执行完毕”, or “跳过” with a reason, plus artifacts, verification results, and blockers, in the run ledger/evidence under the current run directory, not in the chat. In the chat, speak only when there is a result, a blocker, or a decision the user must make; the final reply gives only the result, risks ("无" if none), and suggestions, each in one to three lines, optionally with one verification line and the ledger path. No step narration, file recaps, or repeated logs.
 
 Use the local run ledger and scripts when available. Record failed reviews/tests, repair actions, retry counts, and final evidence. Do not call a stage complete merely because a command returned successfully; inspect the resulting data and state.
 
