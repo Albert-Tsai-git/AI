@@ -11,6 +11,10 @@ Every response must include this exact line: `[SIRE v6] 已使用 SIRE 工作流
 
 Before doing any task, read [`references/global-contract.md`](references/global-contract.md). It contains the user's complete mandatory SIRE process, output contract, R7/R10 real-scenario rules, and task-end archive requirement. This shared skill is the only workflow source; app-level instructions must point here rather than restate the rules.
 
+## Simple-task fast path (confirm once on every run)
+
+On every SIRE run, before any retrieval or analysis, Claude and Codex must first confirm once whether the task is simple. A simple task is a read-only query or quick question (for example, "what is the current branch") answerable with one or two read-only commands, with no file, config, database, Git, or external-state change and no design choice or acceptance test. If it is simple, reply with only the declaration line, the line `快速通道：简单任务`, and the shortest direct answer taken from what was actually run or read in this turn; skip retrieval, stage logs, the model gate, the ledger, archiving, and commits, and add nothing extra. Otherwise write `快速通道：否，完整流程` and run the full workflow. When unsure, use the full workflow. Full rules: `references/global-contract.md` § 简单任务快速通道.
+
 ## Shared locations
 
 `scripts/sire_paths.py` is the only path authority. By default it resolves:
@@ -30,7 +34,7 @@ The SQLite file is the shared working database but is **not tracked in Git for n
 
 Treat the complete user request as one objective. Before decomposing, identify the goal, scope, inputs, outputs, acceptance criteria, dependencies, and authorized actions. If an ambiguity, contradiction, missing input, or acceptance gap could materially change the outcome, stop dependent work and ask a focused question; continue independent work that does not depend on the answer.
 
-Every task uses the SIRE workflow, including analysis and simple requests. Before task analysis, search the shared local knowledge and vector database. At task end, store reusable knowledge, the task record, and validation results in the shared database. Do not skip retrieval, visible SIRE status, or archiving because a task seems small.
+Every task uses the SIRE workflow, including analysis and simple requests. Except for tasks confirmed as simple by the fast path above, search the shared local knowledge and vector database before task analysis, and at task end store reusable knowledge, the task record, and validation results in the shared database. Outside the fast path, do not skip retrieval, visible SIRE status, or archiving because a task seems small.
 
 ## Stages and role responsibilities
 
