@@ -22,7 +22,7 @@ Before doing any task, read [`references/global-contract.md`](references/global-
 
 Claude and Codex must use the same values for `SIRE_ROOT`, `SIRE_DATA_DIR`, `SIRE_VECTOR_DB`, `SIRE_KB_DIR`, `SIRE_EMBED_DIR`, and `SIRE_TASK_ROOTS` when overrides are set. Do not configure app-specific data paths. Run scripts from this skill's `scripts/` directory or invoke the same script file through either installed alias. Never copy the database to an app profile.
 
-The tracked SQLite file is both the shared working database and Git archive. SQLite `-wal`, `-shm`, and journal files are runtime-only and excluded from Git. Keep encryption keys, tokens, personal settings, integrity snapshots, and model weights outside this repository.
+The SQLite file is the shared working database but is **not tracked in Git for now** (it exceeds GitHub's 100MB file limit); `sire/data/DATABASE-RECORD.md` records its actual local paths and restore steps, and `.gitignore` excludes it — never `git add -f` it. SQLite `-wal`, `-shm`, and journal files are runtime-only and excluded from Git. Keep encryption keys, tokens, personal settings, integrity snapshots, and model weights outside this repository.
 
 `search`, `show`, and `stats` must open the database read-only and must not create schema or switch journal mode. Only intentional `index`/`migrate` and archive operations may write; they must create a verified backup and keep the snapshot manifest in sync with the database hash.
 
@@ -72,7 +72,7 @@ python <SHARED_SKILL_DIR>\scripts\sire_vector_db.py migrate
 python <SHARED_SKILL_DIR>\scripts\sire_vector_db.py stats
 ```
 
-On completion, archive reusable facts, search terms, decisions, limitations, validation results, and the task record to the shared database; update the shared Markdown index; and set `meta.sire_last_project`, `meta.sire_last_run`, and `meta.sire_last_status`. Commit the changed database, knowledge, workflow, and evidence to this Git repository. Do not push unless explicitly asked. Database migrations/indexing must keep a recoverable backup and verify row counts, FTS, vectors, and `integrity_check`.
+On completion, archive reusable facts, search terms, decisions, limitations, validation results, and the task record to the shared database; update the shared Markdown index; and set `meta.sire_last_project`, `meta.sire_last_run`, and `meta.sire_last_status`. Commit the changed knowledge, workflow, and evidence to this Git repository (not the database; see `sire/data/DATABASE-RECORD.md`). Do not push unless explicitly asked. Database migrations/indexing must keep a recoverable backup and verify row counts, FTS, vectors, and `integrity_check`.
 
 ## Workflow changes (RSI)
 
@@ -91,4 +91,4 @@ Any change to files in this shared skill directory is a workflow mechanism chang
 
 ## ZIP packages
 
-The Git repository holds the complete shared database and history. A light ZIP, when explicitly requested, does not include the SQLite database or run history; it must still include exactly one `shared/sire/` workflow source and clearly state the omitted data. Sensitive files (`secrets` directories and `.pem/.key/.pfx/.p12/.vault`) and old packages under the knowledge `exports` directory are never packaged. After packaging, R9 `verify-zip` checks its own required-entry list (a missing entry is `package_omission`) and rejects any sensitive file in the ZIP (`package_sensitive_leak`). Restoring a ZIP must reconnect both client aliases to the same repository copy.
+The Git repository holds the workflow, knowledge, and history; the database stays local (see `sire/data/DATABASE-RECORD.md`). A light ZIP, when explicitly requested, does not include the SQLite database or run history; it must still include exactly one `shared/sire/` workflow source and clearly state the omitted data. Sensitive files (`secrets` directories and `.pem/.key/.pfx/.p12/.vault`) and old packages under the knowledge `exports` directory are never packaged. After packaging, R9 `verify-zip` checks its own required-entry list (a missing entry is `package_omission`) and rejects any sensitive file in the ZIP (`package_sensitive_leak`). Restoring a ZIP must reconnect both client aliases to the same repository copy.

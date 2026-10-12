@@ -5,7 +5,7 @@
 - One database is resolved by `scripts/sire_paths.py`: `<SIRE_ROOT>/data/sire_vectors.sqlite3` by default.
 - Knowledge sources are `<SIRE_ROOT>/knowledge/global/`, the shared skill source, and configured task roots.
 - `SIRE_ROOT`, `SIRE_DATA_DIR`, `SIRE_VECTOR_DB`, `SIRE_KB_DIR`, `SIRE_EMBED_DIR`, and `SIRE_TASK_ROOTS` are common overrides. Claude and Codex must inherit identical values.
-- The repository tracks the SQLite database itself. `-wal`, `-shm`, and journal files, temporary copies, models, and secrets stay outside Git.
+- The SQLite database is not tracked in Git for now (over GitHub's 100MB limit); `sire/data/DATABASE-RECORD.md` records its local paths. `-wal`, `-shm`, and journal files, temporary copies, models, and secrets stay outside Git.
 - SQLite uses local FTS and stored embeddings. Model weights remain outside the repository; ordinary search should not require downloading a model.
 
 ## Commands

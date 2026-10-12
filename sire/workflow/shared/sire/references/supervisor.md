@@ -1,12 +1,12 @@
 # R9 — shared-source and archive review
 
-R9 checks that Claude and Codex still use one repository source, that no required SIRE files were omitted or lost, and that the database/knowledge snapshot is safe to commit. The root [`SKILL.md`](../SKILL.md) defines the whole-task review contract.
+R9 checks that Claude and Codex still use one repository source, that no required SIRE files were omitted or lost, and that the knowledge snapshot is safe to commit (the database stays local and out of Git for now; see `sire/data/DATABASE-RECORD.md`). The root [`SKILL.md`](../SKILL.md) defines the whole-task review contract.
 
 ## Canonical content
 
 - `sire/workflow/shared/sire/` is the single SIRE workflow.
 - `sire/knowledge/global/` is the single canonical Markdown knowledge directory.
-- `sire/data/sire_vectors.sqlite3` is the single shared client database and Git snapshot.
+- `sire/data/sire_vectors.sqlite3` is the single shared client database; it is not tracked in Git for now (see `sire/data/DATABASE-RECORD.md`).
 - `scripts/sire_paths.py` must resolve the same database and knowledge path through both client aliases.
 - Run ledgers are under `.sire/runs/<RUN_ID>/` or `sire/runs/<RUN_ID>/` and migrate into the shared database at closure.
 
@@ -18,7 +18,7 @@ Run `scripts/sire_supervisor.py preflight`, `start --run-id <RUN_ID>`, `check --
 
 1. Resolve both app skill folders and confirm each targets the same repository skill directory.
 2. Confirm the shared path resolver returns the same database and knowledge files from either installed entry.
-3. Confirm the database file is tracked and that no `-wal`, `-shm`, or journal sidecar is staged.
+3. Confirm the database file is neither tracked nor staged (it stays local for now; see `sire/data/DATABASE-RECORD.md`) and that no `-wal`, `-shm`, or journal sidecar is staged.
 4. Compare knowledge against the preserved source inventory; ensure private directories and model caches remain outside Git.
 5. Inspect source manifests and package manifests for missing or duplicate SIRE rule sources.
 6. Verify database integrity, core table counts, FTS search, embedding references/hashes, and last-run metadata.
@@ -29,6 +29,6 @@ If a required source file is missing, a link points to a divergent copy, or the 
 
 ## ZIP scope
 
-Only package a ZIP when the user explicitly requests “打包工作流”. A light ZIP includes one `shared/sire/` source and shared knowledge, but intentionally excludes the tracked SQLite database and history; the Git repository remains the complete archive. The ZIP manifest must name those omissions and restore both app links to the same shared directory.
+Only package a ZIP when the user explicitly requests “打包工作流”. A light ZIP includes one `shared/sire/` source and shared knowledge, but intentionally excludes the SQLite database and history; the database is not in Git either for now (see `sire/data/DATABASE-RECORD.md`). The ZIP manifest must name those omissions and restore both app links to the same shared directory.
 
 Sensitive files (`secrets` directories and `.pem/.key/.pfx/.p12/.vault`, judged only by `sire_bundle.is_sensitive`) are not included in the ZIP; R9 snapshots record only their hash and size and never copy them, while deletion or truncation is still detected. Old packages under the knowledge `exports` directory are excluded from both the ZIP and the R9 inventory. `verify-zip` checks R9's own required-entry list, independent of the packaging scope: any missing entry is `package_omission`, and any sensitive file found in the ZIP is `package_sensitive_leak`.

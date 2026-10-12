@@ -1,6 +1,6 @@
 # Shared SIRE workflow archive
 
-This package makes Claude and Codex use one maintained SIRE v6 skill, one Markdown knowledge base, and one tracked SQLite database from this Git checkout.
+This package makes Claude and Codex use one maintained SIRE v6 skill, one Markdown knowledge base, and one local SQLite database (not tracked in Git for now; see `data/DATABASE-RECORD.md`).
 
 ## Canonical paths
 
@@ -20,21 +20,21 @@ The initial Codex/Claude source copies are preserved outside this repository; `s
 
 ## Database and knowledge
 
-Both applications use `scripts/sire_paths.py` to resolve the same values. The repository database is the one shared by Claude and Codex and the database tracked by Git. It holds knowledge records, task records, chunks, embeddings, keyword data, FTS data, and last-run metadata. Do not create app-profile databases. Read commands (`search`, `show`, and `stats`) use read-only SQLite connections and must leave the database file unchanged. Database write entry points, including index, migration, and RSI, create a verified backup before mutation and share a per-database lock with snapshot publication, so they cannot race a Git snapshot.
+Both applications use `scripts/sire_paths.py` to resolve the same values. The repository database is the one shared by Claude and Codex; it is not tracked by Git for now (see `data/DATABASE-RECORD.md`). It holds knowledge records, task records, chunks, embeddings, keyword data, FTS data, and last-run metadata. Do not create app-profile databases. Read commands (`search`, `show`, and `stats`) use read-only SQLite connections and must leave the database file unchanged. Database write entry points, including index, migration, and RSI, create a verified backup before mutation and share a per-database lock with snapshot publication, so they cannot race a Git snapshot.
 
-The machine-level archive database (`@SIRE_ARCHIVE_ROOT@\sire_vectors.sqlite3`) remains a closure archive required by the shared global contract, not a second application database. In PowerShell, `$env:SIRE_ARCHIVE_ROOT` names the local directory represented by `@SIRE_ARCHIVE_ROOT@`, and `$env:SIRE_ARCHIVE_DB` is `Join-Path $env:SIRE_ARCHIVE_ROOT 'sire_vectors.sqlite3'`. At task close, sync reusable knowledge and the run ledger there, then refresh the tracked repository database from that archive through the snapshot tool. This ordering keeps the repository snapshot and its manifest in sync. `sire_rsi.py` writes RSI records to both databases (archive first) and `snapshot_db.py` refuses to publish if the repository database holds RSI records missing from the archive.
+The machine-level archive database (`@SIRE_ARCHIVE_ROOT@\sire_vectors.sqlite3`) remains a closure archive required by the shared global contract, not a second application database. In PowerShell, `$env:SIRE_ARCHIVE_ROOT` names the local directory represented by `@SIRE_ARCHIVE_ROOT@`, and `$env:SIRE_ARCHIVE_DB` is `Join-Path $env:SIRE_ARCHIVE_ROOT 'sire_vectors.sqlite3'`. At task close, sync reusable knowledge and the run ledger there, then refresh the local repository database from that archive through the snapshot tool (the database is not committed to Git for now; see `data/DATABASE-RECORD.md`). This ordering keeps the repository snapshot and its manifest in sync. `sire_rsi.py` writes RSI records to both databases (archive first) and `snapshot_db.py` refuses to publish if the repository database holds RSI records missing from the archive.
 
 ## Privacy and snapshot boundary
 
 `knowledge/global/` contains normalized, reproducible knowledge. User settings, key material, model weights, integrity snapshots, SQLite WAL/SHM/journal files, and temporary database backups remain outside Git. A compatibility `integrity/` or `secrets/` directory may be linked to an external preserved location and is Git-ignored.
 
-Refresh the tracked repository database after the closure archive has received the current knowledge and task ledger:
+Refresh the local repository database (not committed to Git) after the closure archive has received the current knowledge and task ledger:
 
 ```powershell
 $env:SIRE_ARCHIVE_DB = Join-Path $env:SIRE_ARCHIVE_ROOT 'sire_vectors.sqlite3'
 python sire/tools/snapshot_db.py --source $env:SIRE_ARCHIVE_DB --dest sire/data/sire_vectors.sqlite3
 ```
 
-Set `$env:SIRE_ARCHIVE_ROOT` to the machine-level root represented by `@SIRE_ARCHIVE_ROOT@` and `$env:SIRE_EMBED_DIR` to the already installed local model directory before snapshotting. These one-command shell values are not app-specific database overrides. Review `sire/data/snapshot-manifest.json`, confirm its snapshot hash equals the database SHA-256, run the listed R7 checks, and commit the database together with the workflow and knowledge changes. Never push unless the user asks.
+Set `$env:SIRE_ARCHIVE_ROOT` to the machine-level root represented by `@SIRE_ARCHIVE_ROOT@` and `$env:SIRE_EMBED_DIR` to the already installed local model directory before snapshotting. These one-command shell values are not app-specific database overrides. Review `sire/data/snapshot-manifest.json`, confirm its snapshot hash equals the database SHA-256, run the listed R7 checks, and commit the workflow and knowledge changes (not the database, which stays local for now; see `data/DATABASE-RECORD.md`). Never push unless the user asks.
 
-The light workflow ZIP is a separate distribution format. It includes one `shared/sire/` source and shared Markdown knowledge, but omits the SQLite database and historical runs. The Git repository remains the complete archive.
+The light workflow ZIP is a separate distribution format. It includes one `shared/sire/` source and shared Markdown knowledge, but omits the SQLite database and historical runs. The Git repository archives workflow, knowledge, and runs; the database stays local.

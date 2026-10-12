@@ -35,13 +35,13 @@
 - 新增/修改 Markdown：使用共享 `sire_kb.py` 操作 `KNOWLEDGE_DIR`，随后运行 `reindex` 和 `sire_vector_db.py index`。
 - 归档 run 台账：将运行记录留存在工作区 `.sire/runs/` 或 `sire/runs/`，随后运行 `sire_vector_db.py migrate`。
 - 两端检索都使用同一 SQLite。更新后复核知识 ID、FTS、`integrity_check`、计数和 embedding 文本哈希。
-- SIRE 修改共享数据库后，应按本仓库快照流程备份、检查并提交数据库与知识/工作流改动。
+- SIRE 修改共享数据库后，应备份并检查数据库，只提交知识/工作流改动；数据库暂不进 Git，本机路径见 `sire/data/DATABASE-RECORD.md`。
 - 数据库备份放到仓库外；不要将 WAL/SHM、私有密钥、模型缓存或整份个人配置写入 Git。
 - 修改共享 skill 目录（`sire/workflow/shared/sire/`）前先运行 `sire_rsi.py propose` 登记 RSI 提案；R9 `sire_supervisor.py finalize` / `rsi-check` 会拦截未登记的未提交改动（`rsi_unregistered_change`）。`sire_rsi.py` 写命令同时写机器级归档库（`SIRE_ARCHIVE_ROOT`/`SIRE_ARCHIVE_DB`/`--archive-db`）与仓库库；`snapshot_db.py` 发现仓库库独有的 RSI 记录时拒绝发布。
 
 ## Git 快照与轻量 ZIP
 
-本 Git 仓库保存完整的已检查 SQLite 数据库快照。轻量 ZIP 分发仍不含数据库和历史运行台账，两种归档用途不同，不能互相覆盖。ZIP 内的 skill 也只保存一份 `shared/sire/`，恢复时将 Claude 与 Codex 两个入口同时联接到这份目录。
+2026-10-12 起数据库暂不进 Git（超过 GitHub 100MB 单文件上限），本仓库只保留 `sire/data/DATABASE-RECORD.md` 记录本机路径；Git 历史中最后一份数据库是 69MB 的旧版，不代表最新数据。轻量 ZIP 分发同样不含数据库和历史运行台账。ZIP 内的 skill 也只保存一份 `shared/sire/`，恢复时将 Claude 与 Codex 两个入口同时联接到这份目录。
 
 ## 两端验收
 
@@ -50,7 +50,7 @@
 1. 两个 skill 入口的真实目标相同，读取同一个 `SKILL.md`。
 2. `sire_paths.py` 输出相同的数据库路径和知识目录。
 3. 分别运行数据库 `stats` 与共同关键词 `search`，计数和命中 ID 相同。
-4. 在一个入口新增知识并索引后，另一个入口可立即检索到该记录；确认 Git 工作区中的同一数据库文件发生变化。
+4. 在一个入口新增知识并索引后，另一个入口可立即检索到该记录；用 `sire_vector_db.py stats` 计数和数据库文件修改时间确认是同一个本机数据库发生了变化（数据库已被 .gitignore 忽略，`git status` 看不到它）。
 
 历史目录命名和旧 ZIP 操作说明见 `SIRE-MIGRATION-legacy-v1.md`，不作为当前安装规范。
 
@@ -63,3 +63,4 @@
 | 2026-09-25 | 本会话 | global-contract.md 新增“模型分级与省 token 机制”：低难度派 haiku、中难度派 sonnet、高难度留主控，失败逐级升模型 | 规则文本已写入并校验 grep 命中 |
 | 2026-09-26 | 本会话 | 模型分级改为：低=haiku，中=Opus 5.5 low 思考，高=Opus 5.5 high 思考；新增子代理 sire-low/sire-mid/sire-high | grep 校验 |
 | 2026-10-12 | R20261012-claude-tier-agents-link | sire-low/mid/high 纳入 `shared/sire/agents/claude/`，`~/.claude/agents` 同名文件改为符号链接（原件留 `.legacy-backup-20261012`）；R9 `REQUIRED_AGENT_NAMES` 加 low/mid/high，打包缺失即 `package_omission`；RSI-20261012-TIERAGENTS → v6.5 | R6 sire-mid PASS；R7 T2 打包+verify-zip PASS、T3 删件后 STOP；T1 新进程加载 BLOCKED（CLI 401） |
+| 2026-10-12 | R20261012-db-untrack | 数据库 168MB 超 GitHub 100MB 上限推送被拒；用户决定数据库暂不进 Git：未推送提交改写去掉大文件、停止跟踪并 .gitignore、新增 `sire/data/DATABASE-RECORD.md` 记录本机路径；SKILL.md/global-contract/supervisor/vector-knowledge/README 同步改述；RSI-20261012-DBUNTRACK → v6.6 | 待推送范围无 >50MB 对象；文档无残留“数据库进 Git”表述 |

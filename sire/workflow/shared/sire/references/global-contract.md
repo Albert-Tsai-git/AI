@@ -68,7 +68,7 @@ SIRE 是所有任务的强制自动化处理机制，必须完整执行：
 ## Claude/Codex 共用源补充
 
 - 唯一 SIRE skill 源：`<SIRE_ROOT>/workflow/shared/sire/`。Claude 的 `~/.claude/skills/sire-global-workflow/` 与 Codex 的 `~/.codex/skills/ai-dev-sire-workflow/` 必须链接到同一物理目录。
-- 唯一 Claude/Codex 工作数据库：`<SIRE_ROOT>/data/sire_vectors.sqlite3`，存放在 Git 仓库内；知识目录为 `<SIRE_ROOT>/knowledge/global/`。脚本必须通过 `scripts/sire_paths.py` 解析；两端的 `SIRE_ROOT`、`SIRE_DATA_DIR`、`SIRE_VECTOR_DB`、`SIRE_KB_DIR`、`SIRE_EMBED_DIR` 和 `SIRE_TASK_ROOTS` 覆盖值必须相同。
-- 系统级归档规则仍要求更新 `@SIRE_ARCHIVE_ROOT@\sire_vectors.sqlite3`；它是任务闭环归档位置，不得配置成 Claude 或 Codex 的独立工作库。收尾时将任务记录与可复用知识同步到该归档，并将经过检查的共享数据库与工作流提交到 Git。
+- 唯一 Claude/Codex 工作数据库：`<SIRE_ROOT>/data/sire_vectors.sqlite3`，暂不进 Git（超过 GitHub 100MB 单文件上限），本机实际路径见 `sire/data/DATABASE-RECORD.md`；知识目录为 `<SIRE_ROOT>/knowledge/global/`。脚本必须通过 `scripts/sire_paths.py` 解析；两端的 `SIRE_ROOT`、`SIRE_DATA_DIR`、`SIRE_VECTOR_DB`、`SIRE_KB_DIR`、`SIRE_EMBED_DIR` 和 `SIRE_TASK_ROOTS` 覆盖值必须相同。
+- 系统级归档规则仍要求更新 `@SIRE_ARCHIVE_ROOT@\sire_vectors.sqlite3`；它是任务闭环归档位置，不得配置成 Claude 或 Codex 的独立工作库。收尾时将任务记录与可复用知识同步到该归档，并将工作流与知识改动提交到 Git（共享数据库只做备份与检查，暂不进 Git，见 `sire/data/DATABASE-RECORD.md`）。
 - PowerShell 收尾命令中的 `$env:SIRE_ARCHIVE_ROOT` 对应本机的 `@SIRE_ARCHIVE_ROOT@`；`$env:SIRE_ARCHIVE_DB` 必须由 `Join-Path $env:SIRE_ARCHIVE_ROOT 'sire_vectors.sqlite3'` 得到。两者只是执行当前归档步骤的 shell 变量，不配置到任一客户端。
-- 禁止在客户端 profile 目录下保留可写的第二份 SIRE skill、知识库或向量库。轻量 ZIP 可不含数据库，但 Git 仓库完整保留数据库。
+- 禁止在客户端 profile 目录下保留可写的第二份 SIRE skill、知识库或向量库。轻量 ZIP 与 Git 仓库目前都不含数据库；数据库只在本机，位置与恢复方法见 `sire/data/DATABASE-RECORD.md`，禁止 `git add -f` 提交它。
