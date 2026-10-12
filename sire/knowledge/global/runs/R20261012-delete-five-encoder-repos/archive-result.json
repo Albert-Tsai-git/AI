@@ -1,0 +1,56 @@
+{
+  "run_id": "R20261012-delete-five-encoder-repos",
+  "databases": [
+    {
+      "path": "D:\\sire\\sire_vectors.sqlite3",
+      "integrity": "ok",
+      "fts_integrity": "ok",
+      "run_task_records": 10,
+      "meta": {
+        "sire_last_project": "D:/code",
+        "sire_last_run": "R20261012-delete-five-encoder-repos",
+        "sire_last_status": "DONE"
+      },
+      "sha256": "69fa703281dad88b92b508c5ce9d229ef281847ea706d23c75e6a6a0b9811ca1",
+      "records_by_table": {
+        "chunks": 6824,
+        "emb": 6962,
+        "improvement_metrics": 15,
+        "improvement_proposals": 8,
+        "keywords": 24560,
+        "knowledge_records": 139,
+        "knowledge_relations": 6,
+        "meta": 13,
+        "synonyms": 45,
+        "task_records": 2666,
+        "workflow_versions": 7
+      }
+    },
+    {
+      "path": "D:\\sire\\AI\\AI\\sire\\data\\sire_vectors.sqlite3",
+      "integrity": "ok",
+      "fts_integrity": "ok",
+      "run_task_records": 10,
+      "meta": {
+        "sire_last_project": "D:/code",
+        "sire_last_run": "R20261012-delete-five-encoder-repos",
+        "sire_last_status": "DONE"
+      },
+      "sha256": "8f8c71b9dc2b94319cb3f6ff993ed30cf019ca324cc5344c59005afa018bb385",
+      "records_by_table": {
+        "chunks": 7068,
+        "emb": 7208,
+        "improvement_metrics": 15,
+        "improvement_proposals": 8,
+        "keywords": 24647,
+        "knowledge_records": 140,
+        "knowledge_relations": 6,
+        "meta": 13,
+        "synonyms": 45,
+        "task_records": 2687,
+        "workflow_versions": 7
+      }
+    }
+  ],
+  "reusable_knowledge": "none; no applicable durable item identified"
+}
