@@ -1,0 +1,2 @@
+# 对 R6A 发现的交叉复验 — F-054
+复验 `ls firmware_profiles` = 13 份 v3.3.0–v3.4.7、无 dev-*；确认 commands.py 里 _send/_send_mit_frame/_boot_send_raw/_recal_send 恰 4 个（:285/:356/:1117/:1288）；README.md grep crc16 0 命中、rs485_v3.3.md:15/:73 确为 CRC16-CCITT。

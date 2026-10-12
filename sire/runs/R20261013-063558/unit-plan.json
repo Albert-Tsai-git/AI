@@ -1,0 +1,121 @@
+{
+  "units": [
+    {
+      "id": "U-01",
+      "title": "记录 A：后端通信链、reader 双形态与运行形态",
+      "maps": "验收1,2",
+      "owner": "R5",
+      "accept": "当以 server.py 启动、endpoint 分组、reader 三变体、shared_memory、READER_MP、WEB_GUI_PORT、KK_READER 为关键词检索时，应命中一条新 F 记录，每个模块带 文件:行号 入口，并含环境变量清单与打包/开发双形态差异",
+      "files": "D:\\sire\\AI\\AI\\sire\\knowledge\\global\\global_dev_features.md",
+      "verify": "用 grep 在 global_dev_features.md 中取本单元新 ID 的记录块，断言含 server.py:341、reader_mp.py:85、WEB_GUI_PORT 三处串，且含 需求场景/方案/关键文件/验证 四个段名（python 单行脚本按标题切块并匹配段名，输出 OK）",
+      "deps": [],
+      "wave": 1,
+      "risk": "只写后端与进程形态；endpoint 清单不含前端调用",
+      "stop": "抽查 3 处行号与代码不符则 FAIL"
+    },
+    {
+      "id": "U-02",
+      "title": "记录 B：协议层、寄存器、固件档案门控与新增命令链路",
+      "maps": "验收1,2",
+      "owner": "R5",
+      "accept": "当以 protocol.py、commands.py、registers.py、fw_profile、0x38、RS485 V3.3、新加协议命令 为关键词检索时，应命中一条新 F 记录，含 Cmd enum 规模、寄存器单一来源声明、档案未确定时的失败行为、新加命令六步落地顺序与写零位/慢命令的停机前置",
+      "files": "D:\\sire\\AI\\AI\\sire\\knowledge\\global\\global_dev_features.md",
+      "verify": "grep 新 ID 记录块，断言含 core/protocol.py:16、FwProfileUndetermined、0x38 三处串且四个段名齐全",
+      "deps": ["U-01"],
+      "wave": 1,
+      "risk": "内圈零位与再标定 worker 归本记录；U-06 的下线检测建零是卸力建零，另一回事",
+      "stop": "V3.3 差异条目与 docs/protocol/rs485_v3.3.md 不一致则 FAIL"
+    },
+    {
+      "id": "U-03",
+      "title": "记录 C：前端页面、路由注册、通信与图表",
+      "maps": "验收1,2",
+      "owner": "R5",
+      "accept": "当以页面名（运动/电机标定/下线检测/寄存器）或 app.js、api.js、scope-bar.js、uPlot、加一个新页面、后台节流 为关键词检索时，应命中一条新 F 记录，含 13 个 page 文件的职责清单与新增页面的 5 处改动点",
+      "files": "D:\\sire\\AI\\AI\\sire\\knowledge\\global\\global_dev_features.md",
+      "verify": "grep 新 ID 记录块，断言含 PAGE_BUILDERS、unthrottled-timer.js、new uPlot 三处串且四个段名齐全",
+      "deps": ["U-02"],
+      "wave": 1,
+      "risk": "后台节流与发帧循环只在此记录写",
+      "stop": "页面清单与 frontend/js/pages/*.js 实测 13 个文件不符则 FAIL"
+    },
+    {
+      "id": "U-04",
+      "title": "记录 D：Electron 壳启动、窗口与端口回执",
+      "maps": "验收1,2",
+      "owner": "R5",
+      "accept": "当以 electron main.js、backgroundThrottling、startBackend、端口回执、contextIsolation、kkdiag:// 为关键词检索时，应命中一条新 F 记录，说明壳如何拉起后端并取得实际端口、窗口安全选项与崩溃后诊断页",
+      "files": "D:\\sire\\AI\\AI\\sire\\knowledge\\global\\global_dev_features.md",
+      "verify": "grep 新 ID 记录块，断言含 electron/main.js:144、backgroundThrottling、PORT_PINNED 三处串且四个段名齐全，并断言打包装配结论以指向 F-057 的一句话表述而非重复展开",
+      "deps": ["U-03"],
+      "wave": 1,
+      "risk": "「前端不进壳、随 server.dist 走」这条事实唯一归属 U-05，本记录只写一行指向",
+      "stop": "与 U-05 出现同一条事实的展开重复则删除本记录中的重复段"
+    },
+    {
+      "id": "U-05",
+      "title": "记录 E：构建打包、测试分层与 CI 门禁",
+      "maps": "验收1,2",
+      "owner": "R5",
+      "accept": "当以 build.bat、Nuitka、include-data-dir、pytest、tests/unit、.gitlab-ci.yml、release.py、vendor wheel、requirements 精确 pin 为关键词检索时，应命中一条新 F 记录，含 build.bat 步骤顺序、前端随 server.dist 走的唯一归属说明、测试目录分层与 244 文件/2236 用例规模、CI job 清单与 NAS 产物落点",
+      "files": "D:\\sire\\AI\\AI\\sire\\knowledge\\global\\global_dev_features.md",
+      "verify": "grep 新 ID 记录块，断言含 pytest.ini:9、include-data-dir=frontend、NAS_SHARE 三处串且四个段名齐全",
+      "deps": ["U-04"],
+      "wave": 1,
+      "risk": "发布纪律原则已在 F-019/F-024，本记录只补可核对的文件与行号事实",
+      "stop": "步骤顺序与 build.bat 阅读结果不一致则 FAIL"
+    },
+    {
+      "id": "U-06",
+      "title": "记录 F：下线检测功能全貌（当前分支在研）",
+      "maps": "验收1,2,3",
+      "owner": "R5",
+      "accept": "当以下线检测、坏点、卸力建零、出力准备闸、反驱力、额定扭矩、od_relay、噪声使能 为关键词检索时，应命中一条新 F 记录，含八步顺序流程、7 个 od_* 模块分工、前端入口、23 条未发布 CHANGELOG 的归类与验收状态",
+      "files": "D:\\sire\\AI\\AI\\sire\\knowledge\\global\\global_dev_features.md",
+      "verify": "grep 新 ID 记录块，断言含 core/offline_detection.py:717、offline_detection.js:58、CHANGELOG.md:17 三处串且四个段名齐全",
+      "deps": ["U-05"],
+      "wave": 1,
+      "risk": "只写功能结构与口径；与 F-052 不重叠（F-052 只讲信息确认与订单号交互）",
+      "stop": "状态描述与 CHANGELOG [未发布] 段矛盾则 FAIL"
+    },
+    {
+      "id": "U-07",
+      "title": "记录 G：文档映射、协作上下文与自验路径",
+      "maps": "验收1,2,3",
+      "owner": "R5",
+      "accept": "当以 docs/skills、必读、缺陷池、需求池、真机台账、workspace.json、playwright 自测、scope 冻结调试 为关键词检索时，应命中一条新 F 记录，含 13 个 skill 文件的改动前必读分流、AGENTS.md 规则表核实结果（含两处不实引用）、PROJECT-CONTEXT 章节定位与三条自验路径（可见 UI 自测 / 真实数据流出图 / 真机台账按读取器 serial 对号）",
+      "files": "D:\\sire\\AI\\AI\\sire\\knowledge\\global\\global_dev_features.md",
+      "verify": "grep 新 ID 记录块，断言含 docs/skills、PROJECT-CONTEXT.md:213、playwright_ui_self_test 三处串且四个段名齐全",
+      "deps": ["U-06"],
+      "wave": 1,
+      "risk": "缺陷池 base token 属协作定位信息、非密钥，按原文记录；不写任何私钥/口令/NAS 密码",
+      "stop": "把不存在的文档路径写成存在则 FAIL"
+    },
+    {
+      "id": "U-08",
+      "title": "重建索引并校验数据库与备份",
+      "maps": "验收2,4",
+      "owner": "R5",
+      "accept": "当 7 条记录写入后执行 reindex 与 index 时，应使 knowledge_records 计数增量等于 7，且 PRAGMA integrity_check 返回 ok、备份文件 mtime 晚于本次 index 开始且大小大于 0",
+      "files": "D:\\sire\\AI\\AI\\sire\\data\\sire_vectors.sqlite3; D:\\sire\\AI\\AI\\sire\\knowledge\\global\\global_index.json",
+      "verify": "cd 到 D:\\sire\\AI\\AI\\sire\\workflow\\shared\\sire\\scripts 后依次运行 python sire_kb.py reindex、python sire_vector_db.py index、python sire_vector_db.py stats（比对 knowledge_record_count 由 148 增至 155），再用 python 单行以只读 URI 连库执行 PRAGMA integrity_check 取 ok 并用 python 单行列 C:\\Users\\Administrator\\sire\\db-backups 最新备份的 mtime 与字节数",
+      "deps": ["U-01", "U-02", "U-03", "U-04", "U-05", "U-06", "U-07"],
+      "wave": 2,
+      "risk": "写多项目共用库；index 自带 database_mutation_lock + backup_before_mutation，备份失败即中止不得绕过",
+      "stop": "备份缺失或 integrity_check 非 ok 立即中断并报告"
+    },
+    {
+      "id": "U-09",
+      "title": "检索验收：后续开发真实查询词命中率与新旧对比",
+      "maps": "验收3",
+      "owner": "R5",
+      "accept": "当用 6 组后续开发会用的查询词做混合检索时，每组前 5 条命中里应至少出现 1 条本次新记录标题串；且对「driverSoftware 仓库 架构 入口」这组词，新记录应排在旧摘要 K-REPO-DRIVERSOFTWARE-20260924 之前或旧记录已带被取代标注",
+      "files": "D:\\code\\driverSoftware2\\.sire\\runs\\R20261013-063558\\evidence\\u09-retrieval.md",
+      "verify": "cd 到 scripts 目录后运行 python sire_vector_db.py search --query <词> --json --limit 5 六次，词组为：后端 reader 双形态 端口 / 协议 寄存器 固件档案 / 前端 页面 注册 示波器 / Electron 壳 启动 端口 / 测试 CI 打包 发布 / 下线检测 坏点 额定扭矩；python 单行脚本在每个结果的 title 字段匹配 F-053..F-059 标题串并打印每组 PASS/FAIL 与总判定，另运行 python sire_kb.py search 同词六组记录 Top5",
+      "deps": ["U-08"],
+      "wave": 3,
+      "risk": "命中不足说明关键词或分块不到位",
+      "stop": "任一组前 5 条无新记录标题 → 回 U-01..U-07 补关键词后重跑 U-08，返工计数入台账"
+    }
+  ]
+}

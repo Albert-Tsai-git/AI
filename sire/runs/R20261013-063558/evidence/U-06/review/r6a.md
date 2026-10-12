@@ -1,0 +1,3 @@
+# R6A — F-058
+初判 PASS（1 处不准）。属实：八步与 `ITEMS`:21-28（②-⑦ 六项）、卡片 :83-91、`require_step` :739、单会话 :721、`decide` :758、`finish_session` :793、文件头 :11/:12；`DetectionStatus` :31 五态；`DetectionType` :39-45 恰 6 成员；judge_ :319-484、`DetectionResult` :527、会话 :557、控制器 :717、配置 :132-295；六个 od_* 行数 64/83/235/240/228/294 逐一吻合；常量 :18/:27/:28/:33/:38/:113；`core/od_torque_recorder.py` 确不存在；`tests/unit/test_od_*.py` 确为 11 个；CHANGELOG :17 起 23 条（变更 13/新增 6/修复 4）；commit 主题与 `git log -30` 计数 12/9/1/1/7 吻合。
+不准项（已改）：过流/过温的实际判定不在 `od_rated_torque.py:38-70`（那里只有异常类，含 `peak_iq_a/limit_a`），采集循环侧在 `server.py:10613`（滤波 Iq）与 :10649（归类）。

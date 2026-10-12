@@ -11,7 +11,6 @@
 **验证**: 主控报告 test_od_lock_completed 五项通过；可见隔离模拟 GUI 已覆盖继续解锁噪声、结束显示不合格并保留决定、订单号回车聚焦序列号且不提交。独立只读复核通过。
 **限制**: 通信读取失败仍报错重试，只有判定不合格进入人工决定；订单号刷新清空且不进入报告。真实 8766 服务有用户检测，未重启，未宣称真机验收。尺寸自动换格已另提交 cda5e0c：Enter 立即跳格，输入停顿 500ms 跳格，最后只聚焦确认；清空与恢复不抢焦点，失焦与页面重建取消定时器。用户说明设备类似扫码枪单次输入，是否回车未知。仅实际观察逐字输入 30.123 时整笔保留第一格；未完成超时跳格及边界验证。用户要求停止测试并自行验收，已停止，不计为验证通过。
 
-
 ### F-026: EncoderPlotter 烧录面板放开 DPB 锁定 — 型号/固件文件可重选
 **日期**: 2026-09-23
 **项目**: EncoderPlotter_0703_03 (分支 feature/flash-and-pcba，主仓 1f5c515a，子模块 sub_automation 30b1c3f)
@@ -413,3 +412,558 @@
 > - 本清单是项目文档设计与现状审计，不代替各模块规范、脚本行为或用户授权。
 > 
 
+
+### F-044: Unity/Blender 战车 RPG 的美术启动约定
+
+**日期**: 2026-09-27  
+**项目**: GAME（原创废土战车 RPG）  
+**状态**: 已归档（视觉方案仍需实景验收）  
+**关键词**: Unity 美术, Blender, 战车, 模块化武器, 挂点, 俯视 2.5D, Low-poly, Toon, 废土, 资产生产
+
+**背景**: 游戏机制实现与美术准备并行；项目 GDD 已确定固定俯视 2.5D、Low-poly/Toon、低饱和盐尘色系，并在 `Data/parts.csv` 定义车辆武器挂点。
+
+**决策**: 美术准备先建立视觉基线和首辆轻型车的可读剪影，再扩充环境与敌人；可替换武器作为独立网格。轻型底盘挂点必须精确命名 `Mount_Main`、`Mount_Sub`，以现有 75mm 炮和 7.7mm 机枪数据作首批装备对照。车轮布局与比例属于待镜头/导入验证的制作提案；Unity 坐标按项目协作约定固定为 1单位=1米、Y-up、车辆前向+Z，武器炮口+Z。
+
+**文件**: `D:/code/GAME/docs/ART_BIBLE.md`; `D:/code/GAME/UNITY/Assets/Art/Concepts/TNK_Light_Rover_Concept_v01.svg`。
+
+**验证与限制**: 概念 SVG 可解析；挂点和武器 ID 与 CSV 对照一致。Unity 工程根目录为 `UNITY/`；未执行 Blender/FBX/Unity 导入，也未通过真实俯视镜头验收。工作区中尚无本概念对应的 Blender 源文件或 FBX；最终比例、材质表现和换装效果需在 Unity 中确认。
+
+
+### F-045: 舵机加密OTA的协议及ACK丢失恢复
+
+**日期**: 2026-10-08
+**项目**: driverSoftware
+**关键词**: 加密OTA, AES-128-CBC, PKCS7, Bootloader3.4, SetCrypto, ACK丢失, 会话恢复, 96B, 明文兼容
+
+**需求场景 / 现象**: 舵机 Bootloader 3.4 同时支持明文与加密 OTA，上位机需要显式选择加密，3.3 及以下继续明文。
+
+**方案 / 架构**: 完整含 CRC16 的命令帧先 PKCS7 补齐，再 AES-128-CBC 加密；线上为随机 IV(16B) + 密文。Ping 和回复为明文。初次 SetCrypto 开启为明文，加密状态下关闭也必须密文。采用已有 pycryptodome，不复制固件纯 Python AES。API encrypt 默认为 false，页面按 boot Ping 的版本允许选择。
+
+**关键文件与接口**:
+- core/ota_crypto.py — encrypt_frame，64B 写块产生 96B 下行帧。
+- core/commands.py — boot_set_crypto、_boot_send_raw，严格检查开关 ACK 的 CRC/ID/子命令/status。
+- server.py — OtaFlashReq.encrypt、api_ota_flash，版本拒绝与会话恢复。
+- frontend/js/pages/bootloader.js — 加密选择、确认文案、升级结果。
+
+**实施步骤**:
+1. 按 workspace.json 找固件，读取包含加密实现的分支，而非默认检出版本；双端密钥逐字节核对。
+2. Boot Ping 确认版本 ≥3.4，SetCrypto 有效 ACK 后才能 SetMode 和擦写，不自动降级明文擦写。
+3. 克隆命令对象隔离加密状态，使用 OTA 互斥锁阻止并行流水线。
+4. 留在 boot 时密文关闭；开启被拒或关闭 ACK 丢失时再尝试明文关闭，失败提示重启。Jump ACK 丢失时提示先重连确认。
+
+**验证方法**: 相关 pytest 87 项通过，其中加密用例 21 项；固定 IV 与固件 3.4 脚本七种帧长度逐字节一致；可见 Chrome 经真实页面/HTTP 与模拟 boot 完成加密、明文、旧版明文、开启无 ACK 四条路径。未连接真机，不能作为 Analyzer 或 boot 实体验收。
+
+**踩坑**: 固件主检出脚本仍使用旧测试密钥；3.4 分支已改为与 Boot 一致。照主检出脚本复制会导致开启后命令全部无回应。不能把脚本“恒明文关闭”的旧注释当真相，新 Boot 在加密状态下只接受密文关闭。
+
+**状态**: 软件实现与模拟验收完成，真机可见 GUI 验收待设备及逐次 OTA 授权。
+
+
+### F-047: MPT arguments 解耦：'a'指令字段自描述查询（V4.2.1）
+
+**日期**: 2026-10-10
+**项目**: Analyzer_Encoder_DebugTest（C:\Users\Administrator\Downloads\Analyzer_Encoder_DebugTest；Test Script + Test Report，2026-10-09 V4.2.1 第6轮报告）
+**关键词**: MPT, arguments解耦, 'a'指令, ARGUMENTS字段自描述查询, queryArgumentsField, getArgumentsByFieldQuery, argumentsLayoutToBuffer, verifyArgumentsFieldQuery, argumentsReadMethod, argumentsVersion=6, EncoderArgumentsV6, batSpeedMode, argumentsFieldLayoutTable, USARTInterface_Recali.c, fieldCount, ArgumentsErrorStatus, 'R'整块读取, EncoderBase.py, Analyzer, A~F协议回归, IAP, series=104, V4.2.1, a3950c3
+
+**需求场景 / 现象**: MPT 固件的 ARGUMENTS 结构体加字段/改布局（argumentsVersion 3→5→6）时，上位机用 'R' 整块读回 + ctypes 按版本硬解析，必须每版同步改结构体，固件与上位机强耦合。MPT V4.2.1 起固件新增 'a' 指令（提交 a3950c3），让每个字段自描述（名字/偏移/大小/类型/值），上位机据此解耦。
+
+**方案 / 架构**:
+- 请求：`'a' + fieldIndex(u8) + CRC8`；响应：`status + payload + CRC8`，payload 小端：schemaVersion(1) argumentsVersion(4) fieldCount(1) fieldIndex(1) fieldOffset(2) fieldSize(1) fieldType(1: 0=u8/1=u16/2=u32) nameLength(1) name value。
+- fieldIndex >= fieldCount 时固件回 status=ArgumentsErrorStatus(2)，作为遍历结束信号。真机 34 个字段，值与 'R' 整块逐字节一致（2026-10-08 验证）。
+- 上位机：从 index=0 遍历到结束信号，校验响应回显 index、fieldCount==实际条数、上限 64 个字段；任一步失败整体返回 None，不返回半成品。
+- 兼容策略（折中，并未彻底去掉结构体）：`argumentsLayoutToBuffer` 按 offset 把字段值拼回原始字节（空洞补 0，总长按 4 字节向上取整，真机 72B），再喂给原有 `ArgumentsHeader/EncoderArgumentsV5/V6.from_buffer_copy` 解析，所以下游代码零改动；通过 `modes["argumentsReadMethod"]`（"R" 默认 / "a"）或 `getArguments(readMethod=)` 切换，`layout` 同时保存在 `Arguments.argumentsLayout` 里。
+- `byName` 字典（name→小端整数）可直接按字段名取值，是真正解耦用法的入口，目前未被主流程使用。
+
+**关键文件与接口**（Test Script 目录）:
+- `EncoderBase.py:1101-1248` — ARGUMENTS_FIELD_QUERY=ord('a')、queryArgumentsField（state: ok/end/status/fail，重试3次）、getArgumentsByFieldQuery、argumentsLayoutToBuffer、verifyArgumentsFieldQuery（'R' vs 'a' 逐字段对照 + 未覆盖区间非零检测）
+- `EncoderBase.py:1306` getArguments(readMethod) ；`EncoderBase.py:2728+` Arguments.__init__/initArgumentsFromBuffer 里 readMethod=="a" 分支；`EncoderBase.py:2814-2822` argumentsVersion 5/6 → EncoderArgumentsV5/V6
+- `DataFormatter.py` EncoderArgumentsV6（V5 末尾多 batSpeedMode，其余偏移不变）
+- `test_mpt_protocol_regression_AtoF.py:1729` 回归脚本显式切 'a'；`test_iap_mpt20_standalone.py` IAP 刷机流程
+- 协议脚本：mpt_0x64_protocol.py(RS485/422 0x64，5/7字节两种帧)、mpt_ssi_protocol.py、mpt_bus_protocol.py、mpt_t485_protocol.py、bissc_protocol.py；CRC.py(CRC8 多项式 x8+x7+x4+x2+x1+1)、Analyzer.py(M487_Universal 读取器 USB)
+
+**验证结果**（报告 V4.2.1_L6EB981C478199E94，2026-10-09，真机）:
+- IAP：1941/1941 包、496736 字节、43.3s，整区擦除(page7~127+Bank2)+0x5EE5 校验+0x6FF6 复位，刷机后 argumentsVersion 3→6、series 105→104。
+- 全程 'a' 路径读 Arguments 的 A~F 回归：20 项主流程全 PASS，42 组分辨率覆盖矩阵全 PASS，CRC 失败 0，656.1s。'a' 路径首次在完整回归下验证通过。
+- 基线 Arguments（'a'读出）：series=104, interface=202, baudrate=2500000, busID=31, internalResolution multi16/single17, hallNumber=9, rotorSize=15, sectionNumber=36, software=67240192, algoVersion=4060, batSpeedMode=0。
+
+**踩坑 / 限制**:
+- 固件字段表 `argumentsFieldLayoutTable`（USARTInterface_Recali.c）是人工维护静态数组：固件给 ARGUMENTS 加字段忘加表项时，'a' 会静默漏字段；用 verifyArgumentsFieldQuery 查 uncoveredRanges 里 nonZero 区间来发现。
+- 'a' 不报告对齐空洞/尾部 padding，拼回时补 0。
+- 老固件（argumentsVersion<6、series=105 等）不支持 'a'，需回退 'R'；刷机前读取仍走旧路径。
+- 'a' 每字段一次往返（34 次），比 'R' 慢，高频读取场景别用。
+- 后续解耦待办：主流程仍依赖 ctypes 结构体；若要彻底解耦，应改用 byName/字段名 + offset 的动态映射，并保留 'R' 兜底；写入侧（getUpdateArguments/dict_to_init_arguments）仍按 argumentsVersion 分支硬编码，未解耦。
+
+**状态**: 已完成（只读分析归档；未改动任何脚本/固件）
+
+
+### F-046: 打包应用通过兼容 profile 切换多仓库组合
+
+**日期**: 2026-10-10
+**项目**: EncoderPlotter 多仓库打包切换方案（架构咨询）
+**关键词**: Git 子模块, submodule, 主仓库分支, 打包, 运行时切换, profile, manifest, commit SHA, launcher, 版本组合, rollback
+
+**需求场景 / 现象**: 主仓库有多个需求分支，父仓库分别固定四个子模块的不同提交；希望在已打包桌面应用中点按钮切换兼容组合。工作区 EncoderPlotter 仓库包含 sub_embedded、sub_common、sub_algorithm、sub_automation。
+
+**根因**: Git 分支和子模块工作树是构建期源码状态。打包后的可执行文件只包含当时编译进去的主程序与资源，不能因为 UI 点击就检出另一个主仓库分支；普通安装包也不会自动包含 Git 源码仓。
+
+**方案 / 架构**: 将可选分支组合映射为有限的、CI 构建并验证过的 profile。manifest 固定主程序及四个子仓库的 commit SHA、应用/接口版本、构建产物路径和 SHA-256。仅切子模块且存在稳定 API/插件边界时，可在一个主程序包内并列加载模块；否则选择完整 profile 并重启。主仓库分支也有代码差异时，profile 必须包含完整应用构建产物，由稳定 launcher 切换版本；当前应用的按钮可以请求 launcher 完成停进程、校验、原子启用和重启。离线包预置允许 profile；在线方案下载签名产物，校验成功后启用，失败时保留旧版本。禁止把 git checkout 当成打包产品的运行时切换机制。
+
+**关键文件与接口**:
+- 父仓库提交中的 Git gitlink — 固定每个子模块的具体 commit。
+- `profiles/<profile-id>/manifest.json` — 建议清单，包含主仓/子仓 SHA、兼容范围、产物路径与哈希。
+- 稳定 launcher 的 `activateProfile(profileId)` — 停止进程、检查清单和文件、切换当前版本目录并重启。
+
+**实施步骤**:
+1. 建立允许组合与接口兼容矩阵，拒绝任意主/子仓分支拼接。
+2. CI 按父仓提交递归取出四个 gitlink，构建完整 profile 并生成 manifest。
+3. 通过同级版本目录发布 profile；launcher 先校验，再原子切换并保留一个可回退版本。
+4. 真实验收覆盖正确组合启动、缺包/哈希错误拒绝切换、进程占用和启动失败回滚。
+
+**验证方法**: 本条是未实现的架构建议，没有修改源代码、构建安装包或执行 UI 测试。实施后应在真实打包应用测试：选择的 profile 与五个提交 SHA 一致；无效清单保留旧版本；切换失败能恢复旧版。
+
+**踩坑**: 包内同时放多个完整主程序会增加体积；Electron/ASAR 资源路径和 Windows 文件占用可能阻止覆盖；Python 后台服务、设备句柄和配置迁移会影响重启与回滚。先采用 side-by-side 目录和进程重启边界，不要原地覆盖正在运行的文件。
+
+**状态**: 方案建议，未实现、未验证；离线/在线分发方式与具体目标分支待确认。
+
+
+### F-048: EncoderPlotter_0903_01 数据生成四条链路与基线分叉（feature/data-generation）
+
+**日期**: 2026-10-10
+**项目**: EncoderPlotter_0903_01（分支 feature/data-generation，从 feature/iap-ota-sn@19072126 切出）
+**关键词**: 数据生成, 生成标定数据, generateData, generatedDualData, ged_P, ged_Q, ged_T, IAP文件生成, EncoderCommandIapGenerateFile, iap-file-generator, 恢复出厂, feature/data-generation, feature/iap-ota-sn, develop 分叉
+
+**需求场景 / 现象**: 用户说"新建分支处理数据生成的相关逻辑"。"数据生成"在本仓库不是唯一指代，直接动手会改错链路；两条基线（develop 与 feature/iap-ota-sn）的生成代码也不同，从哪切决定能改到什么。
+
+**方案 / 架构**: 先定位全部调用点，再让用户选链路和基线。算法本体 `sub_algorithm/main.py generateData/generatedDualData` 归算法部门，不改，只改调用侧。主仓调用侧分四条链路（以 feature/iap-ota-sn@19072126 为准）：
+1. 标定流程（再标定/局部标定采完霍尔后）：`controller/python/Encoder.py` ~3485/3495
+2. IAP 升级第一阶段（进再标定采数据 → 生成新标定 P/Q/T → 刷固件后写回）：`Encoder.py` ~1503/1513
+3. IAP 文件生成（离线，调试日志 + BIN → 生成 → 按布局合入 BIN → 加密）：`components/share/iap-file-generator.js` + `Encoder.py` ~2406；命令 `EncoderCommandIapGenerateFile`（`sub_common/Defines.py:93`、`controller/defines.js:95`）
+4. 恢复出厂（按 arguments 版本重新生成写回）：`Encoder.py` ~4680/4718
+另有 MES 不良码 `0-1-0-4 数据生成失败`（`sub_common/DefectiveItems.py:36`、`components/encoder/mes/mes.js:31`）。
+
+**关键文件与接口**:
+- 基线分叉（2026-10-10）：feature/iap-ota-sn 比 origin/develop 多 109、少 9 个提交。develop 上 Encoder.py 只有 4 处 generateData 调用，没有 IAP 文件生成模块；develop 独有 `8c0b948b fix: IAP 升级时重新生成标定数据，MPP 不再两个分支都落空`，feature/iap-ota-sn 上没有。
+
+**实施步骤**:
+1. `git grep -n "generateData(\|generatedDualData(" <ref> -- controller/python/Encoder.py`，对比两条基线
+2. 让用户选基线和链路；本次用户选了 feature/iap-ota-sn，链路后续再提供
+3. `git switch -c feature/data-generation feature/iap-ota-sn`；子模块不建分支，等真要改子仓时再按"子先父后"同名建
+
+**验证方法**: HEAD == feature/iap-ota-sn == origin/feature/iap-ota-sn == 19072126，工作区干净，四个子模块 pin 不变。
+
+**踩坑**: 叠在 feature/iap-ota-sn 上的分支，MR 目标应先指向 feature/iap-ota-sn（或等它合进 develop 后 rebase），直接对 develop 提 MR 会把那 109 个提交一起带上。如果改到 MPP 的 IAP 生成，记得 develop 上 8c0b948b 那条修复这条线上没有。
+
+**状态**: 部分完成（分支已建，具体改动范围待用户提供）
+
+
+### F-049: CI tag写入target并在内部版界面显示
+
+**日期**: 2026-10-12
+**项目**: EncoderPlotter_0903_01 / 当前仓库
+**关键词**: Git tag, CI_COMMIT_TAG, target.json, internal build, 构建标签, versionSuffix
+
+**需求场景 / 现象**: CI 由 Git tag 触发打包，但应用左下角版本与设置页仍显示 commit hash，难以直接识别安装包对应的 tag。
+
+**根因**（问题类必填）: gen-target.mjs 只将 CI_COMMIT_SHORT_SHA 写入 randomStamp，未把 CI_COMMIT_TAG 编入 target.json，渲染层没有可读 tag。
+
+**方案 / 架构**: gen-target.mjs 将 CI_COMMIT_TAG 写入 target.tag。版本组件仅在内部版显示该字段：左下角版本后缀和设置页构建标签；内部 test 包的测试版号字段优先显示 tag。外部版隐藏，未带 tag 的本地构建回退原显示行为。
+
+**关键文件与接口**:
+- `scripts/gen-target.mjs` — 将 CI_COMMIT_TAG 写入 target.json 的 tag 字段。
+- `components/analyzer/version.js` — 内部版 buildTag 与左下角版本后缀。
+- `components/analyzer/version.html` — 设置页 tag 行及测试版回退。
+- `components/i18n.js` — 构建标签中英文字段。
+
+**实施步骤**:
+1. 读取 GitLab 预定义的 CI_COMMIT_TAG，无需为每个 tag 构建 job 重复传参。
+2. 内部版显示完整 tag；外部版不显示。
+3. CI 无 tag 时保持原有随机 stamp/版本逻辑。
+
+**验证方法**: 用测试 CI_COMMIT_TAG 生成 target.json 并确认 tag 字段存在；Node 语法检查与 git diff --check 通过。真实 Electron 界面操作未执行，待 GUI 环境验证。
+
+**踩坑**: test/dev 包原先在左下角后缀和设置页显示 commit 短 hash；内部版应以 Git tag 作为识别名，同时保留 commitInfo 哈希用于代码追溯。
+
+**状态**: 部分完成（代码已实现；真实 GUI 验收受限）
+
+
+### F-050: DPB单圈标定采集圆环置灰
+
+**日期**: 2026-10-12
+**项目**: EncoderPlotter_0903_01
+**关键词**: DPB, 单圈标定, 圆环, calibrationChart, ringTarget, ECharts, dispose
+**需求场景 / 现象**: 仅标定内圈或外圈时，未参与采集的环形分段和三角指针需要置灰。
+**方案 / 架构**: 使用 analyzer.calibration 的目标设备 series 与 onlyInnerCalibration/onlyOuterCalibration 计算 ringTarget；watch 在选择时重绘，calibrateData 事件按实际目标清空另一圈旧绿色并设置 markPoint.itemStyle。both 恢复红绿指针。
+**关键文件与接口**: components/encoder/calibrationChart.js 的 ringTarget、applyRingTarget、initChart；components/encoder/device.js 的 HallCollectingProcess 事件。
+**实施步骤**: 初始化及进度更新均应用目标状态；重绘前 dispose 旧 ECharts；innerSeries 深拷贝避免共享对象残留。
+**验证方法**: VM 断言覆盖仅内圈、仅外圈、残留绿色、both 恢复；node --check 和 git diff --check 通过。算法指定 e354d9c 的配置测试 29 passed。真实界面点击和硬件采集未验证。
+**踩坑**: 仅跳过非目标进度更新不能清除旧绿色，三角指针仍会有色；新增选项 watcher 放大原重建未 dispose 的实例泄漏。
+**状态**: 代码完成，真实界面验收受阻。
+
+
+### F-051: ECharts采集图例说明与禁用圈独立深灰
+
+**日期**: 2026-10-12
+**项目**: EncoderPlotter_0903_01
+**关键词**: DPB, 单圈标定, 圆环, calibrationChart, ringTarget, ECharts, dispose
+**需求场景 / 现象**: 仅标定内圈或外圈时，未参与采集的环形分段和三角指针需要置灰。
+**方案 / 架构**: 使用 analyzer.calibration 的目标设备 series 与 onlyInnerCalibration/onlyOuterCalibration 计算 ringTarget；watch 在选择时重绘，calibrateData 事件按实际目标清空另一圈旧绿色并设置 markPoint.itemStyle。both 恢复红绿指针。
+**关键文件与接口**: components/encoder/calibrationChart.js 的 ringTarget、applyRingTarget、initChart；components/encoder/device.js 的 HallCollectingProcess 事件。
+**实施步骤**: 初始化及进度更新均应用目标状态；重绘前 dispose 旧 ECharts；innerSeries 深拷贝避免共享对象残留。
+**验证方法**: VM 断言覆盖仅内圈、仅外圈、残留绿色、both 恢复；node --check 和 git diff --check 通过。算法指定 e354d9c 的配置测试 29 passed。真实界面点击和硬件采集未验证。
+**踩坑**: 仅跳过非目标进度更新不能清除旧绿色，三角指针仍会有色；新增选项 watcher 放大原重建未 dispose 的实例泄漏。
+**状态**: 代码完成，真实界面验收受阻。
+
+**追加经验**: 非目标采集圆环用独立 disabled 深灰 #858B93，而未采集分段及图例保持原浅灰；修改 formatShowData 返回数组前100个实分段，保留末尾零值图例占位。ECharts 4.2.1 selectedMode=false 会使图例 silent，legend.tooltip 无法触发。最终使用 Vue DOM 图例和带 title 的问号按钮；保留 coin-front 的 Vue DOM，仅重建内部 canvas 图表实例。
+
+
+### F-053: driverSoftware2 后端地图：server.py 装配、reader 三变体与运行形态
+
+**日期**: 2026-10-13
+**项目**: driverSoftware2（KingKong 感驱一体舵机 PC 上位机，@CODE_ROOT@\driverSoftware2；基线 VERSION 0.16.1 / 分支 feat/offline-detection-optimize / HEAD cf23634）
+**取代**: K-REPO-DRIVERSOFTWARE-20260924（2026-09-24 的 v0.13.11 单段摘要，行号与规模已过时）
+**关键词**: [driverSoftware2, 后端地图, server.py, FastAPI endpoint, reader_wrapper, reader_mp, reader_mp_worker, READER_MP, WEB_GUI_PORT, KK_READER, shared_memory, asyncio.Queue, 连接状态真相源, 双实现同改, HID独占, _conn_generation, ws monitor 空壳, 加接口, 8765, timeout, 无响应, 端口被占, config.json, 报告落盘, request_abort, _conn_generation, LinkDown]
+
+**需求场景 / 现象**: 在这仓新增或修改任何后端功能前，必须先回答四个问题：请求从哪个函数进、帧从哪个 reader 出、reader 有几份实现要同改、开发态与打包态差在哪。原仓内文档只讲规则不给入口，逐次重新摸清 server.py（11178 行）代价高。
+
+**方案 / 架构（分层与数据流）**:
+`Browser/Electron → HTTP/WS (FastAPI, 默认 127.0.0.1:8765) → server.py endpoint → core/commands.py (V2Commands) → core/reader_*（HID 或 libusb）→ USB → KingKong Analyzer → RS485 → STM32G473 驱动板`。
+- **启动**: `server.py:11154 main()` 读 `WEB_GUI_HOST`(:11156，默认 127.0.0.1) 与 `WEB_GUI_PORT`(:11157，默认 8765) → `_bind_http_socket()`(:11088) 先占端口，**绑成功后把实际端口回写 `os.environ["WEB_GUI_PORT"]`**(:11163) 并写端口回执文件 `_write_port_receipt(port)`(:11164)，再 `uvicorn.Server(Config(app)).run(sockets=[sock])`(:11170)。刻意不用 `uvicorn.run(host, port)`：会二次 bind 产生 TOCTOU，端口被抢时回执与实际不符。`__main__` 前置 `multiprocessing.freeze_support()`(:11177)。
+- **运行形态分叉**: `server.py:341` `_USE_MP_READER = os.environ.get("READER_MP", "1") not in ("0","false","False","")` → 1 用 `core/reader_mp.py`（**打包默认**，子进程独占 HID+GIL），0 用 `core/reader_wrapper.py`（`start.bat:10` 硬写 0，开发态）。单例 `backend = ReaderBackend()` 在 `server.py:352`。
+- **路由规模**: `grep -c '^@app\.' server.py` = **160**。分组与定义行：连接 `/api/scan|connect|disconnect|state|params` :955/:1025/:1124/:1163/:1190；台架 `/api/bench/*` :1429-1717；报告 `/api/report/*` :2008-2086；链路诊断 `/api/probe_device_ids` :2095、`/api/auto_baud` :2162、`/api/diag/link_triage` :2236；硬件连续流 `/api/scope/*` :2643/:2776/:2837/:2865/:4040/:4087/:4144；外部扭矩真值 `/api/jn/*` :2959-2984、`/api/dyn200/*` :3012-3408；力感知 `/api/force_calib/*` :3269-3344、`/api/force_test/*` :3655-3689；命令族锚点 `/api/cmd/mode` :4223、`/api/identify` :5318、`/api/cmd/save_config` :5549；回放与急停 `/api/mit/playback*` :4455-4766、`/api/estop/abort_work` :4727、`/api/comm_loss/*` :4841-5000；测量 `/api/measure/*` :5810-6532、`/api/self_test` :6077；标定 `/api/calibrate/*` :6884/:7560/:7810/:7971/:8018/:8177、pipeline :9767-9836；档案 `/api/fw_profile` GET/POST :8371/:8377；OTA :8393-8781；再标定 `/api/cmd/recal_*` :9268-9330；裸帧 `/api/raw*` :9425/:9439；Kt 与内圈零位 :9901-10031 / :9982-10017；**下线检测 `/api/offline-detection/*` :10148-10736**；黑匣子 `/api/diag/*` :10914-10987；`/api/changelog` :10776、`/api/meta` :11003。
+- **WebSocket**: `/ws/monitor` :9470 的 `_monitor_loop`（:9511）在注释块之后直接 `return`（:9528），**实际一帧都不推**（历史空壳，前端已删"监控中"标签）；真正在用的是 `/ws/calibrate/pipeline` :9852 与 `/ws/kt` :10756，模式为 worker 线程 → `asyncio.Queue` → `call_soon_threadsafe`（:9737/:9743、:9884/:9948），WS 取到终态即关（:9871-9875）。
+- **连接状态单一真相源 = server.py 模块级全局** :352-404：`backend` / `cmds` / `device_id` / `baudrate` / `device_id_confirmed`(:381) / `_last_probe_alive`(:387) / `connected_serial`(:390) / `connected_port`(:394) / `_conn_generation`(:402，断链代哨兵，给无 worker 对象的长跑 closure 做协作式取消；有 worker 的走 `request_abort()`)。**刻意没有 state 类**，前端靠 `/api/state`(:1163) 拉。
+- **进程间**: `reader_mp.py:9-12` SHM ring（SPSC 无锁）+ `mp.Pipe` 控制通道；`_rpc` 带 seq 回显防乱序 :317（详见 :318-361）；父端 drain 游标 `_local_read_idx` :96、`_shm_drain_iter` :556（落后超过 NUM_SLOTS 就跳尾 :564）；热换帧 `update_continuous_frame` :467、ACT 双 item `set_aux_frame` :489。子进程 `reader_mp_worker.py:195 reader_worker()` 必须 top-level（Windows spawn pickle，文件头 :5 说明），SHM 布局 header 8B + 1024×128B :14-22。
+
+**关键文件与接口（均属 F-053 后端地图，仓 = `@CODE_ROOT@\driverSoftware2`）:**
+- `server.py:227-268` core import 集中区；worker 类一律延迟 import：fullpipe :9728/:9731、kt :9881、inner_zero :9973、od_* :10317-10319、force_calib :3260/:3291。
+- `core/reader_wrapper.py`(1346 行) in-process 形态：`ReaderBackend` :736、`_HidReader` :500（`hid.enumerate(VID,PID)` → `open_path` :509-514）、`_LibUsbReader` :598（pyusb 直通，USB jitter 低约 60%，:590-599）、`_make_reader` 优先 libusb 且 `READER_FORCE_HIDAPI` 可关 :718-731、线格式 `bus_config_item` :379 / `build_packet` :419 / `parse_packet` :438、多读取器会话绑定 `KK_READER_ENV` :46（环境变量在 :62 读）与 `_kk_select` :50、`LinkDown` :204、`ensure_baud` :335。
+- `core/reader_mp.py:85` `class ReaderBackend`（全文件 637 行）多进程父端，控制走 `mp.Pipe`、数据走 shared_memory ring。
+- `core/reader_mp_worker.py`(911 行) 子进程侧。
+- `core/blackbox.py`(569) 诊断黑匣子单例 `bb`（`log` :236 / `blob` :373 / `export` :419 / 环与配额 :164），全 fail-open（文件头 :1-7）。
+- `core/paths.py`(68) 源码态与打包态日志根分流；`core/serial_tap.py` 总线计数 tap。
+- 环境变量清单：`READER_MP`(server.py:341)、`WEB_GUI_HOST`/`WEB_GUI_PORT`(server.py:11156-11157，回写 :11163，`core/force_calib_runner.py:72` 复用)、`READER_FORCE_HIDAPI`(reader_wrapper.py:727)、`KK_READER`(reader_wrapper.py:46,62)、`FORCE_CALIB_SCRIPT`(force_calib_runner.py:96)、`BENCH_DUAL_READER`(同文件:500)、`KK_AUX_EVERY`/`KK_MIN_SOF_2ITEM`(reader_mp_worker.py:286,677)。
+
+**实施步骤（怎么用这张地图）**:
+1. 新加一个后端能力：先在上面 endpoint 分组里找最近的组，同组内加 `@app.*`，再进 `core/commands.py` 加高层 wrapper（协议层改动见同批 F 记录"协议层与固件档案门控"）。
+2. 涉及 reader/总线时序：`reader_wrapper.py` 与 `reader_mp.py` **两份实现同时改**，用 `inspect.signature` 写测试钉住签名。
+3. 打包态才复现的问题（管道乱序 / 子进程死 / 游标竞态）：本地显式 `set READER_MP=1` 再起服务。
+
+**落盘与长任务生命周期**:
+- 配置与报告根：`core/offline_detection.py:82 REPORTS_DIR = Path.home()/"Downloads"/"下线检测报告"`、同文件 :83 `CONFIG_PATH`；日志根策略见 `core/paths.py:4`（打包后 `resources/server/logs` 普通用户不可写，由该模块分流）与 :12-13（三个使用点：`fullpipe_worker.LOG_DIR` 的 `calib_*.log`、`server._RECAL_LOGS_DIR` 的 `recal_*` 标定产物、`server.REPORT_DIR`）；测试报告落 `logs/reports/` 而非 `docs/reports/auto/`（`server.py:1930` 注释）。
+- 长跑任务取消：有 worker 对象的（fullpipe / kt）走 `request_abort()`（`core/fullpipe_worker.py:413`）；没有 worker 的 closure 用断链代哨兵 `server.py:402 _conn_generation` 协作式取消；链路断开统一由 `LinkDown` 处理器 `server.py:870` 收口。
+
+**验证方法**:
+- 结构核对（本次已实跑）：`grep -c '^@app\.' server.py` = 160；`ls core/*.py` = 39；`wc -l server.py` = 11178；`grep -n '_USE_MP_READER' server.py` = :341；`grep -n 'def main' server.py` = :11154。
+- 起服务核对：`python server.py` 后请求 `/api/meta`(:11003) 与 `/api/state`(:1163)，端口取自回执文件而非配置文件。
+- 双形态核对：`READER_MP=1` 与 `=0` 各起一次，`/api/scan` 均可列出读取器；`tests/unit/test_drain_guard.py:14-17` 断言 in-process 形态 `link.hot_iters` 恒 0。
+
+**踩坑**:
+1. **HID 全机独占**：一只 Analyzer 同时只许一个进程持有，其余实例只能当 HTTP 客户端；`import server` 有副作用即已抢占 HID（server.py:169-171 注释）→ 脚本别随手 import server。
+2. **双实现接口改签名要两边同改**：`reader_mp.py:475-478` 注释实录 2026-09-22 只改 wrapper 未跟 MP 签名，结果每次热换帧 `TypeError` → HTTP 500。
+3. **`hid.enumerate` 顺序不稳**：散落几十处的 `keys()[0]` 会抢错机器/错总线，选择逻辑收口在 `reader_wrapper.py:46-62` 与 `reader_mp.py:108`。
+4. **`/api/scan` 的 serial 是固件编译时间戳，会撞键**（server.py:955-957）→ 真机台账另用读取器 USB 序列号做主键。
+5. **`/ws/monitor` 是空壳**：按它做过"监控中"状态会永远不动；实时数据走 REST + `TELEMETRY_DISPATCH`（见前端地图记录）。
+6. `AGENTS.md:321` 写"打包版默认 `READER_MP=1`（多进程 reader, `server.py:212`）"—— 该分叉现已迁到 `server.py:341`，文档行号过时；引用行号前先 grep。
+
+**状态**: 已完成（静态勘察 + 全部行号本次逐条 grep 实测；未运行服务与真机，开发机常态不连硬件）
+
+
+### F-054: driverSoftware2 协议层与固件档案门控：帧/命令/寄存器/profile 四层与新增命令链路
+
+**日期**: 2026-10-13
+**项目**: driverSoftware2（@CODE_ROOT@\driverSoftware2，VERSION 0.16.1）
+**取代**: K-REPO-DRIVERSOFTWARE-20260924 中与协议/寄存器相关的过时部分
+**关键词**: [RS485 协议, protocol.py, Cmd, FactoryCmd, crc16, make_frame, commands.py, V2Commands, FwProfileUndetermined, registers.py, register_protocol.h, register_descriptions.py, fw_profile, firmware_profiles, 档案门控, 静默回退, 0x38 内圈零位, 停机写, 慢命令 0xFD, RS485 V3.3, 新加协议命令, recal_chain, 算法不许第二份, read_version, fw_git_sha, 0x0B, 力矩无响应, OTA]
+
+**需求场景 / 现象**: 改任何一帧报文、一个寄存器地址、一条标定流程前，需要知道：帧格式在哪一层拼、寄存器地址的单一来源是谁、固件能力档案缺失时会发生什么、以及新增一条命令要动哪几个文件。这仓最容易出的事故是"静默回退旧路径不报错"和"手填档案值"。
+
+**方案 / 架构（四层）**:
+1. **帧层** `core/protocol.py`(337 行)：`core/protocol.py:16` 的 `class Cmd` 只是常量集合，**只有 5 个命令值**（DEFAULT/MIT/CLEAR_FAULT/RESET/FACTORY），V3.2 帧字段定义与 head byte 说明在 :17-36（`[ID:4 | T:1 | CMD3:3]`，T=bit3 为 1s 看门狗位，广播 0x0F 已于 V3.1 删除）；`FactoryCmd` 子命令 :49、`ReCalCmd` :71、`ReCalMem` :90、`STATE_NAME` :100、`FAULT_BITS` :126、`INTERNAL_FAULT_BITS` :142、`crc16` :243、`make_frame` :255、`head_byte` :261、`parse_frame` :302。
+2. **命令层** `core/commands.py`(1642 行)：`class V2Commands` :204 是唯一对外门面。出入口收口在四个私有方法 —— `_send` 单帧同步 :285、`_send_mit_frame` :356、`_boot_send_raw` :1117、`_recal_send` :1288；其上按域分方法：运动 :454-530、寄存器 :497-620、慢命令 :635-847、boot/OTA :1076-1286、ReCal flash :1311-1636。`CmdResult` :26、`StatusSpec` :153、`FwProfileUndetermined` :98、MIT 缩放同步 `sync_mit_scales` :221。
+3. **寄存器层**：`core/registers.py`(402 行) 文件头 :1-5 声明自己是固件 `Core/Inc/register_protocol.h` 的 **Python 镜像、单一来源**，改固件时同步改它；`core/register_descriptions.py`(526 行) 是与固件版本**无关**的语义描述表（单位/权限/说明），按名字 join，静态对表工具 `tools/check_register_descriptions.py` 是 build.bat Step 0 的硬门禁（scripts/build.bat:121-125）。
+4. **能力档案层** `core/fw_profile.py`：档案目录 `PROFILE_DIR = <repo>/firmware_profiles`（:16），正式档案按固件版本命名 `v<X.Y.Z>.json`（当前 13 份，v3.3.0–v3.4.7）；联调用的 `dev-<sha>.json` 由 `tools/gen_fw_profile.py --rev <sha>` 现生成，仓内一份都没有；缩放值在 `set_active()` 时预计算成模块级 float，热路径只读 `_SCALE_*`（:7-10）。**门控行为**：任何依赖档案的调用在 `fw_profile.get_active() is None` 时 `raise FwProfileUndetermined`（server.py:3784-3794、:3845、:3935），异常处理器在 server.py:851；档案缺失则**静默回退旧路径、不报任何错**（AGENTS.md 军规 9）。
+
+**协议 V3.3 相对 V3.2 的关键变更（F-054 协议层，逐条对过文档）**（`docs/protocol/rs485_v3.3.md`，当前文档版本；host 代码仍是 V3.2，证据在 `core/protocol.py:17` 文档字符串 —— 注意 `docs/protocol/README.md:30` 与 `rs485_v3.3.md:22-44` 都没写这句差异说明，别照着找）：
+① 物理层删除"字节间空闲 <8bit 用于帧定界"；② 表 1/表 2 增加显式类型列（uint8/int16/int32/f32）；③ **发送帧取消 14-15 字节的 `n` 计数字段**，改为"14 起放 n 个地址、个数由帧长决定"，总长 `14+n+2`；④ 接收帧总长 `12+4n+2`；⑤ Fault 明确为按位 uint8；⑥ 文档头部新增 v3.4+ MIT 刻度对照块（θ 2²⁴/2π 输出端、ω 512、τ 2048）并记录 Kp/Kd 的 10000 误填事故，配套门禁 `tests/unit/test_fw_profile_mit_scales.py`；⑦ 0x0B 示例改 v3.3.0；⑧ 0x36 改为"标定写入勿手改，改转向见 0x68"；⑨ 新增 0x68 输出转动方向、0x69 LED 开关；⑩ CRC16 为 CRC16-CCITT、帧末 2 字节小端（`docs/protocol/rs485_v3.3.md:15`、:73），上位机实现就是 `core/protocol.py:243 crc16()`。协议版本源 = 固件 git tag，经寄存器 `0x0B` 映射。
+
+**关键文件与接口**:
+- `core/inner_zero.py`(570)：reg 0x38 内圈零位。手动 `InnerZeroSession` :223（`start` :247 / `_run` :294 / `status` :326，数据源是 ReCal 0x48）；自动 `collect` :467 + `analyze` :404；分箱 `Store` :156；算法 `compute_fix` :108、`write_gate` :136（MIN_BINS/DENSITY/SPAN 三道闸）；**写后必复位** `reset_and_wait` :541；硬约束注释 :372-376（运行时写 0x38 会留下 +86° 残差，必须先停机）。
+- `core/fullpipe_worker.py`(1520)：一键再标定 P1-P10 后台线程（文件头 :4-6 记录 2026-05-28 从 PyQt6 QThread 剥离），事件契约 :12-19，`FullPipelineWorker` :141、`run` :693、`_run_pipeline` :731、标定看门狗仲裁 `_arm_calib_watchdog` :551 / `_restore_watchdog` :600、P5 采样质量 :274-409、`request_abort` :413。
+- `core/recal_chain.py`(321)：**纯计算已抽出的唯一一份**，文件头 :8-12 明令"不许另起第二份算法"；同类收口还有 `core/force_calib_runner.py:5-9`（把台架脚本当子进程跑，不复制算法）与 `core/report_conclusion.py:3-6`。`core/algo_compat.py:1-8` 是 numpy≥1.20 垫片。
+- `core/registers.py` / `core/register_descriptions.py` / `firmware_profiles/*.json` / `tools/gen_fw_profile.py`（档案只能由生成器产出，手填必错）。
+
+**实施步骤（新增一条协议命令的落地顺序，AGENTS.md 开发流程的可核对版本）**:
+1. 固件侧先加（属固件仓 `@CODE_ROOT@\driver`，分支 `v3_AI_Develop`，定论文件 `Core/Inc/register_protocol.h`，见 docs/PROJECT-CONTEXT.md §2:101-120）；
+2. `core/protocol.py` 加 `Cmd`/`FactoryCmd` 常量；
+3. `core/commands.py` 在 `V2Commands` 加高层 wrapper（走 `_send`，别自己拼帧）；
+4. `core/registers.py` 加地址 + `core/register_descriptions.py` 加语义（再跑 `python tools/check_register_descriptions.py`）；
+5. `server.py` 加 endpoint（放进已有分组）；
+6. `frontend/js/api.js` 加调用 → `frontend/js/pages/*.js` 接 UI。
+每一步单独 commit（仓规）。固件能力有变化的，还要用 `python tools/gen_fw_profile.py --rev <sha>` 生成档案。
+
+**验证方法**:
+- 行号核对（本次已实跑）：`grep -n 'class Cmd' core/protocol.py`=16；`grep -n 'class V2Commands' core/commands.py`=204；`grep -n 'FwProfileUndetermined' core/commands.py`=98；`grep -n 'PROFILE_DIR' core/fw_profile.py`=16；`grep -n 'def reset_and_wait' core/inner_zero.py`=541。
+- 档案门控核对：裸 API 连设备**必须先发一次 `read_version`**，否则档案未确定，MIT/Default 帧被守卫拦下；两查 `/api/cmd/read_version` 的 `fw_git_sha` 与 `/api/fw_profile` 的 `active`（军规 9 推论）。
+- 刻度正确性：`pytest tests/unit/test_fw_profile_mit_scales.py`；区分同名数值 —— 10000 是 Kp/Kd 量化 scale，不是 pos/vel/tau 刻度。
+
+**踩坑**:
+1. **慢命令改 flash 必须 `state == kStopped`**，否则固件回 `0xFD` 一个字节都不写（`core/commands.py:611-617` 实录固件分支）；改 device ID 同理 :1024。
+2. **写零位要停机、写完要复位**（`core/inner_zero.py:372-376`），运行时写残留 +86°。
+3. **档案值只能生成不能手填**：手填把 10000 当 pos 刻度填进去过，酿成力矩无响应事故（H-004 第 2 条）。
+4. **寄存器排查要符号名 + 字面量双搜**（军规 12）：只搜 `kCfgMaxVoltage` 会漏掉直写的十进制 `60`。
+5. **别复制第二份算法**：`recal_chain.py:8-12` 之所以 verbatim 迁移，就是为了让标定产物字节级可复现；动它等于动发布物。
+
+**状态**: 已完成（行号与 V3.3 差异逐条 grep/读文档实测；未连真机验证任何协议行为）
+
+
+### F-055: driverSoftware2 前端地图：13 页清单、路由注册五处、REST/WS 与示波器 uPlot 图表
+
+**日期**: 2026-10-13
+**项目**: driverSoftware2（@CODE_ROOT@\driverSoftware2，VERSION 0.16.1）
+**取代**: K-REPO-DRIVERSOFTWARE-20260924 中缺失的前端部分（旧摘要只有一句 "ESM 前端"）
+**关键词**: [前端地图, frontend, 无构建 ESM, app.js, PAGE_BUILDERS, 加一个新页面, api.js, X-KK-Trace, MonitorSocket, PipelineSocket, KtSocket, telemetry:sample, scope-bar.js, uPlot, PAGE_PROFILE, 冻结看门狗, unthrottled-timer, setUnthrottledInterval, 后台节流, 0x4D 看门狗, 页面重建 innerHTML, pageCleanups, capabilities.js 受众分层, tokens.css, i18n, 示波器, 切页, 图表冻结, 不用构建, 13页, 受众档位, MAX_UI_LEVEL, confirmDialog]
+
+**需求场景 / 现象**: 本仓前端**没有 build**（浏览器直接跑 ESM），也没有框架。加页面、改交互、调示波器之前需要知道：页面在哪注册、REST/WS 从哪进出、周期性发帧怎么不被浏览器节流、页面重建会漏掉什么。
+
+**方案 / 架构**:
+- **入口**: `frontend/index.html:199` `<script type="module" src="/static/js/app.js">`，`uPlot` 以 IIFE 全局挂载（:198），6 个 CSS 入口（:11-16）。改 `frontend/js/**/*.js` 直接生效（server 自动 serve 最新版）。
+- **分层**: `js/app.js`(1654 行) 主编排（路由/懒建页/顶栏/scope 抽屉/急停）· `js/api.js` REST+WS 客户端 · `js/store.js:34 class Store` 全局 state + 事件总线 · `js/components.js` DOM helper 与弹窗（:8/:57/:86/:149/:242，弹窗焦点 :235）· `js/scope-bar.js`(4418 行) 示波器抽屉 · `js/capabilities.js:14 CAP_MIN_LEVEL` 受众分层门控 · `i18n.js` + `locales/{zh,en}.json` · `theme.js` · `link-health.js` · `blackbox.js` · `estop.js` · `unthrottled-timer.js` · `trip-snapshot.js` · `risk-tags.js` · `render-md.js` · `test-scope.js` · `bg-canvas.js`。
+- **路由**: `app.js:221-237 const PAGE_BUILDERS` 共注册 **12 个页面**（motion/registers/calibrate/torque/console/tests/offline-detection/trajectory/bootloader/guide/diag/forcecal；`overview` 已删 :222、`scope` 页已删由抽屉自带 :224、`detection` 合并进 calibrate :230），懒建 `app.js:336`（`PAGE_BUILT` 集合 :238）。侧栏项在 `index.html:84-155` 的 `rail-item[data-page=…]`，容器是 `index.html` 里对应的 `<section id="page-…">`（如下线检测 :169）。
+- **通信**: 唯一 REST 咽喉 `api.js:105 request()`；每请求带 `X-KK-Trace` 取证头（:115）；**默认不设超时**（:92-103 有意为之，长命令由后端控制）；HTTP 200 但 `ok:false` 也记为失败（:138）；结果回调钩子 `onApiOutcome` :81，由 `link-health` 单向订阅（:77，刻意不成环）。WS 三类：`MonitorSocket` :456 `/ws/monitor`、`PipelineSocket` :516 `/ws/calibrate/pipeline`、`KtSocket` :541 `/ws/kt`；消费点 `app.js:675` → `feedScope` :692 / `watchFault` :746，开关 `syncMonitorLifecycle` :724（仅 motion 页 + 已连接时开）。后端 `/ws/monitor` 是空壳（见 F-053），实时数据实际走 REST → `TELEMETRY_DISPATCH`（api.js:26-69）转 sample → `store.emit("telemetry:sample")`（:151）→ `scope-bar.js:726` 订阅。
+- **加一个新页面（5 处，顺序固定）**: ① `index.html` 加 `rail-item` + `<section id="page-x">`；② `app.js:17` 区域加 import + `:221 PAGE_BUILDERS` 加键；③ `capabilities.js:14 CAP_MIN_LEVEL["page:x"]` 给定受众档位（如 `"page:offline-detection": 2` 在 :35）；④ `scope-bar.js:257 PAGE_PROFILE` 给该页的采样方案，**不需要 scope 就显式写 null**；⑤ `locales/zh.json`、`locales/en.json` 文案。
+- **样式**: `css/tokens.css:3` 声明 `docs/theme-servo-cyan.md` 为单一真相源（cyan 主色阶 :45-49、字号阶 :93-101、布局根 token `--rail-w`/`--topbar-h` :104-105、light/dark 双份 :117/:171）；受众分层的"分段标题空段自动隐藏"（`docs/gui-design.md:144`）落在 `app.js:375-394 applyUiLevel()`。CSS 按 base reset / components / layout / pages 四层分文件。
+
+**关键文件与接口（F-055 前端地图 · pages 清单，13 个文件）**:
+- `motion.js`（运动）：`buildMotion` :174，MIT 五滑条 + presets，连续发帧 `restartCont` :3020、`setUnthrottledInterval(sender, softPollPeriodMs())` :3066，看门狗安全档 `WDG_SAFE_POLL_MS = 200` :3010 与 `Math.min(base, …)` 钳制 :3017、低频预警 :3057；Electron 形态判定（UA 含 `" Electron/"`）:158-172。
+- `calibrate.js`（电机标定，2662 行）：`buildCalibrate` :190，多相位卡片（:259/:484/:1167/:1414/:1521/:1806/:1938/:2141/:2242/:2467），一键再标定 `api.pipelineStart` :739 + `PipelineSocket` :746。
+- `offline_detection.js`（下线检测，1312 行）：`ITEMS` :21-28、`buildOfflineDetection` :58，页面级清理表 `pageCleanups`/`onPageRebuild` :52-59。
+- `torque.js` 砝码摆臂 Kt（走 `/ws/kt`）· `forcecal.js` 力感知标定 · `registers.js` 寄存器读写 · `bootloader.js` 设备/改 ID/OTA · `trajectory.js` MIT 轨迹回放 · `console.js` 裸帧收发（`buildConsole` :154）· `tests.js` 测试套件 recipe runner（7374 行）· `diag.js` 黑匣子配置 :10 · `guide.js` 使用指南 · `detection.js` 已下线（页面不再注册，文件仍在）。
+
+**受众档位与危险操作确认**: 档位由产物根文件 `MAX_UI_LEVEL`（`server.py:317`）下发；前端 `capabilities.js:7 UI_LEVEL_KEY`、:14 `CAP_MIN_LEVEL`、:91 取 `min` 过滤，`app.js:375 applyUiLevel()` 做 rail 项过滤与空分段隐藏；危险操作统一走 `components.js:149 confirmDialog({danger:true})`。**新功能要先决定落在哪一档** —— 客户包（L1/L0）看不到的入口等于没做。
+
+**实施步骤（周期性发帧为什么不能用定时器）**:
+1. `unthrottled-timer.js:3-14` 记录真机实证：页面 hidden / 窗口被遮挡时浏览器把主线程定时器节流，实测 `setTimeout(25)` 拖到 970ms，帧间隔越过固件 `0x4D` 看门狗 → **电机停转且锁存**；采样循环里圈数被钳还会产出"看似正常的假数据"。
+2. 所以安全路径用本模块：Worker 定时器 `sleep(ms)` :59、`setUnthrottledInterval(fn, ms)` :101；或直接 `await` 链（实测 `tests.js` 里有 144 处 `await sleep`，采样循环形如 :3167/:3241/:3350 的 `while (performance.now() < tEnd) { … ; await sleep() }`）。
+3. **别把 `setInterval` 当成"只是界面刷新"**（实测 `frontend/js/**/*.js` 共 19 处）。轮询/显示类有 `link-health.js:443`、`offline_detection.js:651/:756/:819`、`calibrate.js:2277`、`forcecal.js:606`、`test-scope.js:775/:886`、`trajectory.js:1628`、`tests.js:3816`；**但 `scope-bar.js:4132/:4145` 的 `this._timer = setInterval(() => this._tick(), period)` 就是软轮询发帧路径**（:4146-4148 自证：寄存器页起 Live 就逐 addr 打 `/api/cmd/reg_read`，跟回放帧抢同一条总线），`scope-bar.js:1436/:4140` 的 16ms `_hwDrainTick()` 同样在发请求。碰到这些循环要按第 1 条换成 `unthrottled-timer` 或 `await` 链。
+4. `api.js:485 setInterval(ms)` 是给 `/ws/monitor` 发 `interval_ms` 消息的方法名，不是定时器，别看错。
+
+**验证方法**:
+- 结构核对（本次实跑）：`ls frontend/js/pages/*.js` = 13 个文件；`PAGE_BUILDERS` 注册 12 个键（app.js:221-237）；`wc -l frontend/js/scope-bar.js` = 4418、`app.js` = 1654。
+- UI 改动自验：按 `docs/skills/playwright_ui_self_test.md` 用**可见窗口**跑（军规 13 要求真实 GUI 路径，裸 API 不算）。
+- 图表改动自验：必须让真实数据流起来看图（军规 4）——`tests/test_monitor_lifecycle.py` 需 8765 后端在跑；纯 DOM 断言与静态截图曾在"曲线不绘制"事故里全部正常。
+
+**踩坑**:
+1. **页面重建 = `root.innerHTML=""`**（`app.js:336-347`，FB-023），builder 一律自清；但清不掉 **module 级 setInterval 与 `store.on` 订阅**（`app.js:409-413`）→ 下线检测页专门建了 `pageCleanups`/`onPageRebuild`（`offline_detection.js:52-59`，:530/:677/:758 注册清理）。
+2. **挂在 document 上的 `visibilitychange` 监听**，`innerHTML` 与 store 退订都够不着，必须显式退订：`motion.js:141-145`，注册/退订在 :3338/:3341。
+3. **切页后 scope 失效**：`PAGE_PROFILE`（`scope-bar.js:257-285`）只在 profile 名变化时才 `setProfile`，同名页互切不触发 stop；motion 页重建要自己 destroy chart（`motion.js:561`）；**trajectory 的 profile 必须写 null**（:266-275），否则硬件连续流跟着页面跑，与回放帧 8:1 交织会硬关栅极。
+4. **uPlot 初始化时机**：`scope-bar.js:3028 new uPlot`，`_render()` 末尾用 `setTimeout(() => _initChart(host), 0)`（:2735）等布局落位；同步补一发会被 `!host.clientWidth` 挡掉（:2731），别在外面再加同步调用。主题切换要 destroy + rebuild（:744-748），尺寸靠 ResizeObserver 同步（:703-714）。
+5. **图表冻结排查**：RAF 合并重绘 + 1s 僵死看门狗（:1149-1213）、warn 锚点 :1333、`_diag` 计数器 :661-673，手册 `docs/skills/scope_chart_freeze_debug.md`；后台标签只计数不报警（:1254/:1314）。
+6. **localStorage 谎报**：`Number(localStorage.getItem(k))` 在缺键时得 0，未连接也显示"设备 0"（`store.js:20-31` 有修复注释）；`setDeviceId(null)` 不得覆盖已有记忆（:165）；日志弹窗要主动取历史快照 `log.history()`（:191-193）。
+7. **焦点/换格类交互**：订单号↔序列号调度 `offline_detection.js:416`、尺寸读数后 500ms 自动换格 :529-543、scope min/max 的 Enter+blur `scope-bar.js:3349`、抽屉 ESC 与遮罩共用一道闸（modal 在上）`app.js:770-808`。自动化提交用派发 keydown Enter，别用 Tab（本页 blur 会回滚未提交输入）。
+
+**状态**: 已完成（页面清单/注册表/行号本次逐条 grep 实测；未在浏览器里跑交互回归 —— 开发机不连硬件，UI 行为需按验证方法自验）
+
+
+### F-056: driverSoftware2 Electron 壳：拉起后端、端口回执与窗口安全项
+
+**日期**: 2026-10-13
+**项目**: driverSoftware2（@CODE_ROOT@\driverSoftware2，electron/ 壳，package.json 版本 0.16.1）
+**关键词**: [Electron 壳, electron/main.js, startBackend, server.exe, resources/server, PORT_PINNED, 端口回执文件, killStrayBackends, backgroundThrottling, contextIsolation, nodeIntegration, devTools 客户包关闭, Menu.setApplicationMenu, kkdiag://, did-fail-load 重试, postmortem, diagnose.js, extraResources, 无 preload 无 IPC, user agent Electron, 黑屏, 起不来, npm start, nsis]
+
+**需求场景 / 现象**: 桌面版和浏览器版行为不一致（切窗口后电机停转、devtools 能不能开、端口被占怎么办），或改了后端启动方式要确认壳侧是否跟上。需要壳与后端进程的关系图。
+
+**方案 / 架构（壳只管三件事：拉起后端、拿真实端口、开窗口）**:
+- **拉起后端**：`electron/main.js:144 startBackend()`。打包态 spawn `process.resourcesPath/server/server.exe`（:150-167，windowed 无 console，日志重定向到 `userData/server.log`，:160 注释说明不弹黑窗）；开发态用 `py -3.12 server.py`（:185-203，路径解析注意含空格的 `C:\Program Files\…` 会踩坑，:200 注释）。启动前先 `killStrayBackends()` 清理残留（:87）。
+- **端口获取**：`PORT_PINNED = !!process.env.WEB_GUI_PORT`（:28）—— 只有人为钉住端口才信任它；否则**由 server 自绑后把实际端口写进回执文件**，壳读文件拿端口（:99-135，注释解释了"为什么是文件而不是 stdout"）。这与后端记录里 `server.py:11161` 回写 `WEB_GUI_PORT` 是同一条链的两端。
+- **窗口与安全**：`new BrowserWindow`（:1083），`contextIsolation: true`（:1092）、`nodeIntegration: false`（:1093）、`devTools: !customerBuild`（:1094，客户包关掉后 F12 与 openDevTools 都是空操作）、**`backgroundThrottling: false`**（:1105；:1095-1104 是真机 id4 实证注释；节流导致停机的机理见 F-055，本条只登记壳侧这个开关）。`closed` 监听必须**紧挨构造点**挂（:1109-1119），留到函数尾部会漏掉早期退出路径。菜单：`Menu.setApplicationMenu(null)`（:1127，条件见 :1126）。外链与新窗口一律拦（:1133 `setWindowOpenHandler`，同时截 `kkdiag://` 自定义协议用于"打开诊断包"）。
+- **加载与容错**：`did-fail-load` 自动重试（:1147，注释：后端未就绪时单次 loadURL 会永久黑屏；策略是等后端最多 40s 再 loadURL），首次 `mainWindow.loadURL(BACKEND_URL)`（:1217）；后端起不来时 `showBackendFailurePage()`（:1110 附近两处早退）；运行期崩溃走提示而不是换页（:941，换页会毁掉用户当前页面状态）；崩溃后置诊断页见 `electron/postmortem.js`（自检 `postmortem.selftest.js`），诊断入口 `electron/diagnose.js`。
+- **前端对壳零感知**：**没有 preload、没有 IPC 通道**（`frontend/js/pages/motion.js:158-172` 注释明确），页面只用 UA 里的 `" Electron/"`（带前导空格）判形态。好处是同一份前端在浏览器与桌面下通用，代价是壳不能给页面传能力。
+
+**关键文件与接口**:
+- `electron/main.js`(1273 行)、`electron/diagnose.js`、`electron/postmortem.js`、`electron/postmortem.selftest.js`、`electron/installer.nsh`、`electron/assets/`。
+- `electron/package.json`：`version` :3（与根 `VERSION` 由 `scripts/release.py` 同步）；`build` 段 :16-60，`files` **只带 4 个壳文件**（:22-27：main.js / diagnose.js / postmortem.js / package.json），`extraResources` 把 `../dist_app/server.dist` 拷成 `resources/server`（:28-33）——**所以前端文件不在壳里，随 server.dist 走**；这条打包装配的完整后果（复用旧 dist 会把旧前端发出去）见记录 F-057，本条只登记壳侧配置。win 目标 nsis+zip（:34-40）、mac 目标 dmg+zip（:41-45）。
+
+**实施步骤（改壳相关需求时的检查顺序）**:
+1. 需要新能力给页面用 → 优先加后端 endpoint，不要开 IPC（前端零感知是既有约定）。
+2. 改后端启动方式（入口文件名、端口策略）→ 同步看 `main.js:144/:150/:99-135` 与 `server.py:11154-11170`。
+3. 改窗口选项 → 确认 `backgroundThrottling` 与 `devTools` 两行没被动（前者是真机事故换来的）。
+4. 打包相关 → 见 F-057 的 `build.bat` 步骤与 `extraResources` 链路。
+
+**验证方法**:
+- 本地起壳：`cd electron && npm install && npm start`（AGENTS.md 开发流程），观察窗口是否可见、后端日志落在 `%APPDATA%/…/server.log`。
+- 端口策略核对：占用 8765 后启动，壳应读到回执文件里的实际端口而不是失败。
+- 后台节流核对：运动页使能电机后把窗口最小化/遮挡，帧应继续发（`backgroundThrottling: false` 生效）；浏览器形态则必须靠 `unthrottled-timer.js`（见 F-055）。
+
+**踩坑**:
+1. 用户可见验收必须走真实 GUI（军规 13）；headless Playwright 跑通只能写"底层链路通过"。
+2. `dist_app/server.dist` 是壳引用的**共享产物目录**；"跳过 Nuitka 复用旧 dist 会把旧前端发出去"这条后果与证据归 F-057，本条不重复展开。
+3. 构建脚本的 `for /f` 转义坑见 F-057 踩坑 4。
+
+**状态**: 已完成（main.js / package.json 行号本次逐条读文件实测；未实跑 `npm start`，也未打包验证）
+
+
+### F-057: driverSoftware2 测试分层、CI 门禁与构建发布（旧前端随 server.dist 走的根因）
+
+**日期**: 2026-10-13
+**项目**: driverSoftware2（@CODE_ROOT@\driverSoftware2，VERSION 0.16.1）
+**关键词**: [pytest, pytest.ini, testpaths, tests/unit, conftest, isolate_disconnect, fake_clock, FW_BIN, 无 marker, 源码扫描门禁, _strip_comments, 剥注释, 人为破坏自证, check_register_descriptions, audit_test_meta, GitLab CI, gitlab-ci.yml, CI_COMMIT_TAG, win-probe, test-gates, build-win-release, build-win-smoke, notify-release, NAS, GIT_CLEAN_FLAGS, build.bat, Nuitka, include-data-dir, include-data-files, INTERNAL_SHA, MAX_UI_LEVEL, SKU, 客户包, release.py, cut_changelog, local-build, requirements 精确 pin, OpenBLAS, vendor wheel, requirements.lock, setup.bat, start.bat, READER_MP, 打包, 旧前端, server.dist, dist_app, 复用dist, CHANGELOG, 未发布, 冒烟, win-smoke]
+
+**需求场景 / 现象**: 在本仓提交前要知道"门禁会跑什么、我这条改动会不会被源码扫描拦、打包会不会把旧前端发出去、发版命令是什么"。**先记结论：前端文件装在 `dist_app/server.dist` 里随服务端走，任何跳过 Nuitka、复用上次 dist 的打包都会把旧前端原样发出去。**
+
+AGENTS.md 讲的是原则，这条记录给**具体文件与行号**。
+
+**方案 / 架构（三张地图）**:
+
+**一 · 测试分层**
+- `pytest.ini:9` `testpaths = tests/unit`；:1-7 解释为何钉死（根层脚本的顶层守卫在**收集期**就 `sys.exit` → INTERNALERROR）。`tests/conftest.py:7` `collect_ignore_glob = ["test_*.py"]` 再豁免一次。
+- 规模（2026-10-13 实测）：`tests/unit/test_*.py` **244 个文件**，`grep -h '^def test_' tests/unit/test_*.py` 合计 **2236 条**；`tests/` 根 **7 个硬件独立脚本**（`test_mit_run.py`、`test_monitor_lifecycle.py`、`test_ota_selftest.py`、`test_ota_stream.py`、`test_ota_ui_playwright.py`、`test_read_range_stress.py`、`test_register_table.py`，直接 `python` 跑）；`tests/examples/` 客户端调用示例，`tests/fixtures/`、`tests/unit/fixtures/*.json`、`tests/screenshots/`。**没有 integration 目录**。
+- 跳过机制：①**无 pytest marker 注册**（pytest.ini 与 conftest 都没有 `markers`）；②根层脚本靠环境变量守卫，如 `tests/test_ota_selftest.py:25-29` 缺 `FW_BIN` 即 `sys.exit(0)`；③`pytest.mark.skipif` 13 处（如 macOS 缺 win_amd64 wheel 时整模块跳过，`.gitlab-ci.yml:205-208` 同口径）。
+- 公共 fixture：`tests/conftest.py:48 isolate_disconnect`（:47 是装饰器；隔离黑匣子落盘 + 保存/恢复 server 模块级全局，**8 个文件**共用）、`:120-187 FakeClock`（按模块接管 `monotonic`/`perf_counter`，**不接管 `time.time()`**）。
+
+**二 · 门禁与 CI**
+- 源码扫描类门禁：本仓精确含 `_strip_comments` / `_strip_comments_and_docstrings` 的 unit 文件 **7 个**（宽松算上任意 `_strip*` 助手是 73 个），**125 个文件**用 `read_text` 读源码做断言。代表：`tests/unit/test_cmd_status_contract_guard.py:99`（并在 :242 自证扫描器本身）、`test_build_bat_flow.py`、`test_build_script_parity.py:26`、`test_backend_port_binding.py:155`、`test_bench_host_port.py:117`、`test_bus_timeout_window.py:99`、`test_customer_build_gates.py`、`test_macos_ci_gates.py`、`test_release_dev_guard.py`、`test_drain_guard.py:14-17`、`test_reader_mp_ensure_baud.py:83`、`test_fw_profile_mit_scales.py`、`test_od_*.py`（下线检测 **11 个**）。军规 3：匹配前先剥注释，写完**人为破坏一次**确认变红再还原（还原别用 `git checkout --`，实现未 commit 时会连实现一起 revert）。
+- 静态对表工具：`tools/check_register_descriptions.py`（寄存器地址与语义描述对表，build.bat Step 0 的硬门，`scripts/build.bat:121-125`）、`tools/audit_test_meta.py`（断言 ↔ GB 条款四张表，判红不 throw）、`tools/gen_fw_profile.py`、`tools/reconcile_registers.py`。
+- CI：只有 `.gitlab-ci.yml`。`workflow.rules`（:24-26）**只有 `$CI_COMMIT_TAG` 起流水线**（推分支不触发）；stages test/build/notify（:51-54）。jobs：`win-probe`（tag `win-probe-`，只读探测工具链与 NAS，:101）、`test-gates`（mac 建 venv + `./venv/bin/python -m pytest tests/unit -q -rs`，:192/:208）、`.win_build`（:140：`scripts\ci_win_venv.ps1` → `cmd /c scripts\build.bat --release --customer` → `scripts\ci_win_upload.ps1`）派生 `build-win-release` / `build-win-smoke`、`.mac_build`（:228：`bash scripts/build_mac.sh --release --customer` + smbclient 上传 + 逐文件回读点名 6 个产物）派生 `build-mac-release` / `build-mac-smoke`、`notify-release`（:352，`vX.Y.Z`，needs mac+win）、`notify-smoke-dryrun`（`scripts/ci_notify_lark.py`）。
+- 产物落 NAS `\\KingKongNAS\software\02SD\<tag>\`（mac 加 `mac\` 子目录，win 平铺；冒烟进 `_smoke\`），变量 `NAS_IP/NAS_SHARE/NAS_DIR` 见 :29-33；`GIT_CLEAN_FLAGS: '-ffdx -e venv -e electron/node_modules'`（:49）保住缓存；`NAS_USER/NAS_PASS/LARK_WEBHOOK_URL` 是 masked CI 变量，不落文件（:39-42）。GitLab artifacts 只留一份 exe/dmg 副本，`expire_in: 1 week`。
+- 冒烟通道：`win-smoke-*` tag 出试装包，**不 bump VERSION**、可先不合 development、不必等本地门禁全绿（本仓项目记忆已记）。
+
+**三 · 构建与发布（F-057，`scripts/build.bat` / `scripts/release.py`）**
+- `scripts/build.bat` 顺序：SKU 参数解析 `--internal/--release/--customer/--all`（:43-77）→ 源树完整性守卫①：记 HEAD，`--internal` 拒绝 dirty（:80-107）→ venv Python 优先（:110-117）→ Step 0：寄存器描述门禁 + nuitka 可 import + electron 依赖**指纹**判定（`package-lock.json` 的 SHA256 存进 `electron\node_modules\.package-lock.sha256`，:143-167）→ Step 1：`python -m nuitka server.py` **只编一次，所有 SKU 共用**（:170-201；:183 起强调"Nuitka 退出码 0 不等于数据文件真收进去了"，直接查产物）→ Step 2：按内容"全→少"逐级后处理并 `call :pack`（内部包 :208-213；正式包剔 dev 档案 :215-228；客户包 `:purge_customer` + `:write_level 1/0` + `:gate_customer` 构建后门禁 :231-247 与 :388）→ Step 3：HEAD 复核、`+sha` 重命名、自动打 `internal/v<VER>+<sha>` tag、产物清单（:252-287）。
+- **打包数据目录全在 `server.py` 的 nuitka pragma**（:9-107）：`--include-package=core`、`--include-data-dir=frontend=frontend`（:81）、`--include-data-files=tools/force_calib/*.py=…`（:97，:85-96 解释 `--include-data-dir` **收不了 .py** 这个坑）、`docs/skills`（:101）、`firmware_profiles`（:101-105）、`VERSION` 与 `CHANGELOG.md`（:106-107）。**结论（唯一归属本条）：前端是装在 `server.dist` 里随服务端走的，electron 壳只带 4 个壳文件**（壳侧配置见 F-056）→ 任何"跳过 Nuitka 复用上次 dist"的快捷打包都会把旧前端原样发出去。
+- 运行时读回：`INTERNAL_SHA`（`server.py:298`，写侧 `build.bat:300`）、`MAX_UI_LEVEL`（`server.py:317-331`，内容非法保守钳到 0，见 :331；写侧 `build.bat:364`）。
+- 发布：`python scripts/release.py <版本>` 是唯一 bump 入口 —— ①校验 semver / 工作树干净 / 无 dev 档案 / CHANGELOG `[未发布]` 非空（:128-158）②bump 落盘 `VERSION` + `electron/package.json` + `package-lock.json` 两行手术（:160-171、:65-98）③`cut_changelog` 截断（:45-62）④可选 `--local-build` 做三产物实物核验（:174-204）⑤commit + `git tag -a vX.Y.Z`（:208-213，**不自动 push**）。日常提交禁止手改 `VERSION`。发版前对账三件事见 AGENTS.md 军规 7。
+- 依赖与安装：`requirements.txt:7-16` 说明 numpy/scipy **精确 pin**（`numpy==2.5.1`、`scipy==1.18.0`）的原因 —— 标定算法数值输出依赖 numpy 内嵌 OpenBLAS 的构建代际，换代会让标定产物 md5 漂移，升级必须重跑 replay 一致性；`kingkong_calib==1.0.1; sys_platform=="win32"`（:34，mac 不做标定）；pyusb/libusb-package **故意不列为依赖**（:36-49）。`requirements.lock.txt` 全树锁定，`requirements-dev.txt:3-5`（pytest/nuitka 不进生产）。`vendor/` 只有那一个 Cython wheel + `README.md` 的升级 7 步。`setup.bat`：查 `py -3.12` → 建 venv → **先装 vendor wheel 再装 requirements**（:44-55，否则 PyPI 找不到内部包）→ import 自检 + `hid.enumerate()` 原生绑定检查（:70-96）。`start.bat:10` 写 `set READER_MP=0`。
+
+**验证方法**:
+- 本地门禁：`cd @CODE_ROOT@\driverSoftware2 && venv\Scripts\python -m pytest tests/unit -q -rs`（**不要显式设 READER_MP=0**，用 CI 默认口径，in-process 形态会让 `test_auto_baud` 两条假红 —— 本仓项目记忆已记）。
+- 构建预检：正式包由 Runner 跑完整 `scripts/build.bat`；本地只在显式要求时用 `python scripts/release.py <版本> --local-build`。改 `build.bat` 后至少跑 `pytest tests/unit/test_build_bat_flow.py tests/unit/test_build_script_parity.py`。
+- 发布前对账：`git log <上次 tag>..HEAD` 逐条核 CHANGELOG `[未发布]`；`grep -c '<<<<<<<' CHANGELOG.md` 必须为 0。
+
+**踩坑**:
+1. 打包版反馈先想 `READER_MP` 双形态（分叉行号、复现方法、环境变量清单归 F-053，此处不重复）。
+2. `--include-data-dir` 收不了 `.py`（`server.py:85-96`），必须逐条 `--include-data-files`，新增台架脚本时容易漏。
+3. 扫源码的门禁如果不剥注释就会恒绿（注释文本自己满足断言），本仓已踩两次。
+4. 分支命名以 `AGENTS.md` 军规 6 词表为准（`feat/` `fix/` `docs/` `chore/` `release/` `hotfix/`）；F-019 里的 `feature/*` 属历史线记载。**发布前置也已换代**：F-019 结论 5「必须先完整构建才 bump」不再适用，现为 `release.py` 可选 `--local-build`、正式包由 GitLab Runner 在 tag 上构建。
+5. `cmd /c` 里 `for /f ('…')` 内层的 `=` 与 `>` 必须 `^` 转义（`build.bat:92` 一带），否则 sha 变量取到空值、出现 `ECHO is off.`。
+
+**状态**: 已完成（数字与行号本次实跑/实读；未运行完整构建，未发版）
+
+
+### F-058: driverSoftware2 下线检测（产线出厂检测）功能全貌与 duoji 口径
+
+**日期**: 2026-10-13
+**项目**: driverSoftware2（@CODE_ROOT@\driverSoftware2，分支 feat/offline-detection-optimize，HEAD cf23634，基线 v0.16.0 首发 / v0.16.1 当前 VERSION）
+**关键词**: [下线检测, 扭矩去皮零点, 卸力零点, offline detection, 产线出厂检测, OfflineDetectionController, require_step, DetectionType, 外观检测, 尺寸测量, 反驱力, 信息确认, 噪声, 额定扭矩, 坏点, MAX_PLAUSIBLE_NM, 卸力建零, ZERO_MIN_SAMPLES, 出力准备闸, prepareGate, prepare_delay_s, od_motor, od_sensor, od_rated_torque, od_reverse_force, od_profiles, od_relay, DYN-200, JN-DN5, 485 继电器, duoji 口径, 判定在后端, 人工决定, core/offline_detection.py, offline_detection.js, 八步, 存档, 序列号, Downloads]
+
+**需求场景 / 现象**: 下线检测是产线逐台出厂质检功能（v0.16.0 首次上线，本分支正在按产线参考实现 duoji 的口径逐条对齐）。改动时最常见的三类问题：判定口径抄错来源、采集防呆漏一条、状态机门控被绕过。后续接手需要一页看懂模块分工与口径出处。
+
+**方案 / 架构**:
+- **流程**：八步 = ①产品序列号（**会话主键**）→ ②外观 ③尺寸 ④反驱力 ⑤信息确认 ⑥噪声 ⑦额定扭矩（六个检测项，前端 `ITEMS` 常量逐个列出，`frontend/js/pages/offline_detection.js:21-28`）→ ⑧汇总存档。报告与配置落 `core/offline_detection.py:82 REPORTS_DIR`（`~/Downloads/下线检测报告`）、:83 `CONFIG_PATH`。**强顺序门控**在后端：`core/offline_detection.py:739 require_step()` —— 前一项没做完不许做下一项；单会话约束 :721；不合格时由操作员决定继续或结束 `decide()` :758；结束 `finish_session()` :793（检测表要求每台都落盘，文件头 :12）。
+- **判定一律在后端**（`core/offline_detection.py:11` 明示"前端只负责采集入参与展示，不参与 PASS/FAIL 计算"）；状态枚举 `DetectionStatus` :31（PENDING/RUNNING/PASSED/FAILED/ERROR）、检测项枚举 `DetectionType` :39-45；判定函数 `judge_*` :319-494；结果模型 `DetectionResult` :527；会话模型 `OfflineDetectionSession` :557；控制器 `core/offline_detection.py:717 OfflineDetectionController`。配置读写 `load_config` / `save_config` / `validate_config` / `migrate_legacy_*` :132-295，**阈值/名义值/期望版本全部走 config.json，产线可在界面改**。
+- **采集侧模块分工**（口径一律注明"同 duoji"以便回溯来源）：
+  - `core/od_motor.py`(64)：出力前使能序列 —— 清故障 → default 模式 → 软复位 → 等 `RESET_BOOT_WAIT_S = 0.8s`（:18，duoji 实测 0.5~0.8s）→ 再 default；`ENABLE_ATTEMPTS = 2`，**复位无应答就整套重走**（commit cf23634 的用例口径）。
+  - `core/od_sensor.py`(83)：DYN-200 / JN-DN5 外部扭矩传感器的**只读**适配，绝不启停传感器、绝不动全局去皮（文件头 :5-10）；卸力建零 `:26` = 静置原始读数排序、去两头各 20% 取平均（同 duoji `_auto_tare`）。
+  - `core/od_reverse_force.py`(235)：`ReverseForceRunner` :38 分阶段采集，断电手转、正向取最大 / 反向取最小；`MAX_PLAUSIBLE_NM = 200.0`（:27，量程外读数丢弃且**不计入传感器掉线**，即"坏点"）、`ZERO_MIN_SAMPLES = 5`（:28，建零读数不足直接报错）。
+  - `core/od_rated_torque.py`(240)：`measure()` :113 堵转工装上给前馈力矩持续 `duration_s`，**实测取外部传感器真值，舵机回读仅备查**（文件头 :1-3）；异常类（过流阈值 `peak_iq_a/limit_a`、过温、故障）在 :38-70，**实际停机判定在采集循环侧**：滤波 Iq 取值 `server.py:10613`、过流/过温/故障归类 `server.py:10649`；同样带 `ZERO_MIN_SAMPLES = 5` :33。
+  - `core/od_profiles.py`(228)：判定标准命名方案 —— 多方案存 / 切 / 导 / 删 / 另存（文件头 :1）。
+  - `core/od_relay.py`(294)：`OdRelay` :85，485 Modbus 继电器控制工装通断。
+  - 注：`core/od_torque_recorder.py` 已删除（本分支实际 `ls` 确认不存在）。
+- **后端装配**：`server.py:10148-10736` 是 `/api/offline-detection/*` 全家桶（config/session/开始/下一项/判定/人工决定/导出），装配区 :10092-10343，`from core import od_motor, od_rated_torque, od_sensor` 在 :10317，噪声空载运转 :10525，额定扭矩采集入口 :10590。
+- **前端**：`frontend/js/pages/offline_detection.js`(1312 行) `frontend/js/pages/offline_detection.js:58 buildOfflineDetection`，卡片式八步（:83-91）；**出力准备倒计时闸门** `prepareGate()` :789-826（倒计时中可"立即开始"或"取消"，配置项 `rated_torque.prepare_delay_s` 见 :1208）；订单号↔序列号焦点调度 :416、尺寸读数 500ms 自动换格 :529-543；页面级定时器清理 `pageCleanups` / `onPageRebuild` :52-59。API 封装 `frontend/js/api.js:259-287`（`od*` 一族）；档位 `capabilities.js:35 "page:offline-detection": 2`；导航 `index.html:127` 与 :169；注册 `app.js:26` import + :231 builder。
+- **门禁**：`tests/unit/test_od_*.py` 共 **11 个**文件（`pytest.ini` 限定 testpaths=tests/unit）。
+
+**口径速查（F-058 下线检测 · 别自己发明）**:
+- **坏点** = 量程外（±200 N·m）读数丢弃，且不算传感器掉线。
+- **建零（卸力零点）** = 静置读数排序去两头各 20% 取平均；新读数 <5 个直接报错，不能沿用旧零点。
+- **反驱力** = 断电手转，先正转后反转，正向取最大值、反向取最小值，分段极值判定。
+- **额定扭矩** = 堵转工装 + 前馈力矩持续一段时间，实测真值来自外部传感器。
+- **出力准备闸** = 额定扭矩/噪声出力前先倒计时（可跳过），避免操作员手还在工装上。
+- **噪声使能失败** = 软复位无应答时整套使能序列重走一次（两次尝试），不能谎报使能成功。
+
+**实施步骤（新增一个检测项时）**:
+1. `core/offline_detection.py` 加 `DetectionType` 成员 + `DETECTION_NAMES` + `judge_*` + DEFAULT_CONFIG 项；
+2. 若需要采集过程，新建 `core/od_xxx.py`，口径注明同 duoji 的哪个函数；
+3. `server.py` 在 :10148-10736 段内加 endpoint 并接入 `require_step` 门控；
+4. `frontend/js/api.js` 加调用、`offline_detection.js` 的 `ITEMS` 加卡片；
+5. `tests/unit/test_od_*.py` 补门控与判定用例；CHANGELOG `[未发布]` 写一句白话。
+
+**验证方法**:
+- 判定与门控：`venv\Scripts\python -m pytest tests/unit -q -rs -k od`（11 个 test_od_* 全绿）。
+- 界面：按军规 13 走**可见 GUI**（Electron 正式界面或浏览器可见窗口），路径 = 打开下线检测页 → 连设备 → 逐八步 → 观察不合格时的人工决定与结束存档。
+- 状态一致性：改完核 `CHANGELOG.md:17` 起的 `[未发布]` 段（本次实测 23 条：变更 13 / 新增 6 / 修复 4），别把已生效行为写成"待发布"。
+
+**踩坑 / 限制**:
+1. **duoji 是产线在跑的扭矩质检上位机，口径可对，实现别整抄**（本仓项目记忆已记：坏点处理就有差异）。
+2. **传感器只读**：下线检测不许启停 DYN-200/JN-200 传感器、不许改全局去皮值。
+3. 页面重建会留下脱离文档的旧 DOM 轮询（机理归 F-055 踩坑 1）；本页的做法是把清理注册进 `onPageRebuild`（:530/:677/:758）。
+4. 采样节拍必须**严格晚于 now**（commit 60d0be8：节拍早于 now 导致满速刷帧死循环）。
+5. 通讯延迟后**跳过错过的节拍**而不是连续补帧（commit 4dabd5c）。
+6. 信息确认不合格才进入人工决定，通信读取失败仍应报错重试，不要伪装成"不合格"（与 F-052 的边界）。
+7. 本分支 commit 主题多为"对齐 duoji 口径"，`git log --oneline -30` 计数：`fix(下线检测)` 12、`feat(下线检测)` 9、`test/refactor(下线检测)` 各 1、其它 `fix/feat/docs` 7。
+
+**状态**: 部分完成 —— 结构与口径已核实（行号本次逐条读文件实测）；功能本身仍在开发分支，**未做真机验收**，冒烟通道真实存在：`.gitlab-ci.yml:172-175` 的 `build-win-smoke` 按 `/^win-smoke-/` 触发，本分支已打过 `win-smoke-offline-detection` 与 `win-smoke-offline-detection-fix2`（冒烟包不 bump VERSION，落 `02SD\<tag>\`）。
+
+
+### F-059: driverSoftware2 文档三层地图、协作上下文与三条自验路径
+
+**日期**: 2026-10-13
+**项目**: driverSoftware2（@CODE_ROOT@\driverSoftware2，VERSION 0.16.1）
+**关键词**: [文档地图, docs/skills, 必读, AGENTS.md, PROJECT-CONTEXT, 缺陷池, 需求池, 飞书多维表格, base token, 待回归, 回填, 真机台账, 读取器 serial, workspace.json, 逻辑名, 不引用项目外路径, onboarding, lark-cli PATH, playwright_ui_self_test, scope_chart_freeze_debug, realmachine_fault_injection, inner_zero_calibration, recal_production_workflow, ANALYZER_HARDWARE_GUIDE, reader_issues, rs485_v3.3, gui-design, theme-servo-cyan, CHANGELOG 体例, 文档引用不实, AGENTS.md, 行号过时, 文档引用失效]
+
+**需求场景 / 现象**: 本仓的"知识"分三层放在仓内（`AGENTS.md` 讲怎么干活、`docs/PROJECT-CONTEXT.md` 讲活从哪来回哪去、`docs/skills/` 讲具体工法），但缺一张能检索的目录：改某个模块前该读哪份、某条缺陷回填哪四个字段、真机台账用什么做主键，每次都要重新翻。另外这些文档之间的交叉引用有失效项，照着走会扑空。
+
+**方案 / 架构（文档三层与分流判据）**:
+- `AGENTS.md`（仓根）：硬规定 + 模块→必读 skill 映射表（:170-178）+ 工程军规（:224 起，含分支命名表、发版对账三件事、真机验收必须走可见 GUI）。
+- `docs/PROJECT-CONTEXT.md`：协作上下文。§0:8 就给出"新信息该写到哪"的分流判据 —— A 指针 / B 台账 / C 工法 / D 本机配置。
+- `docs/skills/`：工法手册，共 **13 份**（见下表）。
+- `docs/` 顶层 17 份 md 各管一事：`ONBOARDING.md` 新机接手清单、`PACKAGING.md` Nuitka+Electron 打包、`gui-design.md` 界面设计决策、`theme-servo-cyan.md` 主题令牌（`frontend/css/tokens.css:3` 认它为单一真相源）、`feedback_ledger.md` 反馈分诊台账、`rs485_protocol.md` **已过期**（只是指向 `docs/protocol/` 的迁移指针）、`audience_tiering_proposal.md` 受众分层 L1/L0、`ci_release_migration_proposal.md` 发布迁 CI（已拍板）、`firmware_dev_versioning_coordination.md` 联调固件识别（FB-011）、`macos_support.md`、`ota_cfg_schema_migration_todo.md`、`reader_autonomous_scheduling_todo.md`（未动手）、`ui_test_cases.md` 界面验收资产、`algorithmic-philosophy.md` / `brand-philosophy.md`、`bai_sync_0726_review.md`。
+- `docs/` 子目录 8 个：`protocol/`（协议按版本）、`skills/`、`reports/`（实测报告 + `reports/auto/*.json`）、`parking/backlog-2026-08-03.md`（悬项）、`superpowers/{plans,specs}/`（13+12 份历史设计稿，2026-07-05→09-22）、`traj_samples/*.csv`、`archive/server.spec`、`_rendered_test_suite_guide/`。
+
+**docs/skills 13 份与"改什么前必读"（本表属 F-059；核对命令 `ls docs/skills/*.md` 条数 = 13）**:
+| 文件 | 讲什么 | 必读场景 |
+|---|---|---|
+| `ANALYZER_HARDWARE_GUIDE_V2.40.md` | 分析仪硬件与 USB 通道 V2.40 | 动 `core/reader_*` |
+| `ANALYZER_HARDWARE_GUIDE_V2.30.md` | 旧硬件对照 | 排查老读取器 |
+| `ANALYZER_PROTOCOL_SPEC.md` | 分析仪 USB 协议 | 帧格式 / 通道语义 |
+| `reader_hid_v240_migration.md` | V2.40 迁移记录 | 动 reader |
+| `reader_issues.md` | reader 已知坑 | 动 reader |
+| `recal_production_workflow.md` | 再标定产线流程 | 动 `core/fullpipe_worker.py` / `recal_chain.py` |
+| `encoder_calib_wheel.md` | 编码器标定轮 | 同上 |
+| `inner_zero_calibration.md` | 内圈零位 0x38 | 动 `core/inner_zero.py`：**停机写、写完复位** |
+| `foc_test_params_cookbook.md` | FOC 测试参数 | 力矩/速度试验 |
+| `kkdiag_usage.md` | 诊断包拆解 | 处理 `diag_*.zip` |
+| `realmachine_fault_injection.md` | 真机造障 | 真机验收的异常路径 |
+| `playwright_ui_self_test.md` | 自驱 UI 测试 | **任何 UI 交互改动** |
+| `scope_chart_freeze_debug.md` | Scope 卡死调试 | Scope 相关 |
+
+**协作上下文（按行号取用）**:
+- §1:23 活从哪来。§1.1:25 **缺陷池 = 飞书多维表格**，base `NbzHbFv86araNbsj8pwcx97ynKf`（:27）、表「02测试缺陷管理」（:44）；修完回填**四个字段**并把缺陷状态改成**待回归**（:29-36：缺陷状态 / 修复版本 / 根因 / 解决方案）。§1.1.1:38 **动手前先把这条单子的附件列一遍**（诊断包 > 复现步骤 > 截图 > 读代码推理）。§1.2:64 **需求池**也是多维表格，表名「待开发的问题及需求汇总」，响应后回填**进展 / 实现版本 / 备注**（:68）。§1.3:70 表格操作：`lark-cli base +record-list --base-token <…> --table-id <…>`（:44），参数是 **`--base-token` 不是 `--app-token`**（:335）。§1.4:74 结论**在与用户对话里交付**（发群模式已废弃）；§1.6:89 两组对接群只用于问缺陷疑问，发言需 gaoxing 审。
+- §2:101 相邻仓库：固件仓 = `gitlab.kingkong.tech:embedded/driver.git`，分支 `v3_AI_Develop`（:107），定论文件 `Core/Inc/register_protocol.h` 等（:112-120）；§2.2:122 固件机理速查（排查前先过一遍，别把机理当 bug）。
+- §3:187 诊断包与私钥（私钥不在仓内，见 `~/.kingkong_driver` 与 F-025 的取用流程）。
+- §4:196 **真机台账**：§4.1:200 台账实体=台架，**主键=读取器 serial**（`docs/PROJECT-CONTEXT.md:213`：`/api/connect`、`/api/state` 返回的 `serial`；总线 id 会漂不可信）；舵机 SN = reg `0x01 kStSerialNumber`（:214，不少设备没烧故读回 None）。§4.2:222 已知台架清单（:224-229，本机可见两条读取器 serial）。§4.3:246 真机操作纪律（白名单 + 写后必复读）。
+- §5:258 **本机配置 `~/.kingkong_driver/workspace.json`（不进仓）**：逻辑名 `repos.firmware` / `repos.recalibration` / `keys.diag_private`（:263-273）；缺键必须问用户，**不许瞎猜路径、不许硬编码绝对路径**（:279，对应 AGENTS.md 硬规定 5）。本机实测该文件存在。
+- §6:285 新机 onboarding 与 scope 清单；§6.1:312 常见坑：lark-cli 装了但 agent 调不到（PATH）。
+- §7:339 发布与分发：§7.1:346 版本号怎么定、§7.2:351 **分支与 tag 是两条命令**、§7.3:362 NAS 分发（固件产物另线 `\\KingKongNAS\software\02SD\_internal\fw-<短 SHA>\`，:398）、§7.4:421 本地 dist 只留当前版、§7.5:426 **陷阱：发版后继续开发再构建会同名覆盖**、§7.6:440 **发版后必须把 `vX.Y.Z (待发布)` 收成实号**（仓内门禁扫不到，写在别人的工单页面上）。
+
+**三条自验路径（后续开发每次都要走）**:
+1. UI 改动 → `docs/skills/playwright_ui_self_test.md` + AGENTS.md 军规 13：**必须可见窗口 / Electron 正式界面**，裸 API、headless、静态截图都不算验收通过。
+2. Scope / 图表改动 → `docs/skills/scope_chart_freeze_debug.md` + 军规 4：**必须让真实数据流起来看渲染结果**（"曲线不绘制"那次 DOM 与截图全正常）。
+3. 真机相关 → `docs/skills/realmachine_fault_injection.md` 造障 + §4 台账按**读取器 serial** 对号；结论里"底层链路通过"与"真机验收通过"不能混写。
+
+**关键文件与接口**:
+- `AGENTS.md:170-178`（模块→skill 表）、`AGENTS.md:214` 起（军规）、`AGENTS.md:321`（READER_MP 双形态）、`AGENTS.md:349`（对外说人话，引 kung-fu 仓）。
+- `docs/PROJECT-CONTEXT.md`（分节见上）、`docs/protocol/README.md`（协议索引，版本源=固件 tag 经 `0x0B` 映射，:28）、`docs/protocol/rs485_v3.3.md`（当前）、`rs485_v3.2.md`（往期）、`archive/rs485_mixed_history.md`。
+- `CHANGELOG.md`：`## [未发布]` 从 :17 起；最近三版 `## [0.16.1] - 2026-10-10`:51、`## [0.16.0] - 2026-10-09`:59、`## [0.15.0] - 2026-10-09`:74。体例：Keep a Changelog + semver，**面向使用者、一个点一句白话说清"你会感觉到什么变了"**，按 新增/变更/修复 分组，条目形如「模块·子功能: 用户视角结果」，不写实现细节（约定见 :3-15）。
+
+**踩坑（文档引用不实，2026-10-13 逐条核过）**:
+1. `docs/protocol/README.md:30` 引 `../project_rules/firmware_versioning.md` —— **`docs/project_rules/` 目录不存在**，照链接走必扑空。
+2. `AGENTS.md:173` 说"当前 V3.3；host 代码仍 V3.2，见文档头变更说明"，但 `docs/protocol/rs485_v3.3.md` 头部（:1-50）**没有这段差异说明**；host 仍是 V3.2 的真实证据在 `core/protocol.py:17` 的文档字符串。
+3. `AGENTS.md:321` 写"READER_MP 见 `server.py:212`"，实际分叉在 `server.py:341` —— 文档里的行号引用会随重构漂移，引用前先 grep。
+4. 反过来也核过：`AGENTS.md` 引用的仓内 `docs/*.md` 路径共 9 个（去重后）**全部存在**，包括 `docs/skills/` 那 12 个被点名的文件；`docs/skills/` 实际 13 份（多出的是 `ANALYZER_HARDWARE_GUIDE_V2.30.md`，AGENTS.md 未列）。
+5. `AGENTS.md:349` 与 `docs/PROJECT-CONTEXT.md:465` 引的 `kung-fu/patterns/…`、`kung-fu/checklists/…` 在**另一个仓**（不在本仓），别当本仓路径找。
+
+**验证方法**:
+- 引用真实性核查（本次实跑）：脚本收集 `AGENTS.md` 里所有 `docs/**.md` 引用做存在性判断（9/9 命中）；`ls docs/project_rules` 报不存在；`grep -n 'class Cmd' core/protocol.py`=16、文档字符串在 :17。
+- 台账对号：`/api/state` 取 `serial` 与 `docs/PROJECT-CONTEXT.md:224-229` 表内记录比对（本次未连设备，仅核代码与文档行号）。
+- 文档改动自证：改 `docs/` 或 `AGENTS.md` 时按硬规定 4 当场跑一遍引用的命令；发版前按 §7.6 回收工单里的"待发布"占位。
+
+**状态**: 已完成（三层结构、13 份 skill、协作上下文章节行号、两处引用不实均经本次实测；未连真机）

@@ -1,0 +1,2 @@
+# 对 R6A 发现的交叉复验 — F-058
+复验：DetectionType 成员恰 6；`ls core/od_torque_recorder.py` 报不存在；`ls tests/unit/test_od_*.py` = 11；`git tag -l` 确有 win-smoke-offline-detection 与 -fix2；.gitlab-ci.yml:172-175 为 /^win-smoke-/；过流判定 server.py:10613/:10649 打印确认。

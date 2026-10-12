@@ -58,11 +58,53 @@
       ]
     },
     {
+      "id": "E-010",
+      "type": "efficiency",
+      "title": "SIRE 规则同步直接加载共享源并补齐客户端薄入口",
+      "file": "global_dev_efficiency.md",
+      "line": 67,
+      "date": "2026-10-12",
+      "project": "SIRE v6.11 规则同步",
+      "status": "已验证规则入口与实际脚本；真实客户端自动遥测事件触发未实测",
+      "keywords": [
+        "SIRE",
+        "Codex",
+        "Claude",
+        "v6.11",
+        "快速通道",
+        "薄入口",
+        "单一来源",
+        "telemetry",
+        "RSI",
+        "数据库不进Git"
+      ]
+    },
+    {
+      "id": "F-052",
+      "type": "feature",
+      "title": "下线检测信息确认人工决定与订单号录入",
+      "file": "global_dev_features.md",
+      "line": 3,
+      "date": "2026-10-12",
+      "project": "driverSoftware2",
+      "status": "已实现并通过隔离模拟 GUI 验证，未做真机验收",
+      "keywords": [
+        "下线检测",
+        "信息确认",
+        "firmware_info",
+        "人工决定",
+        "继续检测",
+        "结束检测",
+        "订单号",
+        "扫码"
+      ]
+    },
+    {
       "id": "F-026",
       "type": "feature",
       "title": "EncoderPlotter 烧录面板放开 DPB 锁定 — 型号/固件文件可重选",
       "file": "global_dev_features.md",
-      "line": 3,
+      "line": 14,
       "date": "2026-09-23",
       "project": "EncoderPlotter_0703_03 (分支 feature/flash-and-pcba，主仓 1f5c515a，子模块 sub_automation 30b1c3f)",
       "status": "已归档 (可直接调用)",
@@ -85,7 +127,7 @@
       "type": "feature",
       "title": "舵机(KingKong)诊断包解密规则 — kkdiag + 本机私钥",
       "file": "global_dev_features.md",
-      "line": 24,
+      "line": 35,
       "date": "2026-09-23",
       "project": "driverSoftware (@CODE_ROOT@\\driverSoftware)",
       "status": "已归档 (可直接调用)",
@@ -111,7 +153,7 @@
       "type": "feature",
       "title": "AI工程化基建模板 — driverSoftware 全套工程/规则/打包/发布机制",
       "file": "global_dev_features.md",
-      "line": 41,
+      "line": 52,
       "date": "2026-09-22",
       "project": "driverSoftware (@CODE_ROOT@\\driverSoftware, v0.13.10, 分支 development) — 新项目搭建时直接照抄的参考实现",
       "status": "已归档 (可复用模板)",
@@ -153,7 +195,7 @@
       "type": "feature",
       "title": "【飞书自动化】飞书 ⇄ Claude Code 双向闭环：完成通知、飞书回复续跑、桌面上下文同步",
       "file": "global_dev_features.md",
-      "line": 100,
+      "line": 111,
       "date": "2026-09-23 ~ 2026-09-24",
       "project": "全局工具 @USER_HOME@\\.feishu_bridge",
       "status": "已完成",
@@ -188,7 +230,7 @@
       "type": "feature",
       "title": "【知识库优化】SIRE 知识检索 v2：bge 语义 + trigram 全文 + 复用要点，recall@3 0.45→1.00",
       "file": "global_dev_features.md",
-      "line": 141,
+      "line": 152,
       "date": "2026-09-24",
       "project": "SIRE 知识检索 v2 实施记录（历史闭环库为 `@SIRE_ARCHIVE_ROOT@\\sire_vectors.sqlite3`；Claude/Codex 当前工作库由 `sire_paths.py` 指向仓库 `data/sire_vectors.sqlite3`）",
       "status": "已完成",
@@ -217,7 +259,7 @@
       "type": "feature",
       "title": "【飞书自动化】飞书多 AI 中转中间服务 feishu-hub（中间服务 + Claude/Codex 执行器，取代 F-027）",
       "file": "global_dev_features.md",
-      "line": 182,
+      "line": 193,
       "date": "2026-09-24",
       "project": "飞书多 AI 中转中间服务 feishu-hub —— @SIRE_ROOT@\\AI\\AI\\feishu-hub（GitHub Albert-Tsai-git/AI，分支 feature/feishu-hub，最新 ea704df）",
       "status": "已完成（已上线运行；遗留：CX-3 测试偶发失败、手动 codex exec 也会推送卡片、需登录 Windows 才启动）",
@@ -268,7 +310,7 @@
       "type": "feature",
       "title": "用现状审计建立项目基础文档基线并标出事实冲突",
       "file": "global_dev_features.md",
-      "line": 243,
+      "line": 254,
       "date": "2026-09-25",
       "project": "driverSoftware（D:\\code\\driverSoftware）",
       "status": "已完成；产出为可复用的项目文档基线和有边界说明的仓库审计，适用于启动类似项目的文档规划，不能替代针对各项目的事实核验。",
@@ -289,7 +331,7 @@
       "type": "feature",
       "title": "项目基础文档基线（可迁移完整原文）",
       "file": "global_dev_features.md",
-      "line": 273,
+      "line": 284,
       "date": "2026-09-25",
       "project": "可迁移的项目搭建知识；来源为 driverSoftware 提交 `927e9a4ece55a4ce27bb707c1720e9a0337d6308`",
       "status": "已归档原文；项目仓库恢复动作由当前 run 的 U-02 单独处理",
@@ -313,7 +355,7 @@
       "type": "feature",
       "title": "Unity/Blender 战车 RPG 的美术启动约定",
       "file": "global_dev_features.md",
-      "line": 405,
+      "line": 416,
       "date": "2026-09-27",
       "project": "GAME（原创废土战车 RPG）",
       "status": "已归档（视觉方案仍需实景验收）",
@@ -328,6 +370,488 @@
         "Toon",
         "废土",
         "资产生产"
+      ]
+    },
+    {
+      "id": "F-045",
+      "type": "feature",
+      "title": "舵机加密OTA的协议及ACK丢失恢复",
+      "file": "global_dev_features.md",
+      "line": 432,
+      "date": "2026-10-08",
+      "project": "driverSoftware",
+      "status": "软件实现与模拟验收完成，真机可见 GUI 验收待设备及逐次 OTA 授权。",
+      "keywords": [
+        "加密OTA",
+        "AES-128-CBC",
+        "PKCS7",
+        "Bootloader3.4",
+        "SetCrypto",
+        "ACK丢失",
+        "会话恢复",
+        "96B",
+        "明文兼容"
+      ]
+    },
+    {
+      "id": "F-047",
+      "type": "feature",
+      "title": "MPT arguments 解耦：'a'指令字段自描述查询（V4.2.1）",
+      "file": "global_dev_features.md",
+      "line": 461,
+      "date": "2026-10-10",
+      "project": "Analyzer_Encoder_DebugTest（C:\\Users\\Administrator\\Downloads\\Analyzer_Encoder_DebugTest；Test Script + Test Report，2026-10-09 V4.2.1 第6轮报告）",
+      "status": "已完成（只读分析归档；未改动任何脚本/固件）",
+      "keywords": [
+        "MPT",
+        "arguments解耦",
+        "'a'指令",
+        "ARGUMENTS字段自描述查询",
+        "queryArgumentsField",
+        "getArgumentsByFieldQuery",
+        "argumentsLayoutToBuffer",
+        "verifyArgumentsFieldQuery",
+        "argumentsReadMethod",
+        "argumentsVersion=6",
+        "EncoderArgumentsV6",
+        "batSpeedMode",
+        "argumentsFieldLayoutTable",
+        "USARTInterface_Recali.c",
+        "fieldCount",
+        "ArgumentsErrorStatus",
+        "'R'整块读取",
+        "EncoderBase.py",
+        "Analyzer",
+        "A~F协议回归",
+        "IAP",
+        "series=104",
+        "V4.2.1",
+        "a3950c3"
+      ]
+    },
+    {
+      "id": "F-046",
+      "type": "feature",
+      "title": "打包应用通过兼容 profile 切换多仓库组合",
+      "file": "global_dev_features.md",
+      "line": 498,
+      "date": "2026-10-10",
+      "project": "EncoderPlotter 多仓库打包切换方案（架构咨询）",
+      "status": "方案建议，未实现、未验证；离线/在线分发方式与具体目标分支待确认。",
+      "keywords": [
+        "Git 子模块",
+        "submodule",
+        "主仓库分支",
+        "打包",
+        "运行时切换",
+        "profile",
+        "manifest",
+        "commit SHA",
+        "launcher",
+        "版本组合",
+        "rollback"
+      ]
+    },
+    {
+      "id": "F-048",
+      "type": "feature",
+      "title": "EncoderPlotter_0903_01 数据生成四条链路与基线分叉（feature/data-generation）",
+      "file": "global_dev_features.md",
+      "line": 528,
+      "date": "2026-10-10",
+      "project": "EncoderPlotter_0903_01（分支 feature/data-generation，从 feature/iap-ota-sn@19072126 切出）",
+      "status": "部分完成（分支已建，具体改动范围待用户提供）",
+      "keywords": [
+        "数据生成",
+        "生成标定数据",
+        "generateData",
+        "generatedDualData",
+        "ged_P",
+        "ged_Q",
+        "ged_T",
+        "IAP文件生成",
+        "EncoderCommandIapGenerateFile",
+        "iap-file-generator",
+        "恢复出厂",
+        "feature/data-generation",
+        "feature/iap-ota-sn",
+        "develop 分叉"
+      ]
+    },
+    {
+      "id": "F-049",
+      "type": "feature",
+      "title": "CI tag写入target并在内部版界面显示",
+      "file": "global_dev_features.md",
+      "line": 558,
+      "date": "2026-10-12",
+      "project": "EncoderPlotter_0903_01 / 当前仓库",
+      "status": "部分完成（代码已实现；真实 GUI 验收受限）",
+      "keywords": [
+        "Git tag",
+        "CI_COMMIT_TAG",
+        "target.json",
+        "internal build",
+        "构建标签",
+        "versionSuffix"
+      ]
+    },
+    {
+      "id": "F-050",
+      "type": "feature",
+      "title": "DPB单圈标定采集圆环置灰",
+      "file": "global_dev_features.md",
+      "line": 588,
+      "date": "2026-10-12",
+      "project": "EncoderPlotter_0903_01",
+      "status": "代码完成，真实界面验收受阻。",
+      "keywords": [
+        "DPB",
+        "单圈标定",
+        "圆环",
+        "calibrationChart",
+        "ringTarget",
+        "ECharts",
+        "dispose"
+      ]
+    },
+    {
+      "id": "F-051",
+      "type": "feature",
+      "title": "ECharts采集图例说明与禁用圈独立深灰",
+      "file": "global_dev_features.md",
+      "line": 602,
+      "date": "2026-10-12",
+      "project": "EncoderPlotter_0903_01",
+      "status": "代码完成，真实界面验收受阻。",
+      "keywords": [
+        "DPB",
+        "单圈标定",
+        "圆环",
+        "calibrationChart",
+        "ringTarget",
+        "ECharts",
+        "dispose"
+      ]
+    },
+    {
+      "id": "F-053",
+      "type": "feature",
+      "title": "driverSoftware2 后端地图：server.py 装配、reader 三变体与运行形态",
+      "file": "global_dev_features.md",
+      "line": 618,
+      "date": "2026-10-13",
+      "project": "driverSoftware2（KingKong 感驱一体舵机 PC 上位机，@CODE_ROOT@\\driverSoftware2；基线 VERSION 0.16.1 / 分支 feat/offline-detection-optimize / HEAD cf23634）",
+      "status": "已完成（静态勘察 + 全部行号本次逐条 grep 实测；未运行服务与真机，开发机常态不连硬件）",
+      "keywords": [
+        "driverSoftware2",
+        "后端地图",
+        "server.py",
+        "FastAPI endpoint",
+        "reader_wrapper",
+        "reader_mp",
+        "reader_mp_worker",
+        "READER_MP",
+        "WEB_GUI_PORT",
+        "KK_READER",
+        "shared_memory",
+        "asyncio.Queue",
+        "连接状态真相源",
+        "双实现同改",
+        "HID独占",
+        "_conn_generation",
+        "ws monitor 空壳",
+        "加接口",
+        "8765",
+        "timeout",
+        "无响应",
+        "端口被占",
+        "config.json",
+        "报告落盘",
+        "request_abort",
+        "_conn_generation",
+        "LinkDown"
+      ]
+    },
+    {
+      "id": "F-054",
+      "type": "feature",
+      "title": "driverSoftware2 协议层与固件档案门控：帧/命令/寄存器/profile 四层与新增命令链路",
+      "file": "global_dev_features.md",
+      "line": 670,
+      "date": "2026-10-13",
+      "project": "driverSoftware2（@CODE_ROOT@\\driverSoftware2，VERSION 0.16.1）",
+      "status": "已完成（行号与 V3.3 差异逐条 grep/读文档实测；未连真机验证任何协议行为）",
+      "keywords": [
+        "RS485 协议",
+        "protocol.py",
+        "Cmd",
+        "FactoryCmd",
+        "crc16",
+        "make_frame",
+        "commands.py",
+        "V2Commands",
+        "FwProfileUndetermined",
+        "registers.py",
+        "register_protocol.h",
+        "register_descriptions.py",
+        "fw_profile",
+        "firmware_profiles",
+        "档案门控",
+        "静默回退",
+        "0x38 内圈零位",
+        "停机写",
+        "慢命令 0xFD",
+        "RS485 V3.3",
+        "新加协议命令",
+        "recal_chain",
+        "算法不许第二份",
+        "read_version",
+        "fw_git_sha",
+        "0x0B",
+        "力矩无响应",
+        "OTA"
+      ]
+    },
+    {
+      "id": "F-055",
+      "type": "feature",
+      "title": "driverSoftware2 前端地图：13 页清单、路由注册五处、REST/WS 与示波器 uPlot 图表",
+      "file": "global_dev_features.md",
+      "line": 718,
+      "date": "2026-10-13",
+      "project": "driverSoftware2（@CODE_ROOT@\\driverSoftware2，VERSION 0.16.1）",
+      "status": "已完成（页面清单/注册表/行号本次逐条 grep 实测；未在浏览器里跑交互回归 —— 开发机不连硬件，UI 行为需按验证方法自验）",
+      "keywords": [
+        "前端地图",
+        "frontend",
+        "无构建 ESM",
+        "app.js",
+        "PAGE_BUILDERS",
+        "加一个新页面",
+        "api.js",
+        "X-KK-Trace",
+        "MonitorSocket",
+        "PipelineSocket",
+        "KtSocket",
+        "telemetry:sample",
+        "scope-bar.js",
+        "uPlot",
+        "PAGE_PROFILE",
+        "冻结看门狗",
+        "unthrottled-timer",
+        "setUnthrottledInterval",
+        "后台节流",
+        "0x4D 看门狗",
+        "页面重建 innerHTML",
+        "pageCleanups",
+        "capabilities.js 受众分层",
+        "tokens.css",
+        "i18n",
+        "示波器",
+        "切页",
+        "图表冻结",
+        "不用构建",
+        "13页",
+        "受众档位",
+        "MAX_UI_LEVEL",
+        "confirmDialog"
+      ]
+    },
+    {
+      "id": "F-056",
+      "type": "feature",
+      "title": "driverSoftware2 Electron 壳：拉起后端、端口回执与窗口安全项",
+      "file": "global_dev_features.md",
+      "line": 766,
+      "date": "2026-10-13",
+      "project": "driverSoftware2（@CODE_ROOT@\\driverSoftware2，electron/ 壳，package.json 版本 0.16.1）",
+      "status": "已完成（main.js / package.json 行号本次逐条读文件实测；未实跑 `npm start`，也未打包验证）",
+      "keywords": [
+        "Electron 壳",
+        "electron/main.js",
+        "startBackend",
+        "server.exe",
+        "resources/server",
+        "PORT_PINNED",
+        "端口回执文件",
+        "killStrayBackends",
+        "backgroundThrottling",
+        "contextIsolation",
+        "nodeIntegration",
+        "devTools 客户包关闭",
+        "Menu.setApplicationMenu",
+        "kkdiag://",
+        "did-fail-load 重试",
+        "postmortem",
+        "diagnose.js",
+        "extraResources",
+        "无 preload 无 IPC",
+        "user agent Electron",
+        "黑屏",
+        "起不来",
+        "npm start",
+        "nsis"
+      ]
+    },
+    {
+      "id": "F-057",
+      "type": "feature",
+      "title": "driverSoftware2 测试分层、CI 门禁与构建发布（旧前端随 server.dist 走的根因）",
+      "file": "global_dev_features.md",
+      "line": 804,
+      "date": "2026-10-13",
+      "project": "driverSoftware2（@CODE_ROOT@\\driverSoftware2，VERSION 0.16.1）",
+      "status": "已完成（数字与行号本次实跑/实读；未运行完整构建，未发版）",
+      "keywords": [
+        "pytest",
+        "pytest.ini",
+        "testpaths",
+        "tests/unit",
+        "conftest",
+        "isolate_disconnect",
+        "fake_clock",
+        "FW_BIN",
+        "无 marker",
+        "源码扫描门禁",
+        "_strip_comments",
+        "剥注释",
+        "人为破坏自证",
+        "check_register_descriptions",
+        "audit_test_meta",
+        "GitLab CI",
+        "gitlab-ci.yml",
+        "CI_COMMIT_TAG",
+        "win-probe",
+        "test-gates",
+        "build-win-release",
+        "build-win-smoke",
+        "notify-release",
+        "NAS",
+        "GIT_CLEAN_FLAGS",
+        "build.bat",
+        "Nuitka",
+        "include-data-dir",
+        "include-data-files",
+        "INTERNAL_SHA",
+        "MAX_UI_LEVEL",
+        "SKU",
+        "客户包",
+        "release.py",
+        "cut_changelog",
+        "local-build",
+        "requirements 精确 pin",
+        "OpenBLAS",
+        "vendor wheel",
+        "requirements.lock",
+        "setup.bat",
+        "start.bat",
+        "READER_MP",
+        "打包",
+        "旧前端",
+        "server.dist",
+        "dist_app",
+        "复用dist",
+        "CHANGELOG",
+        "未发布",
+        "冒烟",
+        "win-smoke"
+      ]
+    },
+    {
+      "id": "F-058",
+      "type": "feature",
+      "title": "driverSoftware2 下线检测（产线出厂检测）功能全貌与 duoji 口径",
+      "file": "global_dev_features.md",
+      "line": 851,
+      "date": "2026-10-13",
+      "project": "driverSoftware2（@CODE_ROOT@\\driverSoftware2，分支 feat/offline-detection-optimize，HEAD cf23634，基线 v0.16.0 首发 / v0.16.1 当前 VERSION）",
+      "status": "部分完成 —— 结构与口径已核实（行号本次逐条读文件实测）；功能本身仍在开发分支，**未做真机验收**，冒烟通道真实存在：`.gitlab-ci.yml:172-175` 的 `build-win-smoke` 按 `/^win-smoke-/` 触发，本分支已打过 `win-smoke-offline-detection` 与 `win-smoke-offline-detection-fix2`（冒烟包不 bump VERSION，落 `02SD\\<tag>\\`）。",
+      "keywords": [
+        "下线检测",
+        "扭矩去皮零点",
+        "卸力零点",
+        "offline detection",
+        "产线出厂检测",
+        "OfflineDetectionController",
+        "require_step",
+        "DetectionType",
+        "外观检测",
+        "尺寸测量",
+        "反驱力",
+        "信息确认",
+        "噪声",
+        "额定扭矩",
+        "坏点",
+        "MAX_PLAUSIBLE_NM",
+        "卸力建零",
+        "ZERO_MIN_SAMPLES",
+        "出力准备闸",
+        "prepareGate",
+        "prepare_delay_s",
+        "od_motor",
+        "od_sensor",
+        "od_rated_torque",
+        "od_reverse_force",
+        "od_profiles",
+        "od_relay",
+        "DYN-200",
+        "JN-DN5",
+        "485 继电器",
+        "duoji 口径",
+        "判定在后端",
+        "人工决定",
+        "core/offline_detection.py",
+        "offline_detection.js",
+        "八步",
+        "存档",
+        "序列号",
+        "Downloads"
+      ]
+    },
+    {
+      "id": "F-059",
+      "type": "feature",
+      "title": "driverSoftware2 文档三层地图、协作上下文与三条自验路径",
+      "file": "global_dev_features.md",
+      "line": 906,
+      "date": "2026-10-13",
+      "project": "driverSoftware2（@CODE_ROOT@\\driverSoftware2，VERSION 0.16.1）",
+      "status": "已完成（三层结构、13 份 skill、协作上下文章节行号、两处引用不实均经本次实测；未连真机）",
+      "keywords": [
+        "文档地图",
+        "docs/skills",
+        "必读",
+        "AGENTS.md",
+        "PROJECT-CONTEXT",
+        "缺陷池",
+        "需求池",
+        "飞书多维表格",
+        "base token",
+        "待回归",
+        "回填",
+        "真机台账",
+        "读取器 serial",
+        "workspace.json",
+        "逻辑名",
+        "不引用项目外路径",
+        "onboarding",
+        "lark-cli PATH",
+        "playwright_ui_self_test",
+        "scope_chart_freeze_debug",
+        "realmachine_fault_injection",
+        "inner_zero_calibration",
+        "recal_production_workflow",
+        "ANALYZER_HARDWARE_GUIDE",
+        "reader_issues",
+        "rs485_v3.3",
+        "gui-design",
+        "theme-servo-cyan",
+        "CHANGELOG 体例",
+        "文档引用不实",
+        "AGENTS.md",
+        "行号过时",
+        "文档引用失效"
       ]
     },
     {
@@ -348,6 +872,42 @@
         "波特率",
         "并行会话",
         "发布流程"
+      ]
+    },
+    {
+      "id": "H-005",
+      "type": "habit",
+      "title": "按任务复杂度和验收风险选择模型以控制成本",
+      "file": "global_dev_habits.md",
+      "line": 25,
+      "date": "2026-10-12",
+      "project": "Codex SIRE shared workflow",
+      "status": "已完成",
+      "keywords": [
+        "模型选择",
+        "低成本模型",
+        "token 成本",
+        "复杂度分级",
+        "task routing",
+        "model escalation"
+      ]
+    },
+    {
+      "id": "H-006",
+      "type": "habit",
+      "title": "先简洁回答问题，附加建议经用户确认再执行",
+      "file": "global_dev_habits.md",
+      "line": 51,
+      "date": "2026-10-12",
+      "project": "用户全局交互偏好",
+      "status": "已完成",
+      "keywords": [
+        "优先回答",
+        "简洁",
+        "回答速度",
+        "附加建议",
+        "用户确认",
+        "等待下一次任务"
       ]
     },
     {
@@ -609,9 +1169,188 @@
         "门禁",
         "关键词子串误报"
       ]
+    },
+    {
+      "id": "P-20260926",
+      "type": "problem",
+      "title": "v3.4.6 寄存器文档对账与 0x6A/0x80 清理",
+      "file": "global_problem_solutions.md",
+      "line": 263,
+      "date": "",
+      "project": "driverSoftware（分支 chore/misc-optimizations，提交 b423f31、c140497，未 push）",
+      "status": "已完成",
+      "keywords": [
+        "v3.4.6",
+        "寄存器梳理",
+        "0x6A",
+        "AdcUsableAmp",
+        "GpioDebugPreGen",
+        "HOST_HIDDEN_REG_ADDRS",
+        "0x80",
+        "InnerAngle",
+        "inner_zero",
+        "kStInnerAngle",
+        "上位机隐藏",
+        "固件档案"
+      ]
+    },
+    {
+      "id": "P-20260927",
+      "type": "problem",
+      "title": "设输出零位 (0x67) 不会让内圈零位 0x38 失效",
+      "file": "global_problem_solutions.md",
+      "line": 288,
+      "date": "2026-10-12",
+      "project": "driverSoftware (分支 chore/misc-optimizations 的 review)",
+      "status": "已完成 (review 结论, 未改代码)",
+      "keywords": [
+        "0x67",
+        "OutputZeroOffset",
+        "设零位",
+        "set_output_zero",
+        "0x38",
+        "MechZeroInner",
+        "内圈零位",
+        "BootInferOuterMultiTurnFromInner",
+        "output_zero_offset_",
+        "_IZ_NEED_REGS",
+        "kStInnerAngle"
+      ]
+    },
+    {
+      "id": "P-20260928",
+      "type": "problem",
+      "title": "会跨固件搬家的寄存器按档案名字运行时取址 + 地址合理性校验 (内圈零位 InnerAngle)",
+      "file": "global_problem_solutions.md",
+      "line": 321,
+      "date": "2026-10-12",
+      "project": "driverSoftware (分支 chore/misc-optimizations, 提交 9640f3f..85901f3, 未 push)",
+      "status": "已完成",
+      "keywords": [
+        "InnerAngle",
+        "0x80",
+        "fw_profile.reg_addr",
+        "按名字取址",
+        "_iz_inner_addr",
+        "_IZ_INNER_ADDR_TAKEN",
+        "inner_addr",
+        "内圈零位",
+        "timeout_s",
+        "NaN",
+        "钳位",
+        "寄存器换地址",
+        "坏档案",
+        "截低8位"
+      ]
+    },
+    {
+      "id": "P-20260929",
+      "type": "problem",
+      "title": "数据区地址两表实测 bin 核对：MPP420 现表错、MPT420 productInfoList 错",
+      "file": "global_problem_solutions.md",
+      "line": 354,
+      "date": "2026-10-12",
+      "project": "EncoderPlotter_0903_01 / D:\\code\\EncoderPlotter_0903_01（分支 feature/mpp-algo-4060）",
+      "status": "已完成（分析结论；未改代码）",
+      "keywords": [
+        "DATA_ADDRESS_LAYOUTS",
+        "productInfoList",
+        "resolveDataAddress",
+        "getIAPArguments",
+        "数据区地址",
+        "angleData",
+        "polyfits",
+        "MPP420",
+        "MPT420",
+        "0x08018000",
+        "0x08015800",
+        "0x08014800",
+        "LE32 字面量",
+        "固件 bin 核对",
+        "load_app_data",
+        "kingkong 解密"
+      ]
+    },
+    {
+      "id": "P-20260930",
+      "type": "problem",
+      "title": "MPP 数据区地址改查 sub_common productInfoList（PRODUCT_INFO_LIST_SERIES）",
+      "file": "global_problem_solutions.md",
+      "line": 384,
+      "date": "2026-10-12",
+      "project": "EncoderPlotter_0903_01 / D:\\code\\EncoderPlotter_0903_01（分支 feature/mpp-algo-4060）",
+      "status": "已完成（未提交；真机 MPP 验证 BLOCKED）",
+      "keywords": [
+        "MPP",
+        "105",
+        "productInfoList",
+        "resolveDataAddress",
+        "PRODUCT_INFO_LIST_SERIES",
+        "_resolveFromProductInfoList",
+        "数据区地址",
+        "0x08018000",
+        "IAP 不支持",
+        "data_address_not_found",
+        "AngleDataPtr",
+        "c_uint32"
+      ]
+    },
+    {
+      "id": "P-20260931",
+      "type": "problem",
+      "title": "SIRE RSI 自审：自动发现唯一 PROPOSED 发现来自兜底阶段与未分类任务，钩子单腿断流",
+      "file": "global_problem_solutions.md",
+      "line": 412,
+      "date": "2026-10-13",
+      "project": "SIRE v6 RSI 机制自我审查（`D:\\sire\\AI\\AI\\sire`）",
+      "status": "已验证（run R20261013-063902，RSI-20261013-OUTLIER-BASE → v6.12）",
+      "keywords": [
+        "SIRE",
+        "RSI",
+        "自我审查",
+        "自动发现",
+        "sire_telemetry",
+        "PHASE_OUTLIER",
+        "CLOSE_HEAVY",
+        "TOOL_RETRY",
+        "误报",
+        "遥测钩子",
+        "mode unknown",
+        "rsi-check",
+        "evaluate 方向性",
+        "resolve 无校验",
+        "v6.12"
+      ]
     }
   ],
   "features": {
+    "下线检测": [
+      "F-052",
+      "F-058"
+    ],
+    "信息确认": [
+      "F-052",
+      "F-058"
+    ],
+    "firmware_info": [
+      "F-052"
+    ],
+    "人工决定": [
+      "F-052",
+      "F-058"
+    ],
+    "继续检测": [
+      "F-052"
+    ],
+    "结束检测": [
+      "F-052"
+    ],
+    "订单号": [
+      "F-052"
+    ],
+    "扫码": [
+      "F-052"
+    ],
     "烧录面板": [
       "F-026"
     ],
@@ -625,7 +1364,8 @@
       "F-026"
     ],
     "IAP": [
-      "F-026"
+      "F-026",
+      "F-047"
     ],
     "MPT-G": [
       "F-026"
@@ -698,16 +1438,20 @@
     ],
     "AGENTS.md": [
       "F-024",
-      "F-042"
+      "F-042",
+      "F-059"
     ],
     "AI规则": [
       "F-024"
     ],
     "打包": [
-      "F-024"
+      "F-024",
+      "F-046",
+      "F-057"
     ],
     "Nuitka": [
-      "F-024"
+      "F-024",
+      "F-057"
     ],
     "Electron": [
       "F-024"
@@ -722,22 +1466,26 @@
       "F-024"
     ],
     "release.py": [
-      "F-024"
+      "F-024",
+      "F-057"
     ],
     "VERSION": [
       "F-024"
     ],
     "CHANGELOG": [
-      "F-024"
+      "F-024",
+      "F-057"
     ],
     "GitLab CI": [
-      "F-024"
+      "F-024",
+      "F-057"
     ],
     "Runner": [
       "F-024"
     ],
     "NAS": [
-      "F-024"
+      "F-024",
+      "F-057"
     ],
     "飞书通知": [
       "F-024"
@@ -755,7 +1503,8 @@
       "F-024"
     ],
     "shared_memory": [
-      "F-024"
+      "F-024",
+      "F-053"
     ],
     "venv": [
       "F-024"
@@ -764,10 +1513,12 @@
       "F-024"
     ],
     "workspace.json": [
-      "F-024"
+      "F-024",
+      "F-059"
     ],
     "pytest": [
-      "F-024"
+      "F-024",
+      "F-057"
     ],
     "门禁": [
       "F-024"
@@ -1086,11 +1837,883 @@
     ],
     "资产生产": [
       "F-044"
+    ],
+    "加密OTA": [
+      "F-045"
+    ],
+    "AES-128-CBC": [
+      "F-045"
+    ],
+    "PKCS7": [
+      "F-045"
+    ],
+    "Bootloader3.4": [
+      "F-045"
+    ],
+    "SetCrypto": [
+      "F-045"
+    ],
+    "ACK丢失": [
+      "F-045"
+    ],
+    "会话恢复": [
+      "F-045"
+    ],
+    "96B": [
+      "F-045"
+    ],
+    "明文兼容": [
+      "F-045"
+    ],
+    "MPT": [
+      "F-047"
+    ],
+    "arguments解耦": [
+      "F-047"
+    ],
+    "'a'指令": [
+      "F-047"
+    ],
+    "ARGUMENTS字段自描述查询": [
+      "F-047"
+    ],
+    "queryArgumentsField": [
+      "F-047"
+    ],
+    "getArgumentsByFieldQuery": [
+      "F-047"
+    ],
+    "argumentsLayoutToBuffer": [
+      "F-047"
+    ],
+    "verifyArgumentsFieldQuery": [
+      "F-047"
+    ],
+    "argumentsReadMethod": [
+      "F-047"
+    ],
+    "argumentsVersion=6": [
+      "F-047"
+    ],
+    "EncoderArgumentsV6": [
+      "F-047"
+    ],
+    "batSpeedMode": [
+      "F-047"
+    ],
+    "argumentsFieldLayoutTable": [
+      "F-047"
+    ],
+    "USARTInterface_Recali.c": [
+      "F-047"
+    ],
+    "fieldCount": [
+      "F-047"
+    ],
+    "ArgumentsErrorStatus": [
+      "F-047"
+    ],
+    "'R'整块读取": [
+      "F-047"
+    ],
+    "EncoderBase.py": [
+      "F-047"
+    ],
+    "Analyzer": [
+      "F-047"
+    ],
+    "A~F协议回归": [
+      "F-047"
+    ],
+    "series=104": [
+      "F-047"
+    ],
+    "V4.2.1": [
+      "F-047"
+    ],
+    "a3950c3": [
+      "F-047"
+    ],
+    "Git 子模块": [
+      "F-046"
+    ],
+    "submodule": [
+      "F-046"
+    ],
+    "主仓库分支": [
+      "F-046"
+    ],
+    "运行时切换": [
+      "F-046"
+    ],
+    "profile": [
+      "F-046"
+    ],
+    "manifest": [
+      "F-046"
+    ],
+    "commit SHA": [
+      "F-046"
+    ],
+    "launcher": [
+      "F-046"
+    ],
+    "版本组合": [
+      "F-046"
+    ],
+    "rollback": [
+      "F-046"
+    ],
+    "数据生成": [
+      "F-048"
+    ],
+    "生成标定数据": [
+      "F-048"
+    ],
+    "generateData": [
+      "F-048"
+    ],
+    "generatedDualData": [
+      "F-048"
+    ],
+    "ged_P": [
+      "F-048"
+    ],
+    "ged_Q": [
+      "F-048"
+    ],
+    "ged_T": [
+      "F-048"
+    ],
+    "IAP文件生成": [
+      "F-048"
+    ],
+    "EncoderCommandIapGenerateFile": [
+      "F-048"
+    ],
+    "iap-file-generator": [
+      "F-048"
+    ],
+    "恢复出厂": [
+      "F-048"
+    ],
+    "feature/data-generation": [
+      "F-048"
+    ],
+    "feature/iap-ota-sn": [
+      "F-048"
+    ],
+    "develop 分叉": [
+      "F-048"
+    ],
+    "Git tag": [
+      "F-049"
+    ],
+    "CI_COMMIT_TAG": [
+      "F-049",
+      "F-057"
+    ],
+    "target.json": [
+      "F-049"
+    ],
+    "internal build": [
+      "F-049"
+    ],
+    "构建标签": [
+      "F-049"
+    ],
+    "versionSuffix": [
+      "F-049"
+    ],
+    "DPB": [
+      "F-050",
+      "F-051"
+    ],
+    "单圈标定": [
+      "F-050",
+      "F-051"
+    ],
+    "圆环": [
+      "F-050",
+      "F-051"
+    ],
+    "calibrationChart": [
+      "F-050",
+      "F-051"
+    ],
+    "ringTarget": [
+      "F-050",
+      "F-051"
+    ],
+    "ECharts": [
+      "F-050",
+      "F-051"
+    ],
+    "dispose": [
+      "F-050",
+      "F-051"
+    ],
+    "driverSoftware2": [
+      "F-053"
+    ],
+    "后端地图": [
+      "F-053"
+    ],
+    "server.py": [
+      "F-053"
+    ],
+    "FastAPI endpoint": [
+      "F-053"
+    ],
+    "reader_wrapper": [
+      "F-053"
+    ],
+    "reader_mp": [
+      "F-053"
+    ],
+    "reader_mp_worker": [
+      "F-053"
+    ],
+    "READER_MP": [
+      "F-053",
+      "F-057"
+    ],
+    "WEB_GUI_PORT": [
+      "F-053"
+    ],
+    "KK_READER": [
+      "F-053"
+    ],
+    "asyncio.Queue": [
+      "F-053"
+    ],
+    "连接状态真相源": [
+      "F-053"
+    ],
+    "双实现同改": [
+      "F-053"
+    ],
+    "HID独占": [
+      "F-053"
+    ],
+    "_conn_generation": [
+      "F-053"
+    ],
+    "ws monitor 空壳": [
+      "F-053"
+    ],
+    "加接口": [
+      "F-053"
+    ],
+    "8765": [
+      "F-053"
+    ],
+    "timeout": [
+      "F-053"
+    ],
+    "无响应": [
+      "F-053"
+    ],
+    "端口被占": [
+      "F-053"
+    ],
+    "config.json": [
+      "F-053"
+    ],
+    "报告落盘": [
+      "F-053"
+    ],
+    "request_abort": [
+      "F-053"
+    ],
+    "LinkDown": [
+      "F-053"
+    ],
+    "RS485 协议": [
+      "F-054"
+    ],
+    "protocol.py": [
+      "F-054"
+    ],
+    "Cmd": [
+      "F-054"
+    ],
+    "FactoryCmd": [
+      "F-054"
+    ],
+    "crc16": [
+      "F-054"
+    ],
+    "make_frame": [
+      "F-054"
+    ],
+    "commands.py": [
+      "F-054"
+    ],
+    "V2Commands": [
+      "F-054"
+    ],
+    "FwProfileUndetermined": [
+      "F-054"
+    ],
+    "registers.py": [
+      "F-054"
+    ],
+    "register_protocol.h": [
+      "F-054"
+    ],
+    "register_descriptions.py": [
+      "F-054"
+    ],
+    "fw_profile": [
+      "F-054"
+    ],
+    "firmware_profiles": [
+      "F-054"
+    ],
+    "档案门控": [
+      "F-054"
+    ],
+    "静默回退": [
+      "F-054"
+    ],
+    "0x38 内圈零位": [
+      "F-054"
+    ],
+    "停机写": [
+      "F-054"
+    ],
+    "慢命令 0xFD": [
+      "F-054"
+    ],
+    "RS485 V3.3": [
+      "F-054"
+    ],
+    "新加协议命令": [
+      "F-054"
+    ],
+    "recal_chain": [
+      "F-054"
+    ],
+    "算法不许第二份": [
+      "F-054"
+    ],
+    "read_version": [
+      "F-054"
+    ],
+    "fw_git_sha": [
+      "F-054"
+    ],
+    "0x0B": [
+      "F-054"
+    ],
+    "力矩无响应": [
+      "F-054"
+    ],
+    "OTA": [
+      "F-054"
+    ],
+    "前端地图": [
+      "F-055"
+    ],
+    "frontend": [
+      "F-055"
+    ],
+    "无构建 ESM": [
+      "F-055"
+    ],
+    "app.js": [
+      "F-055"
+    ],
+    "PAGE_BUILDERS": [
+      "F-055"
+    ],
+    "加一个新页面": [
+      "F-055"
+    ],
+    "api.js": [
+      "F-055"
+    ],
+    "X-KK-Trace": [
+      "F-055"
+    ],
+    "MonitorSocket": [
+      "F-055"
+    ],
+    "PipelineSocket": [
+      "F-055"
+    ],
+    "KtSocket": [
+      "F-055"
+    ],
+    "telemetry:sample": [
+      "F-055"
+    ],
+    "scope-bar.js": [
+      "F-055"
+    ],
+    "uPlot": [
+      "F-055"
+    ],
+    "PAGE_PROFILE": [
+      "F-055"
+    ],
+    "冻结看门狗": [
+      "F-055"
+    ],
+    "unthrottled-timer": [
+      "F-055"
+    ],
+    "setUnthrottledInterval": [
+      "F-055"
+    ],
+    "后台节流": [
+      "F-055"
+    ],
+    "0x4D 看门狗": [
+      "F-055"
+    ],
+    "页面重建 innerHTML": [
+      "F-055"
+    ],
+    "pageCleanups": [
+      "F-055"
+    ],
+    "capabilities.js 受众分层": [
+      "F-055"
+    ],
+    "tokens.css": [
+      "F-055"
+    ],
+    "i18n": [
+      "F-055"
+    ],
+    "示波器": [
+      "F-055"
+    ],
+    "切页": [
+      "F-055"
+    ],
+    "图表冻结": [
+      "F-055"
+    ],
+    "不用构建": [
+      "F-055"
+    ],
+    "13页": [
+      "F-055"
+    ],
+    "受众档位": [
+      "F-055"
+    ],
+    "MAX_UI_LEVEL": [
+      "F-055",
+      "F-057"
+    ],
+    "confirmDialog": [
+      "F-055"
+    ],
+    "Electron 壳": [
+      "F-056"
+    ],
+    "electron/main.js": [
+      "F-056"
+    ],
+    "startBackend": [
+      "F-056"
+    ],
+    "server.exe": [
+      "F-056"
+    ],
+    "resources/server": [
+      "F-056"
+    ],
+    "PORT_PINNED": [
+      "F-056"
+    ],
+    "端口回执文件": [
+      "F-056"
+    ],
+    "killStrayBackends": [
+      "F-056"
+    ],
+    "backgroundThrottling": [
+      "F-056"
+    ],
+    "contextIsolation": [
+      "F-056"
+    ],
+    "nodeIntegration": [
+      "F-056"
+    ],
+    "devTools 客户包关闭": [
+      "F-056"
+    ],
+    "Menu.setApplicationMenu": [
+      "F-056"
+    ],
+    "kkdiag://": [
+      "F-056"
+    ],
+    "did-fail-load 重试": [
+      "F-056"
+    ],
+    "postmortem": [
+      "F-056"
+    ],
+    "diagnose.js": [
+      "F-056"
+    ],
+    "extraResources": [
+      "F-056"
+    ],
+    "无 preload 无 IPC": [
+      "F-056"
+    ],
+    "user agent Electron": [
+      "F-056"
+    ],
+    "黑屏": [
+      "F-056"
+    ],
+    "起不来": [
+      "F-056"
+    ],
+    "npm start": [
+      "F-056"
+    ],
+    "nsis": [
+      "F-056"
+    ],
+    "pytest.ini": [
+      "F-057"
+    ],
+    "testpaths": [
+      "F-057"
+    ],
+    "tests/unit": [
+      "F-057"
+    ],
+    "conftest": [
+      "F-057"
+    ],
+    "isolate_disconnect": [
+      "F-057"
+    ],
+    "fake_clock": [
+      "F-057"
+    ],
+    "FW_BIN": [
+      "F-057"
+    ],
+    "无 marker": [
+      "F-057"
+    ],
+    "源码扫描门禁": [
+      "F-057"
+    ],
+    "_strip_comments": [
+      "F-057"
+    ],
+    "剥注释": [
+      "F-057"
+    ],
+    "人为破坏自证": [
+      "F-057"
+    ],
+    "check_register_descriptions": [
+      "F-057"
+    ],
+    "audit_test_meta": [
+      "F-057"
+    ],
+    "gitlab-ci.yml": [
+      "F-057"
+    ],
+    "win-probe": [
+      "F-057"
+    ],
+    "test-gates": [
+      "F-057"
+    ],
+    "build-win-release": [
+      "F-057"
+    ],
+    "build-win-smoke": [
+      "F-057"
+    ],
+    "notify-release": [
+      "F-057"
+    ],
+    "GIT_CLEAN_FLAGS": [
+      "F-057"
+    ],
+    "build.bat": [
+      "F-057"
+    ],
+    "include-data-dir": [
+      "F-057"
+    ],
+    "include-data-files": [
+      "F-057"
+    ],
+    "INTERNAL_SHA": [
+      "F-057"
+    ],
+    "SKU": [
+      "F-057"
+    ],
+    "客户包": [
+      "F-057"
+    ],
+    "cut_changelog": [
+      "F-057"
+    ],
+    "local-build": [
+      "F-057"
+    ],
+    "requirements 精确 pin": [
+      "F-057"
+    ],
+    "OpenBLAS": [
+      "F-057"
+    ],
+    "vendor wheel": [
+      "F-057"
+    ],
+    "requirements.lock": [
+      "F-057"
+    ],
+    "setup.bat": [
+      "F-057"
+    ],
+    "start.bat": [
+      "F-057"
+    ],
+    "旧前端": [
+      "F-057"
+    ],
+    "server.dist": [
+      "F-057"
+    ],
+    "dist_app": [
+      "F-057"
+    ],
+    "复用dist": [
+      "F-057"
+    ],
+    "未发布": [
+      "F-057"
+    ],
+    "冒烟": [
+      "F-057"
+    ],
+    "win-smoke": [
+      "F-057"
+    ],
+    "扭矩去皮零点": [
+      "F-058"
+    ],
+    "卸力零点": [
+      "F-058"
+    ],
+    "offline detection": [
+      "F-058"
+    ],
+    "产线出厂检测": [
+      "F-058"
+    ],
+    "OfflineDetectionController": [
+      "F-058"
+    ],
+    "require_step": [
+      "F-058"
+    ],
+    "DetectionType": [
+      "F-058"
+    ],
+    "外观检测": [
+      "F-058"
+    ],
+    "尺寸测量": [
+      "F-058"
+    ],
+    "反驱力": [
+      "F-058"
+    ],
+    "噪声": [
+      "F-058"
+    ],
+    "额定扭矩": [
+      "F-058"
+    ],
+    "坏点": [
+      "F-058"
+    ],
+    "MAX_PLAUSIBLE_NM": [
+      "F-058"
+    ],
+    "卸力建零": [
+      "F-058"
+    ],
+    "ZERO_MIN_SAMPLES": [
+      "F-058"
+    ],
+    "出力准备闸": [
+      "F-058"
+    ],
+    "prepareGate": [
+      "F-058"
+    ],
+    "prepare_delay_s": [
+      "F-058"
+    ],
+    "od_motor": [
+      "F-058"
+    ],
+    "od_sensor": [
+      "F-058"
+    ],
+    "od_rated_torque": [
+      "F-058"
+    ],
+    "od_reverse_force": [
+      "F-058"
+    ],
+    "od_profiles": [
+      "F-058"
+    ],
+    "od_relay": [
+      "F-058"
+    ],
+    "DYN-200": [
+      "F-058"
+    ],
+    "JN-DN5": [
+      "F-058"
+    ],
+    "485 继电器": [
+      "F-058"
+    ],
+    "duoji 口径": [
+      "F-058"
+    ],
+    "判定在后端": [
+      "F-058"
+    ],
+    "core/offline_detection.py": [
+      "F-058"
+    ],
+    "offline_detection.js": [
+      "F-058"
+    ],
+    "八步": [
+      "F-058"
+    ],
+    "存档": [
+      "F-058"
+    ],
+    "序列号": [
+      "F-058"
+    ],
+    "Downloads": [
+      "F-058"
+    ],
+    "文档地图": [
+      "F-059"
+    ],
+    "docs/skills": [
+      "F-059"
+    ],
+    "必读": [
+      "F-059"
+    ],
+    "PROJECT-CONTEXT": [
+      "F-059"
+    ],
+    "缺陷池": [
+      "F-059"
+    ],
+    "需求池": [
+      "F-059"
+    ],
+    "飞书多维表格": [
+      "F-059"
+    ],
+    "base token": [
+      "F-059"
+    ],
+    "待回归": [
+      "F-059"
+    ],
+    "回填": [
+      "F-059"
+    ],
+    "真机台账": [
+      "F-059"
+    ],
+    "读取器 serial": [
+      "F-059"
+    ],
+    "逻辑名": [
+      "F-059"
+    ],
+    "不引用项目外路径": [
+      "F-059"
+    ],
+    "onboarding": [
+      "F-059"
+    ],
+    "lark-cli PATH": [
+      "F-059"
+    ],
+    "playwright_ui_self_test": [
+      "F-059"
+    ],
+    "scope_chart_freeze_debug": [
+      "F-059"
+    ],
+    "realmachine_fault_injection": [
+      "F-059"
+    ],
+    "inner_zero_calibration": [
+      "F-059"
+    ],
+    "recal_production_workflow": [
+      "F-059"
+    ],
+    "ANALYZER_HARDWARE_GUIDE": [
+      "F-059"
+    ],
+    "reader_issues": [
+      "F-059"
+    ],
+    "rs485_v3.3": [
+      "F-059"
+    ],
+    "gui-design": [
+      "F-059"
+    ],
+    "theme-servo-cyan": [
+      "F-059"
+    ],
+    "CHANGELOG 体例": [
+      "F-059"
+    ],
+    "文档引用不实": [
+      "F-059"
+    ],
+    "行号过时": [
+      "F-059"
+    ],
+    "文档引用失效": [
+      "F-059"
     ]
   },
   "problems": {
     "v3.4.6": [
-      "P-018"
+      "P-018",
+      "P-20260926"
     ],
     "MIT": [
       "P-018"
@@ -1118,7 +2741,8 @@
       "P-020"
     ],
     "固件档案": [
-      "P-018"
+      "P-018",
+      "P-20260926"
     ],
     "804.2477": [
       "P-019"
@@ -1142,7 +2766,8 @@
       "P-019"
     ],
     "0x67": [
-      "P-019"
+      "P-019",
+      "P-20260927"
     ],
     "设零": [
       "P-019"
@@ -1335,7 +2960,8 @@
       "P-024",
       "P-20260923",
       "P-20260924",
-      "P-20260925"
+      "P-20260925",
+      "P-20260931"
     ],
     "Git 归档": [
       "P-024"
@@ -1402,7 +3028,8 @@
       "P-20260924"
     ],
     "RSI": [
-      "P-20260925"
+      "P-20260925",
+      "P-20260931"
     ],
     "自我优化": [
       "P-20260925"
@@ -1432,7 +3059,8 @@
       "P-20260925"
     ],
     "rsi-check": [
-      "P-20260925"
+      "P-20260925",
+      "P-20260931"
     ],
     "finalize": [
       "P-20260925"
@@ -1448,14 +3076,222 @@
     ],
     "关键词子串误报": [
       "P-20260925"
+    ],
+    "寄存器梳理": [
+      "P-20260926"
+    ],
+    "0x6A": [
+      "P-20260926"
+    ],
+    "AdcUsableAmp": [
+      "P-20260926"
+    ],
+    "GpioDebugPreGen": [
+      "P-20260926"
+    ],
+    "HOST_HIDDEN_REG_ADDRS": [
+      "P-20260926"
+    ],
+    "0x80": [
+      "P-20260926",
+      "P-20260928"
+    ],
+    "InnerAngle": [
+      "P-20260926",
+      "P-20260928"
+    ],
+    "inner_zero": [
+      "P-20260926"
+    ],
+    "kStInnerAngle": [
+      "P-20260926",
+      "P-20260927"
+    ],
+    "上位机隐藏": [
+      "P-20260926"
+    ],
+    "OutputZeroOffset": [
+      "P-20260927"
+    ],
+    "设零位": [
+      "P-20260927"
+    ],
+    "set_output_zero": [
+      "P-20260927"
+    ],
+    "0x38": [
+      "P-20260927"
+    ],
+    "MechZeroInner": [
+      "P-20260927"
+    ],
+    "内圈零位": [
+      "P-20260927",
+      "P-20260928"
+    ],
+    "BootInferOuterMultiTurnFromInner": [
+      "P-20260927"
+    ],
+    "output_zero_offset_": [
+      "P-20260927"
+    ],
+    "_IZ_NEED_REGS": [
+      "P-20260927"
+    ],
+    "fw_profile.reg_addr": [
+      "P-20260928"
+    ],
+    "按名字取址": [
+      "P-20260928"
+    ],
+    "_iz_inner_addr": [
+      "P-20260928"
+    ],
+    "_IZ_INNER_ADDR_TAKEN": [
+      "P-20260928"
+    ],
+    "inner_addr": [
+      "P-20260928"
+    ],
+    "timeout_s": [
+      "P-20260928"
+    ],
+    "NaN": [
+      "P-20260928"
+    ],
+    "钳位": [
+      "P-20260928"
+    ],
+    "寄存器换地址": [
+      "P-20260928"
+    ],
+    "坏档案": [
+      "P-20260928"
+    ],
+    "截低8位": [
+      "P-20260928"
+    ],
+    "DATA_ADDRESS_LAYOUTS": [
+      "P-20260929"
+    ],
+    "productInfoList": [
+      "P-20260929",
+      "P-20260930"
+    ],
+    "resolveDataAddress": [
+      "P-20260929",
+      "P-20260930"
+    ],
+    "getIAPArguments": [
+      "P-20260929"
+    ],
+    "数据区地址": [
+      "P-20260929",
+      "P-20260930"
+    ],
+    "angleData": [
+      "P-20260929"
+    ],
+    "polyfits": [
+      "P-20260929"
+    ],
+    "MPP420": [
+      "P-20260929"
+    ],
+    "MPT420": [
+      "P-20260929"
+    ],
+    "0x08018000": [
+      "P-20260929",
+      "P-20260930"
+    ],
+    "0x08015800": [
+      "P-20260929"
+    ],
+    "0x08014800": [
+      "P-20260929"
+    ],
+    "LE32 字面量": [
+      "P-20260929"
+    ],
+    "固件 bin 核对": [
+      "P-20260929"
+    ],
+    "load_app_data": [
+      "P-20260929"
+    ],
+    "kingkong 解密": [
+      "P-20260929"
+    ],
+    "MPP": [
+      "P-20260930"
+    ],
+    "105": [
+      "P-20260930"
+    ],
+    "PRODUCT_INFO_LIST_SERIES": [
+      "P-20260930"
+    ],
+    "_resolveFromProductInfoList": [
+      "P-20260930"
+    ],
+    "IAP 不支持": [
+      "P-20260930"
+    ],
+    "data_address_not_found": [
+      "P-20260930"
+    ],
+    "AngleDataPtr": [
+      "P-20260930"
+    ],
+    "c_uint32": [
+      "P-20260930"
+    ],
+    "自我审查": [
+      "P-20260931"
+    ],
+    "自动发现": [
+      "P-20260931"
+    ],
+    "sire_telemetry": [
+      "P-20260931"
+    ],
+    "PHASE_OUTLIER": [
+      "P-20260931"
+    ],
+    "CLOSE_HEAVY": [
+      "P-20260931"
+    ],
+    "TOOL_RETRY": [
+      "P-20260931"
+    ],
+    "误报": [
+      "P-20260931"
+    ],
+    "遥测钩子": [
+      "P-20260931"
+    ],
+    "mode unknown": [
+      "P-20260931"
+    ],
+    "evaluate 方向性": [
+      "P-20260931"
+    ],
+    "resolve 无校验": [
+      "P-20260931"
+    ],
+    "v6.12": [
+      "P-20260931"
     ]
   },
   "efficiency": {
     "SIRE": [
-      "E-008"
+      "E-008",
+      "E-010"
     ],
     "单一来源": [
-      "E-008"
+      "E-008",
+      "E-010"
     ],
     "governor": [
       "E-008"
@@ -1470,7 +3306,8 @@
       "E-008"
     ],
     "RSI": [
-      "E-008"
+      "E-008",
+      "E-010"
     ],
     "sire_rsi": [
       "E-008"
@@ -1549,6 +3386,27 @@
     ],
     "multi-agent local messaging": [
       "E-009"
+    ],
+    "Codex": [
+      "E-010"
+    ],
+    "Claude": [
+      "E-010"
+    ],
+    "v6.11": [
+      "E-010"
+    ],
+    "快速通道": [
+      "E-010"
+    ],
+    "薄入口": [
+      "E-010"
+    ],
+    "telemetry": [
+      "E-010"
+    ],
+    "数据库不进Git": [
+      "E-010"
     ]
   },
   "habits": {
@@ -1575,8 +3433,44 @@
     ],
     "发布流程": [
       "H-004"
+    ],
+    "模型选择": [
+      "H-005"
+    ],
+    "低成本模型": [
+      "H-005"
+    ],
+    "token 成本": [
+      "H-005"
+    ],
+    "复杂度分级": [
+      "H-005"
+    ],
+    "task routing": [
+      "H-005"
+    ],
+    "model escalation": [
+      "H-005"
+    ],
+    "优先回答": [
+      "H-006"
+    ],
+    "简洁": [
+      "H-006"
+    ],
+    "回答速度": [
+      "H-006"
+    ],
+    "附加建议": [
+      "H-006"
+    ],
+    "用户确认": [
+      "H-006"
+    ],
+    "等待下一次任务": [
+      "H-006"
     ]
   },
-  "last_updated": "2026-09-27T12:16:33Z",
-  "total_records": 23
+  "last_updated": "2026-10-12T23:41:23Z",
+  "total_records": 47
 }

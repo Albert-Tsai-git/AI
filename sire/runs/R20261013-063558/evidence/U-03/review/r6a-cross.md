@@ -1,0 +1,2 @@
+# 对 R6A 发现的交叉复验 — F-055
+复验 `grep -rn setInterval frontend/js` = 19 处，逐处看上下文确认 scope-bar.js:4132/:4145 调 this._tick()、:4146-4148 注释自证发 reg_read；api.js:151 与 console.js:154 由打印指定行确认；tests.js 的 await sleep 计数 144。

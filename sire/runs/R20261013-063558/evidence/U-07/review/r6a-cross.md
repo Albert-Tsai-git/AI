@@ -1,0 +1,2 @@
+# 对 R6A 发现的交叉复验 — F-059
+复验：AGENTS.md 的 docs 引用去重 9 条全部 exists True；docs/project_rules 不存在；rs485_v3.3.md grep V3.2 0 命中；AGENTS.md 各 ## 节起始行实测（项目背景 9 / 硬规定 23 / 项目规则文档 166 / 开发流程速查 182 / 工程军规补充 224 / License 372）。

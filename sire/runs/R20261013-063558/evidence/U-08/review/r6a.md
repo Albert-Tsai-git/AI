@@ -1,0 +1,2 @@
+# R6A 复核 U-08 索引
+复核 index/reindex 输出：inserted=115、removed=0、appended_versions=2 与「只增不减」策略一致；备份文件存在且 integrity=ok；knowledge_records 149→156 恰 +7，F-053~F-059 全部在库，标题与 record_type=F 正确，domain 自动分类为 embedded/frontend（不影响检索，R6B 已确认无调用方传 --domain）。
