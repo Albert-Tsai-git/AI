@@ -60,3 +60,6 @@
 |---|---|---|---|
 | 2026-09-25 | R20260925-052105 | RSI 接入入口（SKILL.md、supervisor.md 检查项 8）与 R9 `rsi-check`/`finalize` 门禁；RSI-20260925-R9GATE → v6.2 | R6A/R6B/R6C 复核、R7 T1–T8 及复测，见 run evidence/U-01 |
 | 2026-09-25 | R20260925-SYNC（本会话） | governor 收敛为 `sire/workflow/support/ai-workflow-governor/` 单份（删除 `shared/sire/references/governor/`；Codex 不再安装独立 governor skill）；RSI 双库写入、只读 status、快照 RSI 丢失保护；RSI-20260925-SYNC → v6.3 ACTIVE（78e25b4）| run R20260925-112329：R4/R6A/R6B/R6C/R7 PASS；知识 E-008 |
+| 2026-09-25 | 本会话 | global-contract.md 新增“模型分级与省 token 机制”：低难度派 haiku、中难度派 sonnet、高难度留主控，失败逐级升模型 | 规则文本已写入并校验 grep 命中 |
+| 2026-09-26 | 本会话 | 模型分级改为：低=haiku，中=Opus 5.5 low 思考，高=Opus 5.5 high 思考；新增子代理 sire-low/sire-mid/sire-high | grep 校验 |
+| 2026-10-12 | R20261012-claude-tier-agents-link | sire-low/mid/high 纳入 `shared/sire/agents/claude/`，`~/.claude/agents` 同名文件改为符号链接（原件留 `.legacy-backup-20261012`）；R9 `REQUIRED_AGENT_NAMES` 加 low/mid/high，打包缺失即 `package_omission`；RSI-20261012-TIERAGENTS → v6.5 | R6 sire-mid PASS；R7 T2 打包+verify-zip PASS、T3 删件后 STOP；T1 新进程加载 BLOCKED（CLI 401） |

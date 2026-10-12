@@ -29,6 +29,8 @@ EXCLUDED_INVENTORY_ROOTS = {SNAPSHOT_DIR.resolve(), RUNS_DIR.resolve()}
 REQUIRED_AGENT_NAMES = (
     "analyst", "code-reviewer", "code-reviewer-a", "code-reviewer-b", "code-reviewer-c", "decomposer",
     "implementer", "integrator", "librarian", "qa-tester", "spec-reviewer", "supervisor", "system-operator",
+    # 模型选择门禁的低/中/高三档子代理，缺失时门禁无处可派
+    "low", "mid", "high",
 )
 REQUIRED_ARCHIVE_ENTRIES = (
     "shared/sire/SKILL.md",
