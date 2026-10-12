@@ -1,0 +1,23 @@
+{
+  "run_id": "R20261012-answer-first-preference",
+  "project": "SIRE user interaction preference",
+  "status": "DONE",
+  "knowledge": "H-006",
+  "scope": "Remember requested answer-first, concise communication and prior confirmation for optional extra work.",
+  "model_gate": "Tiny task: controller executes directly; no delegation overhead.",
+  "validation": "Canonical H-006 matches the explicit request; no optional work or workflow mechanism changes.",
+  "repair": "One template failure (missing key files) corrected before successful add.",
+  "stages": {
+    "R0": "complete",
+    "R1": "complete",
+    "R2": "complete",
+    "R3": "single unit",
+    "R4": "skip: tiny preference save",
+    "R5": "complete",
+    "R6": "skip: no implementation or design change",
+    "R7": "preference text and database persistence checks",
+    "R8": "skip: single unit",
+    "R9": "closure check",
+    "R10": "skip: no UI"
+  }
+}
