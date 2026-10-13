@@ -543,3 +543,136 @@ start = prompts[0]["ts"]
 **踩坑 / 注意**: ① 验证"是否真的在采集"不能只看 events 数量，必须看 `tasks` 是否在增长——events 有、tasks 无就是分析层空转；② 重放验证要用生产真实事件灌隔离库，别手造数据（手造容易漏掉 prompt 缺失这种触发条件）；③ 我第一版验证脚本把事件按原 session 插入、却用另一个 session id 调 `summarize_task`，得到 0 任务是测试写错而非代码错——先怀疑量具再怀疑被测物。
 
 **限制**: 兜底起点的 `prompt` 字段为空，`report` 里这类回合看不到用户原话；`mode` 仍依赖最终回复里的快速通道标记，没有标记的自动化回合依旧是 `unknown`（已知项，另行处理）。
+
+
+### P-20260935: SIRE 三端兼容实测：Codex/Claude 入口副本对 v6.12-v6.17 的关键词覆盖 0/7，且无机制能发现这种漂移
+
+**日期**: 2026-10-13
+**项目**: SIRE 三端兼容性复核（`D:\sire\AI\AI\sire`）
+**状态**: 已验证（取证脚本 scratch/probe_three_clients.py，run 见本次台账）
+**关键词**: SIRE, 三端兼容, Codex, Claude, Qoder, 入口副本漂移, AGENTS.md, sire-reminder.txt, memory, hooks.json, config.toml 信任哈希, 别名 junction, COLLECTION_DEAD, parity, 链式钩子, feishu-hub
+
+**需求场景 / 现象**: 要判断"Codex 与 Claude 是否仍与唯一源兼容"。实测关键词覆盖：唯一源 `global-contract.md` 命中 `Qoder / pending / COLLECTION_DEAD / sire_close / sire_qoder / 强制 / parity` **7/7**；`~/.codex/AGENTS.md`（3033 字节）**0/7**；`~/.claude/sire-reminder.txt`（2587 字节）**0/7**；`~/.qoder-cn/memory/sire-mandatory-workflow.md` 4/7。也就是说 v6.12–v6.17 的改动（三端表述、finish 强制核对 pending、COLLECTION_DEAD、sire_close 合并收尾、parity/role）只有写它们的人知道，另两个客户端的入口副本一字未提，而且**没有任何机制能发现这种漂移**——三份副本都是人手改写的摘要，连"## 简单任务快速通道"整段都不含（`section()` 取不到），无法做指纹比对。
+
+**根因**:
+1. 入口副本制度是"摘要 + 人工同步"：契约只说"修改本节时同步 Codex AGENTS.md 与 Claude reminder"，没有任何命令校验，副本与源之间没有可比较的结构（既非同一文件也非同一小节）。
+2. 采集面本来就三端不齐：Codex 钩子三事件走 `~/.codex/skills/ai-dev-sire-workflow/scripts/sire_telemetry.py`（别名路径）在采；**Claude 的 Stop 与 UserPromptSubmit 都被 feishu-hub 占用**（`hook_prompt.py` / `hook_stop.py` + `Get-Content sire-reminder.txt`），对 `sire_telemetry` 的引用是 0，所以它的采集完全缺失（库里 17 条 claude 任务都是更早配置留下的）；Qoder 是我这次接上的四事件。
+3. 别名即单点：Codex 钩子命令硬编码别名目录路径，junction 一旦失效采集会静默断掉；Claude 的 `settings.hooks` 无 PostToolUse；Codex 另有 `config.toml` 的 3 条 `[hooks.state...]` 信任哈希——**改 hooks.json 需重新信任**，否则钩子不生效且无提示。
+4. 分档委派能力不齐：Claude 有 16 个 `~/.claude/agents/sire-*.md`（含 low/mid/high）；Qoder 没有子代理定义也没有 `model` 参数，只能靠 `sire_qoder.py role` 生成委派文本；Codex 侧未验证。
+5. `COLLECTION_DEAD` 从配置反推"应采集客户端"，未配置的客户端隐形 → Claude 永远不报警，规则只能测"接过又掉"的，测不出"根本没接"。
+
+**方案 / 建议架构**:
+1. **入口副本改为同源生成 + 指纹校验**：新增 `scripts/sire_entry.py`，`render --client codex|claude|qoder` 从 `global-contract.md` 生成固定小节（含源 SHA 前 12 位与"由脚本生成，勿手改"标记），`check` 比对三端指纹并把不一致变成一条发现（等价于把 `parity` 从 Qoder 单端扩成三端）；这一步先做，否则后续任何机制改动都会继续静默漂移。
+2. **Claude 采集用链式而非抢占**：在 feishu-hub 的 `hook_prompt.py` / `hook_stop.py` 内追加调用 `sire_telemetry.py hook --client claude`（或同事件加第二个条目，但 Qoder 实测同事件多条目后曾出现停采，链式更稳）；Codex 侧改 `hooks.json` 后必须提醒重新信任。
+3. **钩子命令不再指向别名**：统一指向唯一源真实路径（或由 `sire_paths.py` 生成的启动器），`check` 同时验证"别名解析 == 唯一源""脚本文件存在""近 N 小时有心跳"三件事。
+4. **显式客户端清单**：`sire_clients.json` 声明应当接入的客户端与必备事件，缺失=发现（`CLIENT_NOT_INSTALLED`），补上"根本没接"的盲区。
+5. **分档文本同源**：把 low/mid/high 的委派约束也收进唯一源生成，Claude 用它生成 `agents/sire-*.md`、Qoder 用 `sire_qoder.py role` 消费，Codex 待验证后接入。
+
+**关键文件与接口**:
+- `~/.codex/AGENTS.md`、`~/.codex/hooks.json`、`~/.codex/config.toml`（3 条 hooks 信任项）
+- `~/.claude/sire-reminder.txt`、`~/.claude/settings.json`（Stop/UserPromptSubmit → `D:\sire\AI\AI\feishu-hub\executors\claude\hook_*.py`）、`~/.claude/agents/sire-*.md`（16 个）
+- `~/.qoder-cn/settings.json`（4 事件 + telemetry）、`~/.qoder-cn/memory/sire-mandatory-workflow.md`、`sire/workflow/shared/sire/agents/qoder/README.md`
+- 三端别名均解析到 `D:\sire\AI\AI\sire\workflow\shared\sire`（junction 正常，工作流本体是真兼容的）
+
+**验证方法**: `scratch/probe_three_clients.py`（输出 `three_clients.json`）逐端打印别名解析、钩子事件与命令、脚本是否存在、副本关键词覆盖；漂移比对用 `section()`+`sha256[:12]`，副本无该段即判"不可比对"，本身就是要修的缺陷。
+
+**限制**: 本次为只读复核，未改任何机制；`sire_entry.py`、Claude 链式钩子、`sire_clients.json` 均属新的机制改动，需各自走 RSI 提案，Claude 那项还要用户授权（涉及 feishu-hub 现有集成）。另注：`plugin:computer-use` 现已在 Qoder 暴露并实测可用（`list_windows` 返回真实窗口列表），此前记录的"R10 本端不支持"已失效，需更正 README 与契约。
+
+
+### P-20260936: DPB MR复审：导入写入校验与packed版本转换
+
+# GitLab MR repeat review 2026-10-13
+
+Remote branches fetched. Embedded HEAD 4ad0fe3d997c70f8365a64a5fa82d875bfa002c9; common HEAD f8825057831178e41502077789b8b45e651c63de. No source update since previous review. Earlier positive conclusion corrected after following additional caller paths.
+
+P1 embedded: new DPB capacity check is only in writeEncoderData. EncoderCommandCalibrationWriteData in parent Encoder.py calls writeEncoderDataV303, whose imported current/generated Q/T branches call writeFlash and eraseAndWriteFlash directly. The latter erases before writing and has no capacity check. Oversized imported T reaches erase instead of preflight rejection. Firmware enforcement and physical consequences have not been tested. Suggested checking all selected buffers before any erase; cross-version DPB408/409 imported T is a concrete trigger.
+
+P2 common: runpy execution of dpbFlashLayout.py confirmed firmware_number(0x04000A00)=410 and firmware_number(4010)=4010. Project three-part concatenation requires 4010. Current 408/409 remain unaffected. Suggested matching packed/UI conversion and tests.
+
+Cross-repository dependency: new top-level import requires coordinated common/embedded pins and common-first merge.
+
+GitLab authenticated browser: existing comments read; new public correction comments posted to both MRs; Activity counts changed from 1 to 2 and full posted text verified. No Approve or merge action. Real hardware not exercised. No code changed.
+
+Keywords: GitLab MR review, DPB 408 409, imported calibration, writeEncoderDataV303, eraseAndWriteFlash, firmware_number, packed 4.0.10, 4010, Flash preflight.
+
+
+### P-20260937: DPB导入数据擦除前预检与packed版本修复
+
+# MR30/MR31 findings repaired
+
+User authorized fixing earlier review findings and updating existing MRs. Used existing clean feature/compatibility branches, no parent pin commit before child merges. Model gate: cross-module write ordering and version encoding require current model; no delegated agents.
+
+Common commit 3b3fa720178e7f859786b4c78610fa0747d6bdb5 replaces arithmetic packed version conversion with three-component decimal concatenation. Embedded commit f3b3a599e6914824a759127cd35b00cd1ee0733c checks all imported P/Q/T buffers before any device operation and checks direct writeFlash before erase. Missing buffers reject before operation. Added parameterized boundary and overflow regression tests.
+
+Review: actual write paths share preflight protection; both current and generated buffers checked before PARAMS is written. Existing normal calibration preflight retained. Other series/algorithm behavior unaffected by DPB4060 guard. Packed/UI conversion matches Arguments convention.
+
+Validation: py -3.12 -m pytest sub_embedded/tests qa_api/tests sub_algorithm/tests/test_v4060_runtime_config.py -q: 181 passed, 7 subtests passed, one existing Starlette/httpx deprecation warning. Submodule git diff --check passed. Overflow tests verify no ensure/stop/write call, direct write tests verify no eraseAndWriteFlash call; boundary DPB408/409 writes pass. No hardware connected or flashed, hardware acceptance remains unverified.
+
+Published: both commits pushed to existing feature branches. Authenticated GitLab Activity shows added commits and new fix comments, Overview counts rise to 3. No approve or merge performed. Parent checkout gitlinks now show child commits but are intentionally uncommitted pending child merges under repository policy.
+
+Keywords: DPB Flash preflight, writeEncoderDataV303, imported P Q T, firmware_number, packed 4010, MR30 MR31, regression.
+
+
+### P-20260938: 飞书卡片队列被单条非法卡片头阻塞；Qoder 钩子两条隐蔽失效点
+
+**日期**: 2026-10-13
+**项目**: 全局工具 / D:\sire\AI\AI\feishu-hub
+**关键词**: 飞书卡片, outbox 头阻塞, HTTP Error 400 Bad Request, head-of-line blocking, blocked 保序键, status DEAD, UnicodeEncodeError surrogates not allowed, sys.stdin.buffer, GBK 控制台, hook_event_name, settings.json hooks 不生效, qoderclicn headless, FEISHU_HUB_TASK_ID, local image markdown
+
+**需求场景 / 现象**:
+1. `~/.feishu_hub/hub.log` 持续刷 `WARNING [出口] 发送失败 outbox=455 第642次: HTTP Error 400: Bad Request`，同一 `session_id` 后面积压 25 条 `PENDING` 且 `attempts=0` 从未被尝试——出站队列对一个会话整体失联 15 天，而日志只看得到那一条坏卡片。
+2. Qoder 桌面轮次结束后飞书没有卡片：`settings.json` 已加 Stop 条目但整场会话不执行；改到新会话又报 `Hook 输入不是有效 JSON`，实际异常是 `UnicodeEncodeError: 'utf-8' codec can't encode character '\udcaa'`。
+
+**根因**:
+1. 载荷非法：卡片 markdown 含本地图片 `![阿砾步行](/D:/code/GAME/.../CHR_Hunter_Walk.png)`，飞书卡片只接受 http(s) 图链，整卡 400——永久性错误，重试不可能成功。队列层再放大：`service.flush_outbox()` 按 id 顺序发送，以 `reply_to or session_id` 为保序键，一条失败就把该键加入 `blocked`，同键后续全部跳过。
+2. Qoder 客户端在会话 `initialize` 时把每组 `{matcher, hookCallbackIds}` 一次性交给 agent runtime（asar 内 `createHooks` 与 init 参数 `e.hooks=t`），运行中改 `hooks` 对当前会话无效；同一事件支持多条目。钩子脚本用 `sys.stdin.read()` 在 GBK 控制台解出孤立代理项，随后任何 `.encode("utf-8")` 抛异常，而客户端吞掉 stderr。
+
+**方案 / 架构**: 三段式：队列加终态、构造侧堵死复发、验证侧留证据。
+- 出站队列新增 `DEAD` 终态：`getattr(e, "code", 0) == 400` 判为永久失败，作废并返回 True（不加入 `blocked`），5xx/网络错仍走原指数退避重试。否决"重试 N 次后放弃"——按 300s 上限算，一条毒卡片要占 1.5 小时才放行同组后续。
+- `outbox_unsent_for_task()` 从 `status!='SENT'` 改为 `status NOT IN ('SENT','DEAD')`，否则作废卡片让任务永久停在 RESULT_SAVED 不能转 DONE。
+- `feishu.compact()` 里 `_plain_local_images()` 把非 http 图链降级成「（图片：路径）」；本地截图在飞书本来也渲染不出来，降级不丢信息。从构造侧堵死复发，历史坏载荷仍可人工按 `outbox.payload` 找回。
+- 钩子统一 `sys.stdin.buffer.read().decode("utf-8", "replace")`；JSON 解析与上报分路 try；traceback 落盘 `~/.feishu_hub/hook_qoder.log`（客户端不给 stderr）。
+
+**关键文件与接口**:
+- `feishu-hub/hub/store.py` — `outbox_dead(oid, err)`、`outbox_unsent_for_task()`
+- `feishu-hub/hub/service.py:73 _send_row()` — 400 分支；`flush_outbox()` 的 `blocked` 保序键语义
+- `feishu-hub/hub/feishu.py` — `_LOCAL_IMG`、`_plain_local_images()`、`compact()`
+- `feishu-hub/executors/qoder/hook_stop.py` — `main()` stdin 解码与分路异常、`LOG_HOME`
+- `feishu-hub/tests/test_hub.py` — 400→DEAD、毒卡片不堵同会话、markdown 降级三项检查
+- 配置：`~/.qoder-cn/settings.json` 的 `hooks.Stop`（遥测 + feishu-hub 两条并存）
+
+**实施步骤**:
+1. 先证伪"钩子没装"：查遥测库同事件有无 `stop` 行——有 stop 但无卡片，说明事件触发了、是第二条钩子没跑或跑了失败。
+2. 队列侧：加 DEAD 终态 → 400 直接作废且不阻塞同组 → 修 unsent 统计口径。
+3. 构造侧：`compact()` 降级本地图片 markdown。
+4. 钩子侧：UTF-8 读 stdin + 分路 try + 日志落盘（含 verdict）。
+5. 用 headless 会话验证整链，不必等真机桌面轮次。
+
+**核心代码片段**:
+```python
+# service._send_row 异常分支
+if getattr(e, "code", 0) == 400:
+    store.outbox_dead(r["id"], str(e))
+    if r["task_id"] and store.outbox_unsent_for_task(r["task_id"]) == 0:
+        store.cas(r["task_id"], store.RESULT_SAVED, store.DONE)
+    return True          # 不进 blocked，同会话后续继续发
+# feishu.py
+_LOCAL_IMG = re.compile(r"!\[[^\]]*\]\(\s*(?!https?:)([^)]*)\)")
+def _plain_local_images(t):
+    return _LOCAL_IMG.sub(lambda m: "（图片：%s）" % m.group(1).strip(), t)
+# hook 读入
+raw = sys.stdin.buffer.read().decode("utf-8", "replace")
+```
+
+**验证方法**:
+- `python tests/test_hub.py` → 82 项，新增 3 项 PASS（余 2 项失败为既有）。
+- 重启 `FeishuHub` 计划任务后查库：455 变 `DEAD`，被压 25 条全部 `SENT`，`PENDING=0`。
+- 钩子链路：`qoderclicn -p --output-format json "只回复四个字：钩子自检"`，环境剔 `QODER_AGENT_SDK*` 前缀、**故意不带 `FEISHU_HUB_TASK_ID`**（带上即走抑制分支），跑完看 `hook_qoder.log` 出现 `verdict=sent`，`outbox` 新增 `executor=qoder`、`task_id=''` 的 SENT 卡片。脚本 `scratch/probe_stop_hook.py`。
+
+**踩坑**:
+- 把 `UnicodeEncodeError` 误标成"输入不是有效 JSON"，因为 JSON 解析和上报共用一个 `except ValueError`（`HubError` 也继承它）——分路 try 才看得见真因。
+- 曾据"装完遥测钩子下个提示词就生效"断言钩子热加载；本次同一会话新加的 Stop 条目整场不跑、新会话立刻跑，旧结论作废。
+- 判定"卡片没发"不能只看有没有异常返回：客户端丢 stderr，必须自带落盘 verdict。
+- `desktop_queue` 能力位对 Qoder 恒 False（客户端没有桌面收件队列），别照抄 Codex 的 True。
+
+**状态**: 已完成

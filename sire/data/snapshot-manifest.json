@@ -1,26 +1,30 @@
 {
-  "created_at": "2026-10-12T00:47:54.466492+00:00",
-  "source": "D:\\sire\\AI\\AI\\sire\\data\\sire_vectors.sqlite3",
-  "snapshot_sha256": "93f7e5203f56c93219b607e72d42adcdd7ef45c64294ef844eb641dfa4c36eca",
+  "created_at": "2026-10-12T02:37:34.454865+00:00",
+  "source": "@SIRE_ROOT@/data/sire_vectors.sqlite3",
+  "snapshot_sha256": "fcb3a78232d5412e25e4a61bf5efbbf084c27533bc0f953cdea7e9beda54db25",
   "records_by_table": {
-    "chunks": 6997,
-    "emb": 7136,
-    "improvement_metrics": 13,
-    "improvement_proposals": 7,
-    "keywords": 24518,
-    "knowledge_records": 139,
-    "knowledge_relations": 6,
     "meta": 13,
-    "synonyms": 45,
-    "task_records": 2656,
-    "workflow_versions": 6
+    "chunks": 7338,
+    "knowledge_records": 143,
+    "task_records": 2715,
+    "keywords": 24693,
+    "improvement_proposals": 12,
+    "improvement_metrics": 21,
+    "workflow_versions": 11,
+    "knowledge_relations": 6,
+    "emb": 7481,
+    "synonyms": 45
   },
   "validation": {
     "integrity_check": "ok",
     "fts_integrity": "ok",
-    "targeted_knowledge_embedding": 2048,
-    "run_task_records": 2
+    "run_task_records": 6,
+    "meta": {
+      "sire_last_project": "SIRE-rule-sync",
+      "sire_last_run": "R20261012-rule-sync",
+      "sire_last_status": "DONE"
+    }
   },
-  "operation": "targeted task archive",
-  "run_id": "R20261012-driver-current-branch"
+  "operation": "SIRE rule sync task archive",
+  "run_id": "R20261012-rule-sync"
 }

@@ -198,3 +198,85 @@ python <SHARED_SKILL_DIR>/scripts/sire_close.py close --root <项目根>
 **踩坑**: ① `--records` 与 `--no-archive` 互斥，且记录必须晚于 run 创建（`kb_baseline` 会拒收"任务开始前就存在"的记录充数）；② `gate G0` 不在 close 链路里——检索回执必须在 init 之后、stage 之前用 `sire_kb.py search --run <完整 run 目录路径>` 生成，否则 G0 会说没有回执；③ 迁移文档追加要先判重，否则重复执行会写两行。
 
 **限制**: 只覆盖 R9 收尾链，R0–R8 的拆解与执行仍需模型判断；`--stages` 清单得自己写（也可以用 `--dry-run` 先验）。
+
+
+### E-015: git-bash 下 git show ref:path 被 MSYS 转换毁参数，需 MSYS_NO_PATHCONV
+
+**日期**: 2026-10-13
+**项目**: Windows + Git Bash（Qoder / Claude / Codex 三端通用）
+**关键词**: MSYS_NO_PATHCONV, git show, ref:path, git-bash, 跨分支读文件, fatal ambiguous argument
+
+**需求场景 / 现象**: 在不 checkout、不动工作区的前提下读另一个分支（`git show "origin/<branch>:<path>"`）的文件内容。git-bash 下报 `fatal: ambiguous argument 'origin\feature\x;.gitlab-ci.yml': unknown revision or path not in the working tree`。**同一条命令对 `electron-builder.yml` 能过、对 `.gitlab-ci.yml` 就挂**（前导点号触发转换），极易误判成"分支或文件不存在"——那是一类假阴性。
+
+**根因**: MSYS2 的参数转换会把含 `:` 的参数当路径列表处理（`:`→`;`、`/`→`\`），`ref:path` 这种 Git 语法被毁成非法 revision。
+
+**方案 / 架构**: 用 `MSYS_NO_PATHCONV=1` 关掉参数转换来跨分支取文件，而不是 checkout 目标分支或改用 `git cat-file --textconv` 之类的绕行——checkout 会动工作区，绕行要多记一套语法。取回的内容再 `cmp` 与分支原文对账。
+
+**实施步骤**:
+1. 每个 shell 会话开头 `export MSYS_NO_PATHCONV=1`（对 `git show`/`git grep <ref>`/`git cat-file` 全生效）。
+2. `git show "origin/<branch>:<path>" > 本地副本`，再用 `git ls-tree -r --name-only <ref>` 确认路径真的存在。
+3. 需要判"某结论是不是这个分支特有"时，配合 `git diff --numstat origin/develop <ref> -- <path>`。
+
+**验证方法**: 本次实跑，去掉该变量 3 次全 fatal，加上后一次成功；随后用 `cmp` 把取回的副本与分支原文逐字节对比确认取数没错。
+
+**状态**: 已完成（实测）
+
+
+### E-016: feishu-hub 接入 Qoder 执行器与桌面 Hook：协议落点、CLI 缺口与真机待验项
+
+**日期**: 2026-10-13
+**项目**: feishu-hub Qoder 执行器（`D:\sire\AI\AI\feishu-hub`）
+**状态**: 单元级已验证；真机端到端 BLOCKED-无法真实验证（Qoder CLI 未安装、启动 Hub 会与旧飞书桥抢长连接）
+**关键词**: feishu-hub, 飞书中转, 执行器协议 v1, Qoder 执行器, qoderclicn, QODER_CLI_BIN, hook_stop, sessions/turns, spool, FEISHU_HUB_TASK_ID, executors 白名单, STRICT_TASK, CUTOVER, parity 复测
+
+**场景**: 让飞书既能给 Qoder 派任务，也能把 Qoder 桌面上的独立回复同步成卡片并可续接；与既有 Claude / Codex 执行器同级接入。
+
+**做法**:
+1. `executors/qoder/executor.py`：按 PROTOCOL v1 上线（`new_session/resume`，`desktop_queue:false`）、`claim` 长轮询、`started(pid,pid_ctime)`、心跳、终态事件；`LeaseLost` 时 `taskkill /T /F` 杀进程树后立刻停止上报；**子进程已启动过就不能 release，只能 interrupted**。目录必须真实存在否则 `CWD_MISSING`（绝不猜目录）。
+2. CLI 定位顺序：`QODER_CLI_BIN` → PATH(`qoderclicn`/`qodercn`) → 已知安装目录；找不到时任务报 `CLI_NOT_FOUND`，不影响其它执行器。参数模板可配置（`args_new`/`args_resume`），默认 `-p --output-format json [--resume S] --permission-mode bypassPermissions`——**这是按 Qoder 与 Claude Code 同源推断的，未真机验证**。
+3. 结果解析：stdout 取最后一个 `{"type":"result"}`；`is_error` 或错误文案映射为 `AUTH_REQUIRED`(login/unauthor/401)、`SESSION_NOT_FOUND`(no conversation found)、`NO_RESULT`；session 变化先报 `session` 事件，飞书卡片才能续接。
+4. 子进程环境注入 `FEISHU_HUB_TASK_ID/LEASE_ID/CWD/URL`，桌面 Hook 见到任务号就抑制，避免双卡片；独立轮次由 `hook_stop.py` 读 Qoder 转录尾部最终可见回复 → `POST /v1/sessions/turns`，Hub 不可达时 `spool` 落盘、执行器上线 `flush_spool` 补发。
+5. Hub 侧接入点只有两处：`hub/config.py` 的 `executors` 白名单，以及 `hub/service.py` 里 5 条指令正则 + 2 处提示文案（`STRICT_TASK`、`PROJECT_LIST`、回复前缀、粘连拆分、协作句）；运行期 `~/.feishu_hub/config.json` 若显式写了 `executors` 会覆盖默认值，要先确认。
+6. Qoder 桌面钩子与 SIRE 遥测钩子共用 `Stop` 事件：Qoder 侧每个事件保持**单条目**（多条目曾出现停采），需要共存时改成一条链式命令，装完立刻 `sire_qoder.py parity` 复测心跳是否仍在增长。
+
+**关键文件与接口**:
+- `feishu-hub/executors/qoder/executor.py`（`--check` 只探测 CLI 与配置，不领任务）
+- `feishu-hub/executors/qoder/hook_stop.py`（`build_turn` / `handle_payload`）
+- `feishu-hub/hub/config.py:50`、`hub/service.py:21,22,206,207,246,251,382,429`
+- `feishu-hub/docs/QODER_ADAPTER.md`（用法、接线、验收表 Q1–Q9、上线四步）
+- `feishu-hub/tests/test_qoder_executor.py`（假 HubClient/FakeReporter，不联网）
+
+**验证方法**: `python tests/test_qoder_executor.py` → 9 项全 OK（三端指令解析、new/resume 命令构造、result 与 session 上报、四种错误码、CWD_MISSING、Hook 抑制/invalid/spool、转录回退读取）。回归：`tests/test_codex_executor.py` 20 项 0 失败；`tests/test_hub.py` 79 项 2 失败，且把本次 `hub/service.py` 改动 `git stash` 后**同样 2 项失败** → 属既有问题（Claude 执行器的 `--resume` + prompt 走 stdin、重复卡片两条用例），不是接入 Qoder 引入。`executor.py --check` 如实报 `CLI_NOT_FOUND`。
+
+**踩坑**: ① 用 `git stash push <file>` + 跑测试 + `git stash pop` 是判定"红是既有还是我引入"的最低成本办法；② 中文正则锚点做批量替换时，`Claude」或「Codex」` 这类整句提示词也在断言里，扩三端要同时改文案与测试期望；③ 测试脚本别真去构造 `HubClient`——它会 `_bootstrap()` 写 `~/.feishu_hub/token`，用假客户端注入即可。
+
+**限制**: 未做真机端到端（Q8/Q9 BLOCKED）：需要装 Qoder CLI 并按 `docs/CUTOVER.md` 停旧飞书桥再启 Hub；CLI 的参数与结果字段形态、错误文案都是推断，装好后按 `docs/QODER_ADAPTER.md` §6 第 2 步先校对。Qoder 侧也不能按任务指定模型档位。
+
+
+### E-017: Qoder CLI（qoderclicn）离线安装与 headless 调用契约：manifest+sha256、SDK 环境变量陷阱、单行 result JSON、--resume、按档位选模型
+
+**日期**: 2026-10-13
+**项目**: Qoder CLI headless 接入（feishu-hub Qoder 执行器）（`D:\sire\AI\AI\feishu-hub`）
+**状态**: 已验证（真机实测；`tests/test_qoder_executor.py` 11/11）
+**关键词**: qoderclicn, Qoder CLI, headless, manifest.json, sha256, sdk_invalid_args, QODER_AGENT_SDK_ENTRYPOINT, --permission-mode bypass_permissions, dont_ask, --output-format json, --resume, total_credits, login 设备码, model_by_tier, reasoning-effort
+
+**场景**: 要让飞书 / 脚本能像调用 `claude -p` 那样非交互调用 Qoder。本机只有 IDE（`D:\software\Qoder CN\Qoder CN.exe`），PATH 上没有 `qoderclicn`，`entry/qodercn-dispatcher.ps1` 会回落报错。
+
+**做法**:
+1. **版本对齐**：在 `resources/app.asar` 里 grep `qoderCliVersion` 得到 IDE 期望的 CLI 版本（本次 1.1.66），不要盲目装最新。
+2. **官方安装**：`https://static.qoder.com.cn/qoder-cli-cn/channels/1.1.66/manifest.json` → `files[]` 取 `os=windows / arch=amd64 / variant!=legacy` 的 `url`+`sha256`；下载 97MB zip，**校验 sha256 相等再解包**（实测 `2010601e43ef…e191b5` 一致），产物 `qoderclicn.exe`、`sites-build.json`、`sites-verification.json`。
+3. **落位**：解到 `~/.qoder-cn/bin/qoderclicn/`——官方 dispatcher 的 `Find-Cli` 就找这个路径；不改 PATH、不改注册表、不改 IDE。
+4. **调用契约**（真机确认）：`-p --output-format json`，prompt 走 stdin；输出单行 `{"type":"result","result","session_id","is_error","num_turns","total_credits","duration_ms",…}`；`--permission-mode` 用蛇形（`bypass_permissions|dont_ask|accept_edits|auto|default`）；`--tools ""` 做零副作用冒烟；`--resume <session_id>` 可续接（实测能复述上一轮）。
+5. **模型分档**：`-m/--model`、`--reasoning-effort`、`--thinking-budget`、`--list-models` 都在 → 执行器加 `model_by_tier`/`effort_by_tier` 配置，飞书任务可按档位派发（推翻"Qoder 无法分档"的旧结论；交互式 `Agent` 工具仍无 model 参数）。
+6. **登录**：`qoderclicn login` 打印设备码 URL，桌面已有信任会话时**自动完成**；未登录时结果 JSON `is_error:true`、`result:"Not logged in — Please run /login"` 且 rc=1，执行器映射 `AUTH_REQUIRED`。
+
+**关键文件与接口**:
+- `feishu-hub/executors/qoder/executor.py` — `find_cli()`（含 `.qoder-cn/bin/qoderclicn/`）、`ENV_DROP_PREFIX`、`build_cmd()`（含 tier→model/effort）、`--check`
+- `feishu-hub/docs/QODER_ADAPTER.md` §5.5 安装来源与实测要点、§5 验收表 Q8a/Q8b/Q8c
+- `feishu-hub/tests/test_qoder_executor.py` — 假 Hub + stub CLI 的 `started→session→result` 全序列
+
+**验证方法**: `executor.py --check` 从 `CLI_NOT_FOUND` 变 `OK` 并给出真实路径；真机 headless：`is_error=false`、`result="收到"`、`total_credits=1.278`、15.5s；`--resume` 续接正确；`tests/test_qoder_executor.py` 11 项全 OK；回归 `tests/test_codex_executor.py` 20 项 0 失败。
+
+**踩坑**: ① 直接在 Qoder/IDE 的子 shell 里调 CLI 必失败——`QODER_AGENT_SDK_ENTRYPOINT` 会让它强制要求 `--input-format stream-json --output-format stream-json`，必须在 `build_env()` 里按前缀剔变量；② 只把 `--config-dir`/PATH 之类当排查方向会浪费时间，先看 `sdk_invalid_args` 报的期望参数；③ CLI 报"未登录"这类致命错也照样输出 JSON 且 **stdout 才有信息**，不能只看 rc；④ `--check` 早期把候选路径写成 `bin/qoderclicn.exe` 漏了子目录，探测型代码要用真实安装路径回归。
+
+**限制**: Hub → 执行器 → 飞书卡片的端到端仍待用户按 `docs/CUTOVER.md` 停旧飞书桥后启 Hub 验证（Q8b）；`model_by_tier` 需要登录后 `--list-models` 取值；CLI 每次执行消耗 credits（本次 1.28/条），Hub 侧 `daily_task_limit=20` 仍生效。

@@ -967,3 +967,311 @@ AGENTS.md 讲的是原则，这条记录给**具体文件与行号**。
 - 文档改动自证：改 `docs/` 或 `AGENTS.md` 时按硬规定 4 当场跑一遍引用的命令；发版前按 §7.6 回收工单里的"待发布"占位。
 
 **状态**: 已完成（三层结构、13 份 skill、协作上下文章节行号、两处引用不实均经本次实测；未连真机）
+
+
+### F-060: MES 需求规格文档：数据库、后台管理与业务系统边界
+
+**日期**: 2026-10-13
+**项目**: MES (D:\code\mes)
+**关键词**: MES, 需求规格说明书, 数据库需求, 后台管理系统, 业务系统, ERP工单八步流程, 来料IQC, TypeORM, 现状与目标边界
+
+**需求场景 / 现象**: 将仓库内 MES 资料整理为完整、清晰、体现流程的需求文档，并明确数据库、后台管理系统、业务系统三部分。
+
+**方案 / 架构**: 以独立子系统章节组织数据库、管理员管理端和业务作业端，同时绘制系统上下文架构及端到端业务流程。文档将现状、目标和待确认事项分别标记，避免将规划能力描述为当前已实现。后台管理系统指管理员操作端，与 Express API 后台服务区分；管理端和业务端经 API 访问数据库。将来料接收/IQC明确为ERP工单八步流的前置流程，不计为第九步。现状调查确认 SQLite 默认配置、TypeORM 实体、数据库管理 API 占位响应及 CLI 仅四类数据同步等实现边界。
+
+**关键文件与接口**:
+- `docs/requirements/MES-综合需求规格说明书.md` — MES需求基线、数据库/管理端/业务端需求、流程图、验收映射。
+- `DATABASE.md` — 数据库配置参考。
+- `.sire/runs/R20261013-074035/evidence/DOC-01/qa/acceptance.md` — 文档验收用例和实际检查结果。
+
+**实施步骤**:
+1. 检索仓库需求资料、实体、路由及相关实现，区分当前能力与目标。
+2. 梳理系统组成、数据域、岗位权限、正常流程和异常/前置流程。
+3. 编写带需求编号和需求到验证映射的规格文档。
+4. 独立检查章节、流程图、需求编号、现状边界及文档内链接，并完成交叉评审。
+
+**验证方法**: 对最终 Markdown 执行可重复的结构/内容检查；通过条件包括三部分齐全、至少两张流程图、FR-DB/FR-ADM/FR-BIZ 编号及映射齐全、IQC前置边界清楚、现状限制准确和数据库说明链接有效。该方法验证文档内容，不代表产品功能验收。
+
+**踩坑**: “后台管理系统”容易与后台 API 服务混为一谈，且容易把尚未存在的管理端页面、数据库恢复/迁移、审计能力误写为现状；须对照前端路由、授权端点和 CLI 实际覆盖范围表述。IQC不可无依据地并入ERP既有八步流程。
+
+**状态**: 已完成文档整理；需求基线仍待业务、生产、质量、仓储及 ERP 相关人员评审确认。
+
+
+### F-061: 将会议架构草图转成可验收的 MES 需求
+
+**日期**: 2026-10-13
+**项目**: MES / D:\code\mes
+**关键词**: MES需求规格说明书, 架构草图, 目标与现状, 工艺配置, 单工序Web, 追溯矩阵, meeting sketch
+
+**需求场景 / 现象**: 制造系统会议经常只有白板或纸面架构草图，图上会混用系统边界、功能编号、箭头、部署图标和业务流程。若直接按推测写规格，容易把目标当作现状、把不明箭头当作强制数据流，导致接口/架构范围被错误冻结。
+
+**根因**（问题类必填）: 草图是沟通输入，不是完整架构或经确认的状态机。图中标记、箭头、服务器细节遮挡或角色职责不完整时，无法单凭视觉线索确定实现方式、时序和权威数据源。
+
+**方案 / 架构**: 整理为需求时将内容分成三层：①明确可观察元素和用户描述（端、角色、菜单、编号、箭头）；②业务解释形成的目标方向（须标为目标，不写成已实现）；③未确定的语义和技术细节（列责任岗位、确认点及影响，进入待确认清单）。用系统上下文图表达端到服务端再到数据库的访问边界；另用业务流程图表达配置发布、外部数据进入、现场执行、门禁及分析查询时序。若箭头含义不明，避免将其编码为权限或数据依赖。为全部 FR/AC/NFR 建立需求到验证映射，并用机械检查确保无虚构编号、无未映射项、无重复范围。
+
+**关键文件与接口**:
+- `docs/requirements/MES-综合需求规格说明书.md` — 本次 MES SRS 对会议草图的实践整理。
+- `.sire/runs/R20261013-080954/evidence/DOC-MEETING-01/qa/verify_requirements_doc.py` — 文档编号、流程图、事实边界和追踪矩阵静态检查。
+
+**实施步骤**:
+1. 先列草图文字、角色、端和编号，明确哪些是直接观察，哪些是解释。
+2. 将目标架构和业务时序分开画，数据库访问统一经过应用服务。
+3. 每条能力标出现状、目标或待确认，并将不确定项绑定责任人/评审阶段。
+4. 追踪矩阵按需求编号覆盖功能、非功能和验收条目，自动校验唯一覆盖。
+
+**核心代码片段**（可选，只放最关键的 5~30 行）:
+不适用，本记录总结需求工程方法，不含产品代码。
+
+**验证方法**: 本次文档静态验证命令为 `python -X utf8 .sire/runs/R20261013-080954/evidence/DOC-MEETING-01/qa/verify_requirements_doc.py`；17 项检查通过，包含 FR/AC/NFR 每项只映射一次、架构流程不允许客户端直连数据库、工序循环可回到下一工序界面。
+
+**踩坑**: 需求矩阵的总览行若重复引用专项行编号，会制造重复覆盖；流程图若只有架构图遵守 API/DB 边界、业务图仍画客户端直连 DB，也会造成规格自相矛盾。最后一次全文件检查应同时核对流程顺序和数据访问边界。
+
+**状态**: 已完成
+
+
+### F-062: Output目录：MPT协议回归与USB描述符探测快照
+
+**日期**: 2026-10-13
+**项目**: C:\Users\Administrator\Downloads\Output (只读目录内容分析)
+**关键词**: Output, MPT, A~F协议回归, Analyzer, USB描述符, pyusb, USB Hub IOCTL, 快照, source of truth
+
+**需求场景 / 现象**: 对 Output 目录做内容梳理，说明用途、主要组成、相互关系及需要注意的地方。
+
+**根因**（问题类必填）: 不适用，目录分析。
+
+**方案 / 架构**: 该目录有两组彼此独立的快照：A~F 六种编码器协议的 Python 驱动和硬件回归测试；以及 USB 描述符多产品线固件说明与三种 Windows 主机侧探测脚本。两组用途不同，不构成单个可安装 Python 包。
+
+**关键文件与接口**:
+- `test_mpt_protocol_regression_AtoF.py` — A~F 主流程；写协议参数、读取数据、判定质量并写回分辨率。
+- `EncoderBase.py`、`Analyzer.py` — 编码器再标定API和Analyzer通信基础。
+- `mpt_*_protocol.py`、`bissc_protocol.py`、`CRC.py` — 协议帧解析和校验。
+- `usb_descriptors/probe_usb_descriptors_hub.py` — Windows Hub IOCTL 路径探测设备与字符串描述符。
+- `usb_descriptors/USB描述符修改说明.md` — USB 多target描述符和三种探测方式说明。
+
+**实施步骤**:
+1. 只读取目录清单、说明文档及脚本入口/主要调用和副作用；没有修改原始文件。
+2. 与 SIRE 现存 MPT/A~F 硬件验证和 Analyzer 代码库记录对照；旧记录不作为本次硬件实测证据。
+
+**验证方法**: PowerShell只读枚举文件、行数和大小；检查测试脚本入口、stage_control、CSV/log输出和USB探测路线。未运行硬件脚本；没有连接或操作设备。
+
+**踩坑**: Output 说明明确指出内容从其他目录拷贝，是冻结快照，不会同步源目录。A~F 测试具有设备状态写入和输出文件覆盖的副作用；USB Hub探测PID固定0x0001，只匹配M01；常规OS缓存拿不到未引用的字符串index=4。
+
+**状态**: 已完成（只读静态分析；本轮未执行设备验证）
+
+
+### F-063: 当前分支DPB单圈标定能力与DPT及输出限制
+
+**日期**: 2026-10-13
+**项目**: EncoderPlotter_0903_01 / feature/dpb-single-turn-calibration
+**关键词**: DPB, DPT, 单圈标定, 内外圈独立标定, calibrationTarget, disabled ring, 角度状态位
+
+**需求场景 / 现象**: 审查单圈标定需求在当前分支的覆盖情况。
+
+**根因**（问题类必填）: 不适用；这是分支覆盖审查。
+
+**方案 / 架构**: 当前分支仅 DPB 开放单内圈/单外圈再标定，默认 both，前后端互斥并只采集/解算目标圈；DPT 尚未接入此选择。算法说明仍重建并保持双圈输出，因而没有实现“关闭圈角度固定0度”；相关状态位未找到明确清零逻辑。
+
+**关键文件与接口**:
+- `components/encoder/device.html` — DPB 条件下显示单圈选项。
+- `components/encoder/device.js` — DPB 限定、UI 互斥。
+- `controller/python/Encoder.py` — 目标系列与互斥校验、calibrationTarget 映射、非目标 Hall 不传入。
+- `controller/python/sub_embedded/EncoderBase.py` — 目标圈采集完成条件。
+- `controller/python/sub_algorithm/main.py` — calibrationTarget 校验和保留双圈输出说明。
+
+**实施步骤**: 只读检查当前分支代码、算法文档和共享知识库。
+
+**验证方法**: 源码静态核对；未做真实界面、未装圈硬件或最终协议帧验收。
+
+**踩坑**: 无。
+
+**状态**: 部分完成
+
+
+### F-064: MES SRS 集成多版本 DPB 工艺图与 Word 静态流程图
+
+**日期**: 2026-10-13
+**项目**: D:\code\mes
+**关键词**: MES 需求规格说明书, DPB 定子工艺流程, 工艺版本, DOCX 图号, 需求追踪, MES-SRS-001
+
+**需求场景 / 现象**: 将会议绘制的多版本制造流程图纳入综合 MES SRS，并同步生成包含流程图截图的 Word 版。
+
+**根因**（问题类必填）: 两张同名产品流程截图显示的工序顺序和检查次数不一致；图中部分动作/失败门禁未定义，不能合并或擅自推导。
+
+**方案 / 架构**: A/B 流程独立记录并保留原始图像，分别整理工序顺序、动作/数据、追溯需求、验收条件和待业务确认事项。与通用 MES 业务流程图区分编号。Markdown 作为内容基线；Word 内嵌三张由 Mermaid 图生成的静态图片及两张原始会议截图。静态 DOCX 检查确认全部 Markdown 内容、表格、需求编号和五张图片映射。
+
+**关键文件与接口**:
+- `docs/requirements/MES-综合需求规格说明书.md` — 统一需求基线，版本 0.9。
+- `docs/requirements/MES-综合需求规格说明书.docx` — Word 排版版，五张流程截图/图示静态内嵌。
+- `docs/requirements/assets/dpb-stator-process-a.png` — 用户提供的 A 流程原图。
+- `docs/requirements/assets/dpb-stator-process-b.png` — 用户提供的 B 流程原图。
+
+**实施步骤**:
+1. 按截图分别摘录工序顺序，明确差异和图上未说明的动作/门禁为待确认。
+2. 增加唯一需求/验收编号和追踪关系，在版本历史中登记 0.9。
+3. 生成 DOCX 并把 Mermaid 源图作为图片插入，保持图号连续。
+
+**验证方法**: `validate_srs.py`: issues=[]、13 张 Word 表格、5 张图片、105 个需求编号；`content_coverage.py`: missing source text lines/cells: 0。独立结构复核确认 0.9 版本行和图 3-2/3-3 位置正确。页面渲染未能执行：环境无 Word、LibreOffice、WPS 或连接的文档会话；视觉分页/裁切仍待真实检查。
+
+**踩坑**: 更新 Markdown 后需重新构建 DOCX；最初 DOCX 没有 0.9 版本历史行，且 DPB 图号不连续。修正 Markdown 并重新构建后，独立复核通过。不要把静态结构检查当作全页视觉验收。
+
+**状态**: 部分完成（交付物与结构验收完成；页面视觉验收受环境限制）
+
+
+### F-065: 当前分支截图需求第2至6项覆盖检查
+
+**日期**: 2026-10-13
+**项目**: EncoderPlotter_0903_01 / feature/dpb-single-turn-calibration
+**关键词**: 标定耗时优化, DPT 标定台账, 标定失败弹窗, 绿色采集说明, 生产模式, 产品软件版本, IAP 烧录
+
+**需求场景 / 现象**: 对照截图审查标定界面需求第2至6项在当前分支的实现情况。
+
+**根因**（问题类必填）: 不适用；只读功能覆盖审查。
+
+**方案 / 架构**: 当前分支能看到再标定步骤计时，但未发现预计算/缓存形式的耗时优化；未发现 DPT 后台标定自动生成台账；失败弹窗有设置开关、失败原因和确定/遮罩关闭，但无 X 或 Enter 关闭；绿色提示已做；生产模式没有编辑产品软件版本并传入烧录的路径。
+
+**关键文件与接口**:
+- `controller/python/Encoder.py` — 再标定逐步计时日志。
+- `components/analyzer/version.html` — 标定失败弹窗设置开关、生产模式开关。
+- `components/encoder/device.js` 与 `components/encoder/device.html` — 失败通知和模态关闭方式。
+- `components/encoder/calibrationChart.js` — 绿色采集说明 tooltip。
+- `components/share/iap.js` — IAP 流程的软件版本由固件/bin 信息驱动，未发现生产手动版本设置。
+
+**实施步骤**: 静态搜索与查看当前分支源码，逐条与需求备注比对。
+
+**验证方法**: 静态代码核对；未进行真实 UI、产线或硬件验收。
+
+**踩坑**: 需区分再标定的耗时统计日志与实际耗时优化；MES 台账不等同标定后台台账。
+
+**状态**: 部分完成
+
+
+### F-066: EncoderPlotter feature/data-generation 分支打包原理与流程（含 Debian 实情）
+
+**日期**: 2026-10-13
+**项目**: EncoderPlotter1 / origin/feature/data-generation（本地无该分支）
+**关键词**: 打包原理, electron-builder, NSIS, deb, Ubuntu 2204, Debian, udev, nuitka, GitLab CI, verify-linux-deb-path, LINUX_PRODUCT_NAME, 免安装zip, HTTP API 包
+
+**需求场景 / 现象**: 要把 `feature/data-generation` 分支的打包规则（Windows / Debian / Ubuntu）整理成一份"原理 + 流程"文档，产物落在该仓 `docs/packaging-rules-data-generation.md`（237 行，66 处 `文件:行` 锚点）。
+
+**根因**（问题类必填）: 不适用；本次是把散在 CI/配置/脚本里的打包规则读穿并沉淀成一份可核对的文档，不是一次性问答——文档已入库、结论可跨分支复用。
+
+**方案 / 架构**:
+1. **该分支没有独立的 Debian 构建通道。** Linux 只有 runner tag `ubt2204`（Ubuntu 22.04）、electron-builder 只有 `deb` 一个 target；`git grep -in debian origin/feature/data-generation -- ':!asset'` 零命中（唯一命中是 vendored fontawesome 的 `.fa-debian` 图标类名）。所以"Debian"在这套规则里指**包格式**，不是被支持/被验证的目标系统。
+2. 该分支相对 `origin/develop` 的打包差异只有三条（numstat：`.gitlab-ci.yml` 24 增 14 删 + 新增 `scripts/verify-linux-deb-path.sh` 49 行）：① deb 的 `-c.productName` 改用 ASCII slug（新变量 `LINUX_PRODUCT_NAME`），中文名只进 `-c.linux.desktop.Name`，因为 productName 决定 `/opt/<productName>`，Nuitka standalone 的中间件路径不能带中文括号；② 每个 deb 构建点后立刻跑 `verify-linux-deb-path.sh`（共 6 处：dev/test/release 各内外两变体），`dpkg-deb -x` 真拆包断言 `/opt/<slug>` 存在且 `/opt` 一级目录名全 ASCII；③ `test-python` 用 `sub_algorithm/tests/test_dpb_flash_layout.py` 替掉了 develop 的 `sub_embedded/tests`。
+3. 整条产物链的原理是"**一次 nuitka、多份产物、变体只靠环境变量 + `-c.` 覆盖**"：`gen-buildinfo → nuitka(main.dist) → 每变体一轮 [gen-target → electron-builder → 后处理]`。`pack-portable.mjs` 消耗 `win-unpacked`（必须紧跟产出它的那次 electron-builder），`pack-http-api.mjs` 复制 `main.dist` 不消耗。electron-builder 的 `${env.X}` 插值只对 pattern 字段生效，所以 `productName/executableName/artifactName` 之类差异一律由 CI 命令行覆盖。
+4. Linux 侧最脆的一环是串口权限：udev 规则文件名编号**必须 <73**（`73-seat-late.rules` 只对已打 uaccess 的设备落 ACL），规则要带 `ENV{ID_MM_DEVICE_IGNORE}=1` 躲 ModemManager 探测竞态，规则文件**按包名分文件**（共享名会让卸任一变体掐断其余变体）。维护者脚本里**不能出现 `${纯字母}`**（fpm 宏展开会炸，注释里也不行）。
+5. deb 的出包节奏各通道不同：`dev-`/`test-v` 是 **when: manual**，`rc-v` **完全不打 deb**（登记在案的未覆盖风险），只有正式通道 `build-ubt-release` 自动且被 `release` 的 `needs` 卡住。
+
+**关键文件与接口**:
+- `.gitlab-ci.yml`(582) — tag 通道矩阵、5 个 gate job、win/ubt 两类基座 job、NAS 落位。
+- `electron-builder.yml`(87) — 静态基线与缺省值；`build/installer.nsh` — 磁盘空间检查与默认安装目录。
+- `build/linux/after-install.sh` / `after-remove.sh` — 顶替内置 postinst、udev 规则、dialout。
+- `scripts/verify-linux-deb-path.sh`、`pack-portable.mjs`、`pack-http-api.mjs`、`gen-target.mjs`、`gen-buildinfo.mjs`、`deb-migration-test.sh`（沙箱，五条通道全跑）、`deb-realmachine-test.sh`（真机，CI 只备料、装卸由人 sudo）。
+
+**实施步骤**:
+1. `export MSYS_NO_PATHCONV=1` 后用 `git show origin/feature/data-generation:<path>` 取回 CI、builder、6 个 scripts、2 个 build/linux 脚本（不 checkout、不动工作区）。
+2. `git diff --numstat origin/develop <ref> -- .gitlab-ci.yml scripts/` 定出"本分支专属差异"，避免把主线规则当成分支规则。
+3. 按"总原理 → 流程（stage×通道矩阵）→ Windows → Ubuntu/deb → 回归网 → 产物身份 → 本地能做什么 → 与 develop 差异"八段写文档，每条断言配 `文件:行`。
+4. 写 `cross-check.sh` 把文档与分支原文对账（见验证方法），锚点越界与数字不符当场红。
+
+**验证方法**: 台账 `.sire/runs/R20261013-143003/cross-check.sh` —— 文档与分支原文对账（副本 cmp、Debian 零命中、tag 前缀、6 处 verify、6 处 ASCII slug、DPB 用例、66 处锚点不越界），本次 PASS。
+
+**踩坑**: git-bash 下 `git show "其他分支:路径"` 的参数会被 MSYS 转换毁掉（冒号变分号、斜杠变反斜杠）报 `fatal: ambiguous argument`；必须先 `export MSYS_NO_PATHCONV=1`。见 E-015（跨分支读文件必设 MSYS_NO_PATHCONV）。
+
+**状态**: 已完成（文档已产出，对账脚本实跑 PASS；未执行任何真实打包，本仓打包只能推 tag 由 runner 出包）
+
+
+### F-067: DOCX统一设置A4纵向并适配流程图
+
+**日期**: 2026-10-13
+**项目**: D:\code\mes
+**关键词**: DOCX, A4, portrait, python-docx, section geometry, image scaling
+
+**需求场景 / 现象**: 用户要求 MES 需求规格说明书 Word 中所有页面保持 A4 纵向，包括流程图页面。
+
+**根因**（问题类必填）: DOCX 构建脚本为宽幅图新增横向 section，并将纸张尺寸设为近似英寸值；既有输出文件又被本机另一进程锁定，无法原位覆盖。
+
+**方案 / 架构**: 通过 python-docx 将每个 section 固定为精确 210×297 mm，删除横向 section，并把图像最大宽度和高度限制在纵向页面版心内。原文件被锁时，生成独立 A4 纵向 DOCX，待关闭占用文件的应用后再替换。
+
+**关键文件与接口**:
+- `D:\code\mes\.sire\runs\R20261013-140114\build_srs_docx.py` — `add_section`/`add_figure` 页面设置与图像缩放。
+- `D:\code\mes\docs\requirements\MES-SRS-A4-Portrait.docx` — A4 纵向输出。
+
+**实施步骤**:
+1. 对所有 Word 节设定 210×297 mm 与 portrait。
+2. 所有流程图以版心宽高上限等比缩放。
+3. 验证各节尺寸、需求编号、表格和嵌入图像。
+
+**验证方法**: 6 个 section 全部为 A4 纵向；DOCX 结构检查 issues=[]、13 张表、5 张图片、105 个需求编号；Markdown 内容覆盖缺失 0。页面视觉效果未渲染验证。
+
+**踩坑**: DOCX 原文件被另一个进程打开时无法删除或覆盖；应保留另存输出，待用户关闭占用后再替换。
+
+**状态**: 部分完成（新文件完成，原路径被占用且视觉验证待完成）
+
+
+### F-068: DPB4010 主仓与 sub_common 同名功能分支
+
+**日期**: 2026-10-13
+**项目**: EncoderPlotter_0903_01 / D:\code\EncoderPlotter_0903_01
+**关键词**: DPB4010, feature/dpb4010, develop, sub_common, 同名功能分支, gitlink
+
+**需求场景 / 现象**: 主仓开展 DPB4010 功能开发，且 `sub_common` 同时有 DPB4010 配置改动，需要两个仓库使用对应功能分支。
+
+**方案 / 架构**: 主仓功能分支从 `develop` 创建；子模块有相关改动时，在该子模块当前承载改动的提交上创建同名 `feature/*`，保留工作树改动。主仓 gitlink 仍锁定该提交；后续按子先父后的提交/MR流程推进。
+
+**关键文件与接口**:
+- `docs/branching.md` — 主仓与子仓功能分支及 gitlink 规则。
+- `controller/python/sub_common/config.py` — DPB4010 产品版本配置（本次工作树已有修改）。
+- `controller/python/sub_common/dpbFlashLayout.py` — DPB4010 Flash 布局（本次工作树已有修改）。
+
+**实施步骤**:
+1. 确认子仓工作树修改与功能目标相符，并确认主仓 gitlink SHA 指向该工作树提交。
+2. 在主仓 `develop` 创建功能分支；子仓在承载功能改动的提交上创建同名分支。
+3. 核对两个仓库分支名及子仓改动保留状态。
+
+**验证方法**: `git branch --show-current` 两仓均为 `feature/dpb4010`；子仓 diff 仍存在，主仓 gitlink SHA 未变化。
+
+**踩坑**: 子仓 detached HEAD 下可直接 `switch -c` 创建分支，已有未提交修改会保留；切分支不会自动提交或修改主仓 gitlink。
+
+**状态**: 已完成
+
+
+### F-069: DPB4010 子仓与主仓 gitlink 提交顺序
+
+**日期**: 2026-10-13
+**项目**: EncoderPlotter_0903_01 / feature/dpb4010
+**关键词**: DPB4010, sub_common, gitlink, child before parent, commit
+
+**需求场景 / 现象**: 用户要求提交本地 DPB4010 改动，改动分布于子模块与主仓指针。
+
+**方案 / 架构**: 先在 sub_common 提交两个 DPB4010 配置文件，再在主仓提交更新后的 gitlink。保持子先父后，未推送。
+
+**关键文件与接口**:
+- `controller/python/sub_common/config.py` — DPB4010 产品与升级配置。
+- `controller/python/sub_common/dpbFlashLayout.py` — DPB4010 Flash 布局。
+- 主仓 `controller/python/sub_common` gitlink。
+
+**验证方法**: 子仓提交 `5ce4962`、主仓提交 `f8d6f7ab`；两仓 `git status` 干净；主仓 gitlink SHA 等于子仓 HEAD；`git diff --check` 无空白错误。
+
+**状态**: 已完成（未推送）
+
+
+### F-070: EncoderPlotter 测试包 tag 规范与序号选择
+
+**日期**: 2026-10-13
+**项目**: EncoderPlotter_0903_01 / DPB4010
+**关键词**: test-v tag, package.json, test sequence, CI_COMMIT_TAG, DPB4010
+
+**需求场景 / 现象**: 为已推送的 feature 分支触发符合仓库规范的测试包构建。
+
+**方案 / 架构**: 主仓测试包 tag 使用 `test-vX.Y.Z-NN[-描述]`；版本号取 package.json，序号按远端同版本最新序号递增。CI 由主仓 tag 触发，因此不在子模块创建 test tag。
+
+**关键文件与接口**:
+- `docs/build-and-release.md` — 测试 tag 格式与序号规则。
+- `.gitlab-ci.yml` — `test-v` tag 规则触发流水线。
+
+**验证方法**: 本仓 package.json 为 4.10.0，远端最新序号为 81；`test-v4.10.0-82-dpb4010` 与 `feature/dpb4010` 远端均指向 `f8d6f7ab`。
+
+**踩坑**: `dev-<描述>` 是仅供自验的独立通道；给同事测试并生成正式测试包时应使用 `test-v*`。同一测试版本序号需查询远端现存 tags 后递增。
+
+**状态**: 已完成

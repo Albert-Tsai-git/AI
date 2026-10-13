@@ -181,6 +181,77 @@
       ]
     },
     {
+      "id": "E-015",
+      "type": "efficiency",
+      "title": "git-bash 下 git show ref:path 被 MSYS 转换毁参数，需 MSYS_NO_PATHCONV",
+      "file": "global_dev_efficiency.md",
+      "line": 203,
+      "date": "2026-10-13",
+      "project": "Windows + Git Bash（Qoder / Claude / Codex 三端通用）",
+      "status": "已完成（实测）",
+      "keywords": [
+        "MSYS_NO_PATHCONV",
+        "git show",
+        "ref:path",
+        "git-bash",
+        "跨分支读文件",
+        "fatal ambiguous argument"
+      ]
+    },
+    {
+      "id": "E-016",
+      "type": "efficiency",
+      "title": "feishu-hub 接入 Qoder 执行器与桌面 Hook：协议落点、CLI 缺口与真机待验项",
+      "file": "global_dev_efficiency.md",
+      "line": 225,
+      "date": "2026-10-13",
+      "project": "feishu-hub Qoder 执行器（`D:\\sire\\AI\\AI\\feishu-hub`）",
+      "status": "单元级已验证；真机端到端 BLOCKED-无法真实验证（Qoder CLI 未安装、启动 Hub 会与旧飞书桥抢长连接）",
+      "keywords": [
+        "feishu-hub",
+        "飞书中转",
+        "执行器协议 v1",
+        "Qoder 执行器",
+        "qoderclicn",
+        "QODER_CLI_BIN",
+        "hook_stop",
+        "sessions/turns",
+        "spool",
+        "FEISHU_HUB_TASK_ID",
+        "executors 白名单",
+        "STRICT_TASK",
+        "CUTOVER",
+        "parity 复测"
+      ]
+    },
+    {
+      "id": "E-017",
+      "type": "efficiency",
+      "title": "Qoder CLI（qoderclicn）离线安装与 headless 调用契约：manifest+sha256、SDK 环境变量陷阱、单行 result JSON、--resume、按档位选模型",
+      "file": "global_dev_efficiency.md",
+      "line": 256,
+      "date": "2026-10-13",
+      "project": "Qoder CLI headless 接入（feishu-hub Qoder 执行器）（`D:\\sire\\AI\\AI\\feishu-hub`）",
+      "status": "已验证（真机实测；`tests/test_qoder_executor.py` 11/11）",
+      "keywords": [
+        "qoderclicn",
+        "Qoder CLI",
+        "headless",
+        "manifest.json",
+        "sha256",
+        "sdk_invalid_args",
+        "QODER_AGENT_SDK_ENTRYPOINT",
+        "--permission-mode bypass_permissions",
+        "dont_ask",
+        "--output-format json",
+        "--resume",
+        "total_credits",
+        "login 设备码",
+        "model_by_tier",
+        "reasoning-effort"
+      ]
+    },
+    {
       "id": "F-052",
       "type": "feature",
       "title": "下线检测信息确认人工决定与订单号录入",
@@ -996,6 +1067,178 @@
       ]
     },
     {
+      "id": "F-062",
+      "type": "feature",
+      "title": "Output目录：MPT协议回归与USB描述符探测快照",
+      "file": "global_dev_features.md",
+      "line": 1032,
+      "date": "2026-10-13",
+      "project": "C:\\Users\\Administrator\\Downloads\\Output (只读目录内容分析)",
+      "status": "已完成（只读静态分析；本轮未执行设备验证）",
+      "keywords": [
+        "Output",
+        "MPT",
+        "A~F协议回归",
+        "Analyzer",
+        "USB描述符",
+        "pyusb",
+        "USB Hub IOCTL",
+        "快照",
+        "source of truth"
+      ]
+    },
+    {
+      "id": "F-063",
+      "type": "feature",
+      "title": "当前分支DPB单圈标定能力与DPT及输出限制",
+      "file": "global_dev_features.md",
+      "line": 1062,
+      "date": "2026-10-13",
+      "project": "EncoderPlotter_0903_01 / feature/dpb-single-turn-calibration",
+      "status": "部分完成",
+      "keywords": [
+        "DPB",
+        "DPT",
+        "单圈标定",
+        "内外圈独立标定",
+        "calibrationTarget",
+        "disabled ring",
+        "角度状态位"
+      ]
+    },
+    {
+      "id": "F-064",
+      "type": "feature",
+      "title": "MES SRS 集成多版本 DPB 工艺图与 Word 静态流程图",
+      "file": "global_dev_features.md",
+      "line": 1090,
+      "date": "2026-10-13",
+      "project": "D:\\code\\mes",
+      "status": "部分完成（交付物与结构验收完成；页面视觉验收受环境限制）",
+      "keywords": [
+        "MES 需求规格说明书",
+        "DPB 定子工艺流程",
+        "工艺版本",
+        "DOCX 图号",
+        "需求追踪",
+        "MES-SRS-001"
+      ]
+    },
+    {
+      "id": "F-065",
+      "type": "feature",
+      "title": "当前分支截图需求第2至6项覆盖检查",
+      "file": "global_dev_features.md",
+      "line": 1120,
+      "date": "2026-10-13",
+      "project": "EncoderPlotter_0903_01 / feature/dpb-single-turn-calibration",
+      "status": "部分完成",
+      "keywords": [
+        "标定耗时优化",
+        "DPT 标定台账",
+        "标定失败弹窗",
+        "绿色采集说明",
+        "生产模式",
+        "产品软件版本",
+        "IAP 烧录"
+      ]
+    },
+    {
+      "id": "F-066",
+      "type": "feature",
+      "title": "EncoderPlotter feature/data-generation 分支打包原理与流程（含 Debian 实情）",
+      "file": "global_dev_features.md",
+      "line": 1148,
+      "date": "2026-10-13",
+      "project": "EncoderPlotter1 / origin/feature/data-generation（本地无该分支）",
+      "status": "已完成（文档已产出，对账脚本实跑 PASS；未执行任何真实打包，本仓打包只能推 tag 由 runner 出包）",
+      "keywords": [
+        "打包原理",
+        "electron-builder",
+        "NSIS",
+        "deb",
+        "Ubuntu 2204",
+        "Debian",
+        "udev",
+        "nuitka",
+        "GitLab CI",
+        "verify-linux-deb-path",
+        "LINUX_PRODUCT_NAME",
+        "免安装zip",
+        "HTTP API 包"
+      ]
+    },
+    {
+      "id": "F-067",
+      "type": "feature",
+      "title": "DOCX统一设置A4纵向并适配流程图",
+      "file": "global_dev_features.md",
+      "line": 1184,
+      "date": "2026-10-13",
+      "project": "D:\\code\\mes",
+      "status": "部分完成（新文件完成，原路径被占用且视觉验证待完成）",
+      "keywords": [
+        "DOCX",
+        "A4",
+        "portrait",
+        "python-docx",
+        "section geometry",
+        "image scaling"
+      ]
+    },
+    {
+      "id": "F-068",
+      "type": "feature",
+      "title": "DPB4010 主仓与 sub_common 同名功能分支",
+      "file": "global_dev_features.md",
+      "line": 1212,
+      "date": "2026-10-13",
+      "project": "EncoderPlotter_0903_01 / D:\\code\\EncoderPlotter_0903_01",
+      "status": "已完成",
+      "keywords": [
+        "DPB4010",
+        "feature/dpb4010",
+        "develop",
+        "sub_common",
+        "同名功能分支",
+        "gitlink"
+      ]
+    },
+    {
+      "id": "F-069",
+      "type": "feature",
+      "title": "DPB4010 子仓与主仓 gitlink 提交顺序",
+      "file": "global_dev_features.md",
+      "line": 1239,
+      "date": "2026-10-13",
+      "project": "EncoderPlotter_0903_01 / feature/dpb4010",
+      "status": "已完成（未推送）",
+      "keywords": [
+        "DPB4010",
+        "sub_common",
+        "gitlink",
+        "child before parent",
+        "commit"
+      ]
+    },
+    {
+      "id": "F-070",
+      "type": "feature",
+      "title": "EncoderPlotter 测试包 tag 规范与序号选择",
+      "file": "global_dev_features.md",
+      "line": 1259,
+      "date": "2026-10-13",
+      "project": "EncoderPlotter_0903_01 / DPB4010",
+      "status": "已完成",
+      "keywords": [
+        "test-v tag",
+        "package.json",
+        "test sequence",
+        "CI_COMMIT_TAG",
+        "DPB4010"
+      ]
+    },
+    {
       "id": "H-004",
       "type": "habit",
       "title": "硬件联调排查纪律 (来自 v3.4.6 力矩无响应排查)",
@@ -1532,6 +1775,82 @@
         "CLOSE_HEAVY 失效",
         "v6.16"
       ]
+    },
+    {
+      "id": "P-20260935",
+      "type": "problem",
+      "title": "SIRE 三端兼容实测：Codex/Claude 入口副本对 v6.12-v6.17 的关键词覆盖 0/7，且无机制能发现这种漂移",
+      "file": "global_problem_solutions.md",
+      "line": 548,
+      "date": "2026-10-13",
+      "project": "SIRE 三端兼容性复核（`D:\\sire\\AI\\AI\\sire`）",
+      "status": "已验证（取证脚本 scratch/probe_three_clients.py，run 见本次台账）",
+      "keywords": [
+        "SIRE",
+        "三端兼容",
+        "Codex",
+        "Claude",
+        "Qoder",
+        "入口副本漂移",
+        "AGENTS.md",
+        "sire-reminder.txt",
+        "memory",
+        "hooks.json",
+        "config.toml 信任哈希",
+        "别名 junction",
+        "COLLECTION_DEAD",
+        "parity",
+        "链式钩子",
+        "feishu-hub"
+      ]
+    },
+    {
+      "id": "P-20260936",
+      "type": "problem",
+      "title": "DPB MR复审：导入写入校验与packed版本转换",
+      "file": "global_problem_solutions.md",
+      "line": 582,
+      "date": "",
+      "project": "",
+      "status": "",
+      "keywords": []
+    },
+    {
+      "id": "P-20260937",
+      "type": "problem",
+      "title": "DPB导入数据擦除前预检与packed版本修复",
+      "file": "global_problem_solutions.md",
+      "line": 599,
+      "date": "",
+      "project": "",
+      "status": "",
+      "keywords": []
+    },
+    {
+      "id": "P-20260938",
+      "type": "problem",
+      "title": "飞书卡片队列被单条非法卡片头阻塞；Qoder 钩子两条隐蔽失效点",
+      "file": "global_problem_solutions.md",
+      "line": 616,
+      "date": "2026-10-13",
+      "project": "全局工具 / D:\\sire\\AI\\AI\\feishu-hub",
+      "status": "已完成",
+      "keywords": [
+        "飞书卡片",
+        "outbox 头阻塞",
+        "HTTP Error 400 Bad Request",
+        "head-of-line blocking",
+        "blocked 保序键",
+        "status DEAD",
+        "UnicodeEncodeError surrogates not allowed",
+        "sys.stdin.buffer",
+        "GBK 控制台",
+        "hook_event_name",
+        "settings.json hooks 不生效",
+        "qoderclicn headless",
+        "FEISHU_HUB_TASK_ID",
+        "local image markdown"
+      ]
     }
   ],
   "features": {
@@ -1668,7 +1987,8 @@
       "F-024"
     ],
     "electron-builder": [
-      "F-024"
+      "F-024",
+      "F-066"
     ],
     "多SKU": [
       "F-024"
@@ -1689,7 +2009,8 @@
     ],
     "GitLab CI": [
       "F-024",
-      "F-057"
+      "F-057",
+      "F-066"
     ],
     "Runner": [
       "F-024"
@@ -2077,7 +2398,8 @@
       "F-045"
     ],
     "MPT": [
-      "F-047"
+      "F-047",
+      "F-062"
     ],
     "arguments解耦": [
       "F-047"
@@ -2131,10 +2453,12 @@
       "F-047"
     ],
     "Analyzer": [
-      "F-047"
+      "F-047",
+      "F-062"
     ],
     "A~F协议回归": [
-      "F-047"
+      "F-047",
+      "F-062"
     ],
     "series=104": [
       "F-047"
@@ -2222,7 +2546,8 @@
     ],
     "CI_COMMIT_TAG": [
       "F-049",
-      "F-057"
+      "F-057",
+      "F-070"
     ],
     "target.json": [
       "F-049"
@@ -2238,11 +2563,13 @@
     ],
     "DPB": [
       "F-050",
-      "F-051"
+      "F-051",
+      "F-063"
     ],
     "单圈标定": [
       "F-050",
-      "F-051"
+      "F-051",
+      "F-063"
     ],
     "圆环": [
       "F-050",
@@ -2967,6 +3294,166 @@
     ],
     "meeting sketch": [
       "F-061"
+    ],
+    "Output": [
+      "F-062"
+    ],
+    "USB描述符": [
+      "F-062"
+    ],
+    "pyusb": [
+      "F-062"
+    ],
+    "USB Hub IOCTL": [
+      "F-062"
+    ],
+    "快照": [
+      "F-062"
+    ],
+    "source of truth": [
+      "F-062"
+    ],
+    "DPT": [
+      "F-063"
+    ],
+    "内外圈独立标定": [
+      "F-063"
+    ],
+    "calibrationTarget": [
+      "F-063"
+    ],
+    "disabled ring": [
+      "F-063"
+    ],
+    "角度状态位": [
+      "F-063"
+    ],
+    "MES 需求规格说明书": [
+      "F-064"
+    ],
+    "DPB 定子工艺流程": [
+      "F-064"
+    ],
+    "工艺版本": [
+      "F-064"
+    ],
+    "DOCX 图号": [
+      "F-064"
+    ],
+    "需求追踪": [
+      "F-064"
+    ],
+    "MES-SRS-001": [
+      "F-064"
+    ],
+    "标定耗时优化": [
+      "F-065"
+    ],
+    "DPT 标定台账": [
+      "F-065"
+    ],
+    "标定失败弹窗": [
+      "F-065"
+    ],
+    "绿色采集说明": [
+      "F-065"
+    ],
+    "生产模式": [
+      "F-065"
+    ],
+    "产品软件版本": [
+      "F-065"
+    ],
+    "IAP 烧录": [
+      "F-065"
+    ],
+    "打包原理": [
+      "F-066"
+    ],
+    "NSIS": [
+      "F-066"
+    ],
+    "deb": [
+      "F-066"
+    ],
+    "Ubuntu 2204": [
+      "F-066"
+    ],
+    "Debian": [
+      "F-066"
+    ],
+    "udev": [
+      "F-066"
+    ],
+    "nuitka": [
+      "F-066"
+    ],
+    "verify-linux-deb-path": [
+      "F-066"
+    ],
+    "LINUX_PRODUCT_NAME": [
+      "F-066"
+    ],
+    "免安装zip": [
+      "F-066"
+    ],
+    "HTTP API 包": [
+      "F-066"
+    ],
+    "DOCX": [
+      "F-067"
+    ],
+    "A4": [
+      "F-067"
+    ],
+    "portrait": [
+      "F-067"
+    ],
+    "python-docx": [
+      "F-067"
+    ],
+    "section geometry": [
+      "F-067"
+    ],
+    "image scaling": [
+      "F-067"
+    ],
+    "DPB4010": [
+      "F-068",
+      "F-069",
+      "F-070"
+    ],
+    "feature/dpb4010": [
+      "F-068"
+    ],
+    "develop": [
+      "F-068"
+    ],
+    "sub_common": [
+      "F-068",
+      "F-069"
+    ],
+    "同名功能分支": [
+      "F-068"
+    ],
+    "gitlink": [
+      "F-068",
+      "F-069"
+    ],
+    "child before parent": [
+      "F-069"
+    ],
+    "commit": [
+      "F-069"
+    ],
+    "test-v tag": [
+      "F-070"
+    ],
+    "package.json": [
+      "F-070"
+    ],
+    "test sequence": [
+      "F-070"
     ]
   },
   "problems": {
@@ -3171,7 +3658,8 @@
       "P-023"
     ],
     "hooks.json": [
-      "P-023"
+      "P-023",
+      "P-20260935"
     ],
     "hook trust": [
       "P-023"
@@ -3221,7 +3709,8 @@
       "P-20260924",
       "P-20260925",
       "P-20260931",
-      "P-20260932"
+      "P-20260932",
+      "P-20260935"
     ],
     "Git 归档": [
       "P-024"
@@ -3243,11 +3732,13 @@
     ],
     "Claude": [
       "P-20260923",
-      "P-20260924"
+      "P-20260924",
+      "P-20260935"
     ],
     "Codex": [
       "P-20260923",
-      "P-20260924"
+      "P-20260924",
+      "P-20260935"
     ],
     "SQLite": [
       "P-20260923",
@@ -3624,13 +4115,89 @@
       "P-20260934"
     ],
     "Qoder": [
-      "P-20260934"
+      "P-20260934",
+      "P-20260935"
     ],
     "CLOSE_HEAVY 失效": [
       "P-20260934"
     ],
     "v6.16": [
       "P-20260934"
+    ],
+    "三端兼容": [
+      "P-20260935"
+    ],
+    "入口副本漂移": [
+      "P-20260935"
+    ],
+    "AGENTS.md": [
+      "P-20260935"
+    ],
+    "sire-reminder.txt": [
+      "P-20260935"
+    ],
+    "memory": [
+      "P-20260935"
+    ],
+    "config.toml 信任哈希": [
+      "P-20260935"
+    ],
+    "别名 junction": [
+      "P-20260935"
+    ],
+    "COLLECTION_DEAD": [
+      "P-20260935"
+    ],
+    "parity": [
+      "P-20260935"
+    ],
+    "链式钩子": [
+      "P-20260935"
+    ],
+    "feishu-hub": [
+      "P-20260935"
+    ],
+    "飞书卡片": [
+      "P-20260938"
+    ],
+    "outbox 头阻塞": [
+      "P-20260938"
+    ],
+    "HTTP Error 400 Bad Request": [
+      "P-20260938"
+    ],
+    "head-of-line blocking": [
+      "P-20260938"
+    ],
+    "blocked 保序键": [
+      "P-20260938"
+    ],
+    "status DEAD": [
+      "P-20260938"
+    ],
+    "UnicodeEncodeError surrogates not allowed": [
+      "P-20260938"
+    ],
+    "sys.stdin.buffer": [
+      "P-20260938"
+    ],
+    "GBK 控制台": [
+      "P-20260938"
+    ],
+    "hook_event_name": [
+      "P-20260938"
+    ],
+    "settings.json hooks 不生效": [
+      "P-20260938"
+    ],
+    "qoderclicn headless": [
+      "P-20260938"
+    ],
+    "FEISHU_HUB_TASK_ID": [
+      "P-20260938"
+    ],
+    "local image markdown": [
+      "P-20260938"
     ]
   },
   "efficiency": {
@@ -3901,6 +4468,109 @@
     ],
     "v6.17": [
       "E-014"
+    ],
+    "MSYS_NO_PATHCONV": [
+      "E-015"
+    ],
+    "git show": [
+      "E-015"
+    ],
+    "ref:path": [
+      "E-015"
+    ],
+    "git-bash": [
+      "E-015"
+    ],
+    "跨分支读文件": [
+      "E-015"
+    ],
+    "fatal ambiguous argument": [
+      "E-015"
+    ],
+    "feishu-hub": [
+      "E-016"
+    ],
+    "飞书中转": [
+      "E-016"
+    ],
+    "执行器协议 v1": [
+      "E-016"
+    ],
+    "Qoder 执行器": [
+      "E-016"
+    ],
+    "qoderclicn": [
+      "E-016",
+      "E-017"
+    ],
+    "QODER_CLI_BIN": [
+      "E-016"
+    ],
+    "hook_stop": [
+      "E-016"
+    ],
+    "sessions/turns": [
+      "E-016"
+    ],
+    "spool": [
+      "E-016"
+    ],
+    "FEISHU_HUB_TASK_ID": [
+      "E-016"
+    ],
+    "executors 白名单": [
+      "E-016"
+    ],
+    "STRICT_TASK": [
+      "E-016"
+    ],
+    "CUTOVER": [
+      "E-016"
+    ],
+    "parity 复测": [
+      "E-016"
+    ],
+    "Qoder CLI": [
+      "E-017"
+    ],
+    "headless": [
+      "E-017"
+    ],
+    "manifest.json": [
+      "E-017"
+    ],
+    "sha256": [
+      "E-017"
+    ],
+    "sdk_invalid_args": [
+      "E-017"
+    ],
+    "QODER_AGENT_SDK_ENTRYPOINT": [
+      "E-017"
+    ],
+    "--permission-mode bypass_permissions": [
+      "E-017"
+    ],
+    "dont_ask": [
+      "E-017"
+    ],
+    "--output-format json": [
+      "E-017"
+    ],
+    "--resume": [
+      "E-017"
+    ],
+    "total_credits": [
+      "E-017"
+    ],
+    "login 设备码": [
+      "E-017"
+    ],
+    "model_by_tier": [
+      "E-017"
+    ],
+    "reasoning-effort": [
+      "E-017"
     ]
   },
   "habits": {
@@ -3965,6 +4635,6 @@
       "H-006"
     ]
   },
-  "last_updated": "2026-10-13T00:49:30Z",
-  "total_records": 56
+  "last_updated": "2026-10-13T09:23:32Z",
+  "total_records": 72
 }
