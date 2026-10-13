@@ -10,7 +10,7 @@
 
 ## 简单任务快速通道（每次执行强制确认一次）
 
-每次执行 SIRE，在做任何检索、分析或拆解之前，必须先确认一次“是否简单任务”。Claude 与 Codex 同样执行，不得省略这一步。
+每次执行 SIRE，在做任何检索、分析或拆解之前，必须先确认一次“是否简单任务”。Claude、Codex 与 Qoder 同样执行，不得省略这一步。
 
 按以下顺序判定，命中即停：
 
@@ -28,7 +28,7 @@
 - 跳过知识库/向量检索、R0–R10 阶段日志、模型选择门禁、子代理派工、运行台账、数据库备份与归档、Git 提交。
 - 限制思考范围：只决定“用哪条命令”。不分析方案、不比较替代做法、不推演额外风险，判定一次即执行，不回头复核判定。
 - 限制步数：最多两条命令，一条执行（可在同一条命令里先检查目标存在且与用户所说一致），一条核对结果；查看类只用一条。命令写最简形式，不加额外防护脚本；命令本身报错时不换方法重试，直接报告错误；执行工具被策略拦截或进程无法启动时，可换一种执行方式重试一次。
-- 命中白名单时不读取 SKILL.md、本文件或其他说明文件。客户端入口（Codex `~/.codex/AGENTS.md`、Claude `~/.claude/sire-reminder.txt`）各带一份白名单和上述限制的副本，修改本节时三处同步。
+- 命中白名单时不读取 SKILL.md、本文件或其他说明文件。客户端入口（Codex `~/.codex/AGENTS.md`、Claude `~/.claude/sire-reminder.txt`）各带一份白名单和上述限制的副本，修改本节时两处人工同步；Qoder 端**不留手工副本**——`scripts/sire_qoder.py remind` 在每次提交提示词时从本节实时生成注入并带规则指纹，所以本节永远是唯一真源。
 - 不加解释、建议、追问、额外检查或“顺便”做的事。
 - 答案和结果必须来自本次实际执行的命令或读取的内容，不得用记忆、知识库或历史记录代替。
 - 发现目标不明确、不存在，或需要多步处理、改代码，立即停止快速通道，用一行说明“转完整流程”，再按完整 SIRE 执行。
@@ -72,6 +72,8 @@ SIRE 是所有任务的强制自动化处理机制，必须完整执行：
 5. 门禁产物是每个单元的“单元编号 / 难度 / 模型 / 判定理由”清单，写入台账并在阶段报告中列出。
 6. R6 复核、R8 集成和 R9 收尾的最终裁决不得降到低成本模型。
 
+Qoder 端没有 `model` 参数（Agent 工具与 `create_chat_session` 都不接受模型），三档改为**角色档 + 隔离会话**：`python <SHARED_SKILL_DIR>\scripts\sire_qoder.py role low|mid|high --task-file <f>` 生成委派文，`subagent_type` 分别取 Explore / general-purpose / Plan；档位与理由照常记台账，模型一栏写 `qoder-role:<tier>`，不得为省事把高难度也丢给低档角色。
+
 规则：
 1. 派工时在台账记录每个单元所用模型；未注明默认按上表。
 2. 低中难度单元主控只写精简指令、只读结论，不重复读取子代理已读内容。
@@ -83,15 +85,16 @@ SIRE 是所有任务的强制自动化处理机制，必须完整执行：
 
 工作流在执行任务的过程中自己发现问题、自己优化，不需要用户安排。
 
-1. **自动记录**：Claude 与 Codex 的钩子（UserPromptSubmit、PostToolUse、Stop）调用 `scripts/sire_telemetry.py hook`，记录每个任务的开始、每次工具调用和结束时间，按阶段（读规则、检索、执行、子代理、台账、归档、RSI、提交、回复）累计耗时，写入本机遥测库 `sire_telemetry.sqlite3`（不进 Git）。模型不需要、也不要手动记录耗时。
-2. **静默分析**：每个任务结束时，Stop 钩子在后台运行 `sire_telemetry.py analyze`，按检测规则累计命中：简单任务超时或越界、收尾占比过高、子代理过重、同一命令反复失败、规则文件读取过多、某阶段明显变慢。达到阈值的转为待处理发现。分析过程不在对话里输出。
-3. **自动优化**：完整流程任务在 R9 收尾时运行 `python <SHARED_SKILL_DIR>\scripts\sire_telemetry.py pending`。没有输出就结束这一步；有输出时处理排在第一的一条：
+1. **自动记录**：Claude、Codex 与 Qoder 的钩子（UserPromptSubmit、PostToolUse、Stop；Qoder 另接 PostToolUseFailure）调用 `scripts/sire_telemetry.py hook --client claude|codex|qoder`，记录每个任务的开始、每次工具调用和结束时间，按阶段（读规则、检索、执行、子代理、台账、归档、RSI、提交、回复）累计耗时，写入本机遥测库 `sire_telemetry.sqlite3`（不进 Git）。Qoder 端由 `scripts/sire_qoder.py install` 一次性注册钩子与 `skills/sire-global-workflow` 别名（junction 指向唯一源），配置写入后**最迟在下一个用户提示词就开始采集，无需重启**；用 `sire_qoder.py verify` 复核，判据是遥测库里 `client='qoder'` 的事件与任务心跳，而不是日志文本；入口注入 `remind` 只是可选项（`--with-remind`）：Qoder 的规则注入实际由用户级记忆 `~/.qoder-cn/memory/` 承担（每轮必进上下文），客户端 SDK 里没有 Claude 的 `additionalContext`/`hookSpecificOutput` 字段，钩子 stdout 不进上下文；`parity` 子命令一条命令自检八项兼容度；Stop 载荷不带 `transcript_path`，模式判定靠 `qoder_transcript()` 回退读 `~/.qoder-cn/projects/*/<session>.jsonl`；卸载用 `sire_qoder.py uninstall`，只移除自己写入的键。模型不需要、也不要手动记录耗时。
+2. **静默分析**：每个任务结束时，Stop 钩子在后台运行 `sire_telemetry.py analyze`。回合边界以 Stop 为准，UserPromptSubmit 只是可选起点（自动化/续跑型提示不触发它，缺 prompt 事件也必须照样汇总），按检测规则累计命中：简单任务超时或越界、收尾占比过高、子代理过重、同一命令反复失败、规则文件读取过多、某阶段明显变慢。达到阈值的转为待处理发现。分析过程不在对话里输出。
+3. **自动优化**：R9 收尾的重复动作已合并成一条命令 `python <SHARED_SKILL_DIR>\scripts\sire_close.py close --root <项目根> --stages stages.json [--records …|--no-archive 原因] [--kb-add 类型|标题|正文] [--migration 行文本]`（内部仍走 `finish` 的 pending 门禁，不绕过任何检查）。完整流程任务在 R9 收尾时运行 `python <SHARED_SKILL_DIR>\scripts\sire_telemetry.py pending`。这一步由 `sire_run.py finish` 强制检查（`pending-check.json` 留痕）：有待处理发现又没处理完，收尾直接 BLOCKED；确实需要用户决定时用 `sire_telemetry.py resolve <发现> --ignore "原因"`，或 `finish --pending-note "原因"` 显式移交。没有输出就结束这一步；有输出时处理排在第一的一条：
    - 读证据（需要时用 `sire_telemetry.py report`），在共享 skill 目录内做最小修复，例如改规则措辞、把多步手工操作合并成脚本命令、同步入口副本。
    - 修复走 RSI：`sire_rsi.py propose` → 修改 → 用遥测数据或实测 `evaluate` → `activate` → 提交；然后运行 `sire_telemetry.py resolve <发现> --proposal <提案号>`。
    - 状态为 `REGRESSED`，说明修复后同类问题又出现了：先判断是否 `sire_rsi.py rollback` 关联提案，再重新修复或 `resolve <发现> --reopen`。
    - 不得通过删除安全、隐私、授权规则或去掉验收、复核来“优化”。这类问题只登记提案，运行 `resolve <发现> --ignore "需用户决定"`，并在最终回复的“建议”里用一句话提出。
    - 每个任务最多处理一条，最终回复加一行：`自动优化：<发现> → <改动>，<版本>`。
 4. 快速通道任务不做第 3 步，钩子仍会自动记录。
+5. **采集存活自检**：`analyze` 会从三端客户端配置里解析出"应当在哪台机器上采集"的 client 名单（可用 `SIRE_CLIENT_CONFIGS` 覆盖），某个已配置客户端超过 `--stale-hours`（默认 12 小时）没有事件就产出 `COLLECTION_DEAD:<client>` 发现并直接进入待处理队列，30 分钟内不重复计数。这类问题不得靠删规则消音。
 
 ## SIRE 输出契约
 
@@ -111,10 +114,10 @@ SIRE 是所有任务的强制自动化处理机制，必须完整执行：
 5. 缺少电脑操作工具、目标环境或权限时，测试必须标记 `BLOCKED-无法真实验证`，不得标记 PASS。
 6. 正常路径和至少一条边界/异常路径都必须进行真实场景验证；失败后必须记录操作步骤、实际表现、失败原因和返工次数。
 
-## Claude/Codex 共用源补充
+## Claude/Codex/Qoder 共用源补充
 
-- 唯一 SIRE skill 源：`<SIRE_ROOT>/workflow/shared/sire/`。Claude 的 `~/.claude/skills/sire-global-workflow/` 与 Codex 的 `~/.codex/skills/ai-dev-sire-workflow/` 必须链接到同一物理目录。
+- 唯一 SIRE skill 源：`<SIRE_ROOT>/workflow/shared/sire/`。Claude 的 `~/.claude/skills/sire-global-workflow/`、Codex 的 `~/.codex/skills/ai-dev-sire-workflow/` 必须链接到同一物理目录；Qoder 用 `sire_qoder.py link` 建立 `~/.qoder-cn/skills/sire-global-workflow` junction 指向同一目录。
 - 唯一 Claude/Codex 工作数据库：`<SIRE_ROOT>/data/sire_vectors.sqlite3`，暂不进 Git（超过 GitHub 100MB 单文件上限），本机实际路径见 `sire/data/DATABASE-RECORD.md`；知识目录为 `<SIRE_ROOT>/knowledge/global/`。脚本必须通过 `scripts/sire_paths.py` 解析；两端的 `SIRE_ROOT`、`SIRE_DATA_DIR`、`SIRE_VECTOR_DB`、`SIRE_KB_DIR`、`SIRE_EMBED_DIR` 和 `SIRE_TASK_ROOTS` 覆盖值必须相同。
 - 系统级归档规则仍要求更新 `@SIRE_ARCHIVE_ROOT@\sire_vectors.sqlite3`；它是任务闭环归档位置，不得配置成 Claude 或 Codex 的独立工作库。收尾时将任务记录与可复用知识同步到该归档，并将工作流与知识改动提交到 Git（共享数据库只做备份与检查，暂不进 Git，见 `sire/data/DATABASE-RECORD.md`）。
 - PowerShell 收尾命令中的 `$env:SIRE_ARCHIVE_ROOT` 对应本机的 `@SIRE_ARCHIVE_ROOT@`；`$env:SIRE_ARCHIVE_DB` 必须由 `Join-Path $env:SIRE_ARCHIVE_ROOT 'sire_vectors.sqlite3'` 得到。两者只是执行当前归档步骤的 shell 变量，不配置到任一客户端。
-- 禁止在客户端 profile 目录下保留可写的第二份 SIRE skill、知识库或向量库。轻量 ZIP 与 Git 仓库目前都不含数据库；数据库只在本机，位置与恢复方法见 `sire/data/DATABASE-RECORD.md`，禁止 `git add -f` 提交它。
+- 禁止在客户端 profile 目录下保留可写的第二份 SIRE skill、知识库或向量库。Qoder 端的 `~/.qoder-cn/skills/sire-global-workflow` 只能是由 `sire_qoder.py link` 建立的 junction；入口规则由 `sire_qoder.py remind` 实时从本文件生成，不留手工副本；`sire_qoder.py verify` 用来证明本端钩子确实在采集，`uninstall` 只删自己写入的键。轻量 ZIP 与 Git 仓库目前都不含数据库；数据库只在本机，位置与恢复方法见 `sire/data/DATABASE-RECORD.md`，禁止 `git add -f` 提交它。
