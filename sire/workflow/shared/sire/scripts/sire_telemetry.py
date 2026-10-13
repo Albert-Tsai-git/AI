@@ -1,7 +1,7 @@
 """SIRE 任务遥测：由 Claude/Codex 钩子自动记录各阶段耗时，任务结束后静默分析并生成 RSI 待处理发现。
 
 子命令：
-  hook --client claude|codex      钩子入口（stdin 为钩子 JSON）；不输出任何内容、任何异常都吞掉并返回 0
+  hook --client claude|codex|qoder  钩子入口（stdin 为钩子 JSON）；不输出任何内容、任何异常都吞掉并返回 0
   analyze                         汇总已结束的任务并运行检测规则（Stop 钩子在后台自动调用）
   report [--last N] [--json]      最近任务的各阶段耗时
   pending [--json]                R9 收尾需要处理的发现（PROPOSED / REGRESSED）；没有时不输出
@@ -32,15 +32,20 @@ RETENTION_DAYS = 60
 PHASE_PATTERNS = (
     ("rsi", re.compile(r"sire_rsi\.py|sire_supervisor\.py|sire_telemetry\.py\W+(pending|resolve|report)", re.I)),
     ("retrieve", re.compile(r"sire_kb\.py\W+(search|show|database-search|search-database)"
-                            r"|sire_vector_db\.py\W+(search|show|stats)", re.I)),
+                            r"|sire_vector_db\.py\W+(search|show|stats)|knowledge[\\/]global", re.I)),
+    # 只认归档动作本身；读 knowledge/global 属于检索，记进收尾会让 CLOSE_HEAVY 变成误报
     ("archive", re.compile(r"sire_kb\.py\W+(reindex|add|next-id|export-md|lint)|sire_vector_db\.py\W+(index|migrate)"
-                           r"|sire_db_backup|snapshot_db|knowledge[\\/]+global|archive[_-]?(db|root|result)", re.I)),
-    ("ledger", re.compile(r"sire_run\.py|[\\/]runs[\\/]|[\\/]\.sire[\\/]", re.I)),
+                           r"|sire_db_backup|snapshot_db|SIRE_ARCHIVE_(ROOT|DB)", re.I)),
+    # 只认台账写入；路径里出现 .sire/runs 不等于在写台账（真实场景测试的夹具也放在 run 目录里）
+    ("ledger", re.compile(r"sire_run\.py|journal\.log|run\.json|units\.json|blockers\.md|assumptions\.md"
+                          r"|kb-hits\.md|stage-output|\.sire[\\/]current", re.I)),
     ("commit", re.compile(r"\bgit\W+(add|commit|push)\b", re.I)),
     ("rules", re.compile(r"skill\.md|global-contract\.md|[\\/]references[\\/]+[\w-]+\.md", re.I)),
 )
 SUBAGENT_TOOLS = {"agent", "task"}
 CLOSE_PHASES = ("ledger", "archive", "rsi", "commit")
+# classify() 的兜底桶：按任务规模浮动，不代表某个 SIRE 步骤变慢，不参与阶段离群判定
+CATCH_ALL_PHASES = ("execute", "reply")
 FAST_FORBIDDEN = ("retrieve", "ledger", "archive", "rsi", "subagent", "commit")
 FAST_MARK = "快速通道：简单任务"
 FULL_MARK = "快速通道：否"
@@ -54,7 +59,52 @@ RULES = {
     "TOOL_RETRY": (2, "同一命令在一个任务里失败 3 次以上：在规则或脚本里写明该场景的正确做法"),
     "RULE_READ": (3, "一个任务读取规则文件 4 次以上：入口文件直接给出所需规则，或合并规则文件"),
     "PHASE_OUTLIER": (2, "某阶段耗时超过历史中位数 3 倍：检查该阶段的脚本或规则是否有新增的低效步骤"),
+    "COLLECTION_DEAD": (1, "客户端配了钩子却长时间无事件：核对该客户端配置是否仍指向 sire_telemetry.py hook，修好后 resolve；这属于采集面故障，不要靠删规则消音"),
 }
+DECAY_SECONDS = 7 * 86400
+# 已配置钩子的客户端应当持续有心跳；长时间无事件本身就是机制故障
+CLIENT_CONFIGS = tuple(Path(p) for p in (os.environ.get("SIRE_CLIENT_CONFIGS") or "").split(os.pathsep) if p) or (
+    Path.home() / ".codex" / "hooks.json",
+    Path.home() / ".claude" / "settings.json",
+    Path.home() / ".claude" / "settings.local.json",
+    Path(os.environ.get("QODER_HOME") or Path.home() / ".qoder-cn") / "settings.json",
+)
+CLIENT_RE = re.compile(r"--client[^a-z]+([a-z]+)", re.I)
+CLIENT_DEDUPE_SECONDS = 1800
+
+
+def expected_clients() -> set[str]:
+    out: set[str] = set()
+    for path in CLIENT_CONFIGS:
+        try:
+            text = path.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            continue
+        out.update(m.group(1).lower() for m in CLIENT_RE.finditer(text))
+    return out
+
+
+def check_clients(c: sqlite3.Connection, now: float, stale_seconds: float) -> None:
+    """只对"曾经采过、现在哑了"的客户端报警；全新安装还没有心跳由 sire_qoder.py verify 负责。"""
+    for client in sorted(expected_clients()):
+        last = c.execute("SELECT max(ts) FROM events WHERE client=?", (client,)).fetchone()[0]
+        if last is None or now - last <= stale_seconds:
+            continue
+        fid = f"COLLECTION_DEAD:{client}"
+        item = {"client": client, "at": round(now), "evidence": f"末次事件距今 {(now - last) / 60:.0f} 分钟"}
+        row = c.execute("SELECT * FROM findings WHERE finding_id=?", (fid,)).fetchone()
+        if row is not None and now - (row["last_seen"] or 0) < CLIENT_DEDUPE_SECONDS:
+            continue  # 半小时内已计过，避免每次 analyze 刷命中
+        if row is None:
+            c.execute("INSERT INTO findings VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+                      (fid, "COLLECTION_DEAD", "PROPOSED", 1, now, now,
+                       json.dumps([item], ensure_ascii=False), RULES["COLLECTION_DEAD"][1], None, None, None))
+            continue
+        status = row["status"] if row["status"] in ("PROPOSED", "REGRESSED") else "PROPOSED"
+        evidence = (json.loads(row["evidence"] or "[]") + [item])[-10:]
+        c.execute("UPDATE findings SET status=?,hits=?,last_seen=?,evidence=? WHERE finding_id=?",
+                  (status, (row["hits"] or 0) + 1, now, json.dumps(evidence, ensure_ascii=False), fid))
+
 DECAY_SECONDS = 7 * 86400
 
 SECRET_PATTERNS = (
@@ -119,18 +169,39 @@ def tool_failed(resp) -> bool:
     return False
 
 
+def qoder_transcript(session: str) -> str:
+    """Qoder 的 Stop 载荷不一定带 transcript_path，按会话 id 在客户端项目目录里找。"""
+    home = Path(os.environ.get("QODER_HOME") or Path.home() / ".qoder-cn")
+    cands = [f for f in home.glob(f"projects/*/{session}.jsonl") if f.is_file()]
+    if not cands:
+        return ""
+    return str(max(cands, key=lambda f: f.stat().st_mtime))
+
+
 def last_assistant_text(payload: dict) -> str:
     """取最后一条助手回复：优先用钩子直接给的字段，否则读转录文件尾部。"""
     for key in ("last_assistant_message", "last-assistant-message"):
         if isinstance(payload.get(key), str):
             return payload[key]
-    path = payload.get("transcript_path")
+    path = payload.get("transcript_path") or qoder_transcript(str(payload.get("session_id") or ""))
     if not path or not os.path.isfile(path):
         return ""
     with open(path, "rb") as f:
         f.seek(0, 2)
-        f.seek(max(0, f.tell() - 256 * 1024))
-        lines = f.read().decode("utf-8", "ignore").splitlines()
+        size = f.tell()
+        # 长回合里尾部 256KB 可能全是工具块，退而扫全文，否则最终回复的标记取不到
+        for window in (256 * 1024, size):
+            f.seek(max(0, size - window))
+            lines = f.read().decode("utf-8", "ignore").splitlines()
+            if window != size:
+                lines = lines[1:] if lines else lines
+            text = _scan_assistant(lines)
+            if text:
+                return text
+    return ""
+
+
+def _scan_assistant(lines: list[str]) -> str:
     for line in reversed(lines):
         try:
             obj = json.loads(line)
@@ -159,15 +230,21 @@ def detect_mode(text: str) -> str:
 
 
 def summarize_task(c: sqlite3.Connection, client: str, session: str, stop_ts: float, mode: str, cwd: str):
-    """把上一个 stop 之后到本次 stop 之间的事件汇总成一个任务。"""
+    """把上一个 stop 之后到本次 stop 之间的事件汇总成一个任务。
+
+    回合边界以 Stop 为准；UserPromptSubmit 只是可选起点——目标续跑、自动化提示不会产生
+    prompt 事件，若此时直接返回，该客户端的整端数据都进不了分析与发现链路（Qoder 实测踩过）。"""
     prev = c.execute("SELECT max(ts) FROM events WHERE session=? AND event='stop' AND ts<?",
                      (session, stop_ts)).fetchone()[0] or 0
     rows = c.execute("SELECT * FROM events WHERE session=? AND ts>? AND ts<=? ORDER BY ts, id",
                      (session, prev, stop_ts)).fetchall()
     prompts = [r for r in rows if r["event"] == "prompt"]
-    if not prompts:
+    others = [r for r in rows if r["event"] != "prompt"]
+    if not prompts and not others:
         return
-    start = prompts[0]["ts"]
+    # 回合边界兜底：目标续跑 / 自动提示不触发 UserPromptSubmit，
+    # 此时仍以窗口内最早事件为起点汇总，否则整端一个任务都进不了分析与发现链路
+    start = prompts[0]["ts"] if prompts else others[0]["ts"]
     phases: dict[str, float] = {}
     counts: dict[str, int] = {}
     last = start
@@ -187,7 +264,8 @@ def summarize_task(c: sqlite3.Connection, client: str, session: str, stop_ts: fl
     c.execute("INSERT OR REPLACE INTO tasks(task_id,client,session,start_ts,end_ts,total_s,mode,phases,tool_calls,"
               "failures,cwd,prompt,analyzed) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,0)",
               (task_id, client, session, start, stop_ts, round(stop_ts - start, 1), mode,
-               json.dumps(summary, ensure_ascii=False), tool_calls, failures, cwd, prompts[0]["detail"]))
+               json.dumps(summary, ensure_ascii=False), tool_calls, failures, cwd,
+               prompts[0]["detail"] if prompts else ""))
 
 
 def spawn_analyze():
@@ -213,13 +291,14 @@ def cmd_hook(args) -> int:
             if event == "UserPromptSubmit":
                 c.execute("INSERT INTO events(ts,client,session,event,detail,ok) VALUES(?,?,?,?,?,1)",
                           (ts, args.client, session, "prompt", redact(str(payload.get("prompt") or ""), 60)))
-            elif event == "PostToolUse":
+            elif event in ("PostToolUse", "PostToolUseFailure"):
                 tool = str(payload.get("tool_name") or "")
                 tool_input = payload.get("tool_input")
                 # 子代理内部的工具调用整体算作子代理阶段
                 phase = "subagent" if agent else classify(tool, tool_input)
-                detail = redact(json.dumps(tool_input, ensure_ascii=False), 160)
-                ok = 0 if tool_failed(payload.get("tool_response")) else 1
+                detail = redact(json.dumps(tool_input, ensure_ascii=False), 320)
+                # Qoder 单独发 PostToolUseFailure，比猜 tool_response 字段可靠
+                ok = 0 if event == "PostToolUseFailure" or tool_failed(payload.get("tool_response")) else 1
                 c.execute("INSERT INTO events(ts,client,session,event,tool,phase,detail,ok,agent) "
                           "VALUES(?,?,?,?,?,?,?,?,?)", (ts, args.client, session, "tool", tool, phase, detail, ok, agent))
             elif event == "Stop":
@@ -259,7 +338,7 @@ def detect(task: sqlite3.Row, history: list[sqlite3.Row]) -> list[tuple[str, str
     if calls.get("rules", 0) >= 4:
         out.append(("RULE_READ", "RULE_READ", f"{calls['rules']} 次"))
     for phase, value in sec.items():
-        if value < 120:
+        if mode == "unknown" or phase in CATCH_ALL_PHASES or value < 120:
             continue
         past = [json.loads(h["phases"] or "{}").get("seconds", {}).get(phase, 0) for h in history
                 if h["mode"] == mode]
@@ -293,7 +372,7 @@ def record_finding(c: sqlite3.Connection, fid: str, rule: str, evidence: str, ta
               (status, hits, now, json.dumps(evidence_list, ensure_ascii=False), fid))
 
 
-def cmd_analyze(_args) -> int:
+def cmd_analyze(args) -> int:
     c = connect()
     now = time.time()
     with c:
@@ -304,6 +383,7 @@ def cmd_analyze(_args) -> int:
             for fid, rule, evidence in detect(task, history):
                 record_finding(c, fid, rule, evidence, task, now)
             c.execute("UPDATE tasks SET analyzed=1 WHERE task_id=?", (task["task_id"],))
+        check_clients(c, now, args.stale_hours * 3600)
         cutoff = now - RETENTION_DAYS * 86400
         c.execute("DELETE FROM events WHERE ts<?", (cutoff,))
         c.execute("DELETE FROM tasks WHERE end_ts<?", (cutoff,))
@@ -370,8 +450,9 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="SIRE 任务遥测与 RSI 自动发现")
     sub = ap.add_subparsers(dest="cmd", required=True)
     h = sub.add_parser("hook")
-    h.add_argument("--client", choices=("claude", "codex"), required=True)
-    sub.add_parser("analyze")
+    h.add_argument("--client", choices=("claude", "codex", "qoder"), required=True)
+    a = sub.add_parser("analyze")
+    a.add_argument("--stale-hours", type=float, default=12.0, help="客户端无事件多少小时后判定采集断流")
     r = sub.add_parser("report")
     r.add_argument("--last", type=int, default=10)
     r.add_argument("--json", action="store_true")
