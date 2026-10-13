@@ -18,8 +18,8 @@ CONFIRM_WORDS = {"确认", "确定", "yes", "y", "执行", "ok"}
 RESUME_WORDS = {"续跑", "继续", "确认", "执行", "重试"}
 ABANDON_WORDS = {"放弃", "取消", "结束", "不用了", "算了"}
 EXECUTOR_PREFIX = re.compile(
-    r"^\s*(?:(?:请)?(?:让|交给|由)\s*)?(claude|codex)\s*(?:(?:来)?执行)?\s*[:：]\s*(.*)$", re.I | re.S)
-COLLAB = re.compile(r"(claude|codex|你)\s*(?:来)?分析.{0,20}?(claude|codex)\s*(?:来)?执行", re.I | re.S)
+    r"^\s*(?:(?:请)?(?:让|交给|由)\s*)?(claude|codex|qoder)\s*(?:(?:来)?执行)?\s*[:：]\s*(.*)$", re.I | re.S)
+COLLAB = re.compile(r"(claude|codex|qoder|你)\s*(?:来)?分析.{0,20}?(claude|codex|qoder)\s*(?:来)?执行", re.I | re.S)
 DIR_PATTERN = re.compile(r'(?:^|\s)(?:@|目录[:：]\s*)(?:"([^"]+)"|((?:[A-Za-z]:[\\/]|\\\\)\S*))')
 PRE_QUEUE = ("RECEIVED", store.NEED_EXECUTOR, store.NEED_DIR, store.NEED_CONFIRM)
 
@@ -86,6 +86,12 @@ def _send_row(r):
         if not mid:
             mid = feishu.send(CFG, target, r["kind"], r["payload"], uuid=key + "-s")
     except Exception as e:  # noqa: BLE001
+        if getattr(e, "code", 0) == 400:
+            store.outbox_dead(r["id"], str(e))
+            log.error("[出口] 卡片被飞书判定非法，outbox=%s 作废不再重试: %s", r["id"], e)
+            if r["task_id"] and store.outbox_unsent_for_task(r["task_id"]) == 0:
+                store.cas(r["task_id"], store.RESULT_SAVED, store.DONE)
+            return True
         delay = min(300, 5 * (2 ** min(int(r["attempts"] or 0), 6)))
         store.outbox_retry(r["id"], str(e), delay)
         log.warning("[出口] 发送失败 outbox=%s 第%d次，%ds 后重试: %s", r["id"], (r["attempts"] or 0) + 1, delay, e)
@@ -203,8 +209,8 @@ def _collab(mid, text):
     return True
 
 
-STRICT_TASK = re.compile(r"^(claude|codex)\s+(\S+)\s+(\S.*)$", re.I | re.S)
-PROJECT_LIST = re.compile(r"^(claude|codex)\s*项目列表$", re.I)
+STRICT_TASK = re.compile(r"^(claude|codex|qoder)\s+(\S+)\s+(\S.*)$", re.I | re.S)
+PROJECT_LIST = re.compile(r"^(claude|codex|qoder)\s*项目列表$", re.I)
 
 
 def list_projects():
@@ -243,12 +249,12 @@ def _normalize(text):
     if body.startswith("【") and body.endswith("】"):
         body = body[1:-1].strip()
     body = re.sub(r"[ 　\t]+", " ", body).strip()
-    return re.sub(r"^(claude|codex)(?=[^\s:：])", r"\1 ", body, flags=re.I)
+    return re.sub(r"^(claude|codex|qoder)(?=[^\s:：])", r"\1 ", body, flags=re.I)
 
 
 def _suggest(body):
     """[提示] 根据错误输入推测用户意图，返回纠正后的完整指令（最多 3 条）。"""
-    m = re.match(r"^(claude|codex)\b\s*(.*)$", body, re.I | re.S)
+    m = re.match(r"^(claude|codex|qoder)\b\s*(.*)$", body, re.I | re.S)
     if not m:
         content = body or "告诉我通讯是否正常"
         return ["claude 默认目录 %s" % content, "codex 默认目录 %s" % content]
@@ -379,7 +385,7 @@ def advance(tid):
     t = store.get_task(tid)
     if not t["executor"]:
         if store.cas(tid, PRE_QUEUE, store.NEED_EXECUTOR):
-            say(t["source_mid"], "🤖 用哪个 AI 执行？\n指令: %s\n\n回复本条「Claude」或「Codex」，「放弃」取消。"
+            say(t["source_mid"], "🤖 用哪个 AI 执行？\n指令: %s\n\n回复本条「Claude」「Codex」或「Qoder」，「放弃」取消。"
                 % t["prompt"][:80], notice_task=tid)
         return
     if not resolve_cwd(t["cwd"]):
@@ -425,8 +431,8 @@ def _on_notice_reply(t, text, mid):
             say(mid, "已放弃该任务。")
         return False
     if st == store.NEED_EXECUTOR:
-        if low not in CFG.get("executors", ["claude", "codex"]):
-            say(mid, "请回复「Claude」或「Codex」，或「放弃」。")
+        if low not in CFG.get("executors", ["claude", "codex", "qoder"]):
+            say(mid, "请回复「Claude」「Codex」或「Qoder」，或「放弃」。")
             return False
         if store.cas(tid, st, "RECEIVED", executor=low, mode="new", session_id=""):
             advance(tid)

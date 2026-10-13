@@ -295,6 +295,12 @@ def outbox_retry(oid, err, delay):
                   (time.time() + delay, (err or "")[:300], oid))
 
 
+def outbox_dead(oid, err):
+    """飞书判定内容非法的记录作废：重试不会成功，且会按会话保序堵死后续卡片。"""
+    with _tx() as c:
+        return c.execute("UPDATE outbox SET status='DEAD', error=? WHERE id=?", ((err or "")[:300], oid)).rowcount == 1
+
+
 def outbox_reset_sending():
     with _tx() as c:
         return c.execute("UPDATE outbox SET status='PENDING' WHERE status='SENDING'").rowcount
@@ -312,7 +318,7 @@ def outbox_count_for_task(task_id):
 
 
 def outbox_unsent_for_task(task_id):
-    return _conn().execute("SELECT COUNT(*) FROM outbox WHERE task_id=? AND status!='SENT'",
+    return _conn().execute("SELECT COUNT(*) FROM outbox WHERE task_id=? AND status NOT IN ('SENT','DEAD')",
                            (task_id,)).fetchone()[0]
 
 

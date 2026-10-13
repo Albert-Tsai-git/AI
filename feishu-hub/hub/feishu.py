@@ -2,6 +2,7 @@
 """[飞书] 飞书开放平台接口（发送/回复/历史消息）与卡片构造。只有中间服务调用本模块。"""
 import json
 import os
+import re
 import time
 import urllib.parse
 import urllib.request
@@ -79,6 +80,14 @@ def list_chat_messages(cfg, chat_id, start_sec, max_pages=100):
 
 # ---------------- 卡片 ----------------
 
+_LOCAL_IMG = re.compile(r"!\[[^\]]*\]\(\s*(?!https?:)([^)]*)\)")
+
+
+def _plain_local_images(text):
+    """卡片只接受 http 图链，本地路径图片会让飞书整卡 400，因此降级成路径文字。"""
+    return _LOCAL_IMG.sub(lambda m: "（图片：%s）" % m.group(1).strip(), text)
+
+
 def compact(text):
     """整理正文：保留 markdown，去掉 SIRE 通道声明行、分隔线和连续空行；标题降为粗体（卡片不支持 #）。"""
     lines = []
@@ -92,7 +101,7 @@ def compact(text):
         if not t and (not lines or not lines[-1]):
             continue
         lines.append(s)
-    return "\n".join(lines).strip()
+    return _plain_local_images("\n".join(lines).strip())
 
 
 def _sections(body):

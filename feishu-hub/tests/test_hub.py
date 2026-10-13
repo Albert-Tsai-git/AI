@@ -530,6 +530,35 @@ service.reap()
 flush()
 check("发送中卡住超过 5 分钟 → 复位并发出", store._conn().execute("SELECT status FROM outbox WHERE id=?",
                                                          (oid,)).fetchone()[0] == "SENT")
+# 飞书判定内容非法（400）：作废，不无限重试，也不堵同会话后续卡片
+import urllib.error  # noqa: E402
+
+BAD = {"on": False}
+_orig_send = feishu.send
+
+
+def guarded_send(cfg, oid, kind, payload, uuid=None):
+    text = payload if isinstance(payload, str) else json.dumps(payload, ensure_ascii=False)
+    if BAD["on"] and "REJECT" in text:
+        raise urllib.error.HTTPError("https://open.feishu.cn/open-apis/im/v1/messages", 400, "Bad Request", None, None)
+    return _orig_send(cfg, oid, kind, payload, uuid=uuid)
+
+
+feishu.send = guarded_send
+bad_id = store.enqueue("card", {"header": {"title": {"content": "REJECT 本地图片"}}, "body": {"elements": []}},
+                       session_id="sess_dead")
+ok_id = store.enqueue("card", {"header": {"title": {"content": "正常卡片"}}, "body": {"elements": []}},
+                      session_id="sess_dead")
+BAD["on"] = True
+flush()
+BAD["on"] = False
+flush()
+_st = lambda i: store._conn().execute("SELECT status,attempts FROM outbox WHERE id=?", (i,)).fetchone()
+check("卡片被拒收(400) → 作废不再重试", _st(bad_id)[0] == "DEAD" and _st(bad_id)[1] == 0, str(_st(bad_id)))
+check("毒卡片不堵同会话后续", _st(ok_id)[0] == "SENT", str(_st(ok_id)))
+feishu.send = _orig_send
+check("本地图片 markdown 降级为文字，http 图链保留",
+      feishu.compact("![a](/D:/x.png) 与 ![b](https://e/f.png)") == "（图片：/D:/x.png） 与 ![b](https://e/f.png)")
 # 未知执行器
 try:
     HubClient("gpt", url=URL).hello({})
