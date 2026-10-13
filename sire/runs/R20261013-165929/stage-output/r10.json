@@ -1,0 +1,11 @@
+{
+  "stage": "R10",
+  "status": "SKIPPED",
+  "artifacts": [
+    "跳过记录"
+  ],
+  "reason": "本轮无 OS 级/浏览器操作，验收全在 CLI 与日志层",
+  "risk": "",
+  "note": "",
+  "updated": "2026-10-13 17:23:50"
+}

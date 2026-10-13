@@ -1,0 +1,11 @@
+{
+  "stage": "R10",
+  "status": "DONE",
+  "artifacts": [
+    "qoderclicn --version/--help/login 由命令行执行，未动桌面窗口"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "",
+  "updated": "2026-10-13 16:24:54"
+}

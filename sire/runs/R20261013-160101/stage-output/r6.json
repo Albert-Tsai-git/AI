@@ -1,0 +1,11 @@
+{
+  "stage": "R6",
+  "status": "DONE",
+  "artifacts": [
+    "git stash 对照确认 test_hub 2 项红为既有；测试未构造真 HubClient 以免写 token"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "纠正一次：批量替换锚点漏了 COLLAB 的「你」导致整批未落盘",
+  "updated": "2026-10-13 16:05:15"
+}

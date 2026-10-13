@@ -1,0 +1,11 @@
+{
+  "stage": "R2",
+  "status": "DONE",
+  "artifacts": [
+    "workflow/shared/sire/references/global-contract.md, references/self-optimization.md"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "重读 R0-R10 与归档强制项",
+  "updated": "2026-10-13 17:23:49"
+}

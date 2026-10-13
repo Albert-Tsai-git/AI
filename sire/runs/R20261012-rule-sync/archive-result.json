@@ -1,0 +1,78 @@
+{
+  "run": "R20261012-rule-sync",
+  "databases": [
+    {
+      "database": "archive",
+      "index": {
+        "sources": 78,
+        "chunks": 6900,
+        "inserted": 4,
+        "unchanged": 76,
+        "removed": 0,
+        "appended_versions": 2
+      },
+      "imported_task_files": 6,
+      "this_run_task_records": 6,
+      "knowledge_record": "E-010",
+      "integrity_check": "ok",
+      "fts_integrity": "ok",
+      "embedding_orphans": 0,
+      "sha256": "23fb04014e9f4a292aa6ec3c6f8f88f48e6671f5c3b9a624a6cd3f97883753c4",
+      "counts": {
+        "meta": 13,
+        "chunks": 6900,
+        "knowledge_records": 142,
+        "task_records": 2672,
+        "keywords": 24581,
+        "improvement_proposals": 12,
+        "improvement_metrics": 21,
+        "workflow_versions": 11,
+        "knowledge_relations": 6,
+        "emb": 7042,
+        "synonyms": 45
+      },
+      "meta": {
+        "sire_last_project": "SIRE-rule-sync",
+        "sire_last_run": "R20261012-rule-sync",
+        "sire_last_status": "DONE"
+      }
+    },
+    {
+      "database": "working",
+      "index": {
+        "sources": 78,
+        "chunks": 7338,
+        "inserted": 17,
+        "unchanged": 69,
+        "removed": 0,
+        "appended_versions": 1
+      },
+      "imported_task_files": 6,
+      "this_run_task_records": 6,
+      "knowledge_record": "E-010",
+      "integrity_check": "ok",
+      "fts_integrity": "ok",
+      "embedding_orphans": 0,
+      "sha256": "fcb3a78232d5412e25e4a61bf5efbbf084c27533bc0f953cdea7e9beda54db25",
+      "counts": {
+        "meta": 13,
+        "chunks": 7338,
+        "knowledge_records": 143,
+        "task_records": 2715,
+        "keywords": 24693,
+        "improvement_proposals": 12,
+        "improvement_metrics": 21,
+        "workflow_versions": 11,
+        "knowledge_relations": 6,
+        "emb": 7481,
+        "synonyms": 45
+      },
+      "meta": {
+        "sire_last_project": "SIRE-rule-sync",
+        "sire_last_run": "R20261012-rule-sync",
+        "sire_last_status": "DONE"
+      }
+    }
+  ],
+  "search_verified": true
+}

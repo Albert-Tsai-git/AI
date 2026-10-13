@@ -1,0 +1,11 @@
+{
+  "stage": "R0",
+  "status": "DONE",
+  "artifacts": [
+    "整段需求=打通飞书发消息与由消息执行任务到 Qoder"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "模型选择门禁：无 model 参数，均主控直接执行",
+  "updated": "2026-10-13 16:05:15"
+}

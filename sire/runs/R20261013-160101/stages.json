@@ -1,0 +1,60 @@
+[
+ {
+  "stage": "R0",
+  "status": "DONE",
+  "artifact": "整段需求=打通飞书发消息与由消息执行任务到 Qoder",
+  "note": "模型选择门禁：无 model 参数，均主控直接执行"
+ },
+ {
+  "stage": "R1",
+  "status": "DONE",
+  "artifact": ".sire/runs/R20261013-160101/kb-hits.md"
+ },
+ {
+  "stage": "R2",
+  "status": "DONE",
+  "artifact": "验收：三端指令解析、执行器协议行为、桌面轮次上报、不破坏既有测试"
+ },
+ {
+  "stage": "R3",
+  "status": "DONE",
+  "artifact": "U1 协议与实现读取 U2 执行器 U3 桌面Hook U4 Hub注册与解析 U5 测试与回归 U6 文档"
+ },
+ {
+  "stage": "R4",
+  "status": "DONE",
+  "artifact": "依赖 U1→U2/U3→U4→U5→U6；与 sire 目录无读写冲突"
+ },
+ {
+  "stage": "R5",
+  "status": "DONE",
+  "artifact": "feishu-hub/executors/qoder/{executor.py,hook_stop.py} hub/config.py hub/service.py docs/QODER_ADAPTER.md"
+ },
+ {
+  "stage": "R6",
+  "status": "DONE",
+  "artifact": "git stash 对照确认 test_hub 2 项红为既有；测试未构造真 HubClient 以免写 token",
+  "note": "纠正一次：批量替换锚点漏了 COLLAB 的「你」导致整批未落盘"
+ },
+ {
+  "stage": "R7",
+  "status": "DONE",
+  "artifact": "python tests/test_qoder_executor.py 9/9 OK；test_codex 20 项 0 失败；test_hub 79 项 2 失败（既有）",
+  "note": "Q8/Q9 真机端到端 BLOCKED-无法真实验证：Qoder CLI 未安装，且启 Hub 需先按 CUTOVER 停旧飞书桥"
+ },
+ {
+  "stage": "R8",
+  "status": "DONE",
+  "artifact": "executor.py --check 输出 CLI_NOT_FOUND，符合未安装状态；不影响 claude/codex 执行器"
+ },
+ {
+  "stage": "R9",
+  "status": "DONE",
+  "artifact": "E-016 + docs/QODER_ADAPTER.md + 迁移文档行"
+ },
+ {
+  "stage": "R10",
+  "status": "SKIPPED",
+  "reason": "仅读取窗口列表验证 computer-use 可用，未做桌面操作验收（属 Q8 前置）"
+ }
+]

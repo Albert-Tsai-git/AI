@@ -1,0 +1,11 @@
+{
+  "stage": "R5",
+  "status": "DONE",
+  "artifacts": [
+    "feishu-hub/executors/qoder/{executor.py,hook_stop.py} hub/config.py hub/service.py docs/QODER_ADAPTER.md"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "",
+  "updated": "2026-10-13 16:05:15"
+}

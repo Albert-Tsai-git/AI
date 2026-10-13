@@ -1,0 +1,11 @@
+{
+  "stage": "R8",
+  "status": "DONE",
+  "artifacts": [
+    "hub.sqlite3 outbox：PENDING=0，DEAD=1(id455)，SENT=997；积压 25 张 16:58 全部补发"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "FeishuHub 计划任务重启加载新代码",
+  "updated": "2026-10-13 17:23:50"
+}

@@ -1,0 +1,11 @@
+{
+  "stage": "R7",
+  "status": "DONE",
+  "artifacts": [
+    "python tests/test_qoder_executor.py 9/9 OK；test_codex 20 项 0 失败；test_hub 79 项 2 失败（既有）"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "Q8/Q9 真机端到端 BLOCKED-无法真实验证：Qoder CLI 未安装，且启 Hub 需先按 CUTOVER 停旧飞书桥",
+  "updated": "2026-10-13 16:05:15"
+}

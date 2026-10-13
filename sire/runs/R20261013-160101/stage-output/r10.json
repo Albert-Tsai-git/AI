@@ -1,0 +1,11 @@
+{
+  "stage": "R10",
+  "status": "SKIPPED",
+  "artifacts": [
+    "跳过记录"
+  ],
+  "reason": "仅读取窗口列表验证 computer-use 可用，未做桌面操作验收（属 Q8 前置）",
+  "risk": "",
+  "note": "",
+  "updated": "2026-10-13 16:05:15"
+}

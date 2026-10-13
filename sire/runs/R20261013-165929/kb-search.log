@@ -1,0 +1,2 @@
+{"ts": "2026-10-13 17:03:17", "run_id": "R20261013-165929", "terms": ["飞书", "卡片", "发送", "失败", "重试", "outbox", "阻塞", "Qoder", "Stop", "钩子", "桌面轮次", "上报"], "kb_dir": "D:\\sire\\AI\\AI\\sire\\knowledge\\global", "kb_total": 180, "hits": 84}
+{"ts": "2026-10-13 17:20:11", "run_id": "R20261013-165929", "terms": ["飞书", "消息队列", "卡住", "不发送", "同会话", "保序", "Qoder", "钩子", "不生效", "需要重启", "编码"], "kb_dir": "D:\\sire\\AI\\AI\\sire\\knowledge\\global", "kb_total": 181, "hits": 66}

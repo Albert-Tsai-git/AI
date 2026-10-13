@@ -1,0 +1,11 @@
+{
+  "stage": "R6",
+  "status": "DONE",
+  "artifacts": [
+    "find_cli 漏子目录、permission-mode 蛇形、必须剔 SDK 入口变量"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "三处均已在实现里改掉了最初错误结论",
+  "updated": "2026-10-13 16:24:54"
+}

@@ -1,0 +1,59 @@
+[
+ {
+  "stage": "R0",
+  "status": "DONE",
+  "artifact": "整段需求=由我安装 Qoder CLI 并让 headless 调用可用"
+ },
+ {
+  "stage": "R1",
+  "status": "DONE",
+  "artifact": ".sire/runs/R20261013-162410/kb-hits.md"
+ },
+ {
+  "stage": "R2",
+  "status": "DONE",
+  "artifact": "验收：CLI 可执行文件到位、参数与结果形态真机确认、执行器测试全绿"
+ },
+ {
+  "stage": "R3",
+  "status": "DONE",
+  "artifact": "U1 找官方安装通道 U2 校验下载 U3 落位与探测 U4 契约实测 U5 环境与参数修正 U6 回归与文档"
+ },
+ {
+  "stage": "R4",
+  "status": "DONE",
+  "artifact": "依赖 U1→U2→U3→U4→U5→U6"
+ },
+ {
+  "stage": "R5",
+  "status": "DONE",
+  "artifact": "app.asar 取 qoderCliVersion → manifest → zip → ~/.qoder-cn/bin/qoderclicn/"
+ },
+ {
+  "stage": "R6",
+  "status": "DONE",
+  "artifact": "find_cli 漏子目录、permission-mode 蛇形、必须剔 SDK 入口变量",
+  "note": "三处均已在实现里改掉了最初错误结论"
+ },
+ {
+  "stage": "R7",
+  "status": "DONE",
+  "artifact": "真机 headless：is_error=false、result=收到、credits 1.278、15.5s；--resume 续接正确；--check 从 CLI_NOT_FOUND 变 OK；tests 11/11",
+  "note": "Hub→飞书卡片端到端(Q8b)仍待用户启停，标 BLOCKED 未改判"
+ },
+ {
+  "stage": "R8",
+  "status": "DONE",
+  "artifact": "tests/test_codex_executor.py 20 项 0 失败；test_hub 2 项红为既有"
+ },
+ {
+  "stage": "R9",
+  "status": "DONE",
+  "artifact": "E-017 + docs/QODER_ADAPTER.md §5.5 + 记忆 qoder-cli-headless.md"
+ },
+ {
+  "stage": "R10",
+  "status": "DONE",
+  "artifact": "qoderclicn --version/--help/login 由命令行执行，未动桌面窗口"
+ }
+]

@@ -1,0 +1,11 @@
+{
+  "stage": "R10",
+  "status": "DONE",
+  "artifacts": [
+    "plugin:computer-use list_windows 实测返回真实窗口"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "据此更正此前「R10 本端不支持」的记录",
+  "updated": "2026-10-13 09:23:13"
+}

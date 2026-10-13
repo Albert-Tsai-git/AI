@@ -1,0 +1,17 @@
+{
+  "run_id": "R20261012-rule-sync",
+  "title": "同步 Codex SIRE v6.11 规则与入口",
+  "project": "SIRE-rule-sync",
+  "date": "2026-10-12",
+  "state": "OPEN",
+  "source_commit": "3ec4941d56c96ec2ae6828769f0a095b715cc916",
+  "request": "用户更新 SIRE 工作流机制，要求同步 SIRE 规则。",
+  "scope": "加载当前共享合同；同步两客户端薄入口的快速通道副本和数据库描述；核对同源和遥测脚本。",
+  "authorization": "用户授权同步规则；共享合同要求任务归档与本地 Git 提交；不推送。",
+  "units": [
+    {"id": "U1", "result": "双客户端薄入口及包入口与现行合同一致", "executor": "sync_adapters", "model": "gpt-6-luna low", "difficulty": "低", "reason": "按已审合同机械同步；写集为三个入口文件，恢复可用对应原文。", "state": "REVIEW"},
+    {"id": "U2", "result": "双别名同源、实际脚本与边界验证、归档闭环", "executor": "root", "model": "current", "difficulty": "高", "reason": "跨客户端验收边界和预存脏状态隔离需判断；不替代独立 R6。", "state": "IN_PROGRESS"}
+  ],
+  "limitations": ["遥测 hooks 在真实客户端新会话中的自动触发尚未独立实测。"],
+  "kb_records": ["E-010"]
+}

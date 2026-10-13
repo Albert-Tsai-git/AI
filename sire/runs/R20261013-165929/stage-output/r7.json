@@ -1,0 +1,11 @@
+{
+  "stage": "R7",
+  "status": "DONE",
+  "artifacts": [
+    "C:/Users/Administrator/.feishu_hub/hook_qoder.log verdict=sent；outbox id=1001 executor=qoder SENT；真机 qoderclicn headless 会话 17:14"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "真实场景端到端，非打桩",
+  "updated": "2026-10-13 17:23:50"
+}

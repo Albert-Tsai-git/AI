@@ -1,0 +1,25 @@
+{
+  "run_id": "R20260927-game-art-start",
+  "project": "GAME",
+  "date": "2026-09-27",
+  "objective": "在游戏机制由 Claude 实现期间，准备 Unity + Blender 项目的美术基线与首个战车概念参考",
+  "status": "ART_PREP_COMPLETE_WITH_VISUAL_QA_AND_ARCHIVE_BLOCKERS",
+  "artifacts": [
+    "D:/code/GAME/docs/ART_BIBLE.md",
+    "D:/code/GAME/UNITY/Assets/Art/Concepts/TNK_Light_Rover_Concept_v01.svg",
+    "kb-hits.md",
+    "stage-ledger.md",
+    "validation.md"
+  ],
+  "validation": "SVG XML parses; GDD and CSV identifiers match; real visual preview and Unity import are blocked by browser file URL policy and incomplete Unity project structure",
+  "repository_archive": "migrated; integrity OK; 6 current-run records present; F-044 searchable; final metadata set and verified",
+  "machine_archive_target": "unconfigured; sire_paths.archive_database_path() returned None",
+  "image_generation": "two attempts failed with HTTP 404; handcrafted original SVG used",
+  "supervisor": "run-check PASS; finalize STOP for preexisting unregistered workflow-contract change",
+  "database_validation": "PRAGMA integrity_check=ok; 6070 embeddings non-empty; chunks_fts returned 4; F-044 retrieval score 0.914",
+  "metadata": {
+    "sire_last_project": "@CODE_ROOT@\\GAME",
+    "sire_last_run": "R20260927-game-art-start",
+    "sire_last_status": "DONE_WITH_ARCHIVE_BLOCKER"
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "T1": {
+    "status": "PASS",
+    "same_source": true,
+    "same_paths": true,
+    "skill_sha256": "ffcf8418deae89bdf957ea0f689dc16e4a4e5ad241bb86ffe1b006589a6fc4b3",
+    "contract_sha256": "adb2b296e1dca9523c0cb68822a549a11cff5ebbea294618aff5d5fe5af96aa2"
+  },
+  "T2": {
+    "status": "PASS",
+    "identical_fast_path_copies": true,
+    "current_codex_context_received_updated_adapter": true
+  },
+  "T3": {
+    "status": "PASS",
+    "clients": [
+      {
+        "client": "codex",
+        "events": 3,
+        "tasks": 1,
+        "mode": "full",
+        "silent": true
+      },
+      {
+        "client": "claude",
+        "events": 3,
+        "tasks": 1,
+        "mode": "full",
+        "silent": true
+      }
+    ],
+    "scope": "configured command and actual script path"
+  },
+  "T4": {
+    "status": "PASS",
+    "malformed_json_silent": true,
+    "counts_unchanged": true
+  },
+  "T5": {
+    "status": "PASS",
+    "same_hit_ids": [
+      "knowledge:E-008",
+      "knowledge:P-20260924",
+      240860
+    ],
+    "boundary_hits": 0,
+    "database_unchanged": true
+  },
+  "T6_pending": {
+    "status": "PASS",
+    "pending_output": "empty"
+  },
+  "T7": {
+    "status": "BLOCKED-无法真实验证",
+    "reason": "真实客户端自动触发路径尚未实测；配置与脚本不能替代事件证据。"
+  }
+}

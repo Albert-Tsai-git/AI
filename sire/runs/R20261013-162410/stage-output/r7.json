@@ -1,0 +1,11 @@
+{
+  "stage": "R7",
+  "status": "DONE",
+  "artifacts": [
+    "真机 headless：is_error=false、result=收到、credits 1.278、15.5s；--resume 续接正确；--check 从 CLI_NOT_FOUND 变 OK；tests 11/11"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "Hub→飞书卡片端到端(Q8b)仍待用户启停，标 BLOCKED 未改判",
+  "updated": "2026-10-13 16:24:54"
+}

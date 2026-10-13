@@ -1,0 +1,11 @@
+{
+  "stage": "R8",
+  "status": "DONE",
+  "artifacts": [
+    "executor.py --check 输出 CLI_NOT_FOUND，符合未安装状态；不影响 claude/codex 执行器"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "",
+  "updated": "2026-10-13 16:05:15"
+}

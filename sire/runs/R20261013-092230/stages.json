@@ -1,0 +1,61 @@
+[
+ {
+  "stage": "R0",
+  "status": "DONE",
+  "artifact": "整段需求=以 Codex/Claude 兼容为前提复核机制",
+  "note": "模型选择门禁：Qoder 无 model 参数，7 单元均主控直接执行（role 档可用）"
+ },
+ {
+  "stage": "R1",
+  "status": "DONE",
+  "artifact": ".sire/runs/R20261013-092230/kb-hits.md"
+ },
+ {
+  "stage": "R2",
+  "status": "DONE",
+  "artifact": "验收：三端入口/钩子/副本状态逐项有证据"
+ },
+ {
+  "stage": "R3",
+  "status": "DONE",
+  "artifact": "U1 别名与钩子取证 U2 副本关键词比对 U3 采集面比对 U4 分档能力比对 U5 建议与归档"
+ },
+ {
+  "stage": "R4",
+  "status": "DONE",
+  "artifact": "只读取证，无写冲突"
+ },
+ {
+  "stage": "R5",
+  "status": "DONE",
+  "artifact": "scratch/probe_three_clients.py three_clients.json"
+ },
+ {
+  "stage": "R6",
+  "status": "DONE",
+  "artifact": "scratch/关键词覆盖比对（0/7、0/7、4/7）",
+  "note": "修正：Qoder 侧 memory 摘要同样是副本，此前「不留副本」的说法需更正"
+ },
+ {
+  "stage": "R7",
+  "status": "DONE",
+  "artifact": "三端别名解析均指向唯一源；Claude 无 sire_telemetry 引用；Codex 钩子经别名路径且 config.toml 有 3 条信任项",
+  "note": "真实状态读取，非静态推断"
+ },
+ {
+  "stage": "R8",
+  "status": "DONE",
+  "artifact": "漂移与建议清单成文"
+ },
+ {
+  "stage": "R9",
+  "status": "DONE",
+  "artifact": "新 P 记录（三端漂移取证）+ 迁移文档行"
+ },
+ {
+  "stage": "R10",
+  "status": "DONE",
+  "artifact": "plugin:computer-use list_windows 实测返回真实窗口",
+  "note": "据此更正此前「R10 本端不支持」的记录"
+ }
+]

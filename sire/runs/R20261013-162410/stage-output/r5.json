@@ -1,0 +1,11 @@
+{
+  "stage": "R5",
+  "status": "DONE",
+  "artifacts": [
+    "app.asar 取 qoderCliVersion → manifest → zip → ~/.qoder-cn/bin/qoderclicn/"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "",
+  "updated": "2026-10-13 16:24:54"
+}

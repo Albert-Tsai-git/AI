@@ -1,0 +1,11 @@
+{
+  "stage": "R5",
+  "status": "DONE",
+  "artifacts": [
+    "feishu-hub/executors/qoder/hook_stop.py, hub/store.py, hub/service.py, hub/feishu.py, docs/QODER_ADAPTER.md"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "钩子 stdin/异常分路/落盘日志；outbox_dead + unsent 口径；400→DEAD 不阻塞；本地图片 markdown 降级；验收表转 PASS",
+  "updated": "2026-10-13 17:23:49"
+}

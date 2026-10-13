@@ -1,0 +1,11 @@
+{
+  "stage": "R4",
+  "status": "DONE",
+  "artifacts": [
+    "依赖 U1→U2→U3→U4→U5→U6"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "",
+  "updated": "2026-10-13 16:24:54"
+}

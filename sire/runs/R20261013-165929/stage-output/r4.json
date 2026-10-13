@@ -1,0 +1,11 @@
+{
+  "stage": "R4",
+  "status": "DONE",
+  "artifacts": [
+    "取证结论：钩子列表在会话 initialize 快照；stdin 需 UTF-8；400 属永久错误应作废"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "asar createHooks + 遥测 stop 事件反证 + outbox 保序键语义",
+  "updated": "2026-10-13 17:23:49"
+}

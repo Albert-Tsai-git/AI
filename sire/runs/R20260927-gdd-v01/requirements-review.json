@@ -1,0 +1,13 @@
+{
+  "retrieval": "SIRE knowledge search returned no GDD-specific Markdown hit; vector hits were unrelated embedded-software records.",
+  "reuse": "none",
+  "basis": [
+    "D:/code/GAME/docs/GDD.md",
+    "D:/code/GAME/Assets/Scripts",
+    "D:/code/GAME/Data/parts.csv",
+    "D:/code/GAME/Data/enemies.csv"
+  ],
+  "read_set": "GDD, Unity C# source, CSV data",
+  "write_set": "docs/GDD.md and SIRE run evidence only",
+  "acceptance": "retain prior direction, separate target vs prototype, clarify vertical slice and pending decisions"
+}

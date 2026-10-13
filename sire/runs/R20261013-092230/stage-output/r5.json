@@ -1,0 +1,11 @@
+{
+  "stage": "R5",
+  "status": "DONE",
+  "artifacts": [
+    "scratch/probe_three_clients.py three_clients.json"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "",
+  "updated": "2026-10-13 09:23:13"
+}

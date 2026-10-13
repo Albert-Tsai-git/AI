@@ -1,0 +1,15 @@
+[2026-10-13 16:59:29] INIT R20261013-165929 | Qoder 执行器上线验收 + 飞书卡片毒记录头阻塞修复 | channel=full
+[2026-10-13 17:20:28] GATE G0=PASS 关键词+向量两组检索，判定部分可参考
+[2026-10-13 17:23:49] STAGE-OUTPUT R0 DONE artifacts=sire/.sire/runs/R20261013-165929/run.json
+[2026-10-13 17:23:49] STAGE-OUTPUT R1 DONE artifacts=拆三层：触发层(钩子是否跑)/钩子层(内部异常)/出站层(队列是否被堵)
+[2026-10-13 17:23:49] STAGE-OUTPUT R2 DONE artifacts=workflow/shared/sire/references/global-contract.md, references/self-optimization.md
+[2026-10-13 17:23:49] STAGE-OUTPUT R3 DONE artifacts=sire/.sire/runs/R20261013-165929/kb-hits.md
+[2026-10-13 17:23:49] STAGE-OUTPUT R4 DONE artifacts=取证结论：钩子列表在会话 initialize 快照；stdin 需 UTF-8；400 属永久错误应作废
+[2026-10-13 17:23:49] STAGE-OUTPUT R5 DONE artifacts=feishu-hub/executors/qoder/hook_stop.py, hub/store.py, hub/service.py, hub/feishu.py, docs/QODER_ADAPTER.md
+[2026-10-13 17:23:50] STAGE-OUTPUT R6 DONE artifacts=py_compile 三文件通过；tests/test_hub.py 82 项(新增3)；逐条比对 hub.log 与 outbox 行
+[2026-10-13 17:23:50] STAGE-OUTPUT R7 DONE artifacts=C:/Users/Administrator/.feishu_hub/hook_qoder.log verdict=sent；outbox id=1001 executor=qoder SENT；真机 qoderclicn headless 会话 17:14
+[2026-10-13 17:23:50] STAGE-OUTPUT R8 DONE artifacts=hub.sqlite3 outbox：PENDING=0，DEAD=1(id455)，SENT=997；积压 25 张 16:58 全部补发
+[2026-10-13 17:23:50] STAGE-OUTPUT R9 DONE artifacts=知识库 P-20260938 + SIRE-MIGRATION v6.18 + 本台账
+[2026-10-13 17:23:50] STAGE-OUTPUT R10 SKIPPED artifacts=跳过记录
+[2026-10-13 17:23:50] PENDING PASS: 无
+[2026-10-13 17:24:14] FINISH records=P-20260938

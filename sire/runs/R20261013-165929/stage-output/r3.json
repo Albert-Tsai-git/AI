@@ -1,0 +1,11 @@
+{
+  "stage": "R3",
+  "status": "DONE",
+  "artifacts": [
+    "sire/.sire/runs/R20261013-165929/kb-hits.md"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "两组不同义词 + 向量检索，判定部分可参考（F-027 有 Claude 侧先例）",
+  "updated": "2026-10-13 17:23:49"
+}

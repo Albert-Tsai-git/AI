@@ -1,0 +1,12 @@
+{
+  "run_id": "R20260927-unity-blender-prep",
+  "project": "GAME",
+  "date": "2026-09-27",
+  "objective": "分析使用 Unity 与 Blender 制作类似重装机兵的游戏还需要准备什么",
+  "status": "ANALYSIS_COMPLETE_SIRE_ARCHIVE_BLOCKED",
+  "artifacts": ["analysis-report.md", "stage-ledger.md", "validation.md", "kb-search.log", "vector-search.log"],
+  "validation": "requirements coverage reviewed; no game app/code/assets to run; SIRE local DB integrity/FTS/vector checks passed",
+  "repository_archive": "task records migrated and verified",
+  "machine_archive_target": "unconfigured; sire_paths.archive_database_path() returned None",
+  "supervisor": "run-check PASS; finalize STOP for preexisting unregistered workflow contract change"
+}

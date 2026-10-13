@@ -1,0 +1,11 @@
+{
+  "stage": "R6",
+  "status": "DONE",
+  "artifacts": [
+    "py_compile 三文件通过；tests/test_hub.py 82 项(新增3)；逐条比对 hub.log 与 outbox 行"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "不以代码文本判 PASS，只看运行时证据",
+  "updated": "2026-10-13 17:23:50"
+}

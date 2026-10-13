@@ -1,0 +1,11 @@
+{
+  "stage": "R0",
+  "status": "DONE",
+  "artifacts": [
+    "整段需求=以 Codex/Claude 兼容为前提复核机制"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "模型选择门禁：Qoder 无 model 参数，7 单元均主控直接执行（role 档可用）",
+  "updated": "2026-10-13 09:23:12"
+}

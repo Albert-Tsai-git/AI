@@ -1,0 +1,11 @@
+{
+  "stage": "R0",
+  "status": "DONE",
+  "artifacts": [
+    "整段需求=由我安装 Qoder CLI 并让 headless 调用可用"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "",
+  "updated": "2026-10-13 16:24:53"
+}

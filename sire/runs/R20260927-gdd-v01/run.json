@@ -1,0 +1,13 @@
+{
+  "run_id": "R20260927-gdd-v01",
+  "project": "GAME",
+  "date": "2026-09-27",
+  "objective": "基于用户要求更新游戏 GDD",
+  "status": "DOCUMENT_COMPLETE_SIRE_ARCHIVE_BLOCKED",
+  "artifact": "D:\\code\\GAME\\docs\\GDD.md",
+  "version": "0.2",
+  "validation": "308-line document readback and source/data consistency review; no Unity runtime test",
+  "supervisor_run_check": "PASS",
+  "supervisor_finalize": "STOP: preexisting unregistered workflow change",
+  "machine_archive_target": "unconfigured"
+}
