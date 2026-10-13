@@ -17,6 +17,8 @@
 | `executors/claude/` | Claude 执行器与桌面 Hook | Claude |
 | `executors/codex/` | Codex 执行器与桌面 Hook | Codex |
 | `executors/mock/` | 参考执行器（联调用） | Claude |
+| `executors/qoder/` | Qoder 执行器与桌面 Hook | Qoder |
+| `docs/QODER_ADAPTER.md` | Qoder 执行器实现说明、飞书用法与验收状态 | Qoder |
 | `tests/test_hub.py` | 中间服务 + Claude 执行器端到端测试 | Claude |
 
 ## 运行
@@ -33,8 +35,8 @@ python tests/test_hub.py              # 测试（不触网）
 
 ## 飞书里怎么用
 
-- **新任务（私聊，严格格式）**：`【执行者 目录 内容】`，【】可省略。
-  - 执行者：`claude` 或 `codex`
+- **新任务（私聊，严格格式）**：`【执行者 目录 内容】`，【】可省略。执行者可选 `claude` / `codex` / `qoder`。
+  - 执行者：`claude`、`codex` 或 `qoder`
   - 目录：`默认目录`（配置 `suggest_cwd`）/ `项目名项目`（如 `AI项目`）/ 完整路径
   - 例：`claude 默认目录 告诉我通讯是否正常`、`codex AI项目 检查最近的改动`
   - 不符合格式的私聊消息一律只回复格式提示，不建任务。

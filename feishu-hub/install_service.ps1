@@ -1,11 +1,12 @@
-# [服务] 注册/卸载 中间服务(FeishuHub) + Claude 执行器(FeishuHubClaudeExecutor) 的开机自启计划任务
+﻿# [服务] 注册/卸载 中间服务(FeishuHub) + Claude 执行器(FeishuHubClaudeExecutor) 的开机自启计划任务
 # 用法: install_service.ps1            注册并立即启动
 #       install_service.ps1 -Uninstall 停止并卸载
 param([switch]$Uninstall)
 $dir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $tasks = @(
     @{ Name = "FeishuHub"; Args = "-m hub.main" },
-    @{ Name = "FeishuHubClaudeExecutor"; Args = "`"$dir\executors\claude\executor.py`"" }
+    @{ Name = "FeishuHubClaudeExecutor"; Args = "`"$dir\executors\claude\executor.py`"" },
+    @{ Name = "FeishuHubQoderExecutor"; Args = "`"$dir\executors\qoder\executor.py`"" }
 )
 if ($Uninstall) {
     foreach ($t in $tasks) {

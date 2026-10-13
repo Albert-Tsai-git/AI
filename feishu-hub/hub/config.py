@@ -47,8 +47,8 @@ DEFAULTS = {
                         "cc-switch", "ccswitch", "cc switch", "settings.json", "settings", "hooks",
                         "hook", "配置文件", "全局配置", "通用配置", ".claude-feishu", "config.json",
                         ".codex", "config.toml", "notify", ".feishu_hub", "token"],
-    # 可选执行者
-    "executors": ["claude", "codex"],
+    # 可选执行者（qoder = Qoder CLI 执行器，见 docs/QODER_ADAPTER.md）
+    "executors": ["claude", "codex", "qoder"],
 }
 
 
