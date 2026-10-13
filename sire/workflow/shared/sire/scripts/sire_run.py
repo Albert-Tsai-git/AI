@@ -1065,6 +1065,31 @@ def cmd_resume(args):
     return 0
 
 
+def telemetry_pending_gate(rd: str, note: str) -> str | None:
+    """R9 的自动优化步骤不能只靠自觉：有待处理发现就必须先处理或显式移交。"""
+    script = str(SHARED_SKILL_DIR / "scripts" / "sire_telemetry.py")
+    result = subprocess.run([sys.executable, script, "pending", "--json"], text=True, capture_output=True,
+                            encoding="utf-8", errors="replace")
+    try:
+        findings = json.loads(result.stdout or "[]")
+    except ValueError:
+        findings = []
+    open_items = [f.get("finding") for f in findings if isinstance(f, dict) and f.get("finding")]
+    check = {"checked_at": now(), "pending": open_items, "handoff_note": note or None,
+             "verdict": "PASS" if not open_items else ("HANDED_OFF" if note else "BLOCKED")}
+    save_json(os.path.join(rd, "pending-check.json"), check)
+    log(rd, "PENDING %s: %s" % (check["verdict"], ",".join(open_items) or "无"))
+    if not open_items:
+        return None
+    if note:
+        return None
+    first = open_items[0]
+    return ("自动优化未闭环：遥测里有 %d 条待处理发现（第一条 %s）。"
+            "按 global-contract.md § RSI 处理完再收尾；确实需要用户决定时，"
+            "用 `sire_telemetry.py resolve <发现> --ignore 原因` 或 finish 带 --pending-note 显式移交"
+            % (len(open_items), first))
+
+
 def cmd_finish(args):
     _root, rid, rd, data = ctx(args)
     run, units = data
@@ -1116,6 +1141,9 @@ def cmd_finish(args):
                     ", ".join(missing_stage_outputs))
     if units and run["gates"].get("G5", {}).get("verdict") not in ("PASS", "FAIL"):
         return fail("G5 集成验收未记录，先执行 gate G5 --pass 或 --fail")
+    pending_error = telemetry_pending_gate(rd, getattr(args, "pending_note", ""))
+    if pending_error:
+        return fail(pending_error)
     run["kb_records"] = records
     note = ("records=" + ",".join(records)) if records else ("免归档: " + args.note)
     run["gates"]["G6"] = {"verdict": "PASS", "at": now(), "note": note}
@@ -1219,6 +1247,8 @@ def main():
     s.add_argument("--no-archive", dest="no_archive", action="store_true",
                    help="轻量或创作通道且未踩坑时免归档，必须用 --note 说明")
     s.add_argument("--note", default="")
+    s.add_argument("--pending-note", dest="pending_note", default="",
+                   help="待处理发现确实需要用户决定时，记录移交理由")
 
     args = p.parse_args()
     fn = {
