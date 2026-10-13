@@ -40,8 +40,13 @@ REQUIRED_ARCHIVE_ENTRIES = (
     "shared/sire/scripts/sire_supervisor.py",
     "shared/sire/scripts/sire_run.py",
     "shared/sire/scripts/sire_kb.py",
+    "shared/sire/scripts/sire_qoder.py",
+    "shared/sire/scripts/sire_close.py",
     "shared/knowledge/SIRE-MIGRATION.md",
-) + tuple(f"shared/sire/agents/claude/sire-{name}.md" for name in REQUIRED_AGENT_NAMES)
+) + tuple(f"shared/sire/agents/claude/sire-{name}.md" for name in REQUIRED_AGENT_NAMES) + (
+    # Qoder 端适配：缺任一项就没有自动采集与本端入口
+    "shared/sire/agents/qoder/README.md",
+)
 
 
 def now() -> str:
