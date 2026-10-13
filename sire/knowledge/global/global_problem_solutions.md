@@ -258,3 +258,288 @@ R4 拆解复核、R6A/R6B/R6C 独立复核与 R7 功能测试结论见 run R2026
 - 其他会话在共享 skill 目录留下未提交改动时，任何 run 的 finalize 都会 STOP（预期行为），需先由改动方登记提案或提交。
 - `sire_rsi.py` 默认写仓库库 `sire/data/sire_vectors.sqlite3`，而收尾流程用 `snapshot_db.py` 从机器级归档库重建仓库库：只写进仓库库的 RSI 记录会在快照时丢失，RSI 写入必须同时（或只）写归档库后再快照。
 - 未修复：`sire_rsi.py status` 会先备份并 `CREATE TABLE`，不是只读；`evaluate` 只支持"越高越好"（after >= target）。
+
+
+### P-20260926: v3.4.6 寄存器文档对账与 0x6A/0x80 清理
+
+**项目**: driverSoftware（分支 chore/misc-optimizations，提交 b423f31、c140497，未 push）
+**关键词**: v3.4.6, 寄存器梳理, 0x6A, AdcUsableAmp, GpioDebugPreGen, HOST_HIDDEN_REG_ADDRS, 0x80, InnerAngle, inner_zero, kStInnerAngle, 上位机隐藏, 固件档案
+
+**需求场景 / 现象**: 以用户给定的《v3.4.6寄存器梳理》为准，核对 registers.py / server.py 隐藏清单 / 固件档案是否一致，并清理 0x6A、0x80 的遗留。
+
+**方案 / 决策**:
+1. 文档与 firmware_profiles/v3.4.6.json 逐地址、名称、读写核对：除 0x6A 外全部一致。0x6A 文档写 GpioDebugPreGen「固件删掉」，档案里 v3.4.5+ 该地址是 AdcUsableAmp（文档没列新名）。
+2. 文档所有「上位机隐藏」地址已全部在 server.py HOST_HIDDEN_REG_ADDRS 中；多出的只有 0x6A（继续隐藏，结果一致）。隐藏只影响寄存器页展示，不影响底层读写。
+3. 0xEB ControllerState 文档标「上位机隐藏/删掉」，但档案里仍存在且 kt_worker/ota_utils/server 依赖，按「上位机隐藏」处理，不动底层读取。
+4. 删除无引用的 kStAdcUsableAmp 常量，改注释说明 0x6A 历史；修正 0x7F GpioDebugAtFail 说明中「与 0x6A 对照」的失效引用。
+5. inner_zero.py 的 REG_INNER/REG_POS_MECH/REG_STATE 由写死字面量改为引用 REG 常量，0x80 下一版固件换地址时只需改 registers.py。
+
+**关键文件**: core/registers.py, core/register_descriptions.py, core/inner_zero.py, server.py(HOST_HIDDEN_REG_ADDRS), firmware_profiles/v3.4.6.json
+
+**验证方法**: 寄存器/meta/隐藏清单/冷启动波特率相关单测 141 通过；inner_zero 相关单测 59 通过 2 跳过。
+
+**限制**: 未跑全量单测；未做真机可见 GUI 验收（改动仅常量引用与说明文字）。v3.4.7 比 v3.4.6 仅多 0x26 IqCmd，文档未覆盖，registers.py 已按 v3.4.7 处理。文档自身有小矛盾（0x81 默认值 100/105、0xE8 范围、0xE1 的 14、0x80 行列错位）未改文档。
+
+**踩坑**: 查寄存器依据要先搜知识库 K-fw-v345-register-compat 与固件档案，我曾因没查而误判 AdcUsableAmp「无依据」。
+
+**状态**: 已完成
+
+
+### P-20260927: 设输出零位 (0x67) 不会让内圈零位 0x38 失效
+
+**日期**: 2026-10-12
+**项目**: driverSoftware (分支 chore/misc-optimizations 的 review)
+**关键词**: 0x67, OutputZeroOffset, 设零位, set_output_zero, 0x38, MechZeroInner, 内圈零位, BootInferOuterMultiTurnFromInner, output_zero_offset_, _IZ_NEED_REGS, kStInnerAngle
+
+**需求场景 / 现象**: review 时发现提交 c488ad5 在「⑨ 设当前位置为零位」成功后弹警告"输出零位变了, 之前测的内圈零位 (0x38) 不再适用, 请回到 ⑥ 重做"。
+
+**根因**: 依据不成立。固件 `Encoder::BootInferOuterMultiTurnFromInner` (driver 仓 Core/Src/encoder.cpp) 只用 inner_angle_q32_ (内圈原始角 − 0x38) 和 outer_angle_q32_ (外圈原始角 − 0x37) 推多圈; output_zero_offset_ (0x67) 只在算 multi_angle_rad_ 时被减掉, 不进 BootInfer、不进相位曲线。所以写 0x67 不会让 0x38 失效; 只有 0x37 (F2) 变化才会。同一张卡的 setZeroDesc 也写着"只改上报位置, 跟 F2 独立"。固件 0x67 的副作用只有一条有记录: register_protocol.h 注释写"重设输出零点会平移 ψ 基准" —— 那是波发生器补偿 (0x3E/0x3F/0x6D), 不是 0x38。
+
+**方案 / 架构**: 判断"某个零位改了要不要重标 0x38"时, 看它进不进 BootInfer 的 phase = wrap180(outer_rep − inner_rep×gear): 0x37/0x38 进, 0x67/0x68 不进。若要提示用户, 应该挂在 F2 改了 0x37 之后, 不挂在 ⑨。
+
+**关键文件与接口**:
+- driver 仓 `Core/Src/encoder.cpp` `BootInferOuterMultiTurnFromInner` / `SetCurrentPositionTo` — 0x67 写入重跑 BootInfer, 但 BootInfer 不读 offset
+- `server.py` `api_set_output_zero` — 停机 → 写 0x67 → SaveConfig
+- `server.py` `_IZ_NEED_REGS` — 内圈零位自动模式按名核对档案的地址表, 仍写死 0x16/0x80/0x38
+- `core/inner_zero.py` `REG_INNER = REG.kStInnerAngle`
+
+**实施步骤**:
+1. 搜固件仓 output_zero_offset_ 全部引用, 确认只出现在 multi_angle 计算与 SetCurrentPositionTo;
+2. 读 BootInfer 实现确认输入只有 inner/outer 两个 q32 角;
+3. 用固件仓最新提交 (f55b3f11, 2026-10-07) 复核一遍, 结论不变。
+
+**验证方法**: `git -C <firmware> show <rev>:Core/Src/encoder.cpp | grep -A18 "BootInferOuterMultiTurnFromInner"` 只见 inner_angle_q32_ / outer_angle_q32_。
+
+**踩坑**:
+- 地址常量化重构 (c140497) 只改了 inner_zero.py, 漏了 server.py 的 `_IZ_NEED_REGS` 字面量 —— 寄存器重构必须符号名 + 字面量双搜 (军规 12)。
+- "下一版固件换地址只改 registers.py" 不成立: 单一常量改地址会让 v3.4.5~v3.4.7 设备失配, 跨版本地址应按 fw_profile.reg_addr(名字) 运行时取。
+- 附带风险 (未真机验证): ⑥ 自动模式进场把 RAM 0x38 清 0 且不写回, 之后点 ⑨ (内含 SaveConfig) 而不做 ⑦, flash 0x38 会被存成 0。
+
+**状态**: 已完成 (review 结论, 未改代码)
+
+
+### P-20260928: 会跨固件搬家的寄存器按档案名字运行时取址 + 地址合理性校验 (内圈零位 InnerAngle)
+
+**日期**: 2026-10-12
+**项目**: driverSoftware (分支 chore/misc-optimizations, 提交 9640f3f..85901f3, 未 push)
+**关键词**: InnerAngle, 0x80, fw_profile.reg_addr, 按名字取址, _iz_inner_addr, _IZ_INNER_ADDR_TAKEN, inner_addr, 内圈零位, timeout_s, NaN, 钳位, 寄存器换地址, 坏档案, 截低8位
+
+**需求场景 / 现象**: 内圈零位自动模式要读 InnerAngle (v3.4.5~v3.4.7 在 0x80, 下一版固件要换地址)。原代码 server.py `_IZ_NEED_REGS` 写死 0x80, 档案里地址不是 0x80 就拒绝; 曾有注释称"换地址只改 registers.py", 实际改常量会让新旧固件只能顾一头。
+
+**根因**: 跨固件版本会搬家的寄存器, 用模块常量表达不了"每台设备各自的地址"; 地址的权威是 active 档案 (fw_profile), 名字才是跨版本稳定键。
+
+**方案 / 架构**:
+1. 会搬家的寄存器 (InnerAngle) 运行时 `fw_profile.reg_addr(name)` 取址, 经参数显式传入采集函数 (`collect(inner_addr=...)` 必填、无默认值, 防静默退回旧地址); 不设模块常量。
+2. 各版地址恒定且被多处直写的 (PosMech 0x16 / MechZeroInner 0x38) 只按 REG 常量核对名字, 不改运行时取址 (避免半套改造)。
+3. 放宽门控 ("档案说在哪就读哪") 后必须补地址合理性校验: 非 int / bool / 越出 0~0xFF (发帧时 `a & 0xFF` 会把 0x116 截成 0x16, 静默读错) / 撞上本流程已占用的地址 (同帧捎带、同批读取、零位寄存器) 一律当"没有"。
+4. 请求里的超时类参数要钳上限并拦 NaN: `el > nan` 恒假, 配合"坏帧 continue 跳过卡住判据"会让电机一直转。
+
+**关键文件与接口**:
+- `server.py` `_iz_inner_addr()` / `_IZ_INNER_ADDR_TAKEN` / `_IZ_FIXED_REGS` — 内圈零位自动端点与 save_all 复位残差共用
+- `core/inner_zero.py` `collect(c, gear, *, inner_addr, ...)`
+- `server.py` 端点里 `timeout_s = min(300, t) if isfinite(t) else 300`
+
+**验证方法**: tests/unit/test_calib_inner_zero_endpoint.py (`test_inner_angle_moved_address_is_followed`、坏地址参数化、`test_timeout_is_capped_so_bad_frames_cannot_spin_forever`) 与 tests/unit/test_persist_zero_regs_reset.py (`test_residual_follows_moved_inner_angle`、`test_residual_not_read_when_inner_angle_addr_is_bogus`); 变异 M1~M5 各自只让目标用例变红。全量 tests/unit 约 2500 例 3~4 分钟。
+
+**踩坑**:
+- 改寄存器取址要同时搜符号名与字面量 (0x80 / 128 / "@0x80"), 注释和测试文件头里的旧说法也算残留 (三路复核都抓到过漏改的注释)。
+- 门控用例若用 0x38=0 的仿真电机, 门控排到"进场清 0x38"之后也看不出来 —— 用 0x38≠0 并断言拒绝时不写寄存器。
+- 复核代理跑测试时主控不要改工作区, 否则测试结果被干扰 (本次 R6C 因此多花十几分钟)。
+- Git Bash 工具里 heredoc 会吞掉反斜杠, 含正则/JSON 转义的脚本用 Write 工具落盘再执行。
+- 已确认的相关风险 (未修, 另开单): ⑥ 自动模式进场把 RAM 0x38 清 0 不写回, 固件 SaveConfig 存整页 g_cfg, 之后点 ⑨ 设零位 (内含 SaveConfig) 而不做 ⑦ 会把 flash 0x38 存成 0; ramp_s 无上限且减速段从满速起减、不判超时。
+
+**状态**: 已完成
+
+
+### P-20260929: 数据区地址两表实测 bin 核对：MPP420 现表错、MPT420 productInfoList 错
+
+**日期**: 2026-10-12
+**项目**: EncoderPlotter_0903_01 / D:\code\EncoderPlotter_0903_01（分支 feature/mpp-algo-4060）
+**关键词**: DATA_ADDRESS_LAYOUTS, productInfoList, resolveDataAddress, getIAPArguments, 数据区地址, angleData, polyfits, MPP420, MPT420, 0x08018000, 0x08015800, 0x08014800, LE32 字面量, 固件 bin 核对, load_app_data, kingkong 解密
+
+**需求场景 / 现象**: 用户想把标定/IAP/恢复出厂用的数据区地址从 parse_iap_bin.DATA_ADDRESS_LAYOUTS 整体换回 sub_common/config.py 的 productInfoList。两表在 MPT 4.2.0、MPP 4.2.0 上地址互相矛盾，不知道哪个对。
+
+**根因**: 两份表都是人工维护的常量，没有任何代码去和固件比对。a26210c0（2026-10-10）把 MPP 105 的 420+ 行改成“按 MPT”0x08015800/0x08016000，与实际 MPP420 固件不符；productInfoList 的 MPT 420 仍是旧布局 0x08014800/0x08015000，与实际 MPT420 固件不符。另外 productInfoList 是精确版本 key，不覆盖 DPT 4.2.2/4.2.3/4.2.4、DPT_G1(109)；DPB 409 条目缺 inner.polyfits。
+
+**方案 / 架构**: 不整体切换。用实际 bin 当真源判定：固件代码引用 Flash 数据区时，地址会以 32 位小端常量出现在字面量池里，统计候选地址出现次数即可判断哪个地址是该固件真用的。结论：MPP420 → 0x08018000/0x08018800（productInfoList 对）；MPT420 → 0x08015800/0x08016000（现表对）；DPT/DPB 其余版本两表一致且命中。建议只修现表 105 的 420+ 行，MPP303 两个来源都未证实，需另找 .map。
+
+**关键文件与接口**:
+- `controller/python/parse_iap_bin.py:224` — DATA_ADDRESS_LAYOUTS；`:267` resolveDataAddress；`:592` load_app_data（自动解密 kingkong 包）
+- `controller/python/sub_common/config.py:88` — productInfoList（326aed1 恢复，注释称仅供旧测试）
+- `controller/python/sub_algorithm/step4_GenerateV4020.py:827` — DPB 慢区取 encoderDataAddress["inner"]["polyfits"]
+- 调用点：parse_iap_bin.py:469（IAP）、Encoder.py:3484（恢复出厂）、Encoder.py:4621（标定）
+
+**实施步骤**:
+1. 本机实际固件在 `C:\Users\Administrator\Downloads\bin\{DPB,DPT,MPP,MPT,...}`（含 .kingkong.bin 加密包）。
+2. 脚本 `.sire/runs/R20261012-102955/evidence/compare_sources.py bins <bin...>`：load_app_data → parse_iap_bin_info → 两表查址 → `data.count(struct.pack('<I', addr))`。
+3. `compare_sources.py tables` 逐版本列两表差异。
+
+**验证方法**: `PYTHONIOENCODING=utf-8 py -3.12 compare_sources.py bins <bins>`；MPP420 bin 中 0x08018000 出现 9 次、0x08015800 0 次；8 个 MPT420 bin 中 0x08015800 出现 8~9 次、0x08014800 0 次。
+
+**踩坑**: Windows 控制台 GBK 输出中文乱码，需 PYTHONIOENCODING=utf-8；DPT 4.2.x 的 inner 地址在 bin 中 0 次引用（可能改为外推），不能用“0 次”直接判错，单圈 outer 地址判定才可靠。
+
+**状态**: 已完成（分析结论；未改代码）
+
+
+### P-20260930: MPP 数据区地址改查 sub_common productInfoList（PRODUCT_INFO_LIST_SERIES）
+
+**日期**: 2026-10-12
+**项目**: EncoderPlotter_0903_01 / D:\code\EncoderPlotter_0903_01（分支 feature/mpp-algo-4060）
+**关键词**: MPP, 105, productInfoList, resolveDataAddress, PRODUCT_INFO_LIST_SERIES, _resolveFromProductInfoList, 数据区地址, 0x08018000, IAP 不支持, data_address_not_found, AngleDataPtr, c_uint32
+
+**需求场景 / 现象**: MPP 4.2.0 的 IAP/标定用了“按 MPT”的数据区地址 0x08015800/0x08016000，实际 MPP420 固件引用的是 0x08018000/0x08018800。用户要求 MPP 改为读取 sub_common/config.py 的 productInfoList。
+
+**根因**: a26210c0 把 DATA_ADDRESS_LAYOUTS 的 105 行改成 MPT 地址，没有拿实际 bin 核对。
+
+**方案 / 架构**: parse_iap_bin.py 新增 `PRODUCT_INFO_LIST_SERIES = (105,)`，resolveDataAddress 命中该系列时走 `_resolveFromProductInfoList`：懒导入 productInfoList，按 系列+int(版本) 精确取 key（与旧 getIAPArguments 同口径），逐层 isinstance 防御，返回副本；导入失败/查不到返回 None（不写错地址）。删除内联表 105 行。否决“整体切 productInfoList”：其 MPT 4.2.0 地址与实际 bin 不符，且缺 DPT 4.2.2+、DPT_G1。
+
+**关键文件与接口**:
+- `controller/python/parse_iap_bin.py` — PRODUCT_INFO_LIST_SERIES、_resolveFromProductInfoList、resolveDataAddress
+- `controller/python/qa_api/tests/test_iap_arguments.py` — MPP 420/303/未收录/副本 4 条
+- 调用点：parse_iap_bin_info（IAP，upgradeSupported）、Encoder.py 恢复出厂/标定
+
+**实施步骤**:
+1. 加系列集合与查表分支，删内联 105 行。
+2. 补单测；同步 AGENTS.md、docs/gotchas.md、components/share/iap.js 注释。
+
+**验证方法**: `cd controller/python && py -3.12 -m pytest qa_api/tests -q`（125 passed）；`py -3.12 parse_iap_bin.py <mpp420 .kingkong.bin>` 输出 dataAddress 0x08018000/0x08018800、upgradeSupported=True；MPP 303 bin → upgradeSupported=False。
+
+**踩坑**: productInfoList 精确 key 不覆盖新版本（MPP 4.2.1+ 需补条目，否则判不支持）；MPP 3.0.3 为空串，只影响 IAP（判不支持），3110 标定的地址取自设备 hallParam，不读 dataAddress（sub_algorithm/main.py 约 1296-1311），空串只在 IAP saveCalibrationData 赋给 ctypes c_uint32 时才会出错；sub_common 恢复 productInfoList 的 326aed1 只在 feature 分支，发布前须合入 sub_common main。
+
+**状态**: 已完成（未提交；真机 MPP 验证 BLOCKED）
+
+
+### P-20260931: SIRE RSI 自审：自动发现唯一 PROPOSED 发现来自兜底阶段与未分类任务，钩子单腿断流
+
+**日期**: 2026-10-13
+**项目**: SIRE v6 RSI 机制自我审查（`D:\sire\AI\AI\sire`）
+**状态**: 已验证（run R20261013-063902，RSI-20261013-OUTLIER-BASE → v6.12）
+**关键词**: SIRE, RSI, 自我审查, 自动发现, sire_telemetry, PHASE_OUTLIER, CLOSE_HEAVY, TOOL_RETRY, 误报, 遥测钩子, mode unknown, rsi-check, evaluate 方向性, resolve 无校验, v6.12
+
+**需求场景 / 现象**: 用户要求按时间、流程、效率、输出、精准度五个维度自审 RSI 自我优化机制。实测数据：采样时刻遥测库 53 条任务 / 542 条事件（claude 187、codex 355；本轮收尾时已增至 582），findings 表里唯一 PROPOSED 的 `PHASE_OUTLIER:execute` 两条证据都来自 `mode=unknown` 的任务（execute 123s/中位数 10s、539s/24s），建议文本"检查该阶段脚本或规则是否新增低效步骤"无法执行。
+
+**根因**:
+1. `classify()` 把没命中任何 `PHASE_PATTERNS` 的调用一律记成 `execute`、Stop 前的等待记成 `reply`，这两个兜底桶的量就是任务规模，与"某个 SIRE 步骤变慢"无关；`PHASE_OUTLIER` 却拿它跟跨任务中位数比，中位数只有 10~24s，3 倍阈值必然被大任务触发。
+2. `detect_mode()` 只认最终回复里的 `快速通道：简单任务` / `快速通道：否` 两处标记，飞书转发、automation、子代理回合天然没有标记，53 条里 27 条 `unknown`（51%）。而规则分支写的是 `mode != "fast"`，把 unknown 当 full 算 `CLOSE_HEAVY`，`PHASE_OUTLIER` 又把 unknown 单独当基线桶。
+3. 采集面单腿：`~/.codex/hooks.json` 三个事件都挂 `sire_telemetry.py hook`，`~/.claude/settings.json` 只有 Stop（指向 feishu-hub `hook_stop.py`）和 UserPromptSubmit，没有 PostToolUse、没有任何 telemetry 引用，claude 事件止于 10-12 10:50；Qoder `settings.json` 根本没有 hooks 键，`--client` 只允许 claude|codex，本客户端任务永远进不了遥测。SKILL.md:83 与契约"两端钩子"的描述与实际不符，且没有任何存活检查，断流是静默的。
+4. 阶段归属靠"先命中的正则"，一次 Bash 里串多条命令只记一个阶段；`ledger` 的 `[\\/]runs[\\/]` 会把 `.sire/runs/` 下的 Playwright 真实场景测试和 `ui_fixture.py` 补丁也算成台账（实测 OPEN 的 `FAST_SCOPE` 就是一次 10.7s 快任务被记了 ledger），`archive` 里混着读 `knowledge/global/KNOWLEDGE_TEMPLATE.md` 和 `snapshot_db.py --help`。
+5. `TOOL_RETRY` 名不符实：文档说"同一命令失败 3 次"，代码统计整任务失败数；`tool_failed()` 只认 `is_error/error/exit_code` 等少数字段，421 条工具事件仅 2 条 `ok=0`，该规则事实上不会触发。
+6. 门禁侧：`rsi_gate()` 允许状态含 `PROPOSED`，只要最后提交后存在任意一个提案就 PASS，不校验提案是否覆盖本次 diff、是否做过 evaluate，`activate --config-hash` 由调用方随手给、无人比对目录内容（本次用文件 sha256 前 16 位，属自证）。`evaluate` 只有 `after >= target` 一种方向，耗时/误报数这类"越低越好"的指标必须写成上升率，本次第一次 evaluate 就用 `after=3,target=100` 把自己判成 `EVALUATED_FAIL`；失败后 `improvement_metrics` 行无法删除，只能再 evaluate 覆盖状态。`sire_telemetry.py resolve --proposal` 完全不校验提案存在性与状态，实测对 `EVALUATED_FAIL` 提案照样把发现标成 FIXED。
+
+**方案 / 架构**: 本轮按"每个任务最多处理一条 pending"只修 `PHASE_OUTLIER`：新增模块常量 `CATCH_ALL_PHASES = ("execute", "reply")`，`detect()` 的阶段离群循环跳过兜底桶和 `mode == "unknown"` 任务，其余规则与阈值不动。第 2~6 条属独立机制改动，各自要单独立提案，未在本轮动。
+
+**关键文件与接口**:
+- `sire/workflow/shared/sire/scripts/sire_telemetry.py:42-46` — `CATCH_ALL_PHASES` 及注释
+- 同文件 `detect()` 阶段离群分支 — `if mode == "unknown" or phase in CATCH_ALL_PHASES or value < 120: continue`
+- 同文件 `PHASE_PATTERNS`、`classify()`、`tool_failed()`、`detect_mode()` — 后续待改的四个精度点
+- `sire_supervisor.py:246,306 rsi_gate()` — 允许 `PROPOSED` 即放行；`sire_rsi.py:37` — 只有 `after >= target`
+
+**验证方法**: 用真实 `detect()` 重放 53 条历史任务：修复前 `PHASE_OUTLIER` 2 条（全 execute、全 unknown），修复后 0 条，`CLOSE_HEAVY=2`、`FAST_SCOPE=1` 与 findings 表一致（无附带损失）。R7 隔离遥测库真实 `analyze`+`pending`：T1 full 任务 execute=600s（中位数 10s）与 unknown 同等任务均不再产生发现；T2 archive=300s 对中位数 20s 连中 2 次转 PROPOSED 并被 `pending` 列出，证明真实阶段离群能力保留。钩子自身开销实测每次事件约 0.10s（裸 python 0.023s）、`analyze` 0.056s，不是瓶颈。rsi-check 由 STOP(`rsi_unregistered_change`) 转 PASS，pending 清空。
+
+**踩坑**: ① 用 SQL 直接往 `tasks` 造数据不会进入检测——只有 Stop 钩子里的 `summarize_task()` 会生成任务行，`analyze` 只处理 `analyzed=0` 的既有行，造场景必须走 `summarize_task`；② `evaluate` 的方向性陷阱会把提案打死，写指标先确认"越高越好"；③ `resolve` 在提案还没激活时就能执行，闭环顺序错了不会报错。
+
+**限制**: unknown 占比 51% 说明"每次回复首行标记"在跨客户端时并不可靠，靠它做统计分桶本身就是精度来源；`pending` 排序 `hits DESC` 无第二排序键，同命中次序不定；`report` 把 prompt 截到 60 字且常截到注入块（`# Files mentioned by the user:`、`<in-app-browser-context`）而不是真实用户意图；遥测没有阶段声明，只有工具正则推断，所以各阶段耗时只能排序、不能当验收数值。
+
+**生效性复核（2026-10-13 同日追加，run R20261013-063902 续）**:
+- 记录层：只有 Codex 在写（末事件 10-13 06:44:54）；claude 末事件 10-12 10:50，而 10-12 14:20、10-13 05:20 仍有 Claude 会话转录 → Claude 侧确认断流。Qoder 本端 0 事件（连续 25+ 次工具调用期间"近 10 分钟新事件=0"）。
+- 分析层：真在跑——54 条任务全部 `analyzed=1`，无积压。
+- 发现层：会自动生成，但输入失真——近 24h 的 54 条任务里 28 条 `unknown`（飞书转发与 automation：天气查询 11s、hyperpersonalized suggestions 31s、飞书相关 515s），约 61% 的观察对象不是 SIRE 回合；队列里剩 `CLOSE_HEAVY` 2/3、`FAST_SCOPE` 1/2 两条 OPEN，逐条核对都是 `.sire/runs/` 正则误分类产物，再命中一次就会转成待处理的假发现。
+- 优化层：不自动。`sire_run.py` 与 `sire_supervisor.py` 里没有任何 `sire_telemetry` 调用（grep 计数 0），`pending` 只存在于 SKILL.md:51/83、global-contract.md:88、supervisor.md:27 的文字里；全仓 `runs/` 中含 "telemetry.py pending" 或 "自动优化：" 的只有本轮 run → 该步骤此前从未被任何 agent 真正执行过。
+- 门禁层：代码有效。临时 git 仓 + 隔离 RSI 库跑 `rsi_gate()` 五场景：无提案→STOP `rsi_unregistered_change`；最后提交后有 PROPOSED→PASS；唯一提案 EVALUATED_FAIL→STOP；ACTIVE 但早于最后提交→STOP；工作树干净→PASS。但 `rsi-check` 要有人跑 `finalize` 才发生，`D:/sire` 下 `rsi-report.json` 一个都没有 → R9 finalize 从未真实落盘。
+- 闭环核对：v6.12 在归档库与工作库均 ACTIVE，`config_hash=015b6c4f7b259e7c`、指标 7 行两库一致；`pending` 现为空。
+
+**结论**: "观察→分析→判门禁"三段在 Codex 侧真实生效；"自动优化"目前是纯文字约定、靠模型自觉，Claude/Qoder 观察通道缺失，因此整体只算半生效。要让它真自动，缺的是两处硬编码：把 pending 接进 `sire_run.py finish`/`sire_supervisor.py finalize` 并在有输出时阻断收尾，以及每客户端的采集存活检查。
+
+
+### P-20260932: CLOSE_HEAVY/FAST_SCOPE 误报根因：阶段正则把真实场景测试与知识检索记成收尾，detail 截断使复核不可能
+
+**日期**: 2026-10-13
+**项目**: SIRE v6.14 遥测阶段归属收紧（`D:\sire\AI\AI\sire`）
+**状态**: 已验证（run R20261013-074759，RSI-20261013-PHASECLASS → v6.14）
+**关键词**: SIRE, 遥测, sire_telemetry, PHASE_PATTERNS, classify, ledger, archive, CLOSE_HEAVY, FAST_SCOPE, 误报, .sire/runs, knowledge/global, detail 截断, RSI, v6.14
+
+**需求场景 / 现象**: RSI 自动发现的 `CLOSE_HEAVY`（收尾占完整任务 40% 以上）累积到 3 次命中转为 PROPOSED，证据是 `收尾 94s/231s`、`155s/304s`、`419s/912s`；第三条里 ledger 一个阶段就占 419s / 19 次调用。同时 `FAST_SCOPE`（快速通道越界）也在一次 10.7 秒的快任务上误报，唯一越界阶段仍是 ledger。
+
+**根因**: 阶段归属靠 `PHASE_PATTERNS` 对"工具名 + 工具输入 JSON 文本"做先命中先用的正则匹配，两个模式的匹配面过宽：
+1. `ledger = sire_run\.py|[\\/]runs[\\/]|[\\/]\.sire[\\/]` —— 任何命令里出现 `.sire/runs/` 路径就算写台账。真实场景测试（R7）的夹具与 Playwright 脚本恰好都放在 run 目录下（`.sire/runs/R…/ui_fixture.py`、`getByRole('button').click()`），于是被整段记成收尾时间。
+2. `archive` 里含裸 `knowledge[\\/]+global` —— 读 `knowledge/global/KNOWLEDGE_TEMPLATE.md` 这类检索动作被记成归档收尾。
+3. 附带缺陷：钩子把事件 `detail` 截断到 160 字，导致事后无法重新分类核对（现存 161 条 ledger/archive 事件里 145 条已是不可解析的半截 JSON），规则命中对不对根本复核不了。
+4. 一次 Bash 里串多条命令只归一个阶段（先命中先用），进一步放大误分类。
+
+**方案 / 架构**: 只收紧匹配面，不动规则编号与阈值：
+- `ledger` 改为只认台账写入：`sire_run\.py|journal\.log|run\.json|units\.json|blockers\.md|assumptions\.md|kb-hits\.md|stage-output|\.sire[\\/]current`。
+- `archive` 去掉裸 `knowledge/global` 与 `archive[_-]?(db|root|result)`，只认动作：`sire_kb\.py (reindex|add|next-id|export-md|lint)|sire_vector_db\.py (index|migrate)|sire_db_backup|snapshot_db|SIRE_ARCHIVE_(ROOT|DB)`。
+- 读知识库改判 `retrieve`（在 retrieve 模式里加 `knowledge[\\/]global`），语义归位而不是简单删掉。
+- 事件 `detail` 上限 160→320，保证该规则可被复核。
+
+**关键文件与接口**:
+- `sire/workflow/shared/sire/scripts/sire_telemetry.py:31-41` — `PHASE_PATTERNS` 的 retrieve/archive/ledger 三项
+- 同文件 `cmd_hook()` — `redact(json.dumps(tool_input…), 320)`
+- `sire/.sire/runs/R20261013-074759/evidence/measure_phaseclass.py` — 新旧模式重放对比
+- 同目录 `r7_phase_test.py` + `r7_phase_result.json` — 隔离库真实 hook 链路断言
+
+**验证方法**: 用打补丁后的 `classify()` 重放 62 个历史任务（只读生产库）：`CLOSE_HEAVY` 命中 3→0、`FAST_SCOPE` 1→0，ledger 累计 1033s→716s、archive 368s→286s；full 任务收尾占比分布仍为 37/27/23/21/18/12%，即真实收尾工作量照样可见，规则没有空转。R7 在隔离遥测库走真实 `hook → summarize_task → analyze`：`stage-output` 记 ledger、`.sire/runs` 下的 Playwright 夹具不再记 ledger、读 `knowledge/global` 记 retrieve、`sire_kb.py reindex` 仍记 archive，5 条断言全 PASS。`sire_qoder.py selftest` 回归 PASS，`pending` 清空，`rsi-check` PASS。
+
+**踩坑**: ① 写 A/B 度量脚本时不要用 `needle in line` 匹配客户端日志——本端 `sire-telemetry` 字样会先被模型自己写进代码文本里，导致假阳性结论；② 造遥测场景必须走 `summarize_task()`，直接往 `tasks` 插行不参与 `analyze`；③ 断言里截断 `detail[:60]` 会把文件名切掉而误判 FAIL；④ `evaluate` 的指标只认"越高越好"，写 `after<target` 会把提案打死。
+
+**限制**: 阶段归属仍是"从工具文本猜"，不是角色声明，一次调用串多条命令时只能归一个阶段；彻底修需要钩子侧记录显式阶段标记或拆分批量命令，属更大改动，本轮未做。收紧后 CLOSE_HEAVY 在现存数据里 0 命中，若将来真实收尾开销变大，该规则仍会按 40% 阈值报出。
+
+
+### P-20260933: DPB 407/408 到 409 的 IAP 升级白名单
+
+**日期**: 2026-10-13
+**项目**: EncoderPlotter_0903_01 / feature/compatibility
+**关键词**: DPB 407, DPB 408, DPB 409, supportedVersions, IAP upgrade matrix, sub_common, dpbFlashLayout, sub_embedded
+
+**需求场景 / 现象**: DPB 409 固件布局已登记，但 DPB 当前固件 407/408 的 IAP 允许版本列表没有 409，因此升级门禁拒绝该升级路径。
+
+**根因**: `sub_common/config.py` 中 DPB 407、408 的 `supportedVersions` 只包含 `[407, 408]`；IAP 依据当前固件配置列表决定是否允许目标版本。
+
+**方案 / 架构**: 在同名兼容分支 `feature/compatibility` 将 409 加入 DPB 407 和 408 的 `supportedVersions`，保持 DPB 409 自身列表为 `[409]`。新增参数化 QA API 测试分别验证当前版本 407、408 能请求 409；root changelog 记录产品行为。子仓先提交，再更新主仓 gitlink。
+
+**关键文件与接口**:
+- `controller/python/sub_common/config.py` — DPB `productInfoList` 中 407/408 的升级目标白名单。
+- `controller/python/qa_api/tests/test_routes.py` — `test_iap_allows_dpb_407_and_408_to_upgrade_to_409`。
+- `CHANGELOG.md` — 用户可见升级支持说明。
+
+**实施步骤**:
+1. 更新 DPB 407/408 的 `supportedVersions` 为 `[407, 408, 409]`。
+2. 通过 IAP API 假设备路径验证 407 和 408 均下发目标 409，保留已有跨系列和不支持版本拒绝测试。
+3. 先提交 sub_common，再更新 root gitlink 并同主仓 QA/changelog 一起提交。
+
+**验证方法**: `py -3.12 -m pytest qa_api/tests`（122 passed）；嵌入式/再标定/v4060 回归（42 passed）；独立审查确认 DPB 409 flashLayout 与 dpbFlashLayout helper 地址、容量一致。测试只验证软件版本门禁和模拟路径，不等同真实设备刷写。
+
+**踩坑**: Pytest `-k` 匹配节点名；初次筛选关键字错误导致 0 selected，按实际测试名调整后 2 passed。软件配置和模拟 API 无法证明设备 bootloader 兼容，升级前仍需在 DPB 407/408 实机验证。
+
+**状态**: 部分完成（代码与软件回归完成；物理设备升级验证待进行）
+
+
+### P-20260934: 遥测采集看着正常但分析层空转：summarize_task 硬依赖 UserPromptSubmit，自动化/续跑回合没有 prompt 事件就整窗丢弃
+
+**日期**: 2026-10-13
+**项目**: SIRE v6.16 遥测回合边界兜底（`D:\sire\AI\AI\sire`）
+**状态**: 已验证（RSI-20261013-TURNBOUNDARY → v6.16）
+**关键词**: 遥测, summarize_task, UserPromptSubmit, Stop, 回合边界, prompt 事件缺失, 目标续跑, automation, Qoder, CLOSE_HEAVY 失效, v6.16
+
+**需求场景 / 现象**: Qoder 端接入钩子后事件在涨（119 条），但 `tasks` 表只有 1 条且不是本会话的：本会话 117 条事件里有 3 个 `stop`、却只有 0 个 `prompt` 事件（全库 `prompt` 仅 1 条）。结果是本端所有回合都进不了 `analyze`，`CLOSE_HEAVY`/`PHASE_OUTLIER`/`FAST_SLOW` 这些按回合判定的规则对这一端完全失效——表面上"心跳正常"，实际上分析层空转。
+
+**根因**: `sire_telemetry.summarize_task()` 把 UserPromptSubmit 当成回合起点硬依赖：
+```
+prompts = [r for r in rows if r["event"] == "prompt"]
+if not prompts:
+    return          # ← 没有 prompt 事件就整窗丢弃
+start = prompts[0]["ts"]
+```
+而自动化/续跑型提示（目标系统注入的 continue、飞书转发、定时任务）不触发 `UserPromptSubmit` 钩子，只有 `Stop`。所以这类会话只有终点没有起点。
+
+**方案 / 架构**: 回合边界改以 `Stop` 为准，`UserPromptSubmit` 降为可选起点——无 prompt 事件时取窗口内最早的非 prompt 事件作为起点、`prompt` 字段留空，`mode` 仍由 Stop 读最终回复判定；有 prompt 时行为完全不变（零回归）。契约 §静默分析同步写明这条口径，防止以后再把它当硬前提。
+
+**关键文件与接口**:
+- `sire/workflow/shared/sire/scripts/sire_telemetry.py` — `summarize_task()` 起点选择与 INSERT 的 prompt 取值
+- `sire/workflow/shared/sire/references/global-contract.md` — §RSI 自动发现 第 2 条
+
+**验证方法**: 从**生产库**导出本端全部事件灌进隔离遥测库（`SIRE_TELEMETRY_DB`）重放真实 `summarize_task()`：2 个会话 4 个 stop → 修复前 0 个任务，修复后 4 个任务，且阶段分布合理，例如某回合 `总1519s / 工具40 / 失败3`（rules 76s、retrieve 169s、execute 1031s、rsi 127s、archive 84s、ledger 12s、reply 22s）。`ast` 语法校验通过，`rsi-check` PASS，`sire_qoder.py parity` rc=0。
+
+**踩坑 / 注意**: ① 验证"是否真的在采集"不能只看 events 数量，必须看 `tasks` 是否在增长——events 有、tasks 无就是分析层空转；② 重放验证要用生产真实事件灌隔离库，别手造数据（手造容易漏掉 prompt 缺失这种触发条件）；③ 我第一版验证脚本把事件按原 session 插入、却用另一个 session id 调 `summarize_task`，得到 0 任务是测试写错而非代码错——先怀疑量具再怀疑被测物。
+
+**限制**: 兜底起点的 `prompt` 字段为空，`report` 里这类回合看不到用户原话；`mode` 仍依赖最终回复里的快速通道标记，没有标记的自动化回合依旧是 `unknown`（已知项，另行处理）。

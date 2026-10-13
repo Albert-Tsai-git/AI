@@ -80,6 +80,107 @@
       ]
     },
     {
+      "id": "E-011",
+      "type": "efficiency",
+      "title": "Qoder 端 SIRE 完全兼容适配：junction 入口 + remind 实时注入 + 四事件遥测",
+      "file": "global_dev_efficiency.md",
+      "line": 83,
+      "date": "2026-10-13",
+      "project": "SIRE v6.13 Qoder 端完全兼容适配（`D:\\sire\\AI\\AI\\sire`）",
+      "status": "已验证（run R20261013-074759，RSI-20261013-QODERADAPTER → v6.13；客户端钩子真实触发待重启后用 verify 补测）",
+      "keywords": [
+        "SIRE",
+        "Qoder",
+        "客户端适配",
+        "钩子",
+        "hooks.json",
+        "settings.json",
+        "installed_plugins_v2.json",
+        "junction",
+        "sire_qoder.py",
+        "sire_telemetry",
+        "--client qoder",
+        "PostToolUseFailure",
+        "transcript",
+        "薄入口",
+        "v6.13"
+      ]
+    },
+    {
+      "id": "E-012",
+      "type": "efficiency",
+      "title": "Qoder 钩子生效时机与可复核判据：下一个提示词即采集、以遥测心跳为准、junction 热加载不等于钩子在跑",
+      "file": "global_dev_efficiency.md",
+      "line": 114,
+      "date": "2026-10-13",
+      "project": "SIRE v6.13/v6.14 Qoder 端接入（`D:\\sire\\AI\\AI\\sire`）",
+      "status": "已验证（run R20261013-081448，本端实测采集在跑）",
+      "keywords": [
+        "Qoder",
+        "钩子生效时机",
+        "下一个提示词",
+        "无需重启",
+        "hooks 条目写法",
+        "verify 心跳",
+        "junction 热加载",
+        "sire_qoder.py",
+        "client=qoder",
+        "假 PASS",
+        "v6.14"
+      ]
+    },
+    {
+      "id": "E-013",
+      "type": "efficiency",
+      "title": "把 RSI 闭环写进代码：finish 强制核对 pending、analyze 自检采集断流、Qoder 加用户级 AGENTS.md 入口",
+      "file": "global_dev_efficiency.md",
+      "line": 142,
+      "date": "2026-10-13",
+      "project": "SIRE v6.15 RSI 闭环强制化（`D:\\sire\\AI\\AI\\sire`）",
+      "status": "已验证（run R20261013-081448 续，RSI-20261013-RSILOOP → v6.15）",
+      "keywords": [
+        "SIRE",
+        "RSI",
+        "自动优化",
+        "pending",
+        "finish 门禁",
+        "sire_run.py",
+        "telemetry_pending_gate",
+        "pending-check.json",
+        "COLLECTION_DEAD",
+        "expected_clients",
+        "SIRE_CLIENT_CONFIGS",
+        "采集断流",
+        "Qoder AGENTS.md",
+        "entry-file",
+        "v6.15"
+      ]
+    },
+    {
+      "id": "E-014",
+      "type": "efficiency",
+      "title": "SIRE 收尾合并命令 sire_close.py：一条调用跑完归档+索引+阶段+finish+台账复制，不绕过 pending 门禁",
+      "file": "global_dev_efficiency.md",
+      "line": 173,
+      "date": "2026-10-13",
+      "project": "SIRE v6.17 收尾合并命令（`D:\\sire\\AI\\AI\\sire`）",
+      "status": "已验证（RSI-20261013-CLOSESCRIPT → v6.17）",
+      "keywords": [
+        "SIRE",
+        "收尾",
+        "R9",
+        "sire_close.py",
+        "close",
+        "合并命令",
+        "效率",
+        "CLOSE_HEAVY",
+        "stages.json",
+        "台账复制",
+        "pending 门禁",
+        "v6.17"
+      ]
+    },
+    {
       "id": "F-052",
       "type": "feature",
       "title": "下线检测信息确认人工决定与订单号录入",
@@ -855,6 +956,46 @@
       ]
     },
     {
+      "id": "F-060",
+      "type": "feature",
+      "title": "MES 需求规格文档：数据库、后台管理与业务系统边界",
+      "file": "global_dev_features.md",
+      "line": 972,
+      "date": "2026-10-13",
+      "project": "MES (D:\\code\\mes)",
+      "status": "已完成文档整理；需求基线仍待业务、生产、质量、仓储及 ERP 相关人员评审确认。",
+      "keywords": [
+        "MES",
+        "需求规格说明书",
+        "数据库需求",
+        "后台管理系统",
+        "业务系统",
+        "ERP工单八步流程",
+        "来料IQC",
+        "TypeORM",
+        "现状与目标边界"
+      ]
+    },
+    {
+      "id": "F-061",
+      "type": "feature",
+      "title": "将会议架构草图转成可验收的 MES 需求",
+      "file": "global_dev_features.md",
+      "line": 1000,
+      "date": "2026-10-13",
+      "project": "MES / D:\\code\\mes",
+      "status": "已完成",
+      "keywords": [
+        "MES需求规格说明书",
+        "架构草图",
+        "目标与现状",
+        "工艺配置",
+        "单工序Web",
+        "追溯矩阵",
+        "meeting sketch"
+      ]
+    },
+    {
       "id": "H-004",
       "type": "habit",
       "title": "硬件联调排查纪律 (来自 v3.4.6 力矩无响应排查)",
@@ -1320,6 +1461,76 @@
         "evaluate 方向性",
         "resolve 无校验",
         "v6.12"
+      ]
+    },
+    {
+      "id": "P-20260932",
+      "type": "problem",
+      "title": "CLOSE_HEAVY/FAST_SCOPE 误报根因：阶段正则把真实场景测试与知识检索记成收尾，detail 截断使复核不可能",
+      "file": "global_problem_solutions.md",
+      "line": 454,
+      "date": "2026-10-13",
+      "project": "SIRE v6.14 遥测阶段归属收紧（`D:\\sire\\AI\\AI\\sire`）",
+      "status": "已验证（run R20261013-074759，RSI-20261013-PHASECLASS → v6.14）",
+      "keywords": [
+        "SIRE",
+        "遥测",
+        "sire_telemetry",
+        "PHASE_PATTERNS",
+        "classify",
+        "ledger",
+        "archive",
+        "CLOSE_HEAVY",
+        "FAST_SCOPE",
+        "误报",
+        ".sire/runs",
+        "knowledge/global",
+        "detail 截断",
+        "RSI",
+        "v6.14"
+      ]
+    },
+    {
+      "id": "P-20260933",
+      "type": "problem",
+      "title": "DPB 407/408 到 409 的 IAP 升级白名单",
+      "file": "global_problem_solutions.md",
+      "line": 488,
+      "date": "2026-10-13",
+      "project": "EncoderPlotter_0903_01 / feature/compatibility",
+      "status": "部分完成（代码与软件回归完成；物理设备升级验证待进行）",
+      "keywords": [
+        "DPB 407",
+        "DPB 408",
+        "DPB 409",
+        "supportedVersions",
+        "IAP upgrade matrix",
+        "sub_common",
+        "dpbFlashLayout",
+        "sub_embedded"
+      ]
+    },
+    {
+      "id": "P-20260934",
+      "type": "problem",
+      "title": "遥测采集看着正常但分析层空转：summarize_task 硬依赖 UserPromptSubmit，自动化/续跑回合没有 prompt 事件就整窗丢弃",
+      "file": "global_problem_solutions.md",
+      "line": 517,
+      "date": "2026-10-13",
+      "project": "SIRE v6.16 遥测回合边界兜底（`D:\\sire\\AI\\AI\\sire`）",
+      "status": "已验证（RSI-20261013-TURNBOUNDARY → v6.16）",
+      "keywords": [
+        "遥测",
+        "summarize_task",
+        "UserPromptSubmit",
+        "Stop",
+        "回合边界",
+        "prompt 事件缺失",
+        "目标续跑",
+        "automation",
+        "Qoder",
+        "CLOSE_HEAVY 失效",
+        "v6.16"
       ]
     }
   ],
@@ -2708,6 +2919,54 @@
     ],
     "文档引用失效": [
       "F-059"
+    ],
+    "MES": [
+      "F-060"
+    ],
+    "需求规格说明书": [
+      "F-060"
+    ],
+    "数据库需求": [
+      "F-060"
+    ],
+    "后台管理系统": [
+      "F-060"
+    ],
+    "业务系统": [
+      "F-060"
+    ],
+    "ERP工单八步流程": [
+      "F-060"
+    ],
+    "来料IQC": [
+      "F-060"
+    ],
+    "TypeORM": [
+      "F-060"
+    ],
+    "现状与目标边界": [
+      "F-060"
+    ],
+    "MES需求规格说明书": [
+      "F-061"
+    ],
+    "架构草图": [
+      "F-061"
+    ],
+    "目标与现状": [
+      "F-061"
+    ],
+    "工艺配置": [
+      "F-061"
+    ],
+    "单工序Web": [
+      "F-061"
+    ],
+    "追溯矩阵": [
+      "F-061"
+    ],
+    "meeting sketch": [
+      "F-061"
     ]
   },
   "problems": {
@@ -2961,7 +3220,8 @@
       "P-20260923",
       "P-20260924",
       "P-20260925",
-      "P-20260931"
+      "P-20260931",
+      "P-20260932"
     ],
     "Git 归档": [
       "P-024"
@@ -3029,7 +3289,8 @@
     ],
     "RSI": [
       "P-20260925",
-      "P-20260931"
+      "P-20260931",
+      "P-20260932"
     ],
     "自我优化": [
       "P-20260925"
@@ -3254,19 +3515,22 @@
       "P-20260931"
     ],
     "sire_telemetry": [
-      "P-20260931"
+      "P-20260931",
+      "P-20260932"
     ],
     "PHASE_OUTLIER": [
       "P-20260931"
     ],
     "CLOSE_HEAVY": [
-      "P-20260931"
+      "P-20260931",
+      "P-20260932"
     ],
     "TOOL_RETRY": [
       "P-20260931"
     ],
     "误报": [
-      "P-20260931"
+      "P-20260931",
+      "P-20260932"
     ],
     "遥测钩子": [
       "P-20260931"
@@ -3282,12 +3546,100 @@
     ],
     "v6.12": [
       "P-20260931"
+    ],
+    "遥测": [
+      "P-20260932",
+      "P-20260934"
+    ],
+    "PHASE_PATTERNS": [
+      "P-20260932"
+    ],
+    "classify": [
+      "P-20260932"
+    ],
+    "ledger": [
+      "P-20260932"
+    ],
+    "archive": [
+      "P-20260932"
+    ],
+    "FAST_SCOPE": [
+      "P-20260932"
+    ],
+    ".sire/runs": [
+      "P-20260932"
+    ],
+    "knowledge/global": [
+      "P-20260932"
+    ],
+    "detail 截断": [
+      "P-20260932"
+    ],
+    "v6.14": [
+      "P-20260932"
+    ],
+    "DPB 407": [
+      "P-20260933"
+    ],
+    "DPB 408": [
+      "P-20260933"
+    ],
+    "DPB 409": [
+      "P-20260933"
+    ],
+    "supportedVersions": [
+      "P-20260933"
+    ],
+    "IAP upgrade matrix": [
+      "P-20260933"
+    ],
+    "sub_common": [
+      "P-20260933"
+    ],
+    "dpbFlashLayout": [
+      "P-20260933"
+    ],
+    "sub_embedded": [
+      "P-20260933"
+    ],
+    "summarize_task": [
+      "P-20260934"
+    ],
+    "UserPromptSubmit": [
+      "P-20260934"
+    ],
+    "Stop": [
+      "P-20260934"
+    ],
+    "回合边界": [
+      "P-20260934"
+    ],
+    "prompt 事件缺失": [
+      "P-20260934"
+    ],
+    "目标续跑": [
+      "P-20260934"
+    ],
+    "automation": [
+      "P-20260934"
+    ],
+    "Qoder": [
+      "P-20260934"
+    ],
+    "CLOSE_HEAVY 失效": [
+      "P-20260934"
+    ],
+    "v6.16": [
+      "P-20260934"
     ]
   },
   "efficiency": {
     "SIRE": [
       "E-008",
-      "E-010"
+      "E-010",
+      "E-011",
+      "E-013",
+      "E-014"
     ],
     "单一来源": [
       "E-008",
@@ -3307,7 +3659,8 @@
     ],
     "RSI": [
       "E-008",
-      "E-010"
+      "E-010",
+      "E-013"
     ],
     "sire_rsi": [
       "E-008"
@@ -3400,13 +3753,154 @@
       "E-010"
     ],
     "薄入口": [
-      "E-010"
+      "E-010",
+      "E-011"
     ],
     "telemetry": [
       "E-010"
     ],
     "数据库不进Git": [
       "E-010"
+    ],
+    "Qoder": [
+      "E-011",
+      "E-012"
+    ],
+    "客户端适配": [
+      "E-011"
+    ],
+    "钩子": [
+      "E-011"
+    ],
+    "hooks.json": [
+      "E-011"
+    ],
+    "settings.json": [
+      "E-011"
+    ],
+    "installed_plugins_v2.json": [
+      "E-011"
+    ],
+    "junction": [
+      "E-011"
+    ],
+    "sire_qoder.py": [
+      "E-011",
+      "E-012"
+    ],
+    "sire_telemetry": [
+      "E-011"
+    ],
+    "--client qoder": [
+      "E-011"
+    ],
+    "PostToolUseFailure": [
+      "E-011"
+    ],
+    "transcript": [
+      "E-011"
+    ],
+    "v6.13": [
+      "E-011"
+    ],
+    "钩子生效时机": [
+      "E-012"
+    ],
+    "下一个提示词": [
+      "E-012"
+    ],
+    "无需重启": [
+      "E-012"
+    ],
+    "hooks 条目写法": [
+      "E-012"
+    ],
+    "verify 心跳": [
+      "E-012"
+    ],
+    "junction 热加载": [
+      "E-012"
+    ],
+    "client=qoder": [
+      "E-012"
+    ],
+    "假 PASS": [
+      "E-012"
+    ],
+    "v6.14": [
+      "E-012"
+    ],
+    "自动优化": [
+      "E-013"
+    ],
+    "pending": [
+      "E-013"
+    ],
+    "finish 门禁": [
+      "E-013"
+    ],
+    "sire_run.py": [
+      "E-013"
+    ],
+    "telemetry_pending_gate": [
+      "E-013"
+    ],
+    "pending-check.json": [
+      "E-013"
+    ],
+    "COLLECTION_DEAD": [
+      "E-013"
+    ],
+    "expected_clients": [
+      "E-013"
+    ],
+    "SIRE_CLIENT_CONFIGS": [
+      "E-013"
+    ],
+    "采集断流": [
+      "E-013"
+    ],
+    "Qoder AGENTS.md": [
+      "E-013"
+    ],
+    "entry-file": [
+      "E-013"
+    ],
+    "v6.15": [
+      "E-013"
+    ],
+    "收尾": [
+      "E-014"
+    ],
+    "R9": [
+      "E-014"
+    ],
+    "sire_close.py": [
+      "E-014"
+    ],
+    "close": [
+      "E-014"
+    ],
+    "合并命令": [
+      "E-014"
+    ],
+    "效率": [
+      "E-014"
+    ],
+    "CLOSE_HEAVY": [
+      "E-014"
+    ],
+    "stages.json": [
+      "E-014"
+    ],
+    "台账复制": [
+      "E-014"
+    ],
+    "pending 门禁": [
+      "E-014"
+    ],
+    "v6.17": [
+      "E-014"
     ]
   },
   "habits": {
@@ -3471,6 +3965,6 @@
       "H-006"
     ]
   },
-  "last_updated": "2026-10-12T23:41:23Z",
-  "total_records": 47
+  "last_updated": "2026-10-13T00:49:30Z",
+  "total_records": 56
 }
