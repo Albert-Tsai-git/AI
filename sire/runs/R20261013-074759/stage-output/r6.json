@@ -1,0 +1,11 @@
+{
+  "stage": "R6",
+  "status": "DONE",
+  "artifacts": [
+    "junction 即时出现在技能列表；settings.json 仅新增 hooks 键"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "纠正2处：selftest 事件数 6→7（补 Agent 调用）；不在 repo 留生成的白名单副本，改为 remind 实时输出",
+  "updated": "2026-10-13 07:57:30"
+}

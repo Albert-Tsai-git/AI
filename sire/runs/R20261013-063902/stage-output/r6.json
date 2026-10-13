@@ -1,0 +1,11 @@
+{
+  "stage": "R6",
+  "status": "DONE",
+  "artifacts": [
+    "evidence/outlier_before.json outlier_after.json"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "逐条对回DB行与文件行号；纠正2处：unknown计数26→27、SQL直插tasks行不走summarize_task管线",
+  "updated": "2026-10-13 06:45:36"
+}

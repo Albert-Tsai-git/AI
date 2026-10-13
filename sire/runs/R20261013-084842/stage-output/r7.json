@@ -1,0 +1,11 @@
+{
+  "stage": "R7",
+  "status": "DONE",
+  "artifacts": [
+    "run R20261013-084551 实测 29.7s 一次调用完成 11 stage+finish+台账复制"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "真实场景：用该命令完成本 run 自身收尾（自指验证）",
+  "updated": "2026-10-13 08:50:25"
+}

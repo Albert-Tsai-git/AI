@@ -1,0 +1,8 @@
+{
+ "tasks": 53,
+ "rules": {
+  "CLOSE_HEAVY": 2,
+  "FAST_SCOPE": 1
+ },
+ "outlier": []
+}

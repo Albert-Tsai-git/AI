@@ -1,0 +1,11 @@
+{
+  "stage": "R0",
+  "status": "DONE",
+  "artifacts": [
+    "整段需求=Qoder 与 Codex/Claude 同等兼容；授权=可改客户端配置与机制源"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "用户指令取代 2026-10-12 的旧裁定（不在 ~/.qoder-cn 建别名），当前指令优先",
+  "updated": "2026-10-13 07:57:13"
+}

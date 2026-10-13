@@ -1,0 +1,11 @@
+{
+  "stage": "R9",
+  "status": "DONE",
+  "artifacts": [
+    "scripts/sire_close.py"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "一次调用完成归档/索引/阶段/收尾/台账复制",
+  "updated": "2026-10-13 08:46:10"
+}

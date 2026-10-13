@@ -1,0 +1,11 @@
+{
+  "stage": "R3",
+  "status": "DONE",
+  "artifacts": [
+    "U1 采集实况核查 U2 误报定量 U3 正则收紧 U4 R7 断言 U5 RSI 闭环 U6 文档与实测一致化 U7 归档"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "",
+  "updated": "2026-10-13 08:15:06"
+}

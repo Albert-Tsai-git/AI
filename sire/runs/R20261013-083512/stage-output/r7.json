@@ -1,0 +1,11 @@
+{
+  "stage": "R7",
+  "status": "DONE",
+  "artifacts": [
+    "evidence/probe_asar_hooks.py asar_probe.txt; sire_qoder.py parity; agents/qoder/README.md"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "取证判定 Qoder 注入通道=用户级记忆；remind 降为可选；parity 扩到 8 项",
+  "updated": "2026-10-13 08:35:14"
+}

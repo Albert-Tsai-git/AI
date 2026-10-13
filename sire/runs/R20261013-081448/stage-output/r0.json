@@ -1,0 +1,11 @@
+{
+  "stage": "R0",
+  "status": "DONE",
+  "artifacts": [
+    "整段需求=Qoder 完全兼容；本段=实采集确认 + 处理 pending CLOSE_HEAVY"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "模型选择门禁：Qoder 无 model 参数，全部主控直接执行",
+  "updated": "2026-10-13 08:15:06"
+}

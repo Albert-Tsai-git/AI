@@ -1,0 +1,11 @@
+{
+  "stage": "R5",
+  "status": "DONE",
+  "artifacts": [
+    "scripts/sire_close.py; REQUIRED_ARCHIVE_ENTRIES; SKILL.md; global-contract §RSI3"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "",
+  "updated": "2026-10-13 08:50:25"
+}

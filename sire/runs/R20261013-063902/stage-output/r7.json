@@ -1,0 +1,11 @@
+{
+  "stage": "R7",
+  "status": "DONE",
+  "artifacts": [
+    "evidence/r7_telemetry_test.py r7_result.json"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "T1 PASS execute600s离群与unknown任务均不再产发现；T2 PASS archive300s对中位数20s连中2次转PROPOSED并进pending；隔离遥测库真实analyze/pending路径",
+  "updated": "2026-10-13 06:45:36"
+}

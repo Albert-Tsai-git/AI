@@ -1,0 +1,15 @@
+[2026-10-13 08:45:51] INIT R20261013-084551 | 收尾合并命令落地与效率验证（v6.17） | channel=light
+[2026-10-13 08:46:09] GATE G0=PASS 
+[2026-10-13 08:46:09] STAGE-OUTPUT R0 DONE artifacts=scripts/sire_close.py
+[2026-10-13 08:46:09] STAGE-OUTPUT R1 DONE artifacts=scripts/sire_close.py
+[2026-10-13 08:46:09] STAGE-OUTPUT R2 DONE artifacts=scripts/sire_close.py
+[2026-10-13 08:46:09] STAGE-OUTPUT R3 DONE artifacts=scripts/sire_close.py
+[2026-10-13 08:46:09] STAGE-OUTPUT R4 DONE artifacts=scripts/sire_close.py
+[2026-10-13 08:46:09] STAGE-OUTPUT R5 DONE artifacts=scripts/sire_close.py
+[2026-10-13 08:46:10] STAGE-OUTPUT R6 DONE artifacts=scripts/sire_close.py
+[2026-10-13 08:46:10] STAGE-OUTPUT R7 DONE artifacts=scripts/sire_close.py
+[2026-10-13 08:46:10] STAGE-OUTPUT R8 DONE artifacts=scripts/sire_close.py
+[2026-10-13 08:46:10] STAGE-OUTPUT R9 DONE artifacts=scripts/sire_close.py
+[2026-10-13 08:46:10] STAGE-OUTPUT R10 SKIPPED artifacts=跳过记录
+[2026-10-13 08:46:10] PENDING PASS: 无
+[2026-10-13 08:46:39] FINISH records=

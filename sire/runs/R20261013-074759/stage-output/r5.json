@@ -1,0 +1,11 @@
+{
+  "stage": "R5",
+  "status": "DONE",
+  "artifacts": [
+    "scripts/sire_qoder.py agents/qoder/README.md sire_telemetry.py 三处 SKILL/契约 SKILL-MIGRATION supervisor 清单"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "",
+  "updated": "2026-10-13 07:57:30"
+}

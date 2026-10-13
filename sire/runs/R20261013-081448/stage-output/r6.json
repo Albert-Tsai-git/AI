@@ -1,0 +1,11 @@
+{
+  "stage": "R6",
+  "status": "DONE",
+  "artifacts": [
+    "runs/R20261013-074759/evidence/measure_phaseclass.py 结果"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "纠正两处：README 断言条目叠加导致断流（证据不足，改为未定并保留 A/B）；verify 假 PASS 判据",
+  "updated": "2026-10-13 08:15:06"
+}

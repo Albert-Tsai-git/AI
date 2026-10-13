@@ -1,0 +1,14 @@
+[2026-10-13 06:39:02] INIT R20261013-063902 | RSI 机制自我审查（时间/流程/效率/输出/精准度） | channel=full
+[2026-10-13 06:45:26] STAGE-OUTPUT R0 DONE artifacts=run.json channel=full
+[2026-10-13 06:45:26] STAGE-OUTPUT R1 DONE artifacts=P-20260925 E-010 E-008 命中记录（本条journal）
+[2026-10-13 06:45:26] STAGE-OUTPUT R2 DONE artifacts=验收标准清单（本条journal）
+[2026-10-13 06:45:26] STAGE-OUTPUT R3 DONE artifacts=单元清单U1-U7（本条journal）
+[2026-10-13 06:45:26] STAGE-OUTPUT R4 DONE artifacts=依赖与读写集核对（本条journal）
+[2026-10-13 06:45:36] STAGE-OUTPUT R5 DONE artifacts=sire_telemetry.py:42-46 CATCH_ALL_PHASES + detect()跳过mode=unknown
+[2026-10-13 06:45:36] STAGE-OUTPUT R6 DONE artifacts=evidence/outlier_before.json outlier_after.json
+[2026-10-13 06:45:36] STAGE-OUTPUT R7 DONE artifacts=evidence/r7_telemetry_test.py r7_result.json
+[2026-10-13 06:45:36] STAGE-OUTPUT R8 DONE artifacts=重放对比 + rsi-check PASS
+[2026-10-13 06:45:36] STAGE-OUTPUT R9 DONE artifacts=P-20260931 / RSI-20261013-OUTLIER-BASE → v6.12 / resolve PHASE_OUTLIER:execute
+[2026-10-13 06:45:37] STAGE-OUTPUT R10 SKIPPED artifacts=跳过记录
+[2026-10-13 06:47:04] FINISH records=P-20260931
+[2026-10-13 06:47:13] GATE G0=PASS 两组关键词检索+一组向量检索回执齐全

@@ -1,0 +1,11 @@
+{
+  "stage": "R10",
+  "status": "SKIPPED",
+  "artifacts": [
+    "跳过记录"
+  ],
+  "reason": "未使用 OS 级原生操作；computer-use 工具暴露未验证",
+  "risk": "",
+  "note": "",
+  "updated": "2026-10-13 07:57:31"
+}

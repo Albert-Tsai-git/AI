@@ -1,0 +1,16 @@
+{
+ "R6 独立复核（用本端新增的 role low 档委派给 Explore 子代理，只读核查）": {
+  "时间": "2026-10-13 08:39",
+  "核查六项": {
+   "sire_qoder.py 十个子命令齐全": "成立（install/entry-file/role/parity/status/uninstall/link/remind/selftest/verify）",
+   "sire_telemetry 支持 qoder + qoder_transcript + COLLECTION_DEAD": "成立（choices 含 qoder；L172 qoder_transcript；RULES 含 COLLECTION_DEAD）",
+   "sire_run 有 telemetry_pending_gate 与 --pending-note": "成立（L1068、L1250，L1144 收尾路径调用）",
+   "agents/qoder/README.md 三端对照表在位": "成立（L8-13，含模型分级派工行）",
+   "global-contract 与 SKILL 提到 Qoder": "成立（分别 7 处、8 处）",
+   "无第二份可写工作流": "成立（~/.qoder-cn/skills/sire-global-workflow 为目录符号链接，与 shared/sire/SKILL.md 同 inode 1407374884230417、15455 字节、diff 无差异）"
+  },
+  "复核发现的缺陷": "sire_telemetry.py 顶部 docstring 仍写 claude|codex，未含 qoder（文档滞后）",
+  "处置": "已修为 claude|codex|qoder，ast 语法校验通过，parity rc=0 复跑通过",
+  "复核后状态": "本端事件 113 条（近 2 分钟 14 条）、pending 空、rsi-check PASS、v6.15 ACTIVE"
+ }
+}

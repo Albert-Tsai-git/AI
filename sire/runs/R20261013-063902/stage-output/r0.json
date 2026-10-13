@@ -1,0 +1,11 @@
+{
+  "stage": "R0",
+  "status": "DONE",
+  "artifacts": [
+    "run.json channel=full"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "整段需求=RSI机制自审，五维度锁定；R9按契约处理一条pending发现",
+  "updated": "2026-10-13 06:45:26"
+}

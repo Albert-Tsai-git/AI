@@ -1,0 +1,11 @@
+{
+  "stage": "R8",
+  "status": "DONE",
+  "artifacts": [
+    "evidence/kb-P-turnboundary.md; P-20260934; sire_telemetry.py summarize_task"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "真实事件重放：4 Stop 修复前 0 任务→修复后 4 任务",
+  "updated": "2026-10-13 08:43:43"
+}

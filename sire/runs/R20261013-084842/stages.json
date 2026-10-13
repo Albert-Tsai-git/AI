@@ -1,0 +1,59 @@
+[
+ {
+  "stage": "R0",
+  "status": "DONE",
+  "artifact": "整段需求=Qoder 完全兼容；本段=收尾合并命令落地",
+  "note": "模型选择门禁：无 model 参数，全部主控直接执行"
+ },
+ {
+  "stage": "R1",
+  "status": "DONE",
+  "artifact": ".sire/runs/R20261013-084842/kb-hits.md"
+ },
+ {
+  "stage": "R2",
+  "status": "DONE",
+  "artifact": "验收：一条命令完成收尾且不绕过门禁"
+ },
+ {
+  "stage": "R3",
+  "status": "DONE",
+  "artifact": "U1 度量 U2 脚本 U3 门禁与文档 U4 自验 U5 归档"
+ },
+ {
+  "stage": "R4",
+  "status": "DONE",
+  "artifact": "依赖 U1→U2→U4→U5；读写集无冲突"
+ },
+ {
+  "stage": "R5",
+  "status": "DONE",
+  "artifact": "scripts/sire_close.py; REQUIRED_ARCHIVE_ENTRIES; SKILL.md; global-contract §RSI3"
+ },
+ {
+  "stage": "R6",
+  "status": "DONE",
+  "artifact": "dry-run 与真实执行输出一致；finish 内部门禁未被绕过（代码走查）"
+ },
+ {
+  "stage": "R7",
+  "status": "DONE",
+  "artifact": "run R20261013-084551 实测 29.7s 一次调用完成 11 stage+finish+台账复制",
+  "note": "真实场景：用该命令完成本 run 自身收尾（自指验证）"
+ },
+ {
+  "stage": "R8",
+  "status": "DONE",
+  "artifact": "归档 E-014 由 close 的 --kb-add 一步完成"
+ },
+ {
+  "stage": "R9",
+  "status": "DONE",
+  "artifact": "E-014 / RSI-20261013-CLOSESCRIPT v6.17 / 迁移文档行"
+ },
+ {
+  "stage": "R10",
+  "status": "SKIPPED",
+  "reason": "无 OS 级原生操作"
+ }
+]

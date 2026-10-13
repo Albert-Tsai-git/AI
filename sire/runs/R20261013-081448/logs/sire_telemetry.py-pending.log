@@ -1,0 +1,6 @@
+rc=0
+STDOUT:
+COLLECTION_DEAD:claude [PROPOSED] 命中 1 次：客户端配了钩子却长时间无事件：核对该客户端配置是否仍指向 sire_telemetry.py hook，修好后 resolve；这属于采集面故障，不要靠删规则消音（近期：末次事件距今 2160 分钟）
+
+STDERR:
+

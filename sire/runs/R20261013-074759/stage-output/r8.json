@@ -1,0 +1,11 @@
+{
+  "stage": "R8",
+  "status": "DONE",
+  "artifacts": [
+    "install/status/verify/selftest 四条命令连续运行结果一致"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "uninstall 只删自有键；旧 4 条条目被幂等替换",
+  "updated": "2026-10-13 07:57:30"
+}

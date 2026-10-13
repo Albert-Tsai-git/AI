@@ -1,0 +1,11 @@
+{
+  "stage": "R3",
+  "status": "DONE",
+  "artifacts": [
+    "单元清单U1-U7（本条journal）"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "U1采集现状 U2规则与门禁代码 U3重放基线 U4最小修复 U5 R7测试 U6 RSI闭环 U7归档",
+  "updated": "2026-10-13 06:45:26"
+}

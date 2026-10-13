@@ -1,0 +1,67 @@
+[
+ {
+  "stage": "R0",
+  "status": "DONE",
+  "artifact": "scripts/sire_close.py",
+  "note": "一次调用完成归档/索引/阶段/收尾/台账复制"
+ },
+ {
+  "stage": "R1",
+  "status": "DONE",
+  "artifact": "scripts/sire_close.py",
+  "note": "一次调用完成归档/索引/阶段/收尾/台账复制"
+ },
+ {
+  "stage": "R2",
+  "status": "DONE",
+  "artifact": "scripts/sire_close.py",
+  "note": "一次调用完成归档/索引/阶段/收尾/台账复制"
+ },
+ {
+  "stage": "R3",
+  "status": "DONE",
+  "artifact": "scripts/sire_close.py",
+  "note": "一次调用完成归档/索引/阶段/收尾/台账复制"
+ },
+ {
+  "stage": "R4",
+  "status": "DONE",
+  "artifact": "scripts/sire_close.py",
+  "note": "一次调用完成归档/索引/阶段/收尾/台账复制"
+ },
+ {
+  "stage": "R5",
+  "status": "DONE",
+  "artifact": "scripts/sire_close.py",
+  "note": "一次调用完成归档/索引/阶段/收尾/台账复制"
+ },
+ {
+  "stage": "R6",
+  "status": "DONE",
+  "artifact": "scripts/sire_close.py",
+  "note": "一次调用完成归档/索引/阶段/收尾/台账复制"
+ },
+ {
+  "stage": "R7",
+  "status": "DONE",
+  "artifact": "scripts/sire_close.py",
+  "note": "一次调用完成归档/索引/阶段/收尾/台账复制"
+ },
+ {
+  "stage": "R8",
+  "status": "DONE",
+  "artifact": "scripts/sire_close.py",
+  "note": "一次调用完成归档/索引/阶段/收尾/台账复制"
+ },
+ {
+  "stage": "R9",
+  "status": "DONE",
+  "artifact": "scripts/sire_close.py",
+  "note": "一次调用完成归档/索引/阶段/收尾/台账复制"
+ },
+ {
+  "stage": "R10",
+  "status": "SKIPPED",
+  "reason": "无 OS 级操作"
+ }
+]

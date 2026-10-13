@@ -1,0 +1,11 @@
+{
+  "stage": "R9",
+  "status": "DONE",
+  "artifacts": [
+    "E-011 / RSI-20261013-QODERADAPTER → v6.13 / SIRE-MIGRATION v6.13 行"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "pending 为空；Claude 侧断流与脚本未强制 pending 两项仍未修，属其它独立提案",
+  "updated": "2026-10-13 07:57:31"
+}

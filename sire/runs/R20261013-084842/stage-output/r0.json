@@ -1,0 +1,11 @@
+{
+  "stage": "R0",
+  "status": "DONE",
+  "artifacts": [
+    "整段需求=Qoder 完全兼容；本段=收尾合并命令落地"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "模型选择门禁：无 model 参数，全部主控直接执行",
+  "updated": "2026-10-13 08:50:25"
+}

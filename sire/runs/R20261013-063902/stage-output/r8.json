@@ -1,0 +1,11 @@
+{
+  "stage": "R8",
+  "status": "DONE",
+  "artifacts": [
+    "重放对比 + rsi-check PASS"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "PHASE_OUTLIER 2→0，CLOSE_HEAVY=2/FAST_SCOPE=1保持不变，pending清空，rsi-check由STOP转PASS",
+  "updated": "2026-10-13 06:45:36"
+}

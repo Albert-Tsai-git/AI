@@ -1,0 +1,15 @@
+[2026-10-13 08:35:12] INIT R20261013-083512 | Qoder 注入通道取证与入口策略定版（v6.15 续） | channel=light
+[2026-10-13 08:35:14] GATE G0=PASS 
+[2026-10-13 08:35:14] STAGE-OUTPUT R0 DONE artifacts=evidence/probe_asar_hooks.py asar_probe.txt; sire_qoder.py parity; agents/qoder/README.md
+[2026-10-13 08:35:14] STAGE-OUTPUT R1 DONE artifacts=evidence/probe_asar_hooks.py asar_probe.txt; sire_qoder.py parity; agents/qoder/README.md
+[2026-10-13 08:35:14] STAGE-OUTPUT R2 DONE artifacts=evidence/probe_asar_hooks.py asar_probe.txt; sire_qoder.py parity; agents/qoder/README.md
+[2026-10-13 08:35:14] STAGE-OUTPUT R3 DONE artifacts=evidence/probe_asar_hooks.py asar_probe.txt; sire_qoder.py parity; agents/qoder/README.md
+[2026-10-13 08:35:14] STAGE-OUTPUT R4 DONE artifacts=evidence/probe_asar_hooks.py asar_probe.txt; sire_qoder.py parity; agents/qoder/README.md
+[2026-10-13 08:35:14] STAGE-OUTPUT R5 DONE artifacts=evidence/probe_asar_hooks.py asar_probe.txt; sire_qoder.py parity; agents/qoder/README.md
+[2026-10-13 08:35:14] STAGE-OUTPUT R6 DONE artifacts=evidence/probe_asar_hooks.py asar_probe.txt; sire_qoder.py parity; agents/qoder/README.md
+[2026-10-13 08:35:14] STAGE-OUTPUT R7 DONE artifacts=evidence/probe_asar_hooks.py asar_probe.txt; sire_qoder.py parity; agents/qoder/README.md
+[2026-10-13 08:35:14] STAGE-OUTPUT R8 DONE artifacts=evidence/probe_asar_hooks.py asar_probe.txt; sire_qoder.py parity; agents/qoder/README.md
+[2026-10-13 08:35:15] STAGE-OUTPUT R9 DONE artifacts=evidence/probe_asar_hooks.py asar_probe.txt; sire_qoder.py parity; agents/qoder/README.md
+[2026-10-13 08:35:15] STAGE-OUTPUT R10 SKIPPED artifacts=跳过记录
+[2026-10-13 08:35:15] PENDING PASS: 无
+[2026-10-13 08:35:31] FINISH records=

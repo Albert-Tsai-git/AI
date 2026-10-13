@@ -1,0 +1,62 @@
+{
+ "逐事件归属": [
+  [
+   "Bash",
+   "ledger",
+   "{\"command\": \"python sire_run.py --root D:/x stage-output R5 DONE --artifact a\"}"
+  ],
+  [
+   "apply_patch",
+   "execute",
+   "{\"command\": \"*** Add File: D:/code/x/.sire/runs/R1/ui_fixture.py UI测试夹具\"}"
+  ],
+  [
+   "Bash",
+   "execute",
+   "{\"command\": \"py -3.12 .sire/runs/R1/ui_fixture.py getByRole(button).click()\"}"
+  ],
+  [
+   "Read",
+   "retrieve",
+   "{\"file_path\": \"D:/sire/AI/AI/sire/knowledge/global/global_dev_efficiency.md\"}"
+  ],
+  [
+   "Bash",
+   "archive",
+   "{\"command\": \"python sire_kb.py reindex\"}"
+  ],
+  [
+   "Bash",
+   "retrieve",
+   "{\"command\": \"python sire_kb.py search 阶段归属\"}"
+  ],
+  [
+   "Bash",
+   "rsi",
+   "{\"command\": \"$env:SIRE_ARCHIVE_ROOT=D:/sire; python sire_rsi.py status\"}"
+  ]
+ ],
+ "阶段秒数": {
+  "ledger": 0.1,
+  "execute": 0.1,
+  "retrieve": 0.2,
+  "archive": 0.1,
+  "rsi": 0.1,
+  "reply": 0.1
+ },
+ "阶段次数": {
+  "ledger": 1,
+  "execute": 2,
+  "retrieve": 2,
+  "archive": 1,
+  "rsi": 1
+ },
+ "断言": {
+  "真台账写入记 ledger": true,
+  "UI 夹具不记 ledger": true,
+  "读知识库记 retrieve": true,
+  "reindex 记 archive": true,
+  "台账与归档都仍有秒数（规则未空转）": true
+ },
+ "结论": "PASS"
+}

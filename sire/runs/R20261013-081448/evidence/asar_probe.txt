@@ -1,0 +1,45 @@
+asar ด๓ะก 141.4 MB
+AGENTS                      2
+agents.md                   0
+QODER.md                    0
+qoder.md                    0
+userMemory                 85
+memoryFile                  7
+instructions              582
+rulesFile                   0
+hook_stdout                 0
+stdout                    279
+additionalContext           0
+hookSpecificOutput          0
+systemMessage               0
+hook_event_name             6
+UserPromptSubmit            2
+PostToolUseFailure          4
+Stop"                      17
+transcript_path             0
+last_assistant_message      0
+Traceback (most recent call last):
+  File "D:\sire\AI\AI\sire\.sire\runs\R20261013-081448\evidence\probe_asar_hooks.py", line 18, in <module>
+    text = re.sub(rb"[^\x20-\x7e\u4e00-\u9fff]+", b" ", chunk).decode("utf-8", "ignore")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python312\Lib\re\__init__.py", line 186, in sub
+    return _compile(pattern, flags).sub(repl, string, count)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python312\Lib\re\__init__.py", line 307, in _compile
+    p = _compiler.compile(pattern, flags)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python312\Lib\re\_compiler.py", line 750, in compile
+    p = _parser.parse(p, flags)
+        ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python312\Lib\re\_parser.py", line 979, in parse
+    p = _parse_sub(source, state, flags & SRE_FLAG_VERBOSE, 0)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python312\Lib\re\_parser.py", line 460, in _parse_sub
+    itemsappend(_parse(source, state, verbose, nested + 1,
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python312\Lib\re\_parser.py", line 573, in _parse
+    code1 = _class_escape(source, this)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python312\Lib\re\_parser.py", line 366, in _class_escape
+    raise source.error('bad escape %s' % escape, len(escape))
+re.error: bad escape \u at position 11

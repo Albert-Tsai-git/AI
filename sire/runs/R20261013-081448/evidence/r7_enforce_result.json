@@ -1,0 +1,42 @@
+{
+ "A_存活自检": {
+  "findings": {
+   "COLLECTION_DEAD:claude": [
+    "PROPOSED",
+    1
+   ]
+  },
+  "pending": "COLLECTION_DEAD:claude [PROPOSED] 命中 1 次：客户端配了钩子却长时间无事件：核对该客户端配置是否仍指向 sire_telemetry.py hook，修好后 resolve；这属于采集面故障，不要靠删规则消音（近期：末次事件距今 2160 分钟）",
+  "断言": {
+   "哑掉的 claude 被报出且直接 PROPOSED": true,
+   "有心跳的 qoder 不被误报": true,
+   "30 分钟去重生效（两次 analyze 命中仍为 1）": true,
+   "进入 pending 队列": true
+  }
+ },
+ "B_无移交": {
+  "rc": 1,
+  "消息": "BLOCKED-台账拒绝: 自动优化未闭环：遥测里有 1 条待处理发现（第一条 COLLECTION_DEAD:claude）。按 global-contract.md § RSI 处理完再收尾；确实需要用户决定时，用 `sire_telemetry.py resolve <发现> --ignore 原因` 或 finish 带 --pending-note 显式移交"
+ },
+ "C_处理后放行": {
+  "rc": 0,
+  "消息": "RUN R20261013-082353 已收尾\n单元: 无\n归档记录: 免归档（门禁测试收尾）"
+ },
+ "D_显式移交": {
+  "rc": 0,
+  "pending-check": {
+   "checked_at": "2026-10-13 08:24:17",
+   "pending": [
+    "COLLECTION_DEAD:demo"
+   ],
+   "handoff_note": "需用户决定：是否改动 Claude 配置",
+   "verdict": "HANDED_OFF"
+  }
+ },
+ "断言汇总": {
+  "有待处理发现时 finish 被挡下": true,
+  "发现处理完后 finish 放行": true,
+  "显式移交可收尾并留痕": true
+ },
+ "结论": "PASS"
+}

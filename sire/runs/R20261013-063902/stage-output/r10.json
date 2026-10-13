@@ -1,0 +1,11 @@
+{
+  "stage": "R10",
+  "status": "SKIPPED",
+  "artifacts": [
+    "跳过记录"
+  ],
+  "reason": "本任务无需本机界面或系统级操作",
+  "risk": "",
+  "note": "",
+  "updated": "2026-10-13 06:45:37"
+}

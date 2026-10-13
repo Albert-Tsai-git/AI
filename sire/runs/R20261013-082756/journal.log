@@ -1,0 +1,15 @@
+[2026-10-13 08:27:56] INIT R20261013-082756 | RSI 闭环强制化收尾（v6.15） | channel=light
+[2026-10-13 08:27:58] GATE G0=PASS 
+[2026-10-13 08:27:58] STAGE-OUTPUT R0 DONE artifacts=evidence/r7_enforce_test.py r7_enforce_result.json E-013 v6.15
+[2026-10-13 08:27:58] STAGE-OUTPUT R1 DONE artifacts=evidence/r7_enforce_test.py r7_enforce_result.json E-013 v6.15
+[2026-10-13 08:27:58] STAGE-OUTPUT R2 DONE artifacts=evidence/r7_enforce_test.py r7_enforce_result.json E-013 v6.15
+[2026-10-13 08:27:58] STAGE-OUTPUT R3 DONE artifacts=evidence/r7_enforce_test.py r7_enforce_result.json E-013 v6.15
+[2026-10-13 08:27:58] STAGE-OUTPUT R4 DONE artifacts=evidence/r7_enforce_test.py r7_enforce_result.json E-013 v6.15
+[2026-10-13 08:27:58] STAGE-OUTPUT R5 DONE artifacts=evidence/r7_enforce_test.py r7_enforce_result.json E-013 v6.15
+[2026-10-13 08:27:58] STAGE-OUTPUT R6 DONE artifacts=evidence/r7_enforce_test.py r7_enforce_result.json E-013 v6.15
+[2026-10-13 08:27:58] STAGE-OUTPUT R7 DONE artifacts=evidence/r7_enforce_test.py r7_enforce_result.json E-013 v6.15
+[2026-10-13 08:27:58] STAGE-OUTPUT R8 DONE artifacts=evidence/r7_enforce_test.py r7_enforce_result.json E-013 v6.15
+[2026-10-13 08:27:58] STAGE-OUTPUT R9 DONE artifacts=evidence/r7_enforce_test.py r7_enforce_result.json E-013 v6.15
+[2026-10-13 08:27:59] STAGE-OUTPUT R10 SKIPPED artifacts=跳过记录
+[2026-10-13 08:27:59] PENDING PASS: 无
+[2026-10-13 08:28:24] FINISH records=

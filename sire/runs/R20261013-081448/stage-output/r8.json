@@ -1,0 +1,11 @@
+{
+  "stage": "R8",
+  "status": "DONE",
+  "artifacts": [
+    "重放 62 任务 CLOSE_HEAVY 3→0、FAST_SCOPE 1→0；pending 清空"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "",
+  "updated": "2026-10-13 08:15:06"
+}

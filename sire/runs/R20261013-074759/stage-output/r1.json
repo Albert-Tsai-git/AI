@@ -1,0 +1,11 @@
+{
+  "stage": "R1",
+  "status": "DONE",
+  "artifacts": [
+    ".sire/runs/R20261013-074759/kb-hits.md + 检索回执3条"
+  ],
+  "reason": "",
+  "risk": "",
+  "note": "复用 E-008/E-010 别名做法；Qoder 钩子能力属新知识",
+  "updated": "2026-10-13 07:57:30"
+}
