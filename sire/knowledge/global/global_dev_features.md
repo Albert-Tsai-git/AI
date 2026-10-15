@@ -1275,3 +1275,25 @@ AGENTS.md 讲的是原则，这条记录给**具体文件与行号**。
 **踩坑**: `dev-<描述>` 是仅供自验的独立通道；给同事测试并生成正式测试包时应使用 `test-v*`。同一测试版本序号需查询远端现存 tags 后递增。
 
 **状态**: 已完成
+
+
+### F-079: DPB外部版查看参数显示产品与固件版本
+
+**日期**: 2026-10-15
+**项目**: EncoderPlotter_0903_01
+**关键词**: DPB, 参数查看, 外部版, series=106, final, software, isInternal, getPropFromArguments, 产品版本, 固件版本
+
+**需求场景 / 现象**: DPB 外部版本查看参数时需要给出产品版本与固件版本；内部版本仍需展示全部参数。
+
+**方案 / 架构**: 在参数查看弹窗保留 isInternal 全量参数分支为首分支；其后仅对 DPB series=106 增加外部版分支，产品版本读取 final，固件版本读取 software；其他外部系列仍走原固件版本显示分支。两字段复用 getPropFromArguments 的现有格式化与缺失值处理。产品版本增加中英双语 key。
+
+**关键文件与接口**:
+- components/analyzer/analyzer.html — 参数查看弹窗版本分支。
+- components/analyzer/analyzer.js — getPropFromArguments 版本格式化方法。
+- components/i18n.js — 产品版本中英翻译。
+
+**验证方法**: git diff --check 通过；三名独立审查员和三路交叉核验通过。真实 Electron/读取器 UI 路径未执行，必须在可操作应用和真实 DPB 参数环境中验收；本次不得以静态检查宣称 UI 通过。
+
+**踩坑**: 修改外部显示分支时应保留内部完整信息分支的优先级；系列码 106 是 DPB；final 是产品版本字段，software 是固件版本字段。
+
+**状态**: 代码完成；真实界面验收 BLOCKED-无法真实验证。
