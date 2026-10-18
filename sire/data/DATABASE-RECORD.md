@@ -10,7 +10,7 @@
 |---|---|
 | Claude/Codex 共用工作库 | `D:\sire\AI\AI\sire\data\sire_vectors.sqlite3` |
 | 机器级收尾归档库（`SIRE_ARCHIVE_ROOT`） | `D:\sire\sire_vectors.sqlite3` |
-| 自动备份目录（`sire_db_backup.py` 默认） | `C:\Users\Administrator\sire\db-backups` |
+| 自动备份目录（`sire_db_backup.py` 默认） | `D:\sire\db-backups`（2026-10-18 起，原 C 盘目录已迁移） |
 
 脚本一律经 `workflow/shared/sire/scripts/sire_paths.py` 解析工作库路径，不要在脚本里写死上表路径；上表只用于人工定位。
 

@@ -12,7 +12,8 @@ from sire_paths import DATABASE_PATH
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    backup_root = Path.home() / "sire" / "db-backups"
+    # 备份一律放 D 盘，避免占满 C 盘；可用 SIRE_DB_BACKUP_DIR 覆盖
+    backup_root = Path("D:/sire/db-backups")
     ap.add_argument("--db", type=Path, default=DATABASE_PATH)
     ap.add_argument("--backup-dir", type=Path, default=Path(os.environ.get("SIRE_DB_BACKUP_DIR") or backup_root))
     ap.add_argument("--keep", type=int, default=14)
