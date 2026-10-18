@@ -15,8 +15,16 @@ MODEL_DIR = Path(os.environ.get("SIRE_EMBED_DIR") or Path.home() / "sire" / "mod
 LEDGER_ROOT = Path(os.environ.get("SIRE_LEDGER_ROOT") or Path("D:/sire/sire_ledger")).expanduser()
 
 
+# Claude/Codex/Qoder 本机通讯数据固定目录：按项目分区，不进 Git、不落在项目里
+COMMS_ROOT = Path(os.environ.get("SIRE_COMMS_ROOT") or Path("D:/sire/sire_comms")).expanduser()
+
+
 def ledger_runs_dir() -> Path:
     return LEDGER_ROOT / "runs"
+
+
+def comms_dir() -> Path:
+    return COMMS_ROOT
 
 
 def archive_database_path() -> Path | None:

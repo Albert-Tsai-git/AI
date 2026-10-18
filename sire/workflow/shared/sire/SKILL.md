@@ -26,6 +26,8 @@ On every SIRE run, before any retrieval or analysis, Claude, Codex and Qoder mus
 
 Run ledgers and evidence must be created only under the directory resolved by `ledger_runs_dir()` (default `D:/sire/sire_ledger/runs/<RUN_ID>/`; override with `SIRE_LEDGER_ROOT`). Never create or copy a new run ledger into a project, including at closure. Legacy project copies may be cleaned only after database contents are verified against their files; retain evidence not imported into the database and keep the fixed-directory source by default. Database indexing and archival run asynchronously after the user receives the result; failures stay in a local queue and retry at the next SIRE trigger.
 
+Claude, Codex and Qoder talk to each other only through `scripts/sire_comms.py` (messages, progress, resource locks). Its data lives under `comms_dir()` (default `D:/sire/sire_comms/projects/<project>/`, override with `SIRE_COMMS_ROOT`), never inside a business project. Full-workflow tasks check `inbox` at R0, show each received message to the user, `ack` it, update `status` at phase changes, and send `handoff` when pausing. Rules: `references/global-contract.md` § 本机通讯.
+
 Claude, Codex and Qoder must use the same values for `SIRE_ROOT`, `SIRE_DATA_DIR`, `SIRE_VECTOR_DB`, `SIRE_KB_DIR`, `SIRE_EMBED_DIR`, and `SIRE_TASK_ROOTS` when overrides are set. Do not configure app-specific data paths. Run scripts from this skill's `scripts/` directory or invoke the same script file through either installed alias. Never copy the database to an app profile.
 
 ## Silent command execution

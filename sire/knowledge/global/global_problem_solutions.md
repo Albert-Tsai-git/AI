@@ -1141,3 +1141,35 @@ controller/python/sub_common/DataFormatter.py；controller/python/sub_embedded/A
 
 **状态**: 架构建议稿，待责任人确认 Release 定义与跨模块门禁语义。
 
+
+
+### P-20261017: MES 重建进度交接（Claude/Codex 同步入口）
+
+**日期**: 2026-10-18
+**项目**: MES 平台重建 / D:/code/mes
+**关键词**: MES重建, 进度交接, Codex同步, PROGRESS.md, mes-admin, mes-server, mes-db, mes-web, IAM, 低代码, 模块管理, LOWCODE契约, 演示模式, dev:mock, Docker未重启, BLOCKED
+
+**需求场景 / 现象**: Claude 与 Codex 交替开发 D:/code/mes。用户要求把本次重建进度同步给 Codex，接手方需要知道当前做到哪、哪些未验证、从哪里继续。
+
+**方案 / 架构**: 进度单一来源放在仓库内 `docs/PROGRESS.md`，并在 `AGENTS.md` 必读清单第 6 项引用，Codex 读取 AGENTS.md 时自然看到；本条知识只做索引，避免两处内容不一致。当前状态摘要：
+- 仓库已清空重建为 npm workspaces 四部分（mes-web 空、mes-admin、mes-server、mes-db），暂不关联 Git。
+- 栈：React18+TS+Vite+Tailwind+Radix 自建组件；NestJS10+Kysely+zod；PostgreSQL16（Docker）。
+- IAM 一期（登录/用户/角色/权限/审计）代码完成，构建与单元测试通过；数据库集成测试与 E2E 因电脑未重启（WSL2/Docker 未生效）BLOCKED。
+- 模块管理（低代码）v1 进行中已暂停：契约与前端核心完成，ModuleDesigner、AppPage、菜单接入、演示数据、后端服务未完成；后端已有的 0002 迁移与 schema.ts 是中途停止的产物，未复核。
+
+**关键文件与接口**:
+- `D:/code/mes/docs/PROGRESS.md` — 进度、阻塞、低代码断点与待办顺序（接手必读）
+- `D:/code/mes/docs/design/IAM-基础身份权限契约.md` v1.1、`LOWCODE-模块管理契约.md` v1.0 — 三端契约
+- `D:/code/mes/DESIGN_SYSTEM.md` v2 — 前端唯一设计约束
+- `D:/sire/sire_ledger/runs/R20261018-MES-LOWCODE-V1/checkpoint.md` — 断点台账
+
+**实施步骤**:
+1. 接手前读 AGENTS.md → docs/PROGRESS.md → 相关契约。
+2. 低代码从 PROGRESS.md 第 4 节“待完成”第 1 步继续；后端已存在的 lowcode 文件先复核再使用。
+3. 阶段完成后更新 PROGRESS.md 的状态表与断点。
+
+**验证方法**: `npm run build`、`npm test`（根目录）；演示模式 `npm run dev:mock -w mes-admin` 浏览器查看；重启并启动 Docker 后按 PROGRESS.md 第 3 节顺序跑集成与 E2E。
+
+**踩坑**: Vitest 的 esbuild 不支持 emitDecoratorMetadata，mes-server 测试用 unplugin-swc；dev 用 tsc --watch + node --watch。初始管理员密码只在 mes-db/.local/initial-admin.txt，不得写入任何日志或报告。
+
+**状态**: 部分完成
