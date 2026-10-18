@@ -280,3 +280,167 @@ python <SHARED_SKILL_DIR>/scripts/sire_close.py close --root <项目根>
 **踩坑**: ① 直接在 Qoder/IDE 的子 shell 里调 CLI 必失败——`QODER_AGENT_SDK_ENTRYPOINT` 会让它强制要求 `--input-format stream-json --output-format stream-json`，必须在 `build_env()` 里按前缀剔变量；② 只把 `--config-dir`/PATH 之类当排查方向会浪费时间，先看 `sdk_invalid_args` 报的期望参数；③ CLI 报"未登录"这类致命错也照样输出 JSON 且 **stdout 才有信息**，不能只看 rc；④ `--check` 早期把候选路径写成 `bin/qoderclicn.exe` 漏了子目录，探测型代码要用真实安装路径回归。
 
 **限制**: Hub → 执行器 → 飞书卡片的端到端仍待用户按 `docs/CUTOVER.md` 停旧飞书桥后启 Hub 验证（Q8b）；`model_by_tier` 需要登录后 `--list-models` 取值；CLI 每次执行消耗 credits（本次 1.28/条），Hub 侧 `daily_task_limit=20` 仍生效。
+
+
+### E-018: SIRE 台账只写固定目录，清理历史副本前核验最终数据库内容
+
+**日期**: 2026-10-14
+**项目**: SIRE 固定台账目录规则
+**状态**: 已验证（RSI-20261014-NOPROJECTLEDGER）
+**关键词**: SIRE, 台账, 固定目录, SIRE_LEDGER_ROOT, sire_close.py, 数据库归档, 历史副本, 清理, 显式 run, 最终状态
+
+**需求场景**: Qoder v6.20 已将新运行台账移到 `D:/sire/sire_ledger/runs/<RUN_ID>/`，但 close 仍向项目 runs/ 复制台账，违反用户要求的项目内不创建台账。
+
+**方案**: 删除 close 的项目复制逻辑；规则明确运行台账及证据只在 sire_paths.ledger_runs_dir() 指定位置创建。历史 .sire/runs/、sire/runs/ 继续可读，用于迁移。数据库收录后核对 run_id、文件清单与文本内容，才可清理重复历史项目副本；数据库当前只收 json/md/log/txt/yaml/yml，图片、脚本和附件需先保存在固定目录。固定目录原件默认保留，删除原件需用户明确要求及可恢复备份。
+
+**关联修复**: 独立复核发现 close 的 --run 未传 stage-output/finish，集中 current 时可能关闭其他 run；现显式透传。finish 在同步后才写最终 CLOSED/G6/FINISH，因此 close 在 finish 后重新 migrate 工作库与机器级归档库，并在无归档配置时提前报错。
+
+**验证**: 实际 CLI 使用隔离台账和双 SQLite 库，current 指向 decoy，而 close 显式指定 target：target CLOSED、decoy 保持未关闭、项目无 .sire 或 runs 副本；双库 run.json、journal.log、stage-output/g6.json 与最终磁盘文本逐一相等，integrity_check=ok。归档任务由本地队列后台执行，失败保留待重试。
+
+**限制**: 本轮未删除历史台账；Qoder 与本轮工作流改动尚未提交，避免混合提交并行已有改动。数据库写入成功不代表所有二进制或脚本证据已归档。
+
+
+### E-019: SIRE 数据库归档异步排队与失败重试
+
+**日期**: 2026-10-14
+**项目**: SIRE shared workflow
+**关键词**: SIRE, 异步归档, 数据库同步, sync_queue, sire_archive_sync.py, 失败重试, worker
+
+**需求场景 / 现象**: 用户要求任务先完成并汇报，数据库归档不能占用前台等待；写库失败时必须保留本地状态并在下次 SIRE 触发时重试。
+
+**根因**: `finish` 原先同步执行知识重建及双库索引、迁移，数据库或归档库不可用会延迟或阻断交付。
+
+**方案 / 架构**: `finish` 先写完最终运行记录，再把持久化任务写入固定台账目录下的 `sync_queue/<RUN_ID>.json` 并启动脱离前台的 worker。worker 成功后标记 `done`；失败时保留 `pending` 和错误信息，下一次 `sire_run.py init` 调用 `kick_pending` 重试。
+
+**关键文件与接口**:
+- `sire/workflow/shared/sire/scripts/sire_archive_sync.py` — durable queue、后台 worker、失败保留和重试
+- `sire/workflow/shared/sire/scripts/sire_run.py` — finish 后排队、init 时重试
+- `sire/workflow/shared/sire/scripts/sire_close.py` — 不在前台同步索引或迁移
+- `sire/workflow/shared/sire/references/global-contract.md` — 任务汇报与异步归档规则
+
+**实施步骤**:
+1. finish 写最终 run.json 后排队并返回，不等待数据库归档。
+2. 后台重建知识索引、同步工作库和机器级归档库并校验最终运行记录。
+3. 出错时留存队列与 last_error；下次 init 触发重试。
+
+**验证方法**: 真实运行 R20261014-134306-ai 的后台队列达到 `done`，attempts=1，worker 完成双库最终记录校验。隔离故障注入验证首次失败保持 `pending`，下一次 kick 启动重试，随后任务达到 `done` 且双库元数据一致。规则由 RSI-20261014-ASYNCDB 激活为 v6.22。
+
+**踩坑**: 测试数据库文件需与正式库隔离；失败重试应复用持久队列，不能只保留内存错误。
+
+**状态**: 已完成，RSI-20261014-ASYNCDB / v6.22
+
+
+### E-020: 提交代码时推送当前分支已配置的 upstream
+
+**日期**: 2026-10-15
+**项目**: SIRE v6 共享工作流
+**关键词**: 提交代码, commit, push, upstream, 当前分支, 远端, 授权
+
+**需求场景 / 现象**: 用户明确规定，说“提交代码”时要把当前改动 commit 后推送到当前分支的远端；不能再把 push 当作需要二次确认的独立动作。
+
+**方案 / 架构**: 代码任务中“提交代码”授权提交本次任务范围内的当前改动，并推送到当前分支已配置的 upstream，使用其对应 remote 和 branch。执行前读取分支、upstream 与工作区差异，只纳入本次任务改动；无 upstream、远端不可访问或目标 ref 不清楚时停止并报告，不猜测 origin 或分支。禁止强推、改写已发布历史、推送其他 ref；其他 push 仍需明确授权。
+
+**关键文件与接口**:
+- `sire/workflow/shared/sire/references/global-contract.md` — 唯一规则契约
+- `sire/workflow/shared/sire/SKILL.md` — 入口摘要与契约保持一致
+- Git：`git branch --show-current`、`git rev-parse --abbrev-ref --symbolic-full-name @{u}`
+
+**实施步骤**:
+1. 用户说“提交代码”后确认当前分支、upstream 和工作区差异。
+2. 只提交本次任务范围内的变更。
+3. 将提交推送到当前分支已配置的 upstream。
+
+**验证方法**: 文档核对确认 global-contract 与 SKILL 对当前分支 upstream、工作范围、无 upstream 阻塞、禁止强推等语义一致。本次实际读取到当前分支 `feature/feishu-hub` 的 upstream 为 `origin/feature/feishu-hub`；本次用户只要求增加规则，没有执行提交或推送。
+
+**踩坑**: 把远端写死成 `origin` 会在分支跟踪其他远端时推错位置；把“提交”和“推送”拆成两次授权会违背用户的明确定义。
+
+**状态**: 已完成（RSI-20261015-COMMITPUSH）
+
+
+### E-021: SIRE 台账耗时：批量记录阶段状态并压缩重复叙述
+
+**日期**: 2026-10-16
+**项目**: SIRE shared workflow
+**关键词**: SIRE, 台账耗时, telemetry, stage-output, 批量写入, sire_close.py, 异步归档
+
+**场景与证据**: 遥测近期出现 ledger 阶段 326s/1410s、1488s/4700s、106s/270s；同期一次 1410s 任务 archive 为 47s。台账阶段是当前可见的收尾耗时重点，数据库归档已有 v6.22 异步队列机制。
+
+**建议**: 先把各阶段状态和证据摘要合并到一个 `stages.json`，用 `sire_close.py close --stages` 一次批量写入；每阶段保留状态、关键证据链接和一句结论，避免重复复制完整过程。若批量后 ledger 仍高，再评估将 `run.json` 多次全量重写改为有检查点的合并写入或追加事件日志。
+
+**验证与限制**: 本建议基于只读遥测报告和现有 E-018/E-019/E-014 知识；本轮未改工作流代码，也未对优化方案做性能测试。阶段遥测不能单独证明时间来自文件 I/O、命令启动还是工具交互，应在实施后对比同类任务。
+
+**状态**: 优化建议，待实施评估
+
+
+### E-022: SIRE v6 完整任务流程图与快速通道/异步归档边界
+
+# SIRE v6 完整流程速览
+
+**关键词**: SIRE, R0-R10, 快速通道, sire_run.py, sire_close.py, pending 门禁, 异步归档
+
+**关键文件**: sire/workflow/shared/sire/references/global-contract.md, sire/workflow/shared/sire/scripts/sire_run.py, sire/workflow/shared/sire/scripts/sire_close.py, sire/workflow/shared/sire/scripts/sire_archive_sync.py
+
+```mermaid
+flowchart TD
+    A[收到请求] --> B{简单任务快速通道?}
+    B -->|是| C[直接处理：最多两条命令]
+    C --> C1[跳过检索、完整阶段台账、测试、归档]
+    C1 --> Z[按三行格式回复]
+    B -->|否| R0[R0 协调：目标/范围/授权/阻塞]
+    R0 --> R1[R1 检索：Markdown 知识库 + 向量库]
+    R1 --> R2[R2 需求分析：验收标准与依赖]
+    R2 --> R3[R3 拆分最小执行单元]
+    R3 --> R4[R4 计划复核 + 模型选择门禁]
+    R4 --> R5[R5 执行并记证据]
+    R5 --> R6[R6 独立 Review]
+    R6 -->|不通过| FIX[修复，最多三次同类失败]
+    FIX --> R5
+    R6 -->|通过| R7[R7 功能验收/真实用户路径测试]
+    R7 -->|不通过| FIX
+    R7 -->|通过| MORE{还有执行单元?}
+    MORE -->|有| R5
+    MORE -->|无| R8[R8 集成与覆盖检查]
+    R8 --> R9[R9 收尾审计：风险/归档/pending]
+    R9 --> P{有未处理发现?}
+    P -->|有| RSI[处理首条发现或说明移交]
+    RSI --> R9
+    P -->|无| R10[R10 原生应用/系统操作；不需要则跳过]
+    R10 --> F[finish：检查阶段记录、知识记录与 pending，关闭 run]
+    F --> G[立即汇报结果]
+    G --> H[后台异步索引并同步工作库/机器归档库]
+    H -->|成功| DONE[队列完成]
+    H -->|失败| Q[本地队列保留错误，下次 SIRE 触发重试]
+```
+
+条件分支：用户明确说“提交代码”时，仅提交本任务范围内的改动并推送当前分支配置的 upstream；其他情况不自动 push。
+
+
+### E-023: SIRE 静默执行、批量台账与合并检索
+
+**日期**: 2026-10-16
+**项目**: SIRE shared workflow
+**关键词**: SIRE, 静默执行, Windows Terminal, CREATE_NO_WINDOW, sire_process.py, stage-output-batch, 批量台账, 并行检索, sire_kb.py
+
+**需求场景 / 现象**: 用户要求 SIRE 自动操作不要弹出 Windows Terminal 窗口，并接受对整体任务执行流程的提效建议。原收尾命令对每个 R0–R10 阶段分别启动一次 Python，知识检索也需要分别运行 Markdown 关键词检索和 SQLite 向量检索。
+
+**根因**: 异步归档 worker 的进程参数没有统一设置 Windows 隐藏窗口标记；其它脚本对子进程控制参数分散。阶段收尾重复启动进程并重复保存 `run.json`；关键词与向量检索接口割裂，增加工具往返。
+
+**方案 / 架构**: 新增 `sire_process.no_console_kwargs()`，对 Windows 子进程统一设置 `CREATE_NO_WINDOW` 与隐藏启动信息。新增 `sire_run.py stage-output-batch --file`，先校验全部阶段，再一次更新 `run.json` 并输出逐阶段文件；`sire_close.py` 改为一次批量调用。`sire_kb.py search --combined` 同时启动向量检索并计算 Markdown 关键词命中，合并去重后输出并生成两种回执。数据库归档仍使用 E-019 的本地持久队列与后台重试。
+
+**关键文件与接口**:
+- `sire/workflow/shared/sire/scripts/sire_process.py` — Windows 子进程隐藏参数。
+- `sire/workflow/shared/sire/scripts/sire_archive_sync.py`, `sire_telemetry.py`, `sire_close.py`, `sire_run.py`, `sire_kb.py`, `sire_qoder.py`, `sire_supervisor.py`, `sire_bundle.py` — 统一静默启动子进程。
+- `sire_run.py stage-output-batch --file stages.json` — 一次批量记入阶段状态。
+- `sire_kb.py search --combined "..." --run <RUN_DIR>` — 并行关键词与向量检索及去重。
+- `references/global-contract.md`、`SKILL.md` — 禁止显示终端窗口，规定静默命令执行。
+
+**实施步骤**:
+1. 把所有 SIRE 启动的 Windows 子进程设置为隐藏运行。
+2. 将阶段产物清单一次校验、一次保存，保留每个阶段单独的证据文件。
+3. 把关键词和向量检索合并为单一并行入口；不改已有异步归档失败重试逻辑。
+
+**验证方法**: 对修改脚本运行 Python 编译检查；使用新 `--combined` 入口实际完成两组关键词与向量检索并产生两类回执，输出按记录编号去重；使用新批量阶段接口完成本次 R0–R10 记录；检查进程工具返回 Windows 隐藏标志 `CREATE_NO_WINDOW=134217728`。未运行额外测试套件或完整 review。
+
+**踩坑**: 仅设置 `DETACHED_PROCESS` 不等于统一窗口策略；所有子进程调用都应走共用 helper。合并检索仍必须分别写 keyword 与 vector 回执，否则 G0 无法证明两个检索源都被使用。
+
+**状态**: 已完成；RSI-20261016-SILENTFLOW 激活 v6.24；close 迁移文档回退修复 RSI-20261016-CLOSEPATH 激活 v6.25。

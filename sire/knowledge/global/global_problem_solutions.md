@@ -676,3 +676,468 @@ raw = sys.stdin.buffer.read().decode("utf-8", "replace")
 - `desktop_queue` 能力位对 Qoder 恒 False（客户端没有桌面收件队列），别照抄 Codex 的 True。
 
 **状态**: 已完成
+
+
+### P-20260939: DPB 4.0.10 版本码 4010：patch 两位数让码值不可比，比较必须走三元组
+
+**日期**: 2026-10-14
+**项目**: EncoderPlotter_0903_01 / D:\code\EncoderPlotter_0903_01（分支 feature/iap-ota-sn）
+**关键词**: DPB 4.0.10, 4010, 410, 版本码, DATA_ADDRESS_LAYOUTS, parse_iap_bin, tryDpb, dpbFlashLayout, firmware_number, iap_sn_restore, MIN_SOFTWARE_VERSION_FOR_SN, NUM_TO_HEX, 0x04000A00, 补丁号两位数
+
+**需求场景 / 现象**: 固件组交付 DPB V4.0.10 的 BIN 解析规则（`Arguments.version.software = 0x04000A00`），要求上位机支持。改动前用真实产物跑 `parse_iap_bin.py` 直接失败：`[IAP] bin解析失败：未找到有效ARGUMENTS结构 size=264392`，前端表现为"bin文件解析失败，请更换有效的固件文件"。
+
+**根因**: 项目的版本码是十进制拼接 `int(f"{major}{minor}{patch}")`，一直默认每个分量一位十进制数字（4.1.2→412）。patch 到 10 之后这个前提崩了：
+1. `parse_iap_bin.tryDpb` 的 DPB 白名单只到 `0x04000900: 409`，没有 `0x04000A00`，判别器直接返回 None。
+2. 码值不再单调：4010（4.0.10）在数值上 **大于** 422（4.2.2），所有 `>= 422` 式门禁（IAP 后 SN 写回、0x83 指令读 SN 能力）会把 DPB 4.0.10 判成比 4.2.2 新。
+3. 显示串按三位拆 `f'{v//100}.{v//10%10}.{v%10}'` → 4010 显示成 "40.1.0"。
+4. `sub_common/dpbFlashLayout.firmware_number` 用 `*100/*10` 折位，把 0x04000A00 折成 410，查不到 `LAYOUTS[4010]`，Flash 预算校验整段跳过。
+5. 前端两处解析副本口径还不一样：`analyzer.js` 把紧凑码拆成 `[首位, 中间, 末位]`（"4010"→[4,1,0]），`device.js` 直接比码值。
+
+**方案 / 架构**: 定一条口径并全栈落到位，不做全局重编码（把码值换成 `major*10000+minor*100+patch` 会牵动 config.py 表键、子仓 sub_algorithm 的算法侧码值与前端，9 年存量承担不起）：
+- 码值继续用拼接形式（4.0.10=4010），**比较一律先解成 (major, minor, patch) 三元组**；规则固定为"第一位 major、第二位 minor、其余整体 patch"，要求 major/minor ≤ 9（`validSoftware` 本就如此约束）。
+- Python 侧新增 `controller/python/firmware_version.py`（`version_triple` / `version_at_least`），接受 4010、"4.0.10"、"4010"、"v4.2.2-test"、0x04000A00、{h1,h2,h3}（dict 或 ctypes 对象）、三元组七种形态；解不出统一返回 None，门禁按"版本未知不放行"。
+- 前端同源一份 `shared/firmware_version.js`，`analyzer.js`、`device.js` 删掉各自的解析副本改引用它，消息文案与 i18n key 一字不改。
+- `parse_iap_bin` 白名单补 `0x04000A00: 4010`，显示串改由打包字节生成；`DATA_ADDRESS_LAYOUTS[106]` 的 `(408, 9999)` 行天然罩住 4010（4.0.10 与 4.0.9 的 P/Q/T 完全相同），只补注释不改表。
+- 子仓 `dpbFlashLayout.firmware_number` 改成拼接规则；`LAYOUTS[4010]` 预算与 409 相同（T 170KiB / Q 2048 / P 0x08040000 30KiB）。
+
+**关键文件与接口**:
+- `controller/python/firmware_version.py` — 版本码口径唯一真源（Python 侧）
+- `controller/python/parse_iap_bin.py:395` — `tryDpb` 的 `software_versions` 白名单；`:424` 显示串
+- `controller/python/iap_sn_restore.py:12` — `iap_sn_restore_supported` 改走 `version_at_least`
+- `controller/python/Encoder.py:4240` — SN 能力诊断块改按三元组比
+- `shared/firmware_version.js` — 前端同源实现
+- `components/analyzer/analyzer.js:427`、`components/encoder/device.js:3251` — 两处 SN 能力判定
+- `controller/python/sub_common/dpbFlashLayout.py:13` — `firmware_number`
+
+**实施步骤**:
+1. 先用真实固件产物复现失败，再动代码（ Downloads 下 DPB10/15/20/25/30 的 `.kingkong.bin` 与一份明文 bin）。
+2. 落 Python/JS 两份同口径的三元组解析，门禁全改三元组比较。
+3. 补白名单与显示串；布局表只加注释。
+4. 子仓改 `firmware_number`（子先父后，两层提交）。
+5. 规则文档入库 `docs/iap-bin-rules/`，`docs/README.md` 加索引行。
+
+**核心代码片段**:
+```python
+def _from_code(code):
+    text = str(code)
+    if code <= 0 or len(text) < 3 or not text.isdigit():
+        return None
+    return int(text[0]), int(text[1]), int(text[2:])   # 4010 -> (4, 0, 10)
+
+def version_at_least(value, minimum):
+    actual, threshold = version_triple(value), version_triple(minimum)
+    if actual is None or threshold is None:
+        return False
+    return actual >= threshold
+```
+
+**验证方法**: `cd controller/python && py -3.12 -m pytest qa_api/tests`（138→140 passed，含 `qa_api/tests/test_dpb_v4010_bin.py` 13 条：七种形态同解、4010<422、合成 0x39010 镜像识别为 4010/"4.0.10"、DPB 预算命中、4.0.9 不回归）；`py -3.12 -m pytest sub_embedded/tests`（39 passed）、`sub_algorithm/tests/test_dpb_flash_layout.py`（6 passed，`get_layout(410)` 仍必须抛错）；`node --check` + 19 条断言跑 `shared/firmware_version.js`；真产物 8 个文件全部 `status=ok`，BIN 长度与 `polyfitDataSize` 对上文档 §0/§4.3（DPB25：274760B、T=160424、T 结束 0x0802C2A8）。
+
+**踩坑**:
+- 文档自身也可能错：单文件版 V410 规则把 `0x82` 写成 31 字节负载差异，合并版更正为两版本都 59 字节——`build_info.py` 本来就兼容。以"最新合并版"为准，别照单份文档拉改协议。
+- `version_triple` 若对非 str/int 对象走 `str(value)` 兜底，`object()` 的 repr 里含长数字串会被当成版本号误命中；必须限定只对 str 做文本解析。
+- 未登记预算的 DPB 版本（407）走无守卫的 `get_layout` 会抛 ValueError 打断写入，合并时这类"顺手去掉守卫"的改动要保留守卫分支。
+
+**状态**: 已完成（代码 + 真 bin 离线实测 + 自动化回归；接读取器的在线路径未验证——本机无设备）
+
+
+### P-20260940: develop 与在途功能同改一条链的合并：预演、子仓 gitlink 双向核对、静默损坏检测
+
+**日期**: 2026-10-14
+**项目**: EncoderPlotter_0903_01 / D:\code\EncoderPlotter_0903_01（feature/iap-ota-sn ← origin/develop）
+**关键词**: 合并冲突, git merge-tree, 子模块 gitlink, merge-base --is-ancestor, 语义冲突, back-merge-check, EncoderBase.py, device.js, CHANGELOG, 静默损坏, 双侧同改, sub_common, sub_embedded
+
+**需求场景 / 现象**: 用户要求"将 origin/develop 合并到当前分支，包括子仓库，当前仓库的代码为基础，整合进 origin/develop 的代码"。本分支领先 145 提交、落后 8 提交，而那 8 条提交恰好是本分支正在做的同一件 DPB 版本工作（另一条分支上改的），两侧都改了 `dpbFlashLayout.firmware_number`、`EncoderBase.py`、`config.py`、`device.js`、`CHANGELOG.md`。
+
+**根因**: 危险的不是 git 报的 4 处冲突，而是三类 git 不响的东西：
+1. 子仓两侧各自前移，主仓只看到一个 gitlink 冲突，真实内容冲突埋在子仓里（`EncoderBase.py` 五处、`dpbFlashLayout.py`/`config.py`）。
+2. 双侧用**不同写法实现同一个修复**（`firmware_number` 一个用 f-string 拼接、一个用 `"".join(...)`），文本冲突看似随便挑一边都对，留下两份就是漂移。
+3. 冲突块外的"共同尾部"行属于其中一侧的结构改造——照抄会带进引用未定义变量的死代码，`node --check` 与测试都不报。
+
+**方案 / 架构**: 顺序固定为：预演 → 清点共同触碰面 → 在途工作先落提交 → 子仓 merge（子先） → 主仓 merge → 逐文件用"与合并前对比"复核 → 全量测试 + 真产物复跑。
+- 预演不改工作区：`git merge-tree --write-tree --name-only HEAD origin/develop`，一次拿到冲突清单（含 submodule 类型冲突）。
+- 共同触碰面用 `git diff --name-only <merge-base> <side>` 两侧交集算，**别用 `comm`**：git-bash 下 `sort` 与 git 的排序口径不一致，实测把 7 个真实重叠文件漏成 0 个，改用 grep 白名单才对。
+- 工作树必须干净才合：在途功能按用户批准先提一个 commit（含子仓 gitlink），CHANGELOG 条目留到合并冲突里一并解决，避免二次冲突。
+- 子仓合并：先确认本地同名分支是记录提交 `89ea339` 的祖先再 `--ff-only` 对齐（不是祖先就不动它），然后 `git merge <develop 侧提交>`，解完在子仓提交，回主仓 `git add <子模块路径>` 记 gitlink。
+- 取舍口径：函数实现两侧等价时采 develop 的写法（避免以后再冲突）；行为相关的一侧更完整时（`writeFlash` 的进度/重试签名、未登记版本跳过校验的守卫）保留本分支，并在 merge message 里写明为什么。
+
+**关键文件与接口**:
+- `controller/python/sub_common` 73e616e → merge `3dc6ebd`（并入 develop 的 `f09ac0f`）
+- `controller/python/sub_embedded` 89ea339 → merge `2ba14ad`（并入 `c339ac1`，`EncoderBase.py` 五处冲突）
+- `components/encoder/device.js` — 保留本分支 DPB/DPT-G1 分支与 `calibrationLog` 字段，采纳 develop 无前缀消息处理
+- 主仓 merge 提交 `65639c24`
+
+**实施步骤**:
+1. `git fetch origin` + 各子仓 `git fetch origin`（主仓 fetch 不带子仓对象，子仓不 fetch 就查不到 develop 侧提交）。
+2. `git merge-tree --write-tree --name-only HEAD origin/develop` 预演。
+3. 两侧 `git diff --name-only <base>` 求交集，逐文件判断是文本冲突还是语义重叠。
+4. 在途改动提交 → `git merge --no-ff origin/develop` → 进子仓解内容冲突并提交 → 回主仓 `git add` 子模块路径与文本冲突 → 提交。
+5. 复核：`git diff HEAD^1 -- <冲突过的文件>`、`git -C <子仓> diff <合并前提交> HEAD --stat` 加 `grep "^-"`，确认我们侧没有行被吃掉。
+6. 闭环核对：`git log HEAD..origin/develop` 为空 **且** 两个子仓 `merge-base --is-ancestor <develop 侧提交> HEAD` 与 `--is-ancestor <我们侧提交> HEAD` 都成立。
+
+**核心代码片段**:
+```bash
+# 只读预演，不动工作区
+git merge-tree --write-tree --name-only HEAD origin/develop
+# 子仓两侧都必须可达，才算"包括子仓库"合干净
+git -C controller/python/sub_common merge-base --is-ancestor f09ac0f HEAD
+# 我们侧有没有被吃掉：只看删除行
+git -C controller/python/sub_embedded diff 89ea339 HEAD -- EncoderBase.py | grep "^-" | grep -v "^---"
+```
+
+**验证方法**: 合并后 CI 五组 + 主仓四组 unittest 全绿（`qa_api/tests` 140 passed、`sub_embedded/tests` 39、`test_v4060_runtime_config.py` 32、`test_dpb_flash_layout.py` 6）；`git diff HEAD` 在暂存前逐个冲突文件复核净变化只含预期项；真产物 8 个 DPB 4.0.9/4.0.10 bin 复跑 `parse_iap_bin.py` 全部 `status=ok`。
+
+**踩坑**:
+- 用脚本批量剥冲突标记时，"冲突块之后的共享尾部"可能是另一侧的代码——本次带进 4 行 `this.$store.commit(..., string: text)`，`text` 在本分支作用域里不存在，语法检查照过，靠 `git diff HEAD` 才发现。
+- develop 新增的测试是给 develop 的调用管线写的：本分支异常收尾要经 `self.encoder`、写 Q 区前调 `self.getFlashRegionSize`，裸对象缺这两处会让本该报"Flash overflow"的用例被 `AttributeError` 顶掉。补桩而不是削断言。
+- 文档也会自相矛盾（同一版本的 0x82 长度两份文档不一致），合并前先确认手上是不是最新合并版。
+
+**状态**: 已完成（本地提交，未推送、未建 MR；接读取器的在线路径未验证）
+
+
+### P-20260941: 端口回收与Boot混合扫描代码审查检查点
+
+**日期**: 2026-10-14
+**项目**: driverSoftware
+**关键词**: Windows端口占用, server.py, server.exe, netstat, CIM, taskkill, 外部进程保护, 混合总线, Bootloader扫描, pytest
+
+**需求场景 / 现象**: Review 当日端口回收与 Boot 混合总线扫描提交，需要判断自有服务清理是否越界，以及 Boot 诊断失败是否破坏 APP 设备发现结果。
+
+**根因**（问题类必填）: 本次审查没有确认新的缺陷。审查边界的关键在于端口归属证据不足时必须按外部进程处理，以及 Boot 探测是诊断增量而不能覆盖 APP 主结果。
+
+**方案 / 架构**: 对端口回收检查先以 netstat 映射占用 PID，再通过 CIM 取命令行；任一 owner 无法确认属于本项目时不杀任何占用者。Boot 扫描异常应 fail-open，并保留已发现的 APP ID。前端将两类 ID 合并去重后供选择。
+
+**关键文件与接口**:
+- `server.py`：`_pids_on_port`、`_cmdline_of`、`_is_our_server_proc`、`_reclaim_port`、`api_probe_device_ids`。
+- `frontend/js/app.js`：连接及切换设备时合并 APP/Boot ID。
+- `tests/unit/test_port_reclaim.py`、`tests/unit/test_probe_boot_mode.py`。
+
+**实施步骤**:
+1. 按本机日期筛选全部提交并审查改动与上下文。
+2. 运行定向 pytest；Windows 端口行为测试在非 Windows 环境应跳过。
+
+**验证方法**: 2026-10-14 本机 `git diff --check 8c2bc669^..dc0980af` 通过；`PYTHONPATH=<仓库根> pytest -q tests/unit/test_probe_boot_mode.py tests/unit/test_backend_port_binding.py tests/unit/test_port_reclaim.py` 得 45 passed。未运行 GUI、真机或完整打包。
+
+**踩坑**: Windows PowerShell 下直接运行 pytest 时仓库根未自动出现在 Python 模块搜索路径，收集时报 `ModuleNotFoundError: No module named 'server'`；设置 `PYTHONPATH` 为仓库根后同一测试集通过。审查测试失败要区分环境导入问题和产品断言失败。
+
+**状态**: 已完成
+
+
+### P-20260942: 飞书文档不可读时用历史台账定位等价基线
+
+**日期**: 2026-10-14
+**项目**: MES / D:\code\mes
+**关键词**: 飞书文档不可读, lark-cli 未安装, 内嵌浏览器未登录, 等价基线定位, accounts.feishu.cn 登录页, 面包屑标题, evidence 截图, SIRE run 复用
+
+**需求场景 / 现象**: 用户只给一个飞书 wiki 链接要求"结合该文档分析代码"，但本机 `lark-cli` 未安装（`cmd /c where lark-cli` 为空），Qoder 内嵌浏览器打开链接被重定向到 `https://accounts.feishu.cn/accounts/page/login?...redirect_uri=...`，截图还报 `NATIVE_BROWSER_VIEWPORT_UNAVAILABLE`（viewport 0x0，只能 take_snapshot）。既不能调 API 也不能登录。
+
+**根因**: 飞书文档读取有两条通道，本机两条都断——CLI 通道缺二进制与 auth login；浏览器通道是未登录的内嵌实例且无可视 surface。继续找第三条通道（WebFetch）同样会撞登录墙，属无效绕路。
+
+**方案 / 架构**: 不绕路，改为"证明本地存在该文档的等价基线"，三步交叉定证：
+1. 用 `take_snapshot`/`list_pages` 拿到重定向 URL 里的 wiki token，确认目标资源；
+2. 在仓库自己的运行台账里找该文档的历史写入记录（`.sire/runs/<RUN>/` 的 journal.log、knowledge-record.md、evidence/*.jpg、导出的 HTML），本例命中 `R20261014-084207/feishu-v1.3.html`；
+3. 用截图里的**面包屑标题**（"MES及追溯系统"）+ **章节号与表格行**（§3.4.3 的"霍尔底涂/分板/标定/三防/成品检"）与本地 Markdown 逐行比对，行号级一致即认定同源。
+被否决方案：凭仓库线索猜文档内容（不可验证）、要求用户复制粘贴全文（成本高且丢排版）。
+
+**关键文件与接口**:
+- `D:\code\mes\.sire\runs\R20261014-084207\evidence\feishu-dpb-final.jpg` — 截图含飞书面包屑标题与 §3.4.3 表格，是等价性主证据
+- `D:\code\mes\docs\requirements\MES-综合需求规格说明书.md:314-330` — 与截图逐行对应的本地基线
+- `mcp__browser-use__take_snapshot` — 登录墙判定用，不要用 take_screenshot（内嵌浏览器无 surface 会失败）
+
+**实施步骤**:
+1. `list_pages` 读重定向 URL，确认是登录墙而不是渲染失败；
+2. `grep -rIl "<wiki token>"` 与 `grep -rIoh "https://[^ ]*feishu.cn/[a-z]*/[A-Za-z0-9]\{15,40\}"` 在台账/文档里找历史引用；
+3. 找同项目历史 run 的 evidence 截图，用 Read 打开图片核对标题与章节表格；
+4. 交付时把"线上增量未读"写成显式前提，并给用户一条补取路径（登录内嵌浏览器 / 导出 docx 到 docs/ / 装 lark-cli 并 auth login）。
+
+**验证方法**: 同一结论需两条互相独立证据（截图表格行 vs 本地 MD 行号；或历史 run 产物 vs 知识记录 F-074）。只有一条时不得声称"该飞书文档就是本地这份"。
+
+**踩坑**: 只看截图缩略图不足以定证，必须能读出面包屑标题；`.sire` 台账里往往没存 wiki URL，只存了截图，所以 token 反查会全空——这时改按"文档标题 + 章节内容"匹配，而不是继续找 URL。
+
+**状态**: 已完成，方法可直接复用于其他"用户给外部文档链接但客户端未登录"的场景
+
+
+### P-20260943: driverSoftware Job 8909 台架脚本漏包修复
+
+**日期**: 2026-10-14
+**项目**: driverSoftware / D:\code\driverSoftware
+**状态**: 修复已提交；相关自动化和原始目录打包验证通过，完整应用构建等待同版依赖环境复核
+**关键词**: 打包失败, Nuitka, GitLab Job 8909, driverSoftware, raw-dir, build.bat, dc946d7
+
+**需求场景 / 现象**: 用户提供 GitLab build-win-smoke 日志，提示 `tools\force_calib\calibrate_force_v2.py` 未随包走。
+
+**根因**: Nuitka 的数据文件收集把台架 `.py` 源码过滤掉。
+
+**方案 / 架构**: 改用 `--include-raw-dir=tools/force_calib=tools/force_calib` 原样递归复制，并保留编译后实物断言。提交 `dc946d7`（fix: 修复 Nuitka 漏收台架运行脚本）。未 push。
+
+**关键文件与接口**: `server.py`; `scripts/build.bat`; `scripts/build_mac.sh`; `tests/unit/test_run_script_entry.py`。
+
+**实施步骤**:
+1. 修复源目录收集参数与两平台提示。
+2. 同步测试和用户文案。
+3. 运行相关测试和独立 Nuitka 产物检查。
+
+**验证方法**: pytest 47 passed；独立 Nuitka 真实编译收集 21 个文件，检查两个关键脚本均在产物。整项目构建因本机 wheel 缺被显式 include 的 `dataStructV4026` 停止，未声称完整包通过。
+
+**踩坑**: raw-dir 必须使用 `源=目标` 写法；不完整 wheel 环境的失败与 Runner 日志显示的漏包根因需分开记录。
+
+
+### P-20260944: 标定汇总 CSV 多语言和 Excel 写入边界修复
+
+**日期**: 2026-10-15
+**项目**: EncoderPlotter_0903_01
+**状态**: 源码修复与主进程处理器检查完成；真实应用/读取器路径待有设备环境时验收
+**关键词**: 标定汇总 CSV, i18n, 内圈, 外圈, Excel EPERM, EBUSY, 负轴向距离, DPB, CHANGELOG
+
+**需求场景 / 现象**: 标定汇总输出在英文界面混用中文圈标签；Excel 占用时忙提示漏掉 Windows `EPERM`；首次写入界面语言被固化进表头；公式防护误伤以负号开头的轴向距离；DPB 判断、去重参数与子模块修复条目也需按统一口径处理。
+
+**根因**: 圈名直接拼接未经过 `$t`，且翻译 key 包含尾空格；忙提示只有两个错误码；CSV 表头使用当前 locale；负轴向数值复用了外部文本安全规则；`saveCalibrationSummaryRow(key)` 参数未参与去重。
+
+**方案 / 架构**:
+- 圈名使用无尾空格的 `内圈` / `外圈` key 并在 formatter 内翻译。
+- 文件占用提示同时匹配 `EBUSY`、`EACCES`、`EPERM`；新文件表头使用固定字段标识符，避免依赖 UI 语言。
+- 轴向距离列保留数值符号，其余用户输入单元格继续使用公式防护。
+- 删除未使用的 `key` 参数，按单场会话固定一行去重；DPB 参数比较使用 `Encoder.Series.DPB`。
+- 根 CHANGELOG 记录 MPP 固件版本读取和旧版离线参数读取修复；DPB 的 `final` 字段标签按用户确认保持“产品版本”。
+
+**关键文件与接口**:
+- `components/encoder/device.js` — 轴向格式化、CSV 行、忙提示和会话去重。
+- `main/file.js` — 追加 CSV 主进程处理器。
+- `components/analyzer/analyzer.html`、`components/i18n.js`、`CHANGELOG.md`。
+- `controller/python/sub_embedded` — `2ba14ad` → `bcdf98c`。
+
+**验证方法**: 三个 JavaScript 文件 `node --check` 通过，`git diff --check` 通过；调用实际 `main/file.js` 处理器验证两行追加、只写一次固定表头并保留 `-0.85mm`；Windows `FileShare.None` 锁文件的 Node 追加打开实测返回 `EBUSY`。真实 Electron 与读取器标定流程未执行，标记 `BLOCKED-无法真实验证`。
+
+**踩坑**: 负数距离虽含 `-`，仍是业务数值，不应像 SN 等外部文本一样加 Excel 公式前缀；CSV 新表头固定后不会自动重写历史文件已有的本地化表头。
+
+
+### P-20260945: 标定失败弹窗读取响应体中的具体不良原因
+
+**日期**: 2026-10-15
+**项目**: EncoderPlotter_0903_01 / D:\code\EncoderPlotter_0903_01
+**关键词**: 标定失败弹窗, defectiveItems, header.status, 外圈角度计算失败, setThenJustReturn
+
+**需求场景 / 现象**: 标定失败弹窗只显示“标定失败”，没有呈现标定过程中已有的具体不良原因（例如“外圈角度计算失败”）。
+
+**根因**: Python 将 `success` 和 `defectiveItems` 放在 JSON 响应体，同时用非零 `processingStatus` 写入响应头状态。`Server.transmit` 因非零 header.status reject，但 `Encoder.setThenJustReturn` 捕获后返回 `{header,data}`；前端失败分支因此仍可访问 `data.defectiveItems`，却直接丢弃并显示通用文案。
+
+**方案 / 架构**: 在响应头失败分支读取 `data.data.defectiveItems`，复用 `_buildCalibrationFailReason` 和 `DefectiveItemsMap` 得到用户文案，写入标定日志并传给失败弹窗。缺陷项为空或无法映射时继续用通用“标定失败”；超时、手动停止和无响应的通信异常保持原行为。
+
+**关键文件与接口**:
+- `controller/server.js` — 非零响应状态以 `{header,data}` reject。
+- `controller/encoder.js` — `setThenJustReturn` 捕获并返回响应对象。
+- `controller/python/Encoder.py` — AllInOne 失败仍将 `defectiveItems` 放进响应体。
+- `components/encoder/device.js` — 失败原因构建和弹窗入口。
+- `components/encoder/mes/mes.js` — 不良项代码到中文文案映射。
+
+**实施步骤**:
+1. 在前端失败响应分支保留响应体不良项。
+2. 用现有映射生成日志/弹窗文案，保留通用兜底。
+3. 独立核对非零 header status、具体错误代码、空/未知代码及超时和异常路径。
+
+**验证方法**: `node --check components/encoder/device.js` 与 `git diff --check` 通过。独立代码级检查以响应头 status=1 和 code `0-1-2-8` 调用生产原因构建器，输出“外圈角度计算失败”；空数组和未知代码的回退均为“标定失败”。用户明确无需真机，未运行 Electron UI。
+
+**踩坑**: header status 表示执行结果失败不等于响应体为空；先判状态后丢弃 payload 会隐藏具体失败原因。
+
+**状态**: 已完成
+
+
+### P-20260946: MES基础架构方案：分阶段配置、授权与审计恢复
+
+**日期**: 2026-10-16
+**项目**: MES 后台管理系统 / D:\code\mes
+**关键词**: MES 架构, modular monolith, MES execution order, configuration package, workflow version, scoped authorization, worker identity, transactional outbox, PITR, audit recovery
+
+**需求场景 / 现象**: 基于 MES 需求规格和初始管理系统架构模型，形成可供跨部门评审的基础搭建方案，同时保留未批准的业务规则为责任人待决项。
+
+**根因**: 原始方案涉及生产、质量、库存、授权、动态配置和外部集成，但数据权威、配置适用性、异步执行身份和恢复目标尚未完全确认；若直接落成技术事实，容易把待决业务规则编码进基础平台。
+
+**方案 / 架构**:
+- 首期采用边界清晰的模块化单体，按领域明确数据所有权，避免在领域和运维能力未验证前拆微服务。
+- 每个 MES 执行订单固定绑定唯一配置包，子工序、报工和质量事实继承；阶段1仅引用工艺路线/标准作业基线，工作流版本待阶段4再加入。
+- 授权按主体、资源、动作、范围、有效期完整匹配；用户发起的后台任务执行时重新核验用户授权，并与最小权限 Worker 主体取交集。
+- 关键业务审计与业务事务同库提交；外部审计归档使用 outbox，需明确投递幂等和 PITR 恢复核对。
+- PITR 回填事件保留原 event ID 和时间，按类型标明已回退业务状态、仍成立的历史读取/拒绝事实或待核对/已补偿的远端副作用；不得因此重建业务状态。
+
+**关键文件与接口**:
+- docs/architecture/MES-基础搭建架构方案.md — 完整分层、版本、授权、审计、恢复和阶段验收建议。
+- docs/requirements/MES-综合需求规格说明书.md — 需求输入。
+
+**实施步骤**:
+1. 读取现有需求与架构输入，列出权威边界和阶段依赖。
+2. 形成领域、运行、数据、安全和恢复章节，并将需业务确认的内容列为 D1-D18。
+3. 经领域、运行时、安全三个独立视角评审，修订工作流阶段边界、双主体授权、outbox/PITR 和审计恢复语义。
+
+**验证方法**: 检查文档含 17 个主章节、1 个 Mermaid 图、18 个责任人待决项及阶段0-5；相对参考链接目标存在。三路独立评审及交叉核验完成，最终没有未关闭的 Blocker/Major。未运行应用代码测试，因为该任务只交付架构文档；方案审批和实施验证仍待后续。
+
+**踩坑**: PITR 回退的是业务数据库状态，不会让已经发生的下载、拒绝或外部副作用自动消失；恢复后的审计回填必须保留事件类型对应的恢复处置状态。外部归档使用异步 outbox 时，也不能宣称与业务数据库跨库原子提交。
+
+**状态**: 架构建议稿待产品、生产、质量、仓储、ERP、IT 和安全责任人评审；实施与生产恢复演练待后续验证。
+
+
+### P-20260947: 大型 IAP 分支合并评估要区分静态与硬件验收
+
+**日期**: 2026-10-16
+**项目**: EncoderPlotter_0903_01
+**关键词**: 分支合并评估, git merge-tree, IAP回归, 子模块gitlink, 真机验收
+
+**需求场景 / 现象**: 评估大型功能分支合入主线后是否完全兼容。
+
+**根因**（问题类必填）: 无文本冲突、静态差异或单元测试均无法单独证明硬件相关多模块行为兼容，尤其涉及 IAP 擦写与固件恢复时。
+
+**方案 / 架构**: 先确认 base 与提交数量，再按业务链路审差异，单独核对 gitlink 目标并确认工作区子模块状态；将静态检查结论与运行验收结论分开报告。
+
+**关键文件与接口**:
+- Git: `git rev-list --left-right --count base...target`、`git merge-tree base base target`、`git diff --check base...target`
+- 本仓 IAP 主路径：`controller/python/Encoder.py`、`controller/python/parse_iap_bin.py`、`controller/python/qa_api/routes_iap.py`
+- 子模块版本：`git ls-tree target controller/python/sub_common controller/python/sub_embedded`
+
+**实施步骤**:
+1. 明确 base 与目标引用，避免把工作分支当作合并目标。
+2. 盘点提交数、差异文件、子模块指针和冲突。
+3. 按正常与失败路径安排 Windows/Linux、HTTP API、IAP 真机验收；没有硬件证据时结论限定为静态风险评估。
+
+**验证方法**: 实际只读命令可得提交计数、目标文件统计、merge-tree、diff-check 和子模块状态；功能兼容仍需 CI 与设备路径验证。
+
+**踩坑**: 子模块 checkout 可能不是目标 gitlink 所指的提交；不能把本地当前子模块内容当作目标分支实现。IAP HTTP 层把校验移到 bin 解析核心后，route 单测应覆盖错误 bin、跨系列、旧固件和异常中断，并需硬件升级后回读验证。
+
+**状态**: 已完成（形成静态评估方法）；本次目标分支兼容结论仍待验收
+
+
+### P-20260948: IAP解析兼容程序加密包内的分段加密固件
+
+**日期**: 2026-10-16
+**项目**: EncoderPlotter1
+**关键词**: IAP, 程序加密, 分段加密, AES V2, Protector.decrypt_iap_segmented_data, ARGUMENTS, 固件参数解析
+
+**需求场景 / 现象**: 用户先对固件执行IAP分段加密，再用程序加密包裹该分段文件。普通IAP能解开外层程序包，却无法扫描内部ARGUMENTS，报“未识别出有效的固件参数结构”。
+
+**根因**: 程序加密和分段加密是两层不同格式。现有IAP流程只对外层调用Protector.decrypt_file，返回的仍是供设备传输的V2/V3分段包；直接扫描该密文当然找不到固件ARGUMENTS。
+
+**方案 / 架构**: 上传数据保持外层程序解密后的完整分段包；单独复制一条解析流，严格验证并解开V2或V3，再执行Flash Layout Footer和ARGUMENTS解析。V2验证包长度、连续序号、内部长度和CRC；V3验证包边界与CRC(iv+密文)。不要把解析明文覆盖上传变量或重试摘要输入。
+
+**关键文件与接口**:
+- `controller/python/sub_common/Protector.py` — `Protector.decrypt_iap_segmented_data(data)` 内存严格解密，返回固件字节和V2/V3格式。
+- `controller/python/Encoder.py` — 普通IAP参数校验使用独立 `metadata_data` 解析；上传仍用 `app_data`。
+
+**实施步骤**:
+1. 解程序加密外层包。
+2. 保留外层解密结果用于分段传输，另建元数据副本。
+3. 校验V2/V3帧并解出固件后解析Footer/ARGUMENTS。
+
+**验证方法**: 对目标kingkong.bin，外层解密得到535716字节V2包，内层还原496888字节；解析出DPT 4.2.6、算法4060、ARGUMENTS版本4、结构有效。截断包和短包均拒绝。未进行真机IAP烧录。
+
+**踩坑**: 现有基于文件路径的 `decrypt_file_aes` 只支持V2且落盘；兼容IAP参数预检需要V2/V3内存解码以避免临时明文文件，同时保留原传输字节。
+
+**状态**: 已完成文件解析兼容；真机升级链路未验证。
+
+
+### P-20260949: IAP首包C5 01向量表失败与V2/V3传输格式匹配
+
+**日期**: 2026-10-16
+**项目**: EncoderPlotter1
+**关键词**: IAP, 5CC5, C5 01, vector table, BootLoader V2 V3 V4, segmented encryption format mismatch
+
+**需求场景 / 现象**: 外层程序加密内含分段加密 V2 的 DPT 固件可正确解析；设备上传第1包后，5CC5提交响应 `C5 01`，导致升级失败。
+
+**根因**: 仓库协议核查记录将 5C C5 01 定义为向量表校验不通过。固件分段记录格式需与目标BootLoader一致：BL V2使用V2（记录无包尾CRC）；BL V3/V4使用V3（每记录有CRC）。上位机按目标BootLoader拆帧，若拿V2文件发给V3/V4，会将下一条记录长度字节误作CRC并破坏首包解密结果。截图未包含目标IAP版本，因此格式错配为高概率根因，最终确认仍需完整日志中的当前BootLoader版本行。
+
+**方案 / 架构**: IAP读出BootLoader版本后、发首个数据包前校验固件分段格式匹配；V2只允许BL V2，V3允许BL V3/V4。明确的C5 01/5C C5 01向量校验失败不进行无效重试。
+
+**关键文件与接口**:
+- `controller/python/sub_embedded/IAP.py` — `validateIapSegmentedEncryptionFormat`、`uploadApp`、5CC5提交响应。
+- `controller/python/Encoder.py` — 将解析出的 segmentedEncryptionFormat 传给上传流程。
+
+**验证方法**: V2/V2、V3/V3、V3/V4通过；V2/V3、V3/V2拒绝；mock C5 01只发送一次；精确BIN预览解析仍返回 DPT 4.2.6/V2。未真机复测。
+
+**状态**: 已加格式错配保护和明确错误响应；硬件原因待目标BootLoader版本日志确认。
+
+
+### P-20260950: IAP V3末包不足256字节导致分段固件解析失败
+
+**日期**: 2026-10-16
+**项目**: EncoderPlotter1
+**关键词**: IAP V3 segmented encryption, partial final chunk, Protector.decrypt_iap_segmented_data, CRC8, AES CBC
+
+**需求场景 / 现象**: 用户提供的 DPT30 V4.2.6 BIN（外层程序加密，内层分段加密）预览解析失败。
+
+**根因**: 外层解密成功；内层是V3分段包。V3加密器每次读取最多256字节，因此有效文件末包可以小于256字节。解码器误将任何前面已有包的短包都判为“非末包”，即便它确实是最后一包，导致解码失败并将密文回退到ARGUMENTS扫描。
+
+**方案 / 架构**: 收集V3每包解密长度。严格要求除最后一包外均为256字节，最后一包允许1至256字节；CRC仍需通过。
+
+**关键文件与接口**:
+- `controller/python/sub_common/Protector.py` — `Protector.decrypt_iap_segmented_data` V3末包校验。
+- `controller/python/Encoder.py` — 离线预览命令复用该解码器。
+
+**实施步骤**:
+1. 外层程序解密。
+2. 按V3长度记录、CRC校验并还原明文。
+3. 用现有Footer/ARGUMENTS规则解析。
+
+**验证方法**: 指定文件外层537657字节，内层V3还原496888字节；解析为DPT 4.2.6、算法4060、ARGUMENTS v4。实际预览命令返回status=ok。旧V2文件仍可解析。CRC有效但非末包短于256的合成数据被拒绝。未做Electron实机或硬件升级。
+
+**踩坑**: “前包之后短于256”不足以判定无效；必须解析完全部记录后再判断它是不是末包。
+
+**状态**: 文件解析兼容已修复；设备升级链路未验证。
+
+
+### P-20260951: EncoderPlotter1读取器功能与IAP子模块合并兼容验证
+
+**关键词**: EncoderPlotter1, analyzer-iap, iap-ota-sn, 子模块合并, AnalyzerInfo
+**日期**: 2026-10-16
+## 需求
+feature/iap-ota-sn 完整接入 feature/analyzer-iap，同时保留已有 DPT V5 参数恢复、SN 回读与分段加密升级。
+## 方案
+两个子仓先分别内容合并再更新父仓 gitlink，禁止择一覆盖。sub_common a314a17 同时包含 e13db13 与 c65b5e3；sub_embedded e3d9daa 同时包含 47c7bf6 与 8ab1943。父仓 c62fe446，保留 const isAnalyzer 的原有通用读取器热插拔实现。selector.html 用户原有删除6选项的修改保留未提交。未推送任何仓库。
+## 关键文件
+controller/python/sub_common/DataFormatter.py；controller/python/sub_embedded/Analyzer.py；controller/analyzer.js；controller/index.js；main/index.js。
+## 验证
+266 passed, 29 subtests passed（qa_api、sub_embedded、v4060、iap_sn_restore、build_info、safe_name）；JS语法及差异空白检查通过。独立review确认双祖先可达、Info None/空/15字节失败与16字节成功、PID1/2/3/5及异常SN隔离通过。
+## 限制
+没有真实读取器升级、热插拔及Ubuntu设备验收，标记BLOCKED-无法真实验证，不承诺全部硬件完全兼容。推送需先子仓后父仓。
+
+
+### P-20260952: EncoderPlotter1合并读取器功能的已验证提交与限制
+
+**关键词**: EncoderPlotter1, analyzer-iap, iap-ota-sn, 子模块合并, AnalyzerInfo
+**日期**: 2026-10-16
+## 需求
+feature/iap-ota-sn 完整接入 feature/analyzer-iap，同时保留已有 DPT V5 参数恢复、SN 回读与分段加密升级。
+## 方案
+两个子仓先分别内容合并再更新父仓 gitlink，禁止择一覆盖。sub_common a314a17 同时包含 e13db13 与 c65b5e3；sub_embedded e3d9daa 同时包含 47c7bf6 与 8ab1943。父仓 c62fe446，保留 const isAnalyzer 的原有通用读取器热插拔实现。selector.html 用户原有删除6选项的修改保留未提交。未推送任何仓库。
+## 关键文件
+controller/python/sub_common/DataFormatter.py；controller/python/sub_embedded/Analyzer.py；controller/analyzer.js；controller/index.js；main/index.js。
+## 验证
+266 passed, 29 subtests passed（qa_api、sub_embedded、v4060、iap_sn_restore、build_info、safe_name）；JS语法及差异空白检查通过。独立review确认双祖先可达、Info None/空/15字节失败与16字节成功、PID1/2/3/5及异常SN隔离通过。
+## 限制
+没有真实读取器升级、热插拔及Ubuntu设备验收，标记BLOCKED-无法真实验证，不承诺全部硬件完全兼容。推送需先子仓后父仓。
+
+
+### P-20261016: MES 可扩展模块基础架构边界与发布流程
+
+**日期**: 2026-10-16
+**项目**: MES 后台管理系统，D:/code/mes
+**关键词**: MES基础架构, 模块化架构, 独立部署, 模块独立数据库, 控制面, Outbox, 无同步热路径, Release编排, manifest, version_token, perm_epoch, 范围授权
+
+**需求场景 / 现象**: 为支持业务模块任意创建和独立添加，需要先定义一套模块依赖的 MES 基础平台和模块契约。
+
+**根因**（问题类必填）: 不适用；这是基础架构设计任务。关键设计风险在于平台与业务模块边界不清、跨模块同步依赖、权限范围遗漏及模块数据所有权混淆。
+
+**方案 / 架构**: 平台提供稳定 SDK/契约、模块目录与 manifest 校验、身份授权和签名能力快照、元数据模板版本、事件通道、审计汇集、Release 编排与观测；模块独立构建、服务、UI、数据库和发布。模块业务热路径不做同步跨模块 RPC；每个模块通过本地事务 Outbox 发布版本化事件。Release 作为平台版本、模块制品、权限快照及迁移批次组成的锁定部署计划。撤权以 perm_epoch 和提交栅栏确认生效；资源范围应用于列表、详情、关联、写入、导出、附件、事件消费和后台任务。跨模块强约束采用目标绑定预授权凭证、命令账本、幂等和低频对账，不直连其他模块数据库。
+
+**关键文件与接口**:
+- `docs/architecture/MES-基础搭建架构方案.md` — 架构建议稿，包含平台边界、模块契约、发布流程和分阶段建设图示。
+- `docs/requirements/MES-综合需求规格说明书.md` — 业务需求输入。
+
+**实施步骤**:
+1. 先落地 SDK/稳定契约、模块注册、身份与权限、模板版本、事件/outbox、审计、Release 与观测等基础能力。
+2. 通过独立参考模块验证制品签名/审批、独立数据库/迁移、路由、范围授权和事件链路。
+3. 再允许模块按 manifest 声明权限、依赖、API/事件、UI、任务与健康检查并独立部署。
+4. 建设阶段以跨模块事务、撤权屏障、终态数据保护和重试补偿作为验收边界。
+
+**验证方法**: 最终建议稿含5张Mermaid图、代码围栏成对；模块独立部署/数据库、禁止热路径同步调用、本地Outbox、默认拒绝、模板版本令牌、perm_epoch提交栅栏、终态保护及范围授权全路径有文本依据；R6领域/运行时/安全评审和交叉复核通过。未运行业务代码测试；Codex文件面板显示检查受工具状态限制。
+
+**踩坑**: 原模型同时包含“模块独立发布”和“单一Release制品”两种口径，建议把Release定义为锁定版本与部署计划，不合并为单体制品；预留门禁凭证是特定任务授权线性化点，后续复判可阻止新预留，但不能宣称立即撤销已预留任务；范围授权必须下沉到查询与后台执行层，禁止先读全量再过滤。
+
+**状态**: 架构建议稿，待责任人确认 Release 定义与跨模块门禁语义。
+

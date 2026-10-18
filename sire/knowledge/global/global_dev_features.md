@@ -1277,6 +1277,210 @@ AGENTS.md 讲的是原则，这条记录给**具体文件与行号**。
 **状态**: 已完成
 
 
+### F-071: MES四部分需求文档与系统设计补充
+
+**日期**: 2026-10-14
+**项目**: MES (D:\\code\\mes)
+**关键词**: MES, 需求说明, 系统设计, 订单生命周期, 动态字段, 工艺版本, 角色矩阵, 流程图
+
+**需求场景 / 现象**: 用户要求以系统设计者角色整理 MES 需求说明，用户给出的会议内容作为参考输入；文档需集中呈现系统描述、功能与角色、订单主流程和操作流程、非业务平台信息，并指出设计缺项。
+
+**设计结论**: 将系统划分为业务 Web、后台管理 Web、后台服务、数据库四部分。采用领域对象与配置元数据分层：订单、工艺、工序任务、流程实例、质量、物料、SN 保持稳定关系；业务扩展字段、页面呈现和受限流程规则由配置驱动。平台保留稳定 ID、状态、引用、权限和审计语义。发布配置不可原位修改，实例绑定版本；动态字段的查询/索引按授权启用。订单状态、流程状态、工序状态和质量处置状态分开建模。
+
+**关键文件**:
+- `docs/requirements/MES-综合需求规格说明书.md` — 四部分架构、功能角色矩阵、订单主流程及分支、登录/配置/业务操作流程、DPB A/B会议截图及设计确认项。
+
+**验证方法与结果**: 结构检查确认四个主体章节、3 个 Mermaid 流程图、两张原始 DPB 图均存在且链接有效；需求说明内容检查未发现重复需求编号。该检查验证文档结构，不代表 MES 产品功能验收。未修改 Word。
+
+**设计者需业务确认**: ERP 工单权威来源和变更规则；八步与路线工序的状态映射；在制实例版本迁移；字段能力和查询边界；数据/字段授权矩阵；DPB A/B 适用关系及抽检标准；性能、部署、恢复、留存和集成指标。
+
+**限制**: 当前仅完成 Markdown 需求基线；流程规则和业务字段细节仍需责任岗位评审，不能作为批准的生产操作规程。
+
+**状态**: Markdown 重构完成，待业务/产品/工艺/质量/仓储/IT 评审。
+
+
+### F-072: MES需求确认基线审查与会议决议清单
+
+**日期**: 2026-10-14
+**项目**: MES (D:\\code\\mes)
+**关键词**: MES, 需求确认, 评审会议, 签字基线, 验收条件, 状态机, 权限矩阵
+
+**需求场景 / 现象**: 用户要求从专业系统设计角度审查现有 MES 需求文档是否能用于需求确认，并说明会议还需确认的内容。
+
+**方案 / 结论**: 当前 Markdown 可作为需求评审/澄清会议的讨论基线，但不能直接作为最终签字验收基线。主要缺口是：功能条目没有逐项需求编号、优先级、可测验收条件和追踪映射；角色没有最终职责/数据/字段/审批矩阵；ERP 八步和工艺路线的状态映射及订单状态机未冻结；主数据责任、订单变更、质量返工、动态字段首期范围、DPB A/B 适用范围、集成和量化非功能指标待确认。
+
+**实施建议**: 议程按范围优先级、系统边界/主数据、订单生命周期、工艺/质量和异常、DPB A/B、动态字段版本、角色权限审计、接口部署非功能、验收与签署推进。每项须形成责任人、明确决议、例外分支、需求条目和验收证据；未决项记录负责人和期限，不把讨论意见直接视为批准。
+
+**关键文件与接口**:
+- `docs/requirements/MES-综合需求规格说明书.md`；审查清单见 `.sire/runs/R20261014-081849/review.md`。
+
+**验证方法**: 静态审查需求结构及待确认项；修正系统上下文图的 ERP 导入箭头，未执行产品功能验收，也未修改 Word 或代码。会议决议后需把确认结果转成编号需求和可测试验收标准。
+
+**状态**: 审查完成，建议用于澄清会；正式冻结前补全验收和决策追踪。
+
+
+
+### F-073: MES需求文档会议确认清单附录
+
+**日期**: 2026-10-14
+**项目**: MES (D:\\code\\mes)
+**关键词**: MES, 会议确认清单, 决策记录, 责任人, 期限, 需求基线
+
+**需求场景 / 现象**: 用户希望将会议上需要确认的事项直接放入需求文档末尾，便于开会逐项记录。
+
+**方案 / 架构**: 在需求说明末尾新增会议确认清单，覆盖一期范围、系统边界/数据责任、订单生命周期、ERP 八步与路线映射、生产准备与物料、质量门禁/异常、DPB A/B、自定义字段/版本、角色权限、接口/平台非功能、报表追溯及验收冻结。每项包含建议确认角色和结论/负责人/期限记录位，并增加会议结论汇总表。文档版本升为 1.2。
+
+**关键文件与接口**:
+- `docs/requirements/MES-综合需求规格说明书.md`
+- `.sire/runs/R20261014-083925/validation.md`
+
+**验证方法**: 检查附录位于文档末尾、12项议题齐全、原 Mermaid 流程图数量不变、DPB 图片链接有效。仅静态文档检查，不代表功能测试。
+
+**状态**: 完成，待会议填写决议。
+
+
+### F-074: MES飞书评审文档完整同步与DPB结构化整理
+
+# MES 评审文档与飞书完整同步
+
+日期：2026-10-14
+项目：D:/code/mes
+**关键词**: MES, DPB, 需求确认, 飞书, Word, 动态字段, 版本, 角色场景
+
+## 场景
+用户要求完整需求进入指定飞书文档，保留四部分功能、订单主流程与分支、角色使用场景、平台要求和末尾会议清单。原图片无法直接写入时允许整理图内内容。
+
+## 方案
+以完整富文本 HTML 写入飞书；按标题、表格、流程箭头组织。DPB A/B 分别保留11和13工序，整理13项动作和信息，明确重复工序、抽检和追溯关联。空白或细字不擅自推定。宽表改为角色分节，避免窄屏裁切。稳定平台属性与动态业务字段分层，定义不可变发布版本及实例绑定。
+由同一 HTML 同步 Markdown，补四个 Mermaid 图和两个原始 DPB 截图，生成 A4 纵向 Word。
+
+## 文件
+docs/requirements/MES-综合需求规格说明书.md
+docs/requirements/MES-SRS-1.3-A4-Portrait.docx
+.sire/runs/R20261014-084207/feishu-v1.3.html
+
+## 验证
+实际打开飞书，替换正文，检查目录、角色场景、DPB表格前后段及保存状态。截图在 evidence/。独立复核发现业务员概称与设备门禁表述问题，已统一。主流程图取消/变更的变更分支以相邻表格补充，图中未单独画出。
+Word结构检查为7节A4纵向、11表、6图片；渲染器缺soffice.exe，视觉分页验证BLOCKED，不声称通过。
+
+## 状态
+飞书完整内容已写入；MD/Word同步1.3；飞书原始DPB图片由结构化文字/表格替代，Word保留原图。业务规则仍待会议确认。
+
+
+### F-075: MES 代码现状基线与 SRS v1.3 差距矩阵（2026-10-14 实测）
+
+**日期**: 2026-10-14
+**项目**: MES / D:\code\mes
+**关键词**: MES 现状基线, 编码器 MES, Express TypeORM, Vue3 Electron, 配置版本未建模, synchronize true 无 migration, 飞书 OAuth 唯一登录, MES_ADMIN_OPEN_IDS, 三套状态并存, 需求差距矩阵, 112 handler
+
+**需求场景 / 现象**: 需要一份可复核的"代码到底实现了什么"基线，用来对照需求说明书 v1.3（业务端/管理端/后台服务/数据库四部分），并回答差距在哪。仓库自带清单文档（README、DELIVERY_CHECKLIST、ACCEPTANCE_CHECKLIST）与实际严重不符，不能作为现状证据。
+
+**根因**: 该仓库实体由脚本批量生成（`generate-entities.js`、`fix-columns*.js`），且 `synchronize: true` 无 migration，导致数据模型随实体漂移；文档侧的多份 checklist 停留在早期 4 实体/5 端点规模，从未回写。
+
+**方案 / 架构**: 用"实测计数 + 逐条 grep 取证"建立现状基线，再按 SRS 章节做差距矩阵。核心判定：
+- 现有代码是**执行记录系统**（工单 + ERP 八步 + 工序报工 + 质检 + 追溯 + 编码器测试），不是文档要求的**元数据驱动 MES**；
+- 最大面积差两块：后台管理系统（0 页面、`/api/admin/*` 前端 0 调用）与 DPB 定子 A/B 路线（0 建模）；
+- 三套状态并存互不相通：`WorkOrderFlow` 6 态硬编码 enum、`OperationWorkflow` 八步、`OperationRecord` in_progress/completed —— 正对应文档"八步与工艺路线映射待确认"，该待确认项优先级最高；
+- 可先做、不依赖业务确认的四件工程底线：git 初始化、TypeORM migration、版本化审计、报表/追溯的角色区分。
+
+**关键文件与接口**:
+- `backend/src/database.ts:62` — `synchronize: true`；`DB_TYPE` 默认 sqlite，`backend/data/mes.db`
+- `backend/src/middleware/auth.ts:19-35` — JWT 校验且强制 `authProvider==='feishu'`；`services/loginPolicy.ts:5` 把 DB 里的 admin 降为 operator，除非 openId ∈ `MES_ADMIN_OPEN_IDS`
+- `backend/src/entities/User.ts:33` — 角色仅 `admin|supervisor|operator`（文档要求 9 角色）
+- `backend/src/entities/OperationStageField.ts` — 唯一的动态字段定义表，仅 fieldKey/label/valueType/required/unit/sequence；`OperationRecord.fieldValues` 用 text 存 JSON
+- `backend/src/routes/workorders.ts:102-105` — ERP 导入按 orderNo 去重（配合 `WorkOrder.orderNo` unique），文档要求的导入幂等已实现
+- `frontend/src/router/index.ts` — 12 个具名路由，无任何配置/权限/主数据管理页
+
+**实施步骤**:
+1. 计数：`find backend/src/{entities,routes,services} -type f | wc -l` = 39/18/10；按 `^router\.(get|post|put|patch|delete)` 解析 handler = 112；`find frontend/src -name '*.vue' | wc -l` = 22（12 页面）。
+2. 鉴权面：逐文件先判 `^router\.use\(.*authMiddleware`（blanket），再看 handler 参数段；结果 112 中 7 个无守卫，全在 `routes/auth.ts`（含两个直接返回 410 的 `/register`、`/login`）。**必须识别 router 级守卫，否则会把 `users.ts` 误报成未鉴权。**
+3. 缺口取证（空结果即结论）：`grep -rn version backend/src/entities/*.ts` 仅 2 处业务字段；`effectiveFrom|revision` 0；`grep -rni audit backend/src` 1 处注释；`dataScope|fieldPermission` 0；`serialport|modbus|opcua|net.connect|.pyd|EncoderPlotter` 在 backend/src、frontend/src、electron 全 0。
+4. 反向接线检查：`grep -rIo 'pick-lists|stock-transfers|warehouse-locations|/admin' frontend/src` = 0 → 4 个路由文件共 23 个 handler 无前端调用方。
+5. 输出差距矩阵，每条"未实现"必须附一次真实检索。
+
+**验证方法**: 同一批计数由独立子代理（Explore）与主控双向复算；子代理对"无任何 version 字段"判 PARTLY（漏了 firmwareVersion、encoderProductVersion），对"无前端调用方 handler"报 19 而主控按文件实数为 23 —— 两处偏差都必须在交付前改正，证明单源计数不可信。
+
+**踩坑**: ① `README.md:41` 仍写 React 18（实为 Vue 3）、`DELIVERY_CHECKLIST.md:5` 写"✅ 生产就绪"、`ACCEPTANCE_CHECKLIST.md:73` 写"19个API端点 全部实现"（实际 112），照抄仓库文档会得到完全错误的现状；② `EncoderPlotter/EncoderAnalyzer` 只出现在 `.sire` 历史日志，不属本仓库，别把它当已接入的设备采集；③ 仓库不是 git 仓库，`git log` 类取证一律不可用。
+
+**状态**: 已完成（只读分析，未运行应用；"已实现"仅指代码存在且路由可达，不等于端到端验收通过）
+
+
+### F-076: Nuitka 用原始目录收集需运行时执行的 Python 脚本
+
+**日期**: 2026-10-14
+**项目**: driverSoftware / D:\code\driverSoftware
+**状态**: 已修复；独立 Nuitka 产物验证通过，完整项目构建受本机 vendor wheel 版本差异阻塞
+**关键词**: Nuitka, --include-raw-dir, --include-data-files, .py 源码打包, force_calib, 台架脚本, dataStructV4026, GitLab Runner, 构建实物门禁
+
+**需求场景 / 现象**: GitLab Windows 冒烟构建编译后，门禁报告 `tools\force_calib\calibrate_force_v2.py` 未进入 `server.dist`；Runner 的 Nuitka 4.1.3 最终因门禁失败退出。
+
+**根因**: Nuitka 的数据文件收集规则把 `.py` 视作代码过滤；运行时由 `server.exe --run-script` 执行的台架源码既不是被 Nuitka 编译的模块，也不应作为普通数据文件收集。`--include-data-files` 无法满足该场景。
+
+**方案 / 架构**: 用 `--include-raw-dir=源目录=目标相对目录` 原样递归复制脚本目录；Windows 和 macOS 构建仍在客户包清理前检查关键脚本实际存在。更新错误提示、运行器说明、测试断言及中英用户提示，消除旧规则口径。
+
+**关键文件与接口**:
+- `server.py` — Nuitka 项目 pragma 指定源目录和目标目录。
+- `scripts/build.bat`、`scripts/build_mac.sh` — 编译后检查两个关键脚本。
+- `core/force_calib_runner.py` — 说明打包态脚本由主程序子进程执行。
+- `tests/unit/test_run_script_entry.py` — 固定收集选项和实物门禁。
+
+**实施步骤**:
+1. 日志定位为产物缺少台架源码。
+2. 使用本机 Nuitka 4.1.3 独立 standalone 工程验证 raw-dir 源到目标目录复制。
+3. 同步修正配置、双平台诊断提示、说明、测试和界面文案。
+
+**验证方法**: 47 条相关 pytest 通过；独立 Nuitka standalone 编译报告 raw-dir 收集 21 个文件，产物含 `calibrate_force_v2.py` 与 `measure_dyn_zero.py`。完整 `scripts/build.bat --release` 已调用真实构建，但本机现有 `kingkong_calib` wheel 缺显式指定的 `dataStructV4026`，在完整应用编译阶段停止；`--internal` 因工作区原有 `tests/unit/test_port_reclaim.py` 改动被 dirty guard 拦截。
+
+**踩坑**: `--include-raw-dir` 同样要求写 `源目录=目标相对目录`，只有目录参数会报 malformed；先用极小 standalone 程序核对映射和产物，再运行耗时较长的整包构建。
+
+**状态**: 修复已提交 dc946d7；等待使用与 Runner 一致的 vendor wheel 重跑完整冒烟构建。
+### F-077: 多分支纳入审计：主仓祖先图、子仓内容与 gitlink 分开判定
+
+**日期**: 2026-10-15
+**项目**: EncoderPlotter_0903_01 / D:\code\EncoderPlotter_0903_01（feature/iap-ota-sn）
+**关键词**: branch ancestry, submodule gitlink, feature/dpb-single-turn-calibration, feature/dpb4010, feature/hesai-mpp, feature/mpp-algo-4060, fix/dpb-rs485-compat-display
+
+**需求场景 / 现象**: 用户询问多条功能分支是否已合入目标主仓分支，并要求纳入子仓但排除算法仓。
+
+**结论与判据**: 不能只报告父仓 branch tip 的祖先关系；对每个仓执行 `git merge-base --is-ancestor <source-tip> <target-tip>`，另读取目标父仓 commit 的 `git ls-tree` 子模块 gitlink，再在对应子仓核对相关分支 tip 和 feature commit。分支 tip 未合入不必然代表每项代码都缺失，需核对代码提交和当前内容。
+
+**本次验证结果**: 主仓目标 `feature/iap-ota-sn` tip 为 `65639c24`。五个来源中，DPB 单圈、Hesai MPP、MPP 算法支线、DPB RS485 展示修复的 tip 均为祖先；DPB4010 tip `f8d6f7ab` 不是祖先。该分支的 sub_common 提交 `5ce4962` 也未被目标 gitlink `3dc6ebd` 包含；不过 4.0.10 核心 Flash layout 与 packed-version 修复已由目标历史中更早提交覆盖，剩余差异包含 `config.py` 对 productInfoList / supportedVersions 的配置（包括 4010 支持条目），应按具体使用场景决定是否需要补入。目标 sub_embedded pin `2ba14ad` 已包含单圈和 MPP/Hesai 对应提交。sub_automation 没有同名本地功能 ref，目标当前 gitlink与工作树 commit 为 `3332eb2`，不能断言其分支历史纳入状态。sub_algorithm 按授权忽略。
+
+**实施步骤**: 主仓所有 ref 与三个自有子仓全部只读；未切换分支或改动产品工作树。完整命令结果与证据保存在 SIRE 运行台账。
+
+**限制**: 本地引用为检查时快照；没有 fetch，不等同于实时远端头。算法仓未核查。
+
+**状态**: 已完成（只读提交图与当前 gitlink 审计）
+
+
+### F-078: 标定结果汇总CSV复用日志距离并累计追加
+
+**日期**: 2026-10-15
+**项目**: EncoderPlotter_0903_01 / D:\code\EncoderPlotter_0903_01
+**关键词**: 标定汇总, CSV追加, CalibrationLogs, deviationItems, SN, 轴向距离, Excel
+
+**需求场景 / 现象**: 标定结束后需要累计导出 SN、轴向距离、结果、时间、尺寸及系列、告警信息，供 Excel 查看。
+
+**方案 / 架构**: 前端复用标定响应的 deviationItems、defectiveItems 和结果时间；轴向值使用标定过程日志显示的同一返回值并保留两位小数，双圈分别输出内圈/外圈。主进程通过同步追加打开 CSV，仅新建或空文件写 BOM 与表头，已有文件仅追加一行，补齐缺失的 CRLF。设置页提供默认关闭的偏好开关；失败、超时、手动停止和通信异常也保存失败行与原因。CSV 单元格转义引号、逗号、换行并防止 Excel 公式注入。
+
+**关键文件与接口**:
+- `components/encoder/device.js` — 汇总行字段和标定结束分支。
+- `main/file.js` — `append-calibration-summary` IPC 追加文件。
+- `components/analyzer/version.html`、`components/global.js` — 配置开关。
+- `components/i18n.js` — 中英文提示。
+
+**实施步骤**:
+1. 固定标定开始时的 SN 与文件目录。
+2. 从标定结果构建单圈/双圈轴向值、结果和告警行。
+3. 主进程追加 UTF-8 BOM、CRLF CSV。
+
+**验证方法**: 四个 JS 文件 `node --check` 与 `git diff --check` 通过；IPC 临时目录验证表头、累计追加、尾换行修复及文件系统错误返回。真实 Electron UI/读取器路径未验收。
+
+**踩坑**: `deviationItems.value` 是标定过程展示的值；需求口径经用户确认采用该值。不能整文件读改写，否则历史表大时成本高且可能覆盖；写追加模式可序列化同进程 IPC。
+
+**状态**: 代码完成；真实设备验收待有读取器环境时进行
+
+
 ### F-079: DPB外部版查看参数显示产品与固件版本
 
 **日期**: 2026-10-15
@@ -1297,3 +1501,139 @@ AGENTS.md 讲的是原则，这条记录给**具体文件与行号**。
 **踩坑**: 修改外部显示分支时应保留内部完整信息分支的优先级；系列码 106 是 DPB；final 是产品版本字段，software 是固件版本字段。
 
 **状态**: 代码完成；真实界面验收 BLOCKED-无法真实验证。
+
+
+### F-080: DPT V4.2.5 V5参数读取与IAP恢复兼容
+
+**日期**: 2026-10-15
+**项目**: EncoderPlotter1（KingKong Encoder Analyzer）
+**关键词**: DPT V4.2.5, DPT V5 Arguments, Analyzer, IAP 参数恢复, descriptor a, FunctionArguments
+
+**需求场景 / 现象**: Analyzer 固件 DPT V4.2.5（算法 4060）升级后需读取并恢复 V5 参数，同时兼容旧固件和历史调试文件。
+
+**根因**: V4.2.5 使用 V5 的 R/s 参数结构与字段描述符；按旧结构或字段名推断布局会误读数据。字段描述符 a 只用于读取布局，不能作为写入命令。
+
+**方案 / 架构**: 在 sub_common 加入 V5 typed Arguments / FunctionArguments 结构；sub_embedded 对新描述符进行严格校验，完整读取并比对 R/s 字节，结构不一致时拒绝解析。写回时以原 V5 结构为底稿，仅更新明确目标字段，保留未知字段、保留区、prodInfo 和未涉及的函数参数；历史 V5 调试文件读取不额外触发 a 读取。IAP 恢复 SN 时只更新对应字节范围。
+
+**关键文件与接口**:
+- controller/python/sub_common/DataFormatter.py — V5 Arguments / FunctionArguments 数据结构
+- controller/python/sub_embedded/EncoderBase.py — DPT V4.2.5 参数读取、验证和恢复
+- controller/python/sub_embedded/tests/test_dpt_v425_arguments.py — 描述符异常及 live Arguments 构造验证
+- controller/python/iap_sn_restore_test.py — IAP SN 恢复字节范围断言
+
+**实施步骤**:
+1. 按参考工具的 DPT V4.2.5 结构与 a 描述符映射实现兼容读取。
+2. 用原始 V5 结构作为写回基底，仅更新已确认字段并保留其他字节。
+3. 在主仓 IAP SN 恢复路径验证只变更 SN 对应字节。
+
+**验证方法**: py -3.12 -m pytest sub_embedded/tests/test_dpt_v425_arguments.py sub_embedded/tests/test_recalibration_versions.py -q（48 passed）；py -3.12 -m unittest iap_sn_restore_test（7 tests OK）。未执行真机升级验证。
+
+**踩坑**: 头版本路由属于通用 dispatch；非 DPT/V5 组合需在进入 a 查询前拒绝该新解析器，同时保留旧版本自身的正常分发。
+
+**状态**: 已完成（离线验证通过，真机 IAP 待验证）
+
+
+### F-081: 编码器标定错误与告警源码清单整理
+
+**日期**: 2026-10-16
+**项目**: EncoderPlotter_0903_01 / D:\\code\\EncoderPlotter_0903_01
+**关键词**: 编码器标定, calibration, 标定错误, 标定告警, 轴向偏差, sub_algorithm, DPT, MPT, partial calibration
+
+**需求场景 / 现象**: 需要形成标定过程中可能出现的错误和告警清单，包含轴向距离阈值提示，并分析算法仓库来源。
+
+**根因**（问题类必填）: 不适用；这是源码分析与文档整理。
+
+**方案 / 架构**: 将清单放在主仓 docs，按用户可见错误、用户可见告警、内部诊断/重试三类组织。对照 Helper.py 消息定义、sub_algorithm 触发点、sub_embedded 采集/读写及 UI 结果映射。明确多层错误可能是同一根因的传播链；阈值配置值和测试回退值分开说明。未被生产路径调用的消息定义单列为未确认启用。
+
+**关键文件与接口**:
+- `docs/calibration-errors-and-warnings.md` — 完整清单。
+- `controller/python/sub_common/Helper.py` — 消息文本、等级及错误码。
+- `controller/python/sub_algorithm/Rtools.py`、`main.py`、`CalcAngles.py`、`CalcAnglesHalf.py` — 触发条件与算法传播。
+- `controller/python/sub_embedded/EncoderBase.py`、`controller/python/Encoder.py`、`components/encoder/device.js` — 采集、写读错误及界面/MES结果。
+
+**实施步骤**:
+1. 检索共享知识库并复用标定分析和错误传播背景。
+2. 静态扫描当前主仓与锁定算法/公共/嵌入式子模块。
+3. 整理对外提示、内部诊断、阈值口径和索引。
+
+**验证方法**: `git diff --check` 与两个仓库的 `git diff --check` 通过；检查主仓和算法 docs 索引链接、确认 `.gitignore` 放行清单文档。未执行真机标定或错误注入。
+
+**踩坑**: `minAxialDeviationTh` 等四个检查值可由运行参数 `thresholdConfig` 覆盖；算法源码中的 `_Test` 值只是缺省/测试回退，不能作为全部型号规格。消息定义不等于生产路径已启用，须核对实际 `addLog` 调用。
+
+**状态**: 已完成（静态源码分析；真机逐条触发未验证）
+
+
+### F-082: 标定错误告警清单转换为DOCX的版式与验证
+
+**日期**: 2026-10-16
+**项目**: EncoderPlotter_0903_01 / D:\\code\\EncoderPlotter_0903_01
+**关键词**: DOCX, Word文档, calibration errors warnings, python-docx, render_docx, LibreOffice缺失
+
+**需求场景 / 现象**: 将已确认的编码器标定错误与告警 Markdown 清单转成交付用 Word 文档。
+
+**根因**（问题类必填）: 不适用；格式转换任务。
+
+**方案 / 架构**: 使用共享依赖中的 python-docx 生成 Letter 纵向文档，设置中文字体、标题层级、错误/告警两张可跨页重复表头的表格，并保留阈值配置口径及来源说明。页面视觉检查调用标准 render_docx.py，但运行环境缺少 LibreOffice soffice.exe；也未安装 Microsoft Word。
+
+**关键文件与接口**:
+- `docs/calibration-errors-and-warnings.md` — 文本来源。
+- `docs/calibration-errors-and-warnings.docx` — 最终Word文件。
+- `render_docx.py --emit_pdf` — 视觉QA渲染器，因 soffice.exe 缺失未能运行。
+
+**实施步骤**:
+1. 复用 F-081 清单和 F-067 DOCX 页面经验。
+2. 生成 Word 标题、分节文字与错误/告警分类表。
+3. 用 python-docx 解析验证结构、关键条目、表格行数和页面尺寸。
+
+**验证方法**: 文件存在、可由 python-docx 打开；包含 2 张表（15 行、11 行）、轴向预警/错误配置字段、主要错误告警章节；页面尺寸 8.5 x 11 in。标准页面渲染失败，未能目测所有页。
+
+**踩坑**: PowerShell 调用文件写入时应使用 ASCII 文件名输出，避免此主机控制台编码把中文路径显示成乱码；最终文件采用 `calibration-errors-and-warnings.docx`。生成清单表后不要依赖源 Markdown 表格原样转换，应将三列表格显式设列宽并重复标题行。
+
+**状态**: 部分完成（Word 结构/内容通过；视觉渲染受限）
+
+### F-083: Bootloader 扫描目标与普通设备选择隔离
+
+**日期**: 2026-10-16
+**项目**: driverSoftware
+**关键词**: Bootloader, RS485, device scan, boot jump, APP recovery, 固件档案
+
+**需求场景 / 现象**: Bootloader 设备不响应普通 read_version，用户仍需明确选择 Boot ID 并跳回 APP；Boot 目标不能污染普通设备命令目标或 OTA 向导状态。
+
+**根因**: 普通设备切换和 Bootloader 命令使用不同协议。把 Boot ID 写入普通连接状态会让界面身份与后续命令目标不一致。
+
+**方案 / 架构**: 在设备页提供独立 Boot ID 扫描、单播 Ping 与跳回入口；目标命令使用 V2Commands 浅拷贝，只改变副本 ID。跳回后普通协议复扫，确认 APP 在线后再绑定普通设备 ID 并刷新 read_version/固件档案。Boot 卡状态与 OTA 向导隔离，并在 reader/普通设备/波特率变化时作废旧结果。
+
+**关键文件与接口**:
+- `frontend/js/pages/bootloader.js` — Boot 设备卡与向导状态隔离。
+- `server.py` — 指定 Boot ID 的 Ping/Jump 路由。
+- `frontend/js/api.js` — Boot ID 参数。
+
+**验证方法**: `git diff --check HEAD^1 HEAD` 通过；三名独立只读审查未发现阻断。按用户要求未运行测试或真机验收。
+
+**踩坑**: Boot ID 不进入普通设备选择流程；只有普通协议复扫确认后才能改绑并刷新固件档案。
+
+**状态**: 已合入 development；设备验证待现场具备设备后进行。
+
+
+### F-084: 端口回收按本机项目绝对路径识别服务
+
+**日期**: 2026-10-16
+**项目**: driverSoftware
+**关键词**: server.exe, server.py, 端口回收, 绝对路径, Nuitka, process identity
+
+**需求场景 / 现象**: 项目启动时清理残留端口进程，不能误结束其他软件目录下恰好同名的 server.exe 或 server.py。
+
+**根因**: 只比较进程名会把无关项目的服务误认成本项目实例。
+
+**方案 / 架构**: Python 服务要求命令行脚本绝对路径规范化后等于当前 server.py；Nuitka 服务要求镜像路径等于 paths.host_executable()。start.bat 传入脚本绝对路径；无法确认路径时保留现有进程。
+
+**关键文件与接口**:
+- `server.py` — `_is_our_server_proc`。
+- `start.bat` — 传入绝对脚本路径。
+- `tests/unit/test_port_reclaim.py` — 路径归属用例。
+
+**验证方法**: `git diff --check HEAD^1 HEAD` 通过；三名独立只读审查确认跨目录同名服务不会被识别为本项目服务。按用户要求未重跑测试。
+
+**踩坑**: Nuitka 打包环境的 `sys.executable` 不一定是 `server.exe`；应以 `paths.host_executable()` 为当前宿主程序路径。
+
+**状态**: 已合入 development；按用户要求未重跑测试。
