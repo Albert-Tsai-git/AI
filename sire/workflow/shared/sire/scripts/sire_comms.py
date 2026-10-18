@@ -209,6 +209,39 @@ class Channel:
         replied = {m["re"] for m in msgs if m.get("re")}
         return [m for m in msgs if m["from"] == me and m["type"] in NEEDS_REPLY and m["id"] not in replied]
 
+    def session(self, me: str, action: str, peer: str) -> dict:
+        """持久化按需监听状态；不自动发送、确认消息或启动客户端。"""
+        if me == peer:
+            raise CommsError("通讯对象不能是自己")
+        fd, guard = self._guard()
+        try:
+            state_path = self.dir / f"session_{me}.json"
+            state = json.loads(state_path.read_text(encoding="utf-8")) if state_path.exists() else {
+                "active": False, "empty_checks": 0, "seen_ids": [], "peer": peer,
+            }
+            messages = []
+            if action == "start":
+                state = {"active": True, "empty_checks": 0, "seen_ids": [], "peer": peer}
+            elif action == "stop":
+                state["active"] = False
+            elif action == "poll" and state["active"]:
+                seen = set(state["seen_ids"])
+                messages = [m for m in self.unread(me)
+                            if m["from"] == state["peer"] and m["id"] not in seen]
+                state["empty_checks"] = 0 if messages else state["empty_checks"] + 1
+                state["seen_ids"] = sorted(seen | {m["id"] for m in messages})
+                if state["empty_checks"] >= 5:
+                    state["active"] = False
+            if action != "status":
+                state["updated"] = now()
+                temporary = state_path.with_suffix(".tmp")
+                temporary.write_text(json.dumps(state, ensure_ascii=False), encoding="utf-8")
+                temporary.replace(state_path)
+            return {**state, "messages": messages, "project": self.slug}
+        finally:
+            os.close(fd)
+            guard.unlink(missing_ok=True)
+
     # ---- 进度 ----
     def status_data(self) -> dict:
         p = self.dir / "status.json"
@@ -301,6 +334,11 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--project", help="项目路径或标识；默认当前目录所在 Git 根目录")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
+    session = sub.add_parser("session", help="按需协作通讯，连续5次无新消息后停止")
+    session.add_argument("action", choices=("start", "poll", "stop", "status"))
+    session.add_argument("--me")
+    session.add_argument("--peer", help="默认：Claude 对 Codex，其余身份对 Claude")
+
     s = sub.add_parser("send")
     s.add_argument("--me")
     s.add_argument("--to", required=True)
@@ -365,7 +403,9 @@ def run(argv: list[str]) -> int:
 
     slug, path = resolve_project(args.project)
     ch = Channel(slug, path)
-    if args.cmd == "send":
+    if args.cmd == "session":
+        print(json.dumps(ch.session(agent(args.me), args.action, agent(args.peer or ("Codex" if agent(args.me) == "Claude" else "Claude"))), ensure_ascii=False))
+    elif args.cmd == "send":
         m = ch.send(agent(args.me), agent(args.to), args.type, args.text, args.re)
         print(f"[comms] 已发送 #{m['id']}（项目 {slug}）")
     elif args.cmd == "reply":
