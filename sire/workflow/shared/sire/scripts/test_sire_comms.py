@@ -148,6 +148,58 @@ class CommsTest(unittest.TestCase):
     def test_c09_slug_is_stable(self):
         self.assertEqual(sc.slugify(Path("D:/code/mes")), "d--code-mes")
 
+    def test_c10_session_binding_blocks_other_sessions(self):
+        a, b = "86822a33-f189-40c3-9cd2-6c9f654456c2", "01a14ccb-bbe1-7272-a118-ee11db6c18ca"
+        # 未绑定时保持兼容
+        self.assertEqual(self.cli("send", "--me", "Claude", "--to", "Codex", "无绑定")[0], 0)
+        self.assertEqual(self.cli("--session", a, "bind", "--me", "Claude")[0], 0)
+        self.assertEqual(self.cli("--session", b, "bind", "--me", "Codex")[0], 0)
+        code, out = self.cli("bind")
+        self.assertIn(a, out)
+        self.assertIn(b, out)
+        # 未带会话或其他会话以 Claude 身份通讯一律拒绝
+        for argv in (("send", "--me", "Claude", "--to", "Codex", "x"),
+                     ("--session", "other-session", "send", "--me", "Claude", "--to", "Codex", "x"),
+                     ("--session", "other-session", "inbox", "--me", "Claude"),
+                     ("--session", "other-session", "session", "poll", "--me", "Claude"),
+                     ("--session", "other-session", "status", "--me", "Claude", "--text", "x")):
+            with self.assertRaises(sc.CommsError, msg=argv):
+                self.cli(*argv)
+        # 绑定会话可正常收发，消息记录双方会话
+        self.assertEqual(self.cli("--session", a, "send", "--me", "Claude", "--to", "Codex", "--type", "request", "请复核")[0], 0)
+        m = self.ch().load()[-1]
+        self.assertEqual((m["from_session"], m["to_session"]), (a, b))
+        with mock.patch.dict("os.environ", {"SIRE_SESSION": b}):
+            self.assertEqual(self.cli("reply", "--me", "Codex", "--re", str(m["id"]), "已复核")[0], 0)
+        code, out = self.cli("log", "-n", "1")
+        self.assertIn(f"Codex({b[:8]})→Claude({a[:8]})", out)
+        # 查看类命令不受限
+        self.assertEqual(self.cli("log")[0], 0)
+        self.assertEqual(self.cli("status")[0], 0)
+
+    def test_c11_rebind_requires_flag(self):
+        ch = self.ch()
+        ch.bind("Claude", "session-one")
+        self.assertEqual(ch.bind("Claude", "session-one")["session"], "session-one", "同会话重复绑定幂等")
+        with self.assertRaises(sc.CommsError):
+            ch.bind("Claude", "session-two")
+        d = ch.bind("Claude", "session-two", rebind=True)
+        self.assertEqual((d["session"], d["previous"]), ("session-two", "session-one"))
+        with self.assertRaises(sc.CommsError):
+            ch.bind("Claude", "bad id!")
+        with self.assertRaises(sc.CommsError):
+            self.cli("bind", "--me", "Codex")  # 缺 --session
+
+    def test_c12_all_projects_inbox_skips_foreign_binding(self):
+        ch = self.ch()
+        ch.bind("Claude", "session-one")
+        ch.send("Codex", "Claude", "info", "hi")
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            sc.run(["--session", "session-two", "inbox", "--me", "Claude", "--all-projects"])
+        self.assertIn("跳过", buf.getvalue())
+        self.assertIn("合计 0 条", buf.getvalue())
+
 
 if __name__ == "__main__":
     unittest.main()

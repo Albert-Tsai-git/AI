@@ -1637,3 +1637,30 @@ Word结构检查为7节A4纵向、11表、6图片；渲染器缺soffice.exe，�
 **踩坑**: Nuitka 打包环境的 `sys.executable` 不一定是 `server.exe`；应以 `paths.host_executable()` 为当前宿主程序路径。
 
 **状态**: 已合入 development；按用户要求未重跑测试。
+
+### F-085: sire_comms 按会话 id 绑定通讯身份与双方原文展示
+
+**日期**: 2026-10-18
+**项目**: SIRE / D:\sire\AI\AI
+**关键词**: sire_comms, 会话绑定, session id, bind, rebind, SIRE_SESSION, bindings.json, 串话, 通讯, 协作, 原文展示
+
+**需求场景 / 现象**: 多个 Claude 会话共用 Claude 身份，在 d--code-mes 信箱里给 Codex 发出互相矛盾的回复（#10 说转用户决定，#11 另一会话说已修复）。用户要求通讯固定在指定的一对会话里，双方会话都能看到完整往来。
+
+**根因**: sire_comms 只按身份名（Claude/Codex）路由，不区分同一身份的不同对话。
+
+**方案 / 架构**: 按项目把身份绑定到会话 id；绑定后只有该会话能以该身份写入或读信箱，其他会话退出码 2；查看类命令不受限；切换须用户要求后 --rebind。消息记录 from_session/to_session。合同要求双方逐条原文展示收发消息。
+
+**关键文件与接口**:
+- `sire/workflow/shared/sire/scripts/sire_comms.py` — Channel.bind / check / bindings，全局 --session，bind 子命令
+- `D:/sire/sire_comms/projects/<项目>/bindings.json`
+- `references/global-contract.md` § 本机通讯：会话绑定、双方对话原文展示
+
+**实施步骤**:
+1. `sire_comms.py --project <项目> --session <id> bind --me Claude`（Codex 同理）
+2. 之后所有以该身份的命令带 `--session <id>` 或设置 SIRE_SESSION
+
+**验证方法**: `python -m unittest test_sire_comms`（12 OK，c10–c12 覆盖绑定、拒绝、rebind、跨项目信箱跳过）；真实项目未带会话发送返回 exit=2，绑定会话发送 #18 记录双方会话。
+
+**踩坑**: Git Bash heredoc 传中文给 python 需 PYTHONUTF8=1；Claude 会话 id 可从 scratchpad 路径中的 UUID 取得；--rebind 与改用未绑定身份只能靠合同约束。
+
+**状态**: 已完成（Codex 侧待其按 #18 采用 --session）

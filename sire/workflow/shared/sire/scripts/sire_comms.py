@@ -21,6 +21,11 @@ SIRE 本机通讯：Claude / Codex / Qoder / User 之间的消息、进度与资
   sire_comms.py locks
 项目：
   sire_comms.py projects                                    各项目消息数与各方未读数
+会话绑定（按项目，把身份固定到用户指定的对话）：
+  sire_comms.py --session <会话id> bind --me Claude [--rebind]  绑定；已绑其他会话时须 --rebind（仅用户要求时）
+  sire_comms.py bind                                        查看本项目绑定
+  身份已绑定后，以该身份收发、确认、轮询、读信箱、上报、加解锁必须带 --session <会话id>
+  （或环境变量 SIRE_SESSION）且与绑定一致，否则拒绝，避免同名的其他会话串话。
 
 --me 可省略，改用环境变量 SIRE_AGENT。类型：info / request / question / reply / handoff。
 """
@@ -47,6 +52,7 @@ RESOURCE_RE = re.compile(r"^[a-z][a-z0-9_-]{0,31}$")
 SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,99}$")
 STALE_GUARD_SECONDS = 10
 MAX_TEXT = 8000
+SESSION_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{3,127}$")
 
 
 class CommsError(Exception):
@@ -117,6 +123,50 @@ class Channel:
             meta.write_text(json.dumps({"path": str(path), "created": now()}, ensure_ascii=False), encoding="utf-8")
         self.log = self.dir / "messages.jsonl"
 
+    # ---- 会话绑定 ----
+    def bindings(self) -> dict:
+        p = self.dir / "bindings.json"
+        if not p.exists():
+            return {}
+        try:
+            data = json.loads(p.read_text(encoding="utf-8"))
+            if not all(isinstance(d, dict) and d.get("session") for d in data.values()):
+                raise ValueError
+            return data
+        except (ValueError, AttributeError):
+            raise CommsError(f"绑定文件损坏，请检查 {p}") from None
+
+    def bind(self, me: str, session: str, rebind: bool = False) -> dict:
+        """把身份绑定到指定会话；已绑定其他会话时须显式 rebind"""
+        if not session or not SESSION_RE.match(session):
+            raise CommsError("会话 id 无效：需为 4–128 位字母、数字或 . _ : -")
+        fd, guard = self._guard()
+        try:
+            data = self.bindings()
+            old = data.get(me)
+            if old and old["session"] != session and not rebind:
+                raise CommsError(f"{me} 已绑定会话 {old['session']}；仅在用户要求切换时加 --rebind")
+            data[me] = {"session": session, "time": now()}
+            if old and old["session"] != session:
+                data[me]["previous"] = old["session"]
+            temporary = self.dir / "bindings.tmp"
+            temporary.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+            temporary.replace(self.dir / "bindings.json")
+            return data[me]
+        finally:
+            os.close(fd)
+            guard.unlink(missing_ok=True)
+
+    def check(self, me: str, session: str | None) -> None:
+        """身份已绑定时，只允许绑定会话以该身份通讯"""
+        bound = self.bindings().get(me)
+        if not bound:
+            return
+        if not session:
+            raise CommsError(f"{me} 在项目 {self.slug} 已绑定会话 {bound['session']}，请带 --session（或 SIRE_SESSION）")
+        if session != bound["session"]:
+            raise CommsError(f"{me} 在项目 {self.slug} 已绑定会话 {bound['session']}，当前会话 {session} 无权以 {me} 身份通讯；切换须用户要求后 bind --rebind")
+
     # ---- 消息 ----
     def load(self) -> list[dict]:
         if not self.log.exists():
@@ -167,6 +217,11 @@ class Channel:
             m = {"id": (msgs[-1]["id"] + 1) if msgs else 1, "time": now(), "from": me, "to": to, "type": typ, "text": text}
             if re_id is not None:
                 m["re"] = re_id
+            # 记录双方绑定会话，便于在各自对话中对照
+            binds = self.bindings()
+            for key, who in (("from_session", me), ("to_session", to)):
+                if who in binds:
+                    m[key] = binds[who]["session"]
             with self.log.open("a", encoding="utf-8") as f:
                 f.write(json.dumps(m, ensure_ascii=False) + "\n")
         finally:
@@ -297,7 +352,9 @@ def all_channels() -> list[Channel]:
 
 def fmt(m: dict) -> str:
     re_part = f" re#{m['re']}" if m.get("re") else ""
-    return f"#{m['id']} [{m['time']}] {m['from']}→{m['to']} {m['type']}{re_part}\n    " + m["text"].replace("\n", "\n    ")
+    src = m["from"] + (f"({m['from_session'][:8]})" if m.get("from_session") else "")
+    dst = m["to"] + (f"({m['to_session'][:8]})" if m.get("to_session") else "")
+    return f"#{m['id']} [{m['time']}] {src}→{dst} {m['type']}{re_part}\n    " + m["text"].replace("\n", "\n    ")
 
 
 def print_status(ch: Channel) -> None:
@@ -332,7 +389,12 @@ def print_inbox(ch: Channel, me: str, header: bool = True) -> int:
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(prog="sire_comms.py", description="SIRE 本机通讯（消息 / 进度 / 资源锁）")
     ap.add_argument("--project", help="项目路径或标识；默认当前目录所在 Git 根目录")
+    ap.add_argument("--session", help="当前会话 id；身份已绑定时必填，默认取环境变量 SIRE_SESSION")
     sub = ap.add_subparsers(dest="cmd", required=True)
+
+    b = sub.add_parser("bind", help="把身份绑定到会话 id；不带 --me 时查看绑定")
+    b.add_argument("--me")
+    b.add_argument("--rebind", action="store_true", help="替换已有绑定，仅在用户要求切换会话时使用")
 
     session = sub.add_parser("session", help="按需协作通讯，连续5次无新消息后停止")
     session.add_argument("action", choices=("start", "poll", "stop", "status"))
@@ -382,6 +444,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def run(argv: list[str]) -> int:
     args = build_parser().parse_args(argv)
+    session = args.session or os.environ.get("SIRE_SESSION") or None
     if args.cmd == "projects":
         chans = all_channels()
         if not chans:
@@ -396,6 +459,10 @@ def run(argv: list[str]) -> int:
         me = agent(args.me)
         total = 0
         for ch in all_channels():
+            bound = ch.bindings().get(me)
+            if bound and bound["session"] != session:
+                print(f"[comms] 跳过 {ch.slug}：{me} 已绑定会话 {bound['session']}" + ("，未提供 --session" if not session else "，与当前会话不符"))
+                continue
             if ch.unread(me) or ch.waiting(me):
                 total += print_inbox(ch, me)
         print(f"[comms] {me} 全部项目未读合计 {total} 条")
@@ -403,6 +470,21 @@ def run(argv: list[str]) -> int:
 
     slug, path = resolve_project(args.project)
     ch = Channel(slug, path)
+    if args.cmd == "bind":
+        if not args.me:
+            data = ch.bindings()
+            print(f"[comms] 项目 {slug} 绑定：" + ("无" if not data else f"{len(data)} 个"))
+            for who, d in data.items():
+                print(f"[comms] {who} → {d['session']}（{d['time']}）")
+            return 0
+        if not session:
+            raise CommsError("绑定需要 --session <会话id>")
+        d = ch.bind(agent(args.me), session, args.rebind)
+        print(f"[comms] 已绑定 {agent(args.me)} → {d['session']}（项目 {slug}）")
+        return 0
+    # 以某身份写入或读取其信箱时，会话必须与绑定一致
+    if args.cmd in ("session", "send", "reply", "inbox", "ack", "lock", "unlock") or (args.cmd == "status" and args.text is not None):
+        ch.check(agent(args.me), session)
     if args.cmd == "session":
         print(json.dumps(ch.session(agent(args.me), args.action, agent(args.peer or ("Codex" if agent(args.me) == "Claude" else "Claude"))), ensure_ascii=False))
     elif args.cmd == "send":
