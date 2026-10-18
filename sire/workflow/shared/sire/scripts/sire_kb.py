@@ -7,6 +7,7 @@
 用法:
   sire_kb.py reindex
   sire_kb.py search "关键词1 关键词2"
+  sire_kb.py search --combined "关键词1 关键词2" --run <run_dir>
   sire_kb.py search-database "关键词1 关键词2"
   sire_kb.py show F-004
   sire_kb.py next-id F
@@ -25,6 +26,7 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 from sire_paths import DATABASE_PATH, KNOWLEDGE_DIR, SHARED_SKILL_DIR
+from sire_process import no_console_kwargs
 
 KB_DIR = str(KNOWLEDGE_DIR)
 INDEX_PATH = os.path.join(KB_DIR, "global_index.json")
@@ -269,6 +271,8 @@ def write_receipt(run_dir, terms, kb_total, hits):
 
 
 def cmd_search(args):
+    if getattr(args, "combined", False):
+        return cmd_search_all(args)
     if getattr(args, "database", False):
         vector = str(SHARED_SKILL_DIR / "scripts" / "sire_vector_db.py")
         query = " ".join(args.query).strip()
@@ -277,7 +281,8 @@ def cmd_search(args):
             return 2
         result = subprocess.run([sys.executable, vector, "search", "--query", query,
                                  "--json", "--limit", str(args.limit)],
-                                text=True, capture_output=True, encoding="utf-8")
+                                text=True, capture_output=True, encoding="utf-8",
+                                **no_console_kwargs())
         if result.returncode:
             print(result.stderr.strip() or "数据库检索失败")
             return result.returncode
@@ -332,6 +337,72 @@ def cmd_search(args):
             print("  · %s" % p[:160])
     print("-" * 60)
     print("下一步: 用 show <ID> 读全文，再判定 已实现过 / 部分可参考 / 全新需求")
+    return 0
+
+
+def cmd_search_all(args):
+    """Run Markdown keyword and SQLite/vector retrieval from one entry point."""
+    query = " ".join(args.query).strip()
+    terms = [term for term in re.split(r"\s+", query) if term]
+    if not terms:
+        print("ERROR 需要检索词")
+        return 2
+    command = [sys.executable, str(SHARED_SKILL_DIR / "scripts" / "sire_vector_db.py"),
+               "search", "--query", query, "--json", "--limit", str(args.limit)]
+    if args.run:
+        command += ["--run", str(args.run)]
+    vector_proc = subprocess.Popen(command, text=True, stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE, encoding="utf-8",
+                                   **no_console_kwargs())
+
+    records = load_records()
+    keyword_hits = []
+    for record in records:
+        score_value, matched = score(record, terms)
+        if score_value:
+            keyword_hits.append((score_value, matched, record))
+    keyword_hits.sort(key=lambda item: -item[0])
+    write_receipt(args.run, terms, len(records), len(keyword_hits))
+
+    stdout, stderr = vector_proc.communicate()
+    if vector_proc.returncode:
+        print(stderr.strip() or "向量数据库检索失败")
+        return vector_proc.returncode
+    try:
+        vector_hits = json.loads(stdout).get("hits", [])
+    except (TypeError, ValueError):
+        print("向量数据库检索返回了无效 JSON")
+        return 1
+
+    merged = {}
+    for hit in vector_hits:
+        record_id = hit.get("record_id") or str(hit.get("id"))
+        merged[record_id] = {"id": record_id, "title": hit.get("title", ""),
+                             "path": hit.get("path", ""), "vector_score": hit.get("score"),
+                             "keyword_score": 0, "sources": ["向量"]}
+    for score_value, matched, record in keyword_hits[:args.limit]:
+        item = merged.setdefault(record["id"], {"id": record["id"], "title": record["title"],
+                                                  "path": record["file"], "vector_score": None,
+                                                  "keyword_score": 0, "sources": []})
+        item["keyword_score"] = score_value
+        item["matched"] = matched
+        if "关键词" not in item["sources"]:
+            item["sources"].append("关键词")
+        if not item.get("path"):
+            item["path"] = record.get("file", "")
+    ordered = sorted(merged.values(), key=lambda item: (
+        -len(item["sources"]), -(item["vector_score"] or 0), -item["keyword_score"]))
+    print("综合检索词: %s" % query)
+    print("关键词命中: %d；向量命中: %d；去重后: %d" %
+          (len(keyword_hits), len(vector_hits), len(ordered)))
+    for item in ordered[:args.limit]:
+        print("- [%s] %s  来源=%s  keyword=%s  vector=%s" %
+              (item["id"], item["title"], "+".join(item["sources"]),
+               item["keyword_score"], item["vector_score"]))
+        print("  %s" % item["path"])
+        if item.get("matched"):
+            print("  匹配词: %s" % ", ".join(item["matched"]))
+    print("下一步: sire_kb.py show <ID> 读取知识全文")
     return 0
 
 
@@ -513,6 +584,8 @@ def main():
     p.set_defaults(database=False)
     p.add_argument("query", nargs="+")
     p.add_argument("--limit", type=int, default=5)
+    p.add_argument("--combined", action="store_true",
+                   help="一次并行检索关键词库与向量库，输出去重结果并写两类回执")
     p.add_argument("--run", default=os.environ.get("SIRE_RUN_DIR"),
                    help="台账 run 目录，写入检索回执供 G0 门禁核验")
     p = sub.add_parser("show")

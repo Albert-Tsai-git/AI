@@ -29,6 +29,7 @@ from pathlib import Path
 SCRIPTS_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPTS_DIR))
 from sire_paths import DATA_DIR, SHARED_SKILL_DIR  # noqa: E402
+from sire_process import no_console_kwargs  # noqa: E402
 
 QODER_HOME = Path(os.environ.get("QODER_HOME") or Path.home() / ".qoder-cn").expanduser()
 SETTINGS = QODER_HOME / "settings.json"
@@ -156,7 +157,7 @@ def cmd_link(_args=None) -> int:
         return 2
     SKILL_ALIAS.parent.mkdir(parents=True, exist_ok=True)
     subprocess.run(["cmd.exe", "/c", "mklink", "/J", str(SKILL_ALIAS), str(SHARED_SKILL_DIR)],
-                   capture_output=True, text=True)
+                   capture_output=True, text=True, **no_console_kwargs())
     ok = SKILL_ALIAS.exists() and SKILL_ALIAS.resolve() == SHARED_SKILL_DIR
     print(("skills 别名已建立：" if ok else "skills 别名建立失败：") + f"{SKILL_ALIAS} -> {SHARED_SKILL_DIR}")
     return 0 if ok else 1
@@ -308,7 +309,8 @@ def _heartbeat() -> tuple[int, float, int]:
 
 def _pending_ids() -> list[str]:
     out = subprocess.run([str(PY if False else sys.executable), str(TELEMETRY), "pending", "--json"],
-                         capture_output=True, text=True, encoding="utf-8", errors="replace").stdout
+                         capture_output=True, text=True, encoding="utf-8", errors="replace",
+                         **no_console_kwargs()).stdout
     try:
         return [f.get("finding") for f in json.loads(out or "[]") if isinstance(f, dict)]
     except ValueError:
@@ -431,7 +433,8 @@ def cmd_selftest(_args) -> int:
 
     def run(payload):
         return subprocess.run([str(PY), str(TELEMETRY), "hook", "--client", "qoder"],
-                              input=json.dumps(payload).encode("utf-8"), env=env, capture_output=True)
+                              input=json.dumps(payload).encode("utf-8"), env=env, capture_output=True,
+                              **no_console_kwargs())
 
     run({"hook_event_name": "UserPromptSubmit", "session_id": session, "prompt": "自测：改一处规则"})
     for tool, inp in [("Bash", {"command": "python sire_kb.py search x"}),
@@ -449,7 +452,8 @@ def cmd_selftest(_args) -> int:
         ensure_ascii=False) + "\n", encoding="utf-8")
     run({"hook_event_name": "Stop", "session_id": session, "transcript_path": str(transcript),
          "cwd": str(DATA_DIR)})
-    subprocess.run([str(PY), str(TELEMETRY), "analyze"], env=env, capture_output=True)
+    subprocess.run([str(PY), str(TELEMETRY), "analyze"], env=env, capture_output=True,
+                   **no_console_kwargs())
     conn = sqlite3.connect(tmp)
     events = [list(r) for r in conn.execute("select event,phase,ok from events order by rowid")]
     task = conn.execute("select mode,total_s,failures,phases from tasks").fetchone()
@@ -466,7 +470,7 @@ def cmd_selftest(_args) -> int:
             "PostToolUseFailure 记为失败": bool(task) and task[2] == 1,
             "读规则/检索/归档分别归位": {"rules", "retrieve", "archive"} <= set(phases)},
         "pending": subprocess.run([str(PY), str(TELEMETRY), "pending"], env=env, capture_output=True,
-                                   text=True, encoding="utf-8").stdout.strip()}
+                                   text=True, encoding="utf-8", **no_console_kwargs()).stdout.strip()}
     report["结论"] = "PASS" if all(report["断言"].values()) else "FAIL"
     print(json.dumps(report, ensure_ascii=False, indent=1))
     for path in (tmp, transcript):

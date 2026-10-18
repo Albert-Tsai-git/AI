@@ -11,6 +11,12 @@ DATA_DIR = Path(os.environ.get("SIRE_DATA_DIR") or SIRE_ROOT / "data").expanduse
 DATABASE_PATH = Path(os.environ.get("SIRE_VECTOR_DB") or DATA_DIR / "sire_vectors.sqlite3").expanduser()
 KNOWLEDGE_DIR = Path(os.environ.get("SIRE_KB_DIR") or SIRE_ROOT / "knowledge" / "global").expanduser()
 MODEL_DIR = Path(os.environ.get("SIRE_EMBED_DIR") or Path.home() / "sire" / "models").expanduser()
+# 台账固定目录：跨项目集中存放，不随 --root 落在各项目里
+LEDGER_ROOT = Path(os.environ.get("SIRE_LEDGER_ROOT") or Path("D:/sire/sire_ledger")).expanduser()
+
+
+def ledger_runs_dir() -> Path:
+    return LEDGER_ROOT / "runs"
 
 
 def archive_database_path() -> Path | None:

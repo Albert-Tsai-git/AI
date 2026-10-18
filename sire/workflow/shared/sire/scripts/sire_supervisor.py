@@ -15,6 +15,7 @@ import sys
 import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
+from sire_process import no_console_kwargs
 
 from sire_bundle import files_for, historical_specs, is_sensitive, kb_dir, target_specs
 from sire_paths import DATABASE_PATH, SHARED_SKILL_DIR
@@ -248,12 +249,14 @@ def check(run_id: str, unit_id: str | None) -> int:
 
 
 # 这些状态的提案才算"已登记且未失败"；EVALUATED_FAIL / ROLLED_BACK 的改动不应留在工作区
-RSI_OPEN_STATUSES = ("PROPOSED", "EVALUATED_PASS", "ACTIVE")
+RSI_OPEN_STATUSES = ("PROPOSED", "EVALUATED_PASS", "ACTIVE", "SUPERSEDED")
 
 
 def git_output(args: list[str], cwd: Path) -> tuple[int, str]:
     try:
-        result = subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=60)
+        result = subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True,
+                                encoding="utf-8", errors="replace", timeout=60,
+                                **no_console_kwargs())
     except (OSError, subprocess.SubprocessError):
         # git 不存在、超时或 cwd 无效：由调用方按 fail-closed 处理
         return 127, ""

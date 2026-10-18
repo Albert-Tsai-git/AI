@@ -21,7 +21,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable
-from sire_paths import DATABASE_PATH, KNOWLEDGE_DIR, SHARED_SKILL_DIR, task_roots as shared_task_roots
+from sire_paths import DATABASE_PATH, KNOWLEDGE_DIR, SHARED_SKILL_DIR, ledger_runs_dir, task_roots as shared_task_roots
 
 
 DIMENSION = 384
@@ -488,7 +488,7 @@ def task_roots() -> list[Path]:
 
 
 def run_directories(root: Path) -> list[Path]:
-    """兼容工作区 .sire/runs 和清理后的归档目录结构。"""
+    """兼容固定台账目录、工作区 .sire/runs 和清理后的归档目录结构。"""
     found: set[Path] = set()
     for run_dir in root.rglob(".sire/runs"):
         if run_dir.is_dir():
@@ -496,11 +496,14 @@ def run_directories(root: Path) -> list[Path]:
     for run_json in root.rglob("run.json"):
         if run_json.is_file():
             found.add(run_json.parent)
+    ledger = ledger_runs_dir()          # D:/sire/sire_ledger/runs：不在任何 task_roots 里，单独扫一次
+    if ledger.is_dir():
+        found.update(item for item in ledger.iterdir() if item.is_dir())
     return sorted(found, key=lambda item: str(item).lower())
 
 
 def sync_task_records(conn: sqlite3.Connection) -> int:
-    """将历史 .sire/runs 台账文件导入数据库；幂等，不删除原始台账。"""
+    """将台账文件（含固定目录 sire_ledger/runs）导入数据库；幂等，不删除原始台账。"""
     allowed = {".json", ".md", ".log", ".txt", ".yaml", ".yml"}
     if os.environ.get("SIRE_DB_ALLOW_DELETE") == "1":
         require_delete_password()

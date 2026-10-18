@@ -22,6 +22,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from sire_process import no_console_kwargs
 
 from sire_paths import DATA_DIR
 
@@ -36,9 +37,9 @@ PHASE_PATTERNS = (
     # 只认归档动作本身；读 knowledge/global 属于检索，记进收尾会让 CLOSE_HEAVY 变成误报
     ("archive", re.compile(r"sire_kb\.py\W+(reindex|add|next-id|export-md|lint)|sire_vector_db\.py\W+(index|migrate)"
                            r"|sire_db_backup|snapshot_db|SIRE_ARCHIVE_(ROOT|DB)", re.I)),
-    # 只认台账写入；路径里出现 .sire/runs 不等于在写台账（真实场景测试的夹具也放在 run 目录里）
+    # 只认台账写入；路径里出现 runs 不等于在写台账（真实场景测试的夹具也放在 run 目录里）
     ("ledger", re.compile(r"sire_run\.py|journal\.log|run\.json|units\.json|blockers\.md|assumptions\.md"
-                          r"|kb-hits\.md|stage-output|\.sire[\\/]current", re.I)),
+                          r"|kb-hits\.md|stage-output|[\\/]sire_ledger[\\/]", re.I)),
     ("commit", re.compile(r"\bgit\W+(add|commit|push)\b", re.I)),
     ("rules", re.compile(r"skill\.md|global-contract\.md|[\\/]references[\\/]+[\w-]+\.md", re.I)),
 )
@@ -270,12 +271,11 @@ def summarize_task(c: sqlite3.Connection, client: str, session: str, stop_ts: fl
 
 def spawn_analyze():
     """后台启动 analyze，不阻塞钩子返回。"""
-    flags = 0
-    if os.name == "nt":
-        flags = subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW
-    subprocess.Popen([sys.executable, str(Path(__file__).resolve()), "analyze"], creationflags=flags,
+    group = subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0
+    subprocess.Popen([sys.executable, str(Path(__file__).resolve()), "analyze"],
                      stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                     close_fds=True, cwd=str(Path(__file__).resolve().parent))
+                     close_fds=True, cwd=str(Path(__file__).resolve().parent),
+                     **no_console_kwargs(group))
 
 
 def cmd_hook(args) -> int:

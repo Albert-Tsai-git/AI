@@ -4,11 +4,16 @@
 保证快照从归档库重建仓库库时不会丢失 RSI 记录。status 只读。
 """
 from __future__ import annotations
-import argparse, json, sqlite3
+import argparse, json, sqlite3, sys
 from datetime import datetime, timezone
 from pathlib import Path
 from sire_paths import DATABASE_PATH, archive_database_path
 from sire_vector_db import backup_before_mutation, database_mutation_lock
+
+# 本机控制台是 GBK，拒绝信息按 GBK 出来三端读到的都是乱码，只能靠猜再试一轮，两条流强制 UTF-8
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        _stream.reconfigure(encoding="utf-8", errors="replace")
 
 def now(): return datetime.now(timezone.utc).isoformat()
 def db(p):
@@ -39,10 +44,23 @@ def apply(c, args, ts):
         result=json.dumps({'passed':passed,'metrics':len(args.metric)},ensure_ascii=False)
         c.execute("UPDATE improvement_proposals SET status=?,evaluated_at=?,evaluation=? WHERE proposal_id=?",('EVALUATED_PASS' if passed else 'EVALUATED_FAIL',ts,result,args.proposal_id))
     elif args.cmd=='activate':
-        row=c.execute('SELECT status FROM improvement_proposals WHERE proposal_id=?',(args.proposal_id,)).fetchone()
+        row=c.execute('SELECT status,parent_version FROM improvement_proposals WHERE proposal_id=?',(args.proposal_id,)).fetchone()
         if not row or row['status']!='EVALUATED_PASS': raise SystemExit('只能激活评估通过的提案')
+        cur=c.execute("SELECT version FROM workflow_versions WHERE status='ACTIVE'").fetchall()
+        current=cur[0]['version'] if cur else ''
+        parent=(row['parent_version'] or '').strip()
+        # --parent-version 的默认值是哨兵 'current'（意为"基于当时生效版本"），不是版本号；
+        # 显式钉过版本时才做冲突判定：三端共用一条版本链，他端推进过就不能静默覆盖
+        if parent and parent.lower()!='current':
+            if current and parent!=current:
+                raise SystemExit('版本链已被他端推进：本提案基于 %s，当前生效是 %s；'
+                                 '请复核改动仍成立后以 --parent-version %s 重新登记' % (parent, current, current))
+        if parent.lower()=='current':
+            c.execute('UPDATE improvement_proposals SET parent_version=? WHERE proposal_id=?',(current,args.proposal_id))
         c.execute("UPDATE workflow_versions SET status='RETIRED',retired_at=? WHERE status='ACTIVE'",(ts,))
         c.execute('INSERT OR REPLACE INTO workflow_versions VALUES(?,?,?,?,?,?,?)',(args.version,args.proposal_id,'ACTIVE',args.config_hash,ts,ts,None))
+        # 提案状态与版本链同步，否则被取代的提案仍标 ACTIVE，"有多少条生效改动"读出来是假的
+        c.execute("UPDATE improvement_proposals SET status='SUPERSEDED' WHERE status='ACTIVE' AND proposal_id<>?",(args.proposal_id,))
         c.execute("UPDATE improvement_proposals SET status='ACTIVE',activated_at=? WHERE proposal_id=?",(ts,args.proposal_id))
     elif args.cmd=='rollback':
         c.execute("UPDATE workflow_versions SET status='ROLLED_BACK',retired_at=? WHERE proposal_id=? AND status='ACTIVE'",(ts,args.proposal_id))

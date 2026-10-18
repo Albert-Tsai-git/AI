@@ -8,7 +8,7 @@ R9 checks that Claude and Codex still use one repository source, that no require
 - `sire/knowledge/global/` is the single canonical Markdown knowledge directory.
 - `sire/data/sire_vectors.sqlite3` is the single shared client database; it is not tracked in Git for now (see `sire/data/DATABASE-RECORD.md`).
 - `scripts/sire_paths.py` must resolve the same database and knowledge path through both client aliases.
-- Run ledgers are under `.sire/runs/<RUN_ID>/` or `sire/runs/<RUN_ID>/` and migrate into the shared database at closure.
+- Database indexing and migration run asynchronously after user reporting; retain failures in a local queue and retry on the next SIRE trigger. Run ledgers are only under `D:/sire/sire_ledger/runs/<RUN_ID>/` (or `SIRE_LEDGER_ROOT`); closure must not copy them into a project. Legacy `.sire/runs/` and `sire/runs/` remain readable for migration. Verify final database records and preserve unsupported evidence before cleaning a redundant legacy project copy; retain the fixed-directory source by default.
 
 App skill aliases and Claude role entry files may live in client configuration directories only as links to the shared repository resources. Local integrity evidence, user settings, model weights, credentials, and SQLite sidecars remain outside Git.
 

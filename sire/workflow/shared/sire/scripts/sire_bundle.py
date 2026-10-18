@@ -11,6 +11,7 @@ import sys
 import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
+from sire_process import no_console_kwargs
 from sire_paths import DATABASE_PATH, KNOWLEDGE_DIR, SHARED_SKILL_DIR
 
 
@@ -181,7 +182,8 @@ def build(output: Path, dry_run: bool = False) -> dict[str, object]:
     sidecar.write_text(f"{digest}  {output.name}\n", encoding="utf-8")
     supervisor = Path(__file__).with_name("sire_supervisor.py")
     if supervisor.is_file():
-        subprocess.run([sys.executable, str(supervisor), "verify-zip", "--zip", str(output), "--against-current"], check=True)
+        subprocess.run([sys.executable, str(supervisor), "verify-zip", "--zip", str(output), "--against-current"],
+                       check=True, **no_console_kwargs())
     manifest["output"] = str(output)
     manifest["sha256"] = digest
     print(json.dumps(manifest, ensure_ascii=False, indent=2))
@@ -202,7 +204,7 @@ def main() -> int:
         output = kb_dir() / "exports" / f"sire-workflow-{stamp}.zip"
     supervisor = Path(__file__).with_name("sire_supervisor.py")
     if supervisor.is_file() and not args.dry_run and not args.lightweight:
-        subprocess.run([sys.executable, str(supervisor), "preflight"], check=True)
+        subprocess.run([sys.executable, str(supervisor), "preflight"], check=True, **no_console_kwargs())
     build(output, args.dry_run)
     return 0
 

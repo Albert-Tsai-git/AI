@@ -24,7 +24,13 @@ On every SIRE run, before any retrieval or analysis, Claude, Codex and Qoder mus
 - SQLite database: `sire/data/sire_vectors.sqlite3`
 - Model cache: outside Git
 
+Run ledgers and evidence must be created only under the directory resolved by `ledger_runs_dir()` (default `D:/sire/sire_ledger/runs/<RUN_ID>/`; override with `SIRE_LEDGER_ROOT`). Never create or copy a new run ledger into a project, including at closure. Legacy project copies may be cleaned only after database contents are verified against their files; retain evidence not imported into the database and keep the fixed-directory source by default. Database indexing and archival run asynchronously after the user receives the result; failures stay in a local queue and retry at the next SIRE trigger.
+
 Claude, Codex and Qoder must use the same values for `SIRE_ROOT`, `SIRE_DATA_DIR`, `SIRE_VECTOR_DB`, `SIRE_KB_DIR`, `SIRE_EMBED_DIR`, and `SIRE_TASK_ROOTS` when overrides are set. Do not configure app-specific data paths. Run scripts from this skill's `scripts/` directory or invoke the same script file through either installed alias. Never copy the database to an app profile.
+
+## Silent command execution
+
+Never open or show Windows Terminal, PowerShell, Command Prompt, or another terminal window. Run commands through a non-interactive execution interface with PTY disabled. Every child process started by a SIRE script on Windows must use `scripts/sire_process.py` `no_console_kwargs()`; do not use `Start-Process` or launch a terminal app. Background archive and telemetry work must stay detached and hidden, write output to a log or discard it, and never delay the user-facing result.
 
 Qoder is bound to this same source by `scripts/sire_qoder.py`: `install` registers the four telemetry events plus the entry-injection hook and links `~/.qoder-cn/skills/sire-global-workflow` to this directory as a junction; `selftest` proves the pipeline on an isolated telemetry DB; `verify` proves the hooks actually fire; `uninstall` removes only what the adapter wrote. Hook config takes effect by the next user prompt — measured, no client restart required. `verify` decides by telemetry heartbeat for `client='qoder'`, not by log text matching (string matching produced a false PASS once). Entry injection is opt-in via `--with-remind`. The Qoder alias is a junction, never a second writable copy.
 
@@ -71,15 +77,14 @@ Use the local run ledger and scripts when available. Record failed reviews/tests
 Resolve the shared skill, database, and knowledge locations with `scripts/sire_paths.py`. The common commands are:
 
 ```powershell
-python <SHARED_SKILL_DIR>\scripts\sire_kb.py search "keyword one keyword two" --run <RUN_DIR>
-python <SHARED_SKILL_DIR>\scripts\sire_vector_db.py search --query "task summary" --json --limit 5 --run <RUN_DIR>
+python <SHARED_SKILL_DIR>\scripts\sire_kb.py search --combined "keyword one keyword two" --run <RUN_DIR>
 python <SHARED_SKILL_DIR>\scripts\sire_kb.py reindex
 python <SHARED_SKILL_DIR>\scripts\sire_vector_db.py index
 python <SHARED_SKILL_DIR>\scripts\sire_vector_db.py migrate
 python <SHARED_SKILL_DIR>\scripts\sire_vector_db.py stats
 ```
 
-On completion, archive reusable facts, search terms, decisions, limitations, validation results, and the task record to the shared database; update the shared Markdown index; and set `meta.sire_last_project`, `meta.sire_last_run`, and `meta.sire_last_status`. Commit the changed knowledge, workflow, and evidence to this Git repository (not the database; see `sire/data/DATABASE-RECORD.md`). Do not push unless explicitly asked. Database migrations/indexing must keep a recoverable backup and verify row counts, FTS, vectors, and `integrity_check`.
+On completion, archive reusable facts, search terms, decisions, limitations, validation results, and the task record to the shared database; update the shared Markdown index; and set `meta.sire_last_project`, `meta.sire_last_run`, and `meta.sire_last_status`. Commit changed knowledge and workflow to this Git repository; keep run ledgers and their evidence in the fixed directory and archive their records to the database, never copy them into Git. The database stays outside Git (see `sire/data/DATABASE-RECORD.md`). When the user explicitly says "提交代码", commit the current changes within the scope of that task and push them to the upstream configured for the current branch, using that upstream remote and branch; do not ask again whether to push. First inspect the current branch, its upstream, and the working-tree diff; exclude unrelated or pre-existing changes. If no upstream is configured, the remote is unavailable, or the target ref is ambiguous, stop and report the blocker rather than guessing a remote or branch. Never force-push, rewrite published history, or push another ref; any other push still requires explicit authorization. Database migrations/indexing must keep a recoverable backup and verify row counts, FTS, vectors, and `integrity_check`.
 
 ## Workflow changes (RSI)
 
@@ -98,7 +103,7 @@ Any change to files in this shared skill directory is a workflow mechanism chang
 - Learning, self-optimization, and RSI gate: [references/self-optimization.md](references/self-optimization.md)
 - Claude adapter role files: [agents/claude/](agents/claude/)
 - Qoder client adapter (hooks, junction, selftest/verify): [agents/qoder/](agents/qoder/)
-- One-call R9 closure (stages + finish + archive + ledger copy): `scripts/sire_close.py`
+- One-call R9 closure (stages + finish + queued background archive; ledger stays outside projects): scripts/sire_close.py
 - Codex discovery metadata: [agents/openai.yaml](agents/openai.yaml)
 
 ## ZIP packages

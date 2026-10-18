@@ -80,6 +80,7 @@ Qoder 端没有 `model` 参数（Agent 工具与 `create_chat_session` 都不接
 3. 子代理结果不达标可升一级模型重做（haiku→Opus low→Opus high），计入返工次数；不得一开始就全部用高级模型。
 4. 纯问答、单点小改等极小任务直接在主控完成，不为派工而派工（派工本身有冷启动成本）。
 5. 输出保持简约：阶段日志写台账，对话只给结果、风险、建议，不复述文件内容。
+6. 先完成任务，再汇报异议：执行过程中发现的隐患、建议、机制缺口、需授权的动作，一律记录后继续推进可推进部分，任务完成后在末尾一小段列出；不得中途停下提问，不得为其单独占一轮。仅当出现真实阻塞（缺授权、会丢数据、不可逆）才中断，且只说清需要用户决定的一件事。
 
 ## RSI 自动发现与自我优化
 
@@ -97,6 +98,19 @@ Qoder 端没有 `model` 参数（Agent 工具与 `create_chat_session` 都不接
 5. **采集存活自检**：`analyze` 会从三端客户端配置里解析出"应当在哪台机器上采集"的 client 名单（可用 `SIRE_CLIENT_CONFIGS` 覆盖），某个已配置客户端超过 `--stale-hours`（默认 12 小时）没有事件就产出 `COLLECTION_DEAD:<client>` 发现并直接进入待处理队列，30 分钟内不重复计数。这类问题不得靠删规则消音。
 
 ## SIRE 输出契约
+
+### 静默执行命令
+
+- 不得打开或显示 Windows Terminal、PowerShell、命令提示符或其他终端窗口；命令必须通过非交互执行接口运行，并关闭 PTY/可见终端。
+- SIRE 脚本在 Windows 上启动的所有子进程，统一使用 `scripts/sire_process.py` 的 `no_console_kwargs()` 隐藏控制台；不得用 `Start-Process` 或终端应用启动任务。
+- 后台归档与遥测进程必须脱离前台、隐藏窗口，输出写入日志或丢弃；不得让归档操作阻塞任务结果。
+
+### 台账目录与清理
+
+- 新运行台账、阶段日志和验证证据只能写入 `scripts/sire_paths.py` 的 `ledger_runs_dir()` 所解析的固定目录：默认 `D:/sire/sire_ledger/runs/<RUN_ID>/`，可用 `SIRE_LEDGER_ROOT` 覆盖；三端使用相同配置。禁止在项目中新建台账文件或目录，收尾也不得复制台账进项目或 Git 仓库。
+- 历史 `.sire/runs/`、`sire/runs/` 仅保留读取和迁移兼容。任务完成后，将最终任务记录同步到共享工作库及机器级归档库，再核对 run_id、文件清单和文本内容。仅收到“写入成功”不能作为删除依据。
+- 数据库已完整收录且不再需要的历史项目重复副本可以清理；未入库的图片、附件、脚本等证据须先保存在固定目录。固定目录原件默认保留；删除原件须有用户明确要求，并先核验数据库归档与可恢复备份。归档失败、任务未关闭或内容不一致时保留台账。
+- 任务达到完成条件后立即汇报结果，再异步执行知识索引、工作库及机器级归档库写入；主流程不等待数据库。后台失败时保留本地队列和错误记录，在下一次 SIRE 触发时自动重试。数据库失败不得改变已完成任务的结果。
 
 每个阶段和角色的“执行中”“执行完毕”“跳过及原因”、产物、验证结果和阻塞项，都写入本次运行目录的台账和证据文件，不在对话里逐条输出，也不在最终回复里重复。
 
@@ -120,5 +134,6 @@ Qoder 端没有 `model` 参数（Agent 工具与 `create_chat_session` 都不接
 - 唯一 SIRE skill 源：`<SIRE_ROOT>/workflow/shared/sire/`。Claude 的 `~/.claude/skills/sire-global-workflow/`、Codex 的 `~/.codex/skills/ai-dev-sire-workflow/` 必须链接到同一物理目录；Qoder 用 `sire_qoder.py link` 建立 `~/.qoder-cn/skills/sire-global-workflow` junction 指向同一目录。
 - 唯一 Claude/Codex 工作数据库：`<SIRE_ROOT>/data/sire_vectors.sqlite3`，暂不进 Git（超过 GitHub 100MB 单文件上限），本机实际路径见 `sire/data/DATABASE-RECORD.md`；知识目录为 `<SIRE_ROOT>/knowledge/global/`。脚本必须通过 `scripts/sire_paths.py` 解析；两端的 `SIRE_ROOT`、`SIRE_DATA_DIR`、`SIRE_VECTOR_DB`、`SIRE_KB_DIR`、`SIRE_EMBED_DIR` 和 `SIRE_TASK_ROOTS` 覆盖值必须相同。
 - 系统级归档规则仍要求更新 `@SIRE_ARCHIVE_ROOT@\sire_vectors.sqlite3`；它是任务闭环归档位置，不得配置成 Claude 或 Codex 的独立工作库。收尾时将任务记录与可复用知识同步到该归档，并将工作流与知识改动提交到 Git（共享数据库只做备份与检查，暂不进 Git，见 `sire/data/DATABASE-RECORD.md`）。
+- **“提交代码”的定义（用户定，2026-10-15）**：用户明确说“提交代码”时，授权将本次任务范围内的当前改动 commit 后，推送到当前分支已配置的 upstream（使用该 upstream 对应的远端和分支），无需再次确认是否 push。先读取当前分支、upstream 和工作区差异，只提交本次任务范围内的改动；保留并排除无关或此前已有的改动。若 upstream 未配置、远端不可访问或目标 ref 无法明确解析，停止 push 并说明阻塞，不猜测 origin、分支或其他 ref。不得强推、改写已发布历史或推送当前分支以外的 ref；其他 push 仍须用户明确授权。
 - PowerShell 收尾命令中的 `$env:SIRE_ARCHIVE_ROOT` 对应本机的 `@SIRE_ARCHIVE_ROOT@`；`$env:SIRE_ARCHIVE_DB` 必须由 `Join-Path $env:SIRE_ARCHIVE_ROOT 'sire_vectors.sqlite3'` 得到。两者只是执行当前归档步骤的 shell 变量，不配置到任一客户端。
 - 禁止在客户端 profile 目录下保留可写的第二份 SIRE skill、知识库或向量库。Qoder 端的 `~/.qoder-cn/skills/sire-global-workflow` 只能是由 `sire_qoder.py link` 建立的 junction；入口规则由 `sire_qoder.py remind` 实时从本文件生成，不留手工副本；`sire_qoder.py verify` 用来证明本端钩子确实在采集，`uninstall` 只删自己写入的键。轻量 ZIP 与 Git 仓库目前都不含数据库；数据库只在本机，位置与恢复方法见 `sire/data/DATABASE-RECORD.md`，禁止 `git add -f` 提交它。

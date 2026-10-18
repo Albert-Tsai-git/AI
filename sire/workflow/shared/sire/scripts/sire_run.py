@@ -17,6 +17,7 @@
   sire_run.py test U-01 PASS|FAIL|BLOCKED --note "..."
   sire_run.py board
   sire_run.py stage-output R0|R1|...|R10 DONE|SKIPPED|BLOCKED --artifact "..." [--reason "..."]
+  sire_run.py stage-output-batch --file stages.json
   sire_run.py blockers
   sire_run.py resume
   sire_run.py finish --records F-012,P-009
@@ -31,7 +32,8 @@ import subprocess
 from datetime import datetime
 from pathlib import Path
 
-from sire_paths import KNOWLEDGE_DIR, SHARED_SKILL_DIR
+from sire_paths import KNOWLEDGE_DIR, SHARED_SKILL_DIR, ledger_runs_dir
+from sire_process import no_console_kwargs
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -107,21 +109,54 @@ def fail(msg, code=1):
     return code
 
 
+CIRCLED = "①②③④⑤⑥⑦⑧⑨⑩⑪⑫"
+
+
+def fail_all(items, code=1):
+    """一次列全所有阻塞项。逐项报错会让每个缺口多花一整轮模型往返（遥测实测台账单任务调用中位已到 18 次）。"""
+    items = [i for i in items if i]
+    if not items:
+        return None
+    if len(items) == 1:
+        return fail(items[0], code)
+    listed = " ".join("%s%s" % (CIRCLED[i] if i < len(CIRCLED) else "(%d)" % (i + 1), t)
+                      for i, t in enumerate(items))
+    return fail("共 %d 项未通过（一次改完再重试，别一条条试）：%s" % (len(items), listed), code)
+
+
 def sire_dir(root):
+    """兼容旧位置：项目内 `.sire` 只作迁移读取用，新台账一律写 LEDGER_DIR。"""
     return os.path.join(root, ".sire")
 
 
+LEDGER_DIR = str(ledger_runs_dir().parent)  # D:/sire/sire_ledger（runs/ 与 current 都在这里）
+
+
+def project_slug(root):
+    """项目名转 RUN_ID 片段：小写、非字母数字收成单个连字符，最长 24。"""
+    s = re.sub(r"[^a-z0-9]+", "-", os.path.basename(os.path.abspath(root)).lower()).strip("-")
+    return (s or "root")[:24]
+
+
 def run_dir(root, run_id):
-    return os.path.join(sire_dir(root), "runs", run_id)
+    """固定台账目录优先；历史 run 仍在项目内旧位置时可继续读写（不迁移）。"""
+    fixed = os.path.join(LEDGER_DIR, "runs", run_id)
+    if os.path.isdir(lp(fixed)):
+        return fixed
+    legacy = os.path.join(sire_dir(root), "runs", run_id)
+    if os.path.isdir(lp(legacy)):
+        return legacy
+    return fixed
 
 
 def current_run(root):
-    marker = os.path.join(sire_dir(root), "current")
-    if not os.path.exists(lp(marker)):
-        return None
-    with open(lp(marker), "r", encoding="utf-8") as fh:
-        rid = fh.read().strip()
-    return rid or None
+    for marker in (os.path.join(LEDGER_DIR, "current"), os.path.join(sire_dir(root), "current")):
+        if os.path.exists(lp(marker)):
+            with open(lp(marker), "r", encoding="utf-8") as fh:
+                rid = fh.read().strip()
+            if rid:
+                return rid
+    return None
 
 
 def load_json(path, default=None):
@@ -186,7 +221,7 @@ def log(rd, line):
 
 def cmd_init(args):
     root = os.path.abspath(args.root or os.getcwd())
-    rid = datetime.now().strftime("R%Y%m%d-%H%M%S")
+    rid = datetime.now().strftime("R%Y%m%d-%H%M%S") + "-" + project_slug(root)
     rd = run_dir(root, rid)
     mkdirs(os.path.join(rd, "evidence"))
     run = {
@@ -206,8 +241,8 @@ def cmd_init(args):
     }
     save_json(os.path.join(rd, "run.json"), run)
     save_json(os.path.join(rd, "units.json"), [])
-    mkdirs(sire_dir(root))
-    with open(lp(os.path.join(sire_dir(root), "current")), "w", encoding="utf-8") as fh:
+    mkdirs(LEDGER_DIR)
+    with open(lp(os.path.join(LEDGER_DIR, "current")), "w", encoding="utf-8") as fh:
         fh.write(rid)
     for name in ("assumptions.md", "blockers.md"):
         p = os.path.join(rd, name)
@@ -316,7 +351,15 @@ def migration_sync_error(run):
 
 def kb_records():
     idx = load_json(os.path.join(default_kb_dir(), "global_index.json"), {})
-    return idx.get("records", [])
+    records = idx.get("records", [])
+    try:
+        from sire_kb import parse_records
+        by_id = {record["id"]: record for record in records}
+        parsed, _conflicts = parse_records()
+        by_id.update({record["id"]: record for record in parsed})
+        return list(by_id.values())
+    except (ImportError, KeyError, OSError, TypeError, ValueError):
+        return records
 
 
 def kb_record_ids():
@@ -348,22 +391,23 @@ def cmd_gate(args):
         return fail("门禁编号必须是 %s" % "/".join(GATES))
     verdict = "PASS" if args.pass_ else "FAIL"
     if gate == "G0" and verdict == "PASS":
+        blockers, text = [], ""
         p = kb_hits_path(rd)
         if not os.path.exists(lp(p)):
-            return fail("G0 未生成 kb-hits.md，知识检索是强制门禁，不得跳过")
-        with open(lp(p), "r", encoding="utf-8") as fh:
-            text = fh.read()
-        missing = [k for k in ("检索词", "命中", "判定") if k not in text]
-        if missing:
-            return fail("kb-hits.md 缺少字段: %s（三项必备：检索词/命中/判定）" % "、".join(missing))
-        verdicts = ("已实现过", "部分可参考", "全新需求")
-        if not any(v in text for v in verdicts):
-            return fail("kb-hits.md 判定值必须是 %s 三选一" % " / ".join(verdicts))
+            blockers.append("G0 未生成 kb-hits.md，知识检索是强制门禁，不得跳过")
+        else:
+            with open(lp(p), "r", encoding="utf-8") as fh:
+                text = fh.read()
+            missing = [k for k in ("检索词", "命中", "判定") if k not in text]
+            if missing:
+                blockers.append("kb-hits.md 缺少字段: %s（三项必备：检索词/命中/判定）" % "、".join(missing))
+            if not any(v in text for v in ("已实现过", "部分可参考", "全新需求")):
+                blockers.append("kb-hits.md 判定值必须是 已实现过 / 部分可参考 / 全新需求 三选一")
         # 检索回执：证明 sire_kb.py search 真的跑过，堵死手写 kb-hits 蒙混过关
         receipts = search_receipts(rd)
         if not receipts:
-            return fail("没有检索回执。必须执行 sire_kb.py search --run \"%s\" \"关键词\"，"
-                        "手写 kb-hits.md 不算检索" % rd)
+            blockers.append("没有检索回执。必须执行 sire_kb.py search --run \"%s\" \"关键词\"，"
+                            "手写 kb-hits.md 不算检索" % rd)
         real_dir = os.path.normcase(os.path.abspath(default_kb_dir()))
         created = run.get("created", "")
         valid, seen_terms = [], []
@@ -373,21 +417,25 @@ def cmd_gate(args):
             if created and r.get("ts", "") < created:
                 continue  # 早于本 run 创建，是复制来的旧回执
             if os.path.normcase(os.path.abspath(r.get("kb_dir", ""))) != real_dir:
-                return fail("检索用的不是真实知识库（%s）。必须检索 %s，"
-                            "不要用 SIRE_KB_DIR 指向别处" % (r.get("kb_dir"), default_kb_dir()))
+                blockers.append("检索用的不是真实知识库（%s）。必须检索 %s，"
+                                "不要用 SIRE_KB_DIR 指向别处" % (r.get("kb_dir"), default_kb_dir()))
+                continue
             terms = frozenset(t.lower() for t in r.get("terms", []))
             if terms and terms not in seen_terms:
                 seen_terms.append(terms)
                 valid.append(r)
-        if not valid:
-            return fail("没有属于本 run 的有效检索回执。回执必须由本 run 期间的 "
-                        "sire_kb.py search --run \"%s\" 产生，复制别处的不算" % rd)
-        if len(seen_terms) < 2:
-            return fail("只有 %d 组不同的检索词。规范要求换一组同义词再搜一次，"
-                        "重复同一组词不算第二次检索" % len(seen_terms))
+        if receipts and not valid and not blockers:
+            blockers.append("没有属于本 run 的有效检索回执。回执必须由本 run 期间的 "
+                            "sire_kb.py search --run \"%s\" 产生，复制别处的不算" % rd)
+        if valid and len(seen_terms) < 2:
+            blockers.append("只有 %d 组不同的检索词。规范要求换一组同义词再搜一次，"
+                            "重复同一组词不算第二次检索" % len(seen_terms))
         vector_receipt = os.path.join(rd, "vector-search.log")
         if not os.path.exists(lp(vector_receipt)):
-            return fail("没有向量检索回执。必须执行 sire_vector_db.py search --run \"%s\"" % rd)
+            blockers.append("没有向量检索回执。必须执行 sire_vector_db.py search --run \"%s\"" % rd)
+        rc = fail_all(blockers)
+        if rc:
+            return rc
         if len(kb_record_ids()) == 0:
             print("WARN 真实知识库为空，本次检索无从命中")
     run["gates"][gate] = {"verdict": verdict, "at": now(), "note": args.note or ""}
@@ -556,42 +604,83 @@ def emit_stage_output(stage, record):
         print("隐患/阻塞：%s" % (record.get("risk") or "无"))
 
 
-def cmd_stage_output(args):
-    _root, _rid, rd, data = ctx(args)
-    run, _units = data
-    stage = args.stage.strip().upper()
-    status = args.status.strip().upper()
+def stage_record(stage, status, artifacts, reason="", risk="", note=""):
+    stage = stage.strip().upper()
+    status = status.strip().upper()
+    artifacts = [item.strip() for item in artifacts if item and item.strip()]
+    reason = (reason or "").strip()
     if stage not in STAGE_KEYS:
-        return fail("阶段必须是 %s" % "/".join(STAGE_KEYS))
+        raise ValueError("阶段必须是 %s" % "/".join(STAGE_KEYS))
     if status not in STAGE_STATUSES:
-        return fail("阶段状态必须是 DONE / SKIPPED / BLOCKED")
-    artifacts = [item.strip() for item in (args.artifact or []) if item.strip()]
-    reason = (args.reason or "").strip()
+        raise ValueError("阶段状态必须是 DONE / SKIPPED / BLOCKED")
     if status == "SKIPPED":
         if not reason:
-            return fail("跳过阶段必须说明原因")
+            raise ValueError("跳过阶段必须说明原因")
         artifacts = artifacts or ["跳过记录"]
     elif not artifacts:
-        return fail("完成或阻塞阶段必须至少提供一个产物")
+        raise ValueError("完成或阻塞阶段必须至少提供一个产物")
     if status == "BLOCKED" and not reason:
-        return fail("阻塞阶段必须说明原因")
-    record = {
+        raise ValueError("阻塞阶段必须说明原因")
+    return {
         "stage": stage,
         "status": status,
         "artifacts": artifacts,
         "reason": reason,
-        "risk": (args.risk or "").strip(),
-        "note": (args.note or "").strip(),
+        "risk": (risk or "").strip(),
+        "note": (note or "").strip(),
         "updated": now(),
     }
-    run.setdefault("stage_outputs", {})[stage] = record
+
+
+def persist_stage_outputs(rd, run, records):
+    outputs = run.setdefault("stage_outputs", {})
+    outputs.update({record["stage"]: record for record in records})
     save_json(os.path.join(rd, "run.json"), run)
     stage_dir = os.path.join(rd, "stage-output")
     mkdirs(stage_dir)
-    save_json(os.path.join(stage_dir, "%s.json" % stage.lower()), record)
-    log(rd, "STAGE-OUTPUT %s %s artifacts=%s" % (stage, status, "|".join(artifacts)))
-    emit_stage_output(stage, record)
+    for record in records:
+        stage = record["stage"]
+        save_json(os.path.join(stage_dir, "%s.json" % stage.lower()), record)
+        log(rd, "STAGE-OUTPUT %s %s artifacts=%s" %
+            (stage, record["status"], "|".join(record["artifacts"])))
+        emit_stage_output(stage, record)
     return 0
+
+
+def cmd_stage_output(args):
+    _root, _rid, rd, data = ctx(args)
+    run, _units = data
+    try:
+        record = stage_record(args.stage, args.status, args.artifact or [],
+                              args.reason, args.risk, args.note)
+    except ValueError as exc:
+        return fail(str(exc))
+    return persist_stage_outputs(rd, run, [record])
+
+
+def cmd_stage_output_batch(args):
+    _root, _rid, rd, data = ctx(args)
+    run, _units = data
+    try:
+        entries = load_json(args.file, None)
+        if not isinstance(entries, list) or not entries:
+            return fail("阶段清单必须是非空 JSON 数组")
+        records = []
+        seen = set()
+        for entry in entries:
+            if not isinstance(entry, dict):
+                raise ValueError("阶段清单每项必须是 JSON 对象")
+            artifacts = entry.get("artifacts") or ([entry["artifact"]] if entry.get("artifact") else [])
+            record = stage_record(entry.get("stage", ""), entry.get("status", ""), artifacts,
+                                  entry.get("reason", ""), entry.get("risk", ""),
+                                  entry.get("note", ""))
+            if record["stage"] in seen:
+                raise ValueError("阶段清单重复：%s" % record["stage"])
+            seen.add(record["stage"])
+            records.append(record)
+    except (OSError, ValueError, TypeError) as exc:
+        return fail("阶段清单无效：%s" % exc)
+    return persist_stage_outputs(rd, run, records)
 
 
 def cmd_approve_units(args):
@@ -1069,7 +1158,7 @@ def telemetry_pending_gate(rd: str, note: str) -> str | None:
     """R9 的自动优化步骤不能只靠自觉：有待处理发现就必须先处理或显式移交。"""
     script = str(SHARED_SKILL_DIR / "scripts" / "sire_telemetry.py")
     result = subprocess.run([sys.executable, script, "pending", "--json"], text=True, capture_output=True,
-                            encoding="utf-8", errors="replace")
+                            encoding="utf-8", errors="replace", **no_console_kwargs())
     try:
         findings = json.loads(result.stdout or "[]")
     except ValueError:
@@ -1093,57 +1182,60 @@ def telemetry_pending_gate(rd: str, note: str) -> str | None:
 def cmd_finish(args):
     _root, rid, rd, data = ctx(args)
     run, units = data
+    blockers = []
     if units and not approval_granted(run):
-        return fail("执行任务列表尚未获得用户确认，不能收尾")
+        blockers.append("执行任务列表尚未获得用户确认，不能收尾")
     records = [r.strip().upper() for r in (args.records or "").split(",") if r.strip()]
     light_ok = run.get("channel") in ("light", "creative")
     if getattr(args, "no_archive", False):
         if not light_ok:
-            return fail("只有轻量和创作通道允许免归档，本 run 是 %s 通道" % run.get("channel"))
+            blockers.append("只有轻量和创作通道允许免归档，本 run 是 %s 通道" % run.get("channel"))
         if not args.note:
-            return fail("免归档必须用 --note 说明为什么没有值得沉淀的新知识")
+            blockers.append("免归档必须用 --note 说明为什么没有值得沉淀的新知识")
         if records:
-            return fail("--no-archive 与 --records 不能同时给")
+            blockers.append("--no-archive 与 --records 不能同时给")
     elif not records:
-        return fail("G6 知识归档是强制门禁：必须提供已写入的记录编号 --records F-0xx[,P-0xx]。"
-                    "轻量或创作通道确实无坑可记时用 --no-archive --note \"原因\"")
+        blockers.append("G6 知识归档是强制门禁：必须提供已写入的记录编号 --records F-0xx[,P-0xx]。"
+                        "轻量或创作通道确实无坑可记时用 --no-archive --note \"原因\"")
     bad = [r for r in records if not re.match(r"^[FPEH]-\d+$", r)]
     if bad:
-        return fail("记录编号格式错误: %s（应形如 F-012）" % ", ".join(bad))
-    # 记录日期必须不早于本 run 创建日，防止拿别的 run 新写的记录充数
-    run_day = (run.get("created") or "")[:10]
-    by_id = dict((r["id"], r) for r in kb_records())
-    for rid_ in records:
-        rec = by_id.get(rid_)
-        if rec and run_day and rec.get("date") and rec["date"][:10] < run_day:
-            return fail("%s 的日期是 %s，早于本 run 创建日 %s，不是本次沉淀的知识"
-                        % (rid_, rec["date"][:10], run_day))
-    known = kb_record_ids()
-    missing = [r for r in records if r not in known]
-    if missing:
-        return fail("索引中找不到 %s。先把记录写入知识库并执行 sire_kb.py reindex" % ", ".join(missing))
-    baseline = set(run.get("kb_baseline") or [])
-    fresh = [r for r in records if r not in baseline]
-    if records and baseline and not fresh:
-        return fail("%s 在本次任务开始前就已存在，不算本次归档。"
-                    "G6 要求沉淀新知识：用 sire_kb.py next-id 取新编号写新记录再 reindex"
-                    % ", ".join(records))
+        blockers.append("记录编号格式错误: %s（应形如 F-012）" % ", ".join(bad))
+    elif records:
+        # 记录日期必须不早于本 run 创建日，防止拿别的 run 新写的记录充数
+        run_day = (run.get("created") or "")[:10]
+        by_id = dict((r["id"], r) for r in kb_records())
+        stale = ["%s（日期 %s 早于本 run %s）" % (r_, by_id[r_]["date"][:10], run_day) for r_ in records
+                 if r_ in by_id and run_day and by_id[r_].get("date") and by_id[r_]["date"][:10] < run_day]
+        if stale:
+            blockers.append("%s 不是本次沉淀的知识" % "、".join(stale))
+        known = kb_record_ids()
+        missing = [r for r in records if r not in known]
+        if missing:
+            blockers.append("索引中找不到 %s。先把记录写入知识库并执行 sire_kb.py reindex" % ", ".join(missing))
+        baseline = set(run.get("kb_baseline") or [])
+        if records and baseline and not missing and not [r for r in records if r not in baseline]:
+            blockers.append("%s 在本次任务开始前就已存在，不算本次归档。"
+                            "G6 要求沉淀新知识：用 sire_kb.py next-id 取新编号写新记录再 reindex"
+                            % ", ".join(records))
     open_units = [u["id"] for u in units if u["state"] not in TERMINAL]
     if open_units:
-        return fail("仍有未收敛单元: %s（须为 DONE/BLOCKED/DEFERRED 之一）" % ", ".join(open_units))
+        blockers.append("仍有未收敛单元: %s（须为 DONE/BLOCKED/DEFERRED 之一）" % ", ".join(open_units))
     migration_error = migration_sync_error(run)
     if migration_error:
-        return fail(migration_error + "；先同步迁移文档再收尾")
+        blockers.append(migration_error + "；先同步迁移文档再收尾")
     missing_stage_outputs = [stage for stage in REQUIRED_STAGE_OUTPUTS
                              if stage not in (run.get("stage_outputs") or {})]
     if missing_stage_outputs:
-        return fail("阶段产物未完整：%s。无需执行的阶段也必须用 stage-output 标记 SKIPPED" %
-                    ", ".join(missing_stage_outputs))
+        blockers.append("阶段产物未完整：%s。无需执行的阶段也必须用 stage-output 标记 SKIPPED" %
+                        ", ".join(missing_stage_outputs))
     if units and run["gates"].get("G5", {}).get("verdict") not in ("PASS", "FAIL"):
-        return fail("G5 集成验收未记录，先执行 gate G5 --pass 或 --fail")
+        blockers.append("G5 集成验收未记录，先执行 gate G5 --pass 或 --fail")
     pending_error = telemetry_pending_gate(rd, getattr(args, "pending_note", ""))
     if pending_error:
-        return fail(pending_error)
+        blockers.append(pending_error)
+    rc = fail_all(blockers)
+    if rc:
+        return rc
     run["kb_records"] = records
     note = ("records=" + ",".join(records)) if records else ("免归档: " + args.note)
     run["gates"]["G6"] = {"verdict": "PASS", "at": now(), "note": note}
@@ -1159,12 +1251,6 @@ def cmd_finish(args):
     run.setdefault("stage_outputs", {})["G6"] = g6_record
     run["state"] = "CLOSED"
     run["closed"] = now()
-    vector_script = str(SHARED_SKILL_DIR / "scripts" / "sire_vector_db.py")
-    for command in (("index",), ("migrate",)):
-        result = subprocess.run([sys.executable, vector_script, *command],
-                                text=True, capture_output=True, encoding="utf-8")
-        if result.returncode:
-            return fail("数据库同步失败（%s）：%s" % (command[0], result.stderr.strip() or result.stdout.strip()))
     save_json(os.path.join(rd, "run.json"), run)
     mkdirs(os.path.join(rd, "stage-output"))
     save_json(os.path.join(rd, "stage-output", "g6.json"), g6_record)
@@ -1175,13 +1261,19 @@ def cmd_finish(args):
     print("RUN %s 已收尾" % rid)
     print("单元: " + (" ".join("%s=%d" % (k, v) for k, v in sorted(counts.items())) or "无"))
     print("归档记录: %s" % (", ".join(records) if records else "免归档（%s）" % args.note))
+    try:
+        from sire_archive_sync import enqueue
+        queue_file = enqueue(rd, run.get("project") or os.path.basename(_root), os.environ.copy())
+        print("数据库归档已排队，后台处理：%s" % queue_file)
+    except Exception as exc:
+        print("数据库归档已保留待处理台账；下次 SIRE 触发时重试：%s" % exc)
     return 0
 
 
 def main():
     p = argparse.ArgumentParser(description="SIRE v6 交付台账 CLI")
     p.add_argument("--root", default=None, help="项目根目录，默认当前目录")
-    p.add_argument("--run", default=None, help="指定 RUN_ID，默认取 .sire/current")
+    p.add_argument("--run", default=None, help="指定 RUN_ID，默认取 sire_ledger/current")
     sub = p.add_subparsers(dest="cmd")
 
     s = sub.add_parser("init")
@@ -1242,6 +1334,9 @@ def main():
     s.add_argument("--risk", default="")
     s.add_argument("--note", default="")
 
+    s = sub.add_parser("stage-output-batch")
+    s.add_argument("--file", required=True, help="JSON 阶段清单；先全量校验，再一次保存 run.json")
+
     s = sub.add_parser("finish")
     s.add_argument("--records", default="")
     s.add_argument("--no-archive", dest="no_archive", action="store_true",
@@ -1251,12 +1346,19 @@ def main():
                    help="待处理发现确实需要用户决定时，记录移交理由")
 
     args = p.parse_args()
+    if args.cmd == "init":
+        try:
+            from sire_archive_sync import kick_pending
+            kick_pending()
+        except Exception:
+            pass
     fn = {
         "init": cmd_init, "gate": cmd_gate, "add-units": cmd_add_units,
         "approve-units": cmd_approve_units, "set": cmd_set,
         "review": cmd_review, "test": cmd_test, "board": cmd_board,
         "show-units": cmd_show_units, "blockers": cmd_blockers,
-        "resume": cmd_resume, "stage-output": cmd_stage_output, "finish": cmd_finish,
+        "resume": cmd_resume, "stage-output": cmd_stage_output,
+        "stage-output-batch": cmd_stage_output_batch, "finish": cmd_finish,
     }.get(args.cmd)
     if not fn:
         p.print_help()
