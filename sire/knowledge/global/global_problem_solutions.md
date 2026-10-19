@@ -1173,3 +1173,130 @@ controller/python/sub_common/DataFormatter.py；controller/python/sub_embedded/A
 **踩坑**: Vitest 的 esbuild 不支持 emitDecoratorMetadata，mes-server 测试用 unplugin-swc；dev 用 tsc --watch + node --watch。初始管理员密码只在 mes-db/.local/initial-admin.txt，不得写入任何日志或报告。
 
 **状态**: 部分完成
+
+
+### P-20261018: 低代码模块删除与发布需要共享引用锁协议
+
+**日期**: 2026-10-18
+**项目**: MES 重建 / D:\code\mes
+**关键词**: lowcode, 模块软删除, publish, 引用完整性, 并发竞态, lock ordering
+
+**需求场景 / 现象**: 删除模块时需要防止仍被其他已发布模块引用；并发发布可以在删除检查之后新增引用。
+
+**根因**: `ModulesService.remove()` 仅锁待删除模块行后查询其他模块的已发布 schema；`publish()` 只锁当前源模块行，发布校验读取目标模块不加锁。两个事务无共同锁，无法串行化“查引用并删除”与“发布新引用”。
+
+**方案 / 架构**: 复核发现，建议删除与发布对引用目标使用一致的行锁协议，并在锁定后复查引用；保持所有模块锁顺序一致以避免死锁。实现尚未完成，需新增数据库并发集成测试。
+
+**关键文件与接口**:
+- `mes-server/src/lowcode/modules.service.ts:506` — `remove()` 的已发布引用扫描与软删除。
+- `mes-server/src/lowcode/modules.service.ts:376` — `publish()` 当前模块锁与发布检查。
+
+**实施步骤**:
+1. 定义发布与删除共享的锁顺序。
+2. 发布前锁引用目标；删除时锁定可能引用方并再次检查。
+3. 增加两个事务交错的集成测试。
+
+**验证方法**: 运行覆盖并发 publish/delete 的 PostgreSQL 集成测试；当前未运行。
+
+**踩坑**: 只锁待删除模块并不足以保护反向引用，因为写入引用发生在源模块事务。
+
+**状态**: 部分完成
+
+
+### P-20261019: MES 低代码模块管理：动态权限、防自授权与发布并发锁序
+
+**日期**: 2026-10-18
+**项目**: MES 平台 / D:/code/mes（mes-admin、mes-server、mes-db）
+**关键词**: 低代码, 模块管理, 元数据, schema 版本, JSONB 动态字段, 动态权限, mod:{code}:view, RLS, 防自授权, privilege escalation, IAM_PRIVILEGE_ESCALATION, 发布锁序, FOR SHARE, FOR UPDATE, 同编码重建, 悬空引用, Playwright E2E, NestJS Kysely PostgreSQL
+
+**需求场景 / 现象**: 后台“模块管理”让管理员自定义业务模块（如产品管理）：字段、列表、筛选、关联完全由配置决定，发布后出现在业务菜单并可增删改查、搜索导出；同时必须保证权限默认拒绝、不能借角色配置自我提权、并发下不留脏数据。
+
+**方案 / 架构**:
+- 模块 = 一个对象；schema（字段 10 种类型、标题字段、默认排序）分草稿与不可变发布版本；记录存 `lc.records.data jsonb`，记录写入时的 `schema_version` 以复合外键指向 `module_versions`。
+- 新建模块同事务生成 5 个动态权限 `mod:{code}:view/create/update/delete/export`（`module='lowcode'`），运行账号经 RLS 只能写 `module='lowcode' AND code LIKE 'mod:%'` 的权限行；种子同步不删动态权限。
+- 列表查询：关键词/筛选/排序全部参数化下推（JSONB 按类型 cast），禁止取全量再过滤；唯一字段写入用 advisory xact lock；编号锁模块行取号。
+- 防自授权（用户确认）：不能改自己的角色；非超管新增角色、给角色加权限、**启用停用角色**时，授出的每项权限必须自己已持有，否则 403 `IAM_PRIVILEGE_ESCALATION`（details.missing）。
+- 发布与删除并发：发布按 id 排序锁本模块 FOR UPDATE + 引用目标 FOR SHARE，并核对“按 code 查到的活动目标 id == 已锁 id”，否则 409 回滚（防删除后同编码重建替换目标身份）；删除对目标 FOR UPDATE 后扫描引用。
+- 被否决：每模块独立物理表（DDL 需高权限、迁移复杂）；前端过滤（越权与性能）。
+
+**关键文件与接口**:
+- `docs/design/LOWCODE-模块管理契约.md` v1.1、`docs/design/IAM-基础身份权限契约.md` v1.2
+- `mes-server/src/lowcode/{modules,apps}.service.ts`（`referenceTargets`、`isLockedTarget`）、`common/permission.ts`（`escalationGap`）
+- `mes-db/migrations/0002_lowcode.up.sql`
+- `mes-admin/src/lowcode/`（designer/ModuleDesigner、pages/AppPage、FilterBar、schema-utils）
+
+**验证方法**: `npm test`（admin 20、server 77、db 14）；`npm run test:integration -w mes-server` 34/34；`npm run e2e -w mes-admin` 13/13（真实后端）。
+
+**踩坑**:
+- 弹窗内的 Select/Popover 被遮罩压住：浮层 z-index 要高于 modal（新增 z-popover 1050）。
+- 演示 mock 里 `const db = load()` 放在常量声明之前导致 TDZ 报错，需放在所有声明之后。
+- 外部复核连续发现授权旁路：除“分配”外，“启用停用角色”同样等于授权；删除后同编码重建会让按 code 校验失效，必须核对已锁行 id。
+- E2E 连续登录会触发登录限流，本地 .env 放宽 `LOGIN_RATE_LIMIT`；整页跳转前要等登录完成，否则刷新令牌 Cookie 未写入。
+- Playwright `getByLabel('新密码', {exact:true})` 匹配不到带必填星号的标签，用正则 `/^新密码/`。
+
+**状态**: 已完成（确定性屏障并发测试待补）
+
+
+### P-20261020: PostgreSQL工作流角色引用的精确查询与并发锁保护
+
+**日期**: 2026-10-19
+**项目**: MES / D:/code/mes
+**关键词**: PostgreSQL, Kysely, JSONB, jsonb_path_exists, workflowRoleCodes, FOR SHARE, FOR UPDATE, 工作流角色引用, 流程快照, 并发发布
+
+**需求场景 / 现象**: 角色被已发布工作流或记录流程快照引用时必须禁止删除/停用。实际复核发现：递归扫描整个 definition 会把同名状态标签误认为角色引用；普通角色存在性 SELECT 又不能与角色删停的 FOR UPDATE 串行化。
+
+**根因**: `definition.** ? (@ == $c)` 不区分业务文本与角色数组。READ COMMITTED 下普通 SELECT 不阻止另一事务随后修改角色；读取旧绑定流程定义与插入记录快照之间也存在引用不可见窗口。
+
+**方案 / 架构**: 快照查询只扫描 states[*].editRoleCodes、states[*].viewRoleCodes、transitions[*].actorRoleCodes、transitions[*].approvalRoleCodes，角色码使用 SQL 参数。真实发布与记录快照创建时，对最终引用的活动、未删除角色按稳定 ID 顺序 FOR SHARE，并持锁到事务提交。角色删除/停用先 FOR UPDATE 再扫描已提交引用。只读发布预校验不持锁。创建快照取不到全部角色时返回字段校验错误。
+
+**关键文件与接口**:
+- D:/code/mes/mes-server/src/roles/roles.service.ts — assertRoleNotUsedByWorkflow：精确 JSONPath，删停引用保护。
+- D:/code/mes/mes-server/src/lowcode/modules.service.ts — publishIssues：实际发布时共享锁角色。
+- D:/code/mes/mes-server/src/lowcode/apps.service.ts — createRecord：最终 selectedWorkflow 的角色共享锁。
+- D:/code/mes/mes-server/test/integration/lowcode-visibility.int.test.ts — 标签同名反例、旧快照保护、并发角色锁屏障。
+
+**实施步骤**:
+1. 区分角色编码数组与任意文本，保留参数化查询。
+2. 写入引用前获取角色共享锁，锁后重新检查 active/deleted_at 条件。
+3. 固定角色锁排序；避免为了绑定快照而临时追加目标模块锁，引入宿主/目标交叉锁。
+4. 并发测试用独立连接持角色 FOR UPDATE，启动真实 HTTP 请求，通过 pg_locks 未授予锁与 pg_blocking_pids 确认等待，再提交停用，断言发布或创建拒绝。不要依赖低权限连接读取其他账号的 pg_stat_activity.query，其文本可能被权限屏蔽。
+
+**验证方法**: 服务端 typecheck；LC-VIS-INT-006 标签同名不误阻止，008 新版本移除引用但旧快照仍保护角色，009 发布与停用串行，010 绑定创建与停用串行。完整测试日志与开发库恢复证据位于本次独立台账 evidence/。
+
+**踩坑**: Supertest 请求是惰性的，赋给变量不代表请求已启动；先调用 `.then(response => response)` 再观察数据库等待。E2E 角色选择器要限定编辑角色或可见角色所在组件，同一角色会出现在两处。开发库 E2E 前完整备份，结束还原迁移后 dump 与初始管理员文件，不覆盖真实业务数据。
+
+**状态**: 已实现，最终测试结果见本次台账 validation.md。
+
+
+### P-20261021: 【MES 测试服务器】10.0.64.2：SSH 公钥登录、主机指纹核对与 Docker 权限
+
+**日期**: 2026-10-19
+**项目**: MES 重建 / D:\code\mes
+**关键词**: MES 测试服务器, MES 部署服务器, 10.0.64.2, SSH 公钥登录, mes_ed25519, 主机指纹, known_hosts, docker 权限, docker compose, 共享服务器, ssh-keyscan unsupported KEX sntrup761x25519, 端口占用
+
+**用途标记**: 这是 MES 的**测试服务器**（测试/联调部署用，非生产）。
+
+**需求场景 / 现象**: 需要从本机连接公司内网 MES 部署服务器，用于部署 mes-server 与数据库；管理员先开通普通账号（无 sudo、无 Docker），随后加入 docker 组。本机 `ssh-keyscan` 报 `choose_kex: unsupported KEX method sntrup761x25519-sha512@openssh.com`，拿不到主机指纹。
+
+**根因**: 本机旧版 ssh-keyscan 不支持服务器的 sntrup761x25519 密钥交换；但 ssh 客户端本身支持 curve25519-sha256，可用 `-v` 严格模式读到指纹。
+
+**方案 / 架构**: 先核对主机指纹再登录，不用 `StrictHostKeyChecking=no`。取指纹：`ssh -v -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=<空文件> -i ~/.ssh/mes_ed25519 mes@10.0.64.2 exit`，从调试输出取 ed25519 指纹发管理员核对，一致后用 `StrictHostKeyChecking=accept-new` 登录写入 known_hosts。公钥指纹（Ykboxi1v…）是本机公钥的，不是服务器主机指纹，别混淆。
+
+**关键文件与接口**:
+- 地址 10.0.64.2，SSH 端口 22，用户 `mes`，需先连公司内网
+- 登录：`ssh -i ~/.ssh/mes_ed25519 mes@10.0.64.2`（私钥仅在本机，不入库不入仓库）
+- 服务器 ed25519 主机指纹 `SHA256:FNPCkhf72fL+MlfPyBjvAgs+cx6fI8BGcau4US3mW9Y`，2026-10-19 管理员核对一致
+- 主机 lenovo-ThinkSystem-SR650-V3，Ubuntu，Linux 7.0.0-22；账号 uid=1006(mes) 属 mes、docker(973) 组，无 sudo
+- Docker Compose v5.1.4 可用（2026-10-19 用 `docker ps`、`docker compose version` 验证通过）
+- 共享服务器：已有几十个他人容器（mmorpg、wecom、be-unlimited、kingkong-identity 等），已占用端口含 3010/3011/8000/8083/18080/18090/28090/28091/30090-32091
+
+**实施步骤**:
+1. 未核对指纹前不要登录；严格模式取指纹发管理员核对。
+2. 一致后 accept-new 登录，`whoami; hostname; uname -sr` 验证。
+3. 部署时 MES 容器统一加 `mes-` 前缀，只操作自己的资源；PG 不映射宿主机或仅绑 127.0.0.1；端口避开上面已占用的。
+
+**验证方法**: `ssh -o BatchMode=yes -i ~/.ssh/mes_ed25519 mes@10.0.64.2 "id; docker ps; docker compose version"`，期望 groups 含 docker，能列出容器和 compose 版本。
+
+**踩坑**: 共享服务器上禁用 `docker system prune`、不要动他人容器和端口；主机指纹若变化须停止并找管理员核对，不要忽略警告；ssh-keyscan 失败不代表网络不通（22 端口可达）。
+
+**状态**: 已完成

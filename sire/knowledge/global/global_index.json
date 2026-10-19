@@ -1632,6 +1632,29 @@
       ]
     },
     {
+      "id": "F-085",
+      "type": "feature",
+      "title": "sire_comms 按会话 id 绑定通讯身份与双方原文展示",
+      "file": "global_dev_features.md",
+      "line": 1641,
+      "date": "2026-10-18",
+      "project": "SIRE / D:\\sire\\AI\\AI",
+      "status": "已完成（Codex 侧待其按 #18 采用 --session）",
+      "keywords": [
+        "sire_comms",
+        "会话绑定",
+        "session id",
+        "bind",
+        "rebind",
+        "SIRE_SESSION",
+        "bindings.json",
+        "串话",
+        "通讯",
+        "协作",
+        "原文展示"
+      ]
+    },
+    {
       "id": "H-004",
       "type": "habit",
       "title": "硬件联调排查纪律 (来自 v3.4.6 力矩无响应排查)",
@@ -2544,6 +2567,128 @@
         "version_token",
         "perm_epoch",
         "范围授权"
+      ]
+    },
+    {
+      "id": "P-20261017",
+      "type": "problem",
+      "title": "MES 重建进度交接（Claude/Codex 同步入口）",
+      "file": "global_problem_solutions.md",
+      "line": 1146,
+      "date": "2026-10-18",
+      "project": "MES 平台重建 / D:/code/mes",
+      "status": "部分完成",
+      "keywords": [
+        "MES重建",
+        "进度交接",
+        "Codex同步",
+        "PROGRESS.md",
+        "mes-admin",
+        "mes-server",
+        "mes-db",
+        "mes-web",
+        "IAM",
+        "低代码",
+        "模块管理",
+        "LOWCODE契约",
+        "演示模式",
+        "dev:mock",
+        "Docker未重启",
+        "BLOCKED"
+      ]
+    },
+    {
+      "id": "P-20261018",
+      "type": "problem",
+      "title": "低代码模块删除与发布需要共享引用锁协议",
+      "file": "global_problem_solutions.md",
+      "line": 1178,
+      "date": "2026-10-18",
+      "project": "MES 重建 / D:\\code\\mes",
+      "status": "部分完成",
+      "keywords": [
+        "lowcode",
+        "模块软删除",
+        "publish",
+        "引用完整性",
+        "并发竞态",
+        "lock ordering"
+      ]
+    },
+    {
+      "id": "P-20261019",
+      "type": "problem",
+      "title": "MES 低代码模块管理：动态权限、防自授权与发布并发锁序",
+      "file": "global_problem_solutions.md",
+      "line": 1206,
+      "date": "2026-10-18",
+      "project": "MES 平台 / D:/code/mes（mes-admin、mes-server、mes-db）",
+      "status": "已完成（确定性屏障并发测试待补）",
+      "keywords": [
+        "低代码",
+        "模块管理",
+        "元数据",
+        "schema 版本",
+        "JSONB 动态字段",
+        "动态权限",
+        "mod:{code}:view",
+        "RLS",
+        "防自授权",
+        "privilege escalation",
+        "IAM_PRIVILEGE_ESCALATION",
+        "发布锁序",
+        "FOR SHARE",
+        "FOR UPDATE",
+        "同编码重建",
+        "悬空引用",
+        "Playwright E2E",
+        "NestJS Kysely PostgreSQL"
+      ]
+    },
+    {
+      "id": "P-20261020",
+      "type": "problem",
+      "title": "PostgreSQL工作流角色引用的精确查询与并发锁保护",
+      "file": "global_problem_solutions.md",
+      "line": 1240,
+      "date": "2026-10-19",
+      "project": "MES / D:/code/mes",
+      "status": "已实现，最终测试结果见本次台账 validation.md。",
+      "keywords": [
+        "PostgreSQL",
+        "Kysely",
+        "JSONB",
+        "jsonb_path_exists",
+        "workflowRoleCodes",
+        "FOR SHARE",
+        "FOR UPDATE",
+        "工作流角色引用",
+        "流程快照",
+        "并发发布"
+      ]
+    },
+    {
+      "id": "P-20261021",
+      "type": "problem",
+      "title": "【MES 测试服务器】10.0.64.2：SSH 公钥登录、主机指纹核对与 Docker 权限",
+      "file": "global_problem_solutions.md",
+      "line": 1271,
+      "date": "2026-10-19",
+      "project": "MES 重建 / D:\\code\\mes",
+      "status": "已完成",
+      "keywords": [
+        "MES 测试服务器",
+        "MES 部署服务器",
+        "10.0.64.2",
+        "SSH 公钥登录",
+        "mes_ed25519",
+        "主机指纹",
+        "known_hosts",
+        "docker 权限",
+        "docker compose",
+        "共享服务器",
+        "ssh-keyscan unsupported KEX sntrup761x25519",
+        "端口占用"
       ]
     }
   ],
@@ -4426,6 +4571,39 @@
     ],
     "process identity": [
       "F-084"
+    ],
+    "sire_comms": [
+      "F-085"
+    ],
+    "会话绑定": [
+      "F-085"
+    ],
+    "session id": [
+      "F-085"
+    ],
+    "bind": [
+      "F-085"
+    ],
+    "rebind": [
+      "F-085"
+    ],
+    "SIRE_SESSION": [
+      "F-085"
+    ],
+    "bindings.json": [
+      "F-085"
+    ],
+    "串话": [
+      "F-085"
+    ],
+    "通讯": [
+      "F-085"
+    ],
+    "协作": [
+      "F-085"
+    ],
+    "原文展示": [
+      "F-085"
     ]
   },
   "problems": {
@@ -5507,6 +5685,184 @@
     ],
     "范围授权": [
       "P-20261016"
+    ],
+    "MES重建": [
+      "P-20261017"
+    ],
+    "进度交接": [
+      "P-20261017"
+    ],
+    "Codex同步": [
+      "P-20261017"
+    ],
+    "PROGRESS.md": [
+      "P-20261017"
+    ],
+    "mes-admin": [
+      "P-20261017"
+    ],
+    "mes-server": [
+      "P-20261017"
+    ],
+    "mes-db": [
+      "P-20261017"
+    ],
+    "mes-web": [
+      "P-20261017"
+    ],
+    "IAM": [
+      "P-20261017"
+    ],
+    "低代码": [
+      "P-20261017",
+      "P-20261019"
+    ],
+    "模块管理": [
+      "P-20261017",
+      "P-20261019"
+    ],
+    "LOWCODE契约": [
+      "P-20261017"
+    ],
+    "演示模式": [
+      "P-20261017"
+    ],
+    "dev:mock": [
+      "P-20261017"
+    ],
+    "Docker未重启": [
+      "P-20261017"
+    ],
+    "BLOCKED": [
+      "P-20261017"
+    ],
+    "lowcode": [
+      "P-20261018"
+    ],
+    "模块软删除": [
+      "P-20261018"
+    ],
+    "publish": [
+      "P-20261018"
+    ],
+    "引用完整性": [
+      "P-20261018"
+    ],
+    "并发竞态": [
+      "P-20261018"
+    ],
+    "lock ordering": [
+      "P-20261018"
+    ],
+    "元数据": [
+      "P-20261019"
+    ],
+    "schema 版本": [
+      "P-20261019"
+    ],
+    "JSONB 动态字段": [
+      "P-20261019"
+    ],
+    "动态权限": [
+      "P-20261019"
+    ],
+    "mod:{code}:view": [
+      "P-20261019"
+    ],
+    "RLS": [
+      "P-20261019"
+    ],
+    "防自授权": [
+      "P-20261019"
+    ],
+    "privilege escalation": [
+      "P-20261019"
+    ],
+    "IAM_PRIVILEGE_ESCALATION": [
+      "P-20261019"
+    ],
+    "发布锁序": [
+      "P-20261019"
+    ],
+    "FOR SHARE": [
+      "P-20261019",
+      "P-20261020"
+    ],
+    "FOR UPDATE": [
+      "P-20261019",
+      "P-20261020"
+    ],
+    "同编码重建": [
+      "P-20261019"
+    ],
+    "悬空引用": [
+      "P-20261019"
+    ],
+    "Playwright E2E": [
+      "P-20261019"
+    ],
+    "NestJS Kysely PostgreSQL": [
+      "P-20261019"
+    ],
+    "PostgreSQL": [
+      "P-20261020"
+    ],
+    "Kysely": [
+      "P-20261020"
+    ],
+    "JSONB": [
+      "P-20261020"
+    ],
+    "jsonb_path_exists": [
+      "P-20261020"
+    ],
+    "workflowRoleCodes": [
+      "P-20261020"
+    ],
+    "工作流角色引用": [
+      "P-20261020"
+    ],
+    "流程快照": [
+      "P-20261020"
+    ],
+    "并发发布": [
+      "P-20261020"
+    ],
+    "MES 测试服务器": [
+      "P-20261021"
+    ],
+    "MES 部署服务器": [
+      "P-20261021"
+    ],
+    "10.0.64.2": [
+      "P-20261021"
+    ],
+    "SSH 公钥登录": [
+      "P-20261021"
+    ],
+    "mes_ed25519": [
+      "P-20261021"
+    ],
+    "主机指纹": [
+      "P-20261021"
+    ],
+    "known_hosts": [
+      "P-20261021"
+    ],
+    "docker 权限": [
+      "P-20261021"
+    ],
+    "docker compose": [
+      "P-20261021"
+    ],
+    "共享服务器": [
+      "P-20261021"
+    ],
+    "ssh-keyscan unsupported KEX sntrup761x25519": [
+      "P-20261021"
+    ],
+    "端口占用": [
+      "P-20261021"
     ]
   },
   "efficiency": {
@@ -6057,6 +6413,6 @@
       "H-006"
     ]
   },
-  "last_updated": "2026-10-16T09:33:01Z",
-  "total_records": 107
+  "last_updated": "2026-10-19T03:33:44Z",
+  "total_records": 113
 }
