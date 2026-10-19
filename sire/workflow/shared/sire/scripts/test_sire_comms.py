@@ -296,6 +296,28 @@ class CommsTest(unittest.TestCase):
         with self.assertRaises(sc.CommsError):
             self.cli("--session", a, "send", "--me", "Claude", "--to", "Codex", "旧会话")
         self.assertEqual(self.cli("--session", b, "send", "--me", "Claude", "--to", "Codex", "新会话")[0], 0)
+    def test_c18_resume_summary(self):
+        a = "session-aaaa"
+        ch = self.ch()
+        for i in range(7):
+            ch.send("Codex", "Claude", "info", f"消息{i}")
+        ch.send("Claude", "Codex", "request", "长" * 500)
+        ch.lock("Codex", "db", "测试")
+        self.cli("--session", a, "session", "start", "--me", "Claude", "--peer", "Codex")
+        code, out = self.cli("--session", a, "resume", "--me", "Claude")
+        self.assertEqual(code, 0)
+        self.assertIn(f"绑定 Claude → {a}", out)
+        self.assertIn("active=True", out)
+        self.assertIn("未读 7 条", out)
+        self.assertIn("待对方回复 1 条", out)
+        self.assertEqual(out.count("\n  #"), 5, "只列最近5条")
+        self.assertNotIn("消息0", out)
+        self.assertIn("消息6", out)
+        self.assertNotIn("长" * 201, out, "每条截断到200字")
+        self.assertIn("全文见 messages.jsonl", out)
+        self.assertIn("锁 db", out)
+        with self.assertRaises(sc.CommsError):  # 非绑定会话不能接手该身份
+            self.cli("--session", "session-bbbb", "resume", "--me", "Claude")
 
 
 if __name__ == "__main__":

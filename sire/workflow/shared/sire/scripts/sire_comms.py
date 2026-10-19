@@ -434,6 +434,32 @@ def print_status(ch: Channel, ttl: float | None = None) -> None:
         print(f"[comms] 锁 {l['resource']}：{l['holder']}（{l['purpose']}，{l['time']}，{lock_age_text(l)}）{mark}")
 
 
+def clip(text: str, limit: int) -> str:
+    text = text.replace("\n", " ")
+    return text if len(text) <= limit else text[:limit] + f"…（共{len(text)}字，全文见 messages.jsonl）"
+
+
+def print_resume(ch: Channel, me: str, last: int = 5, limit: int = 200) -> None:
+    """新会话开启协作后一次输出精简交接摘要，免重读全部历史"""
+    peer = "Codex" if me == "Claude" else "Claude"
+    print(f"[resume] 项目 {ch.slug}  身份 {me}")
+    binds = ch.bindings()
+    for who, d in binds.items():
+        print(f"[resume] 绑定 {who} → {d['session']}" + (f"（原 {d['previous']}）" if d.get("previous") else ""))
+    if not binds:
+        print("[resume] 绑定：无")
+    st = ch.session(me, "status", peer)
+    print(f"[resume] 监听 active={st['active']} persistent={st.get('persistent', False)} 对方={st['peer']} 连续空闲={st['empty_checks']}")
+    unread, waiting = ch.unread(me), ch.waiting(me)
+    print(f"[resume] 未读 {len(unread)} 条 {[m['id'] for m in unread]}；待对方回复 {len(waiting)} 条 {[m['id'] for m in waiting]}")
+    msgs = ch.load()
+    print(f"[resume] 共 {len(msgs)} 条消息，最近 {min(last, len(msgs))} 条（每条≤{limit}字）：")
+    for m in msgs[-last:]:
+        re_part = f" re#{m['re']}" if m.get("re") else ""
+        print(f"  #{m['id']} [{m['time']}] {m['from']}→{m['to']} {m['type']}{re_part}：{clip(m['text'], limit)}")
+    print_status(ch)
+
+
 def print_inbox(ch: Channel, me: str, header: bool = True) -> int:
     unread = ch.unread(me)
     waiting = ch.waiting(me)
@@ -510,6 +536,8 @@ def build_parser() -> argparse.ArgumentParser:
     lks = sub.add_parser("locks")
     lks.add_argument("--ttl", type=float, help="过期阈值（小时）")
     sub.add_parser("projects")
+    rs = sub.add_parser("resume", help="新会话接手：输出精简交接摘要（绑定、监听、未读、最近消息、锁、各方进度）")
+    rs.add_argument("--me")
     return ap
 
 
@@ -574,7 +602,7 @@ def run(argv: list[str]) -> int:
                 print(f"[comms] ⚠⚠ 警告：{who} 在项目 {slug} 未绑定会话且未带 --session，任何同名会话都能冒用该身份。"
                       f"请用 --session <会话id> 重新执行（首次使用即自动绑定）。", file=sys.stderr)
     # 以某身份写入或读取其信箱时，会话必须与绑定一致
-    if args.cmd in ("session", "send", "reply", "inbox", "ack", "lock", "unlock") or (args.cmd == "status" and args.text is not None):
+    if args.cmd in ("session", "send", "reply", "inbox", "ack", "lock", "unlock", "resume") or (args.cmd == "status" and args.text is not None):
         ch.check(agent(args.me), session)
     if args.cmd == "session" and args.action == "wait":
         peer = agent(args.peer or ("Codex" if agent(args.me) == "Claude" else "Claude"))
@@ -610,6 +638,8 @@ def run(argv: list[str]) -> int:
     elif args.cmd == "unlock":
         ch.unlock(agent(args.me), args.resource, args.stale, args.ttl)
         print(f"[comms] 已释放 {args.resource}")
+    elif args.cmd == "resume":
+        print_resume(ch, agent(args.me))
     elif args.cmd == "locks":
         print_status(ch, args.ttl)
     return 0
