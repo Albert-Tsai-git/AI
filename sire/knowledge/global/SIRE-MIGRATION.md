@@ -88,3 +88,4 @@ v6.18 | 2026-10-13 | Qoder 成为 feishu-hub 第三执行者并端到端验收�
 2026-10-16 | EncoderPlotter1 | 修复IAP V3合法短末包被误拒导致DPT30 V4.2.6固件无法解析；仅允许末包短于256字节。 | 指定文件实际预览解析为DPT 4.2.6/V3成功；V2回归及非法短中间包拒绝通过；未真机升级
 2026-10-18 | RSI-20261018-comms-bind | sire_comms 按项目把身份绑定到用户指定会话 id，其他会话被拒，双方对话原文展示收发消息，仅用户要求时 rebind | unittest 12 OK；d--code-mes 实测拒绝与发送；v6.28 激活
 - 2026-10-19 RSI-20261019-comms-persist（v6.29）：sire_comms session 默认常驻，用户说结束协作才停；--auto-stop 保留5次空闲自停；契约与 SKILL 增加常驻协作规则。
+- 2026-10-19 RSI-20261019-comms-wait（v6.30）：sire_comms 新增 session wait 进程内阻塞等待，空闲零额度；契约与 SKILL 增加省额度规则。

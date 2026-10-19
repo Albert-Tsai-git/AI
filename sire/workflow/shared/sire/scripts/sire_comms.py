@@ -298,6 +298,29 @@ class Channel:
             os.close(fd)
             guard.unlink(missing_ok=True)
 
+    def wait(self, me: str, peer: str, timeout: float, interval: float) -> dict:
+        """阻塞等待对方新消息，整个等待过程在进程内完成、不消耗 AI 额度。
+        常驻模式下仅在消息日志变化时才解析轮询；非常驻（--auto-stop）每个间隔都计一次空闲。
+        返回：有新消息 / 会话已停止 / 超时（timeout=True，messages 为空，调用方可继续等）。"""
+        deadline = time.time() + timeout
+        last_sig = None
+        while True:
+            try:
+                stat = self.log.stat()
+                sig = (stat.st_size, stat.st_mtime_ns)
+            except OSError:
+                sig = None
+            state = self.session(me, "status", peer) if last_sig is not None else None
+            persistent = state.get("persistent", False) if state else True
+            if last_sig is None or sig != last_sig or not persistent:
+                last_sig = sig
+                r = self.session(me, "poll", peer)
+                if r["messages"] or not r["active"]:
+                    return r
+            if time.time() >= deadline:
+                return {**r, "timeout": True}
+            time.sleep(min(interval, max(0.0, deadline - time.time())))
+
     # ---- 进度 ----
     def status_data(self) -> dict:
         p = self.dir / "status.json"
@@ -398,9 +421,11 @@ def build_parser() -> argparse.ArgumentParser:
     b.add_argument("--rebind", action="store_true", help="替换已有绑定，仅在用户要求切换会话时使用")
 
     session = sub.add_parser("session", help="协作通讯：start 后常驻轮询，直到 stop（用户说结束协作）；加 --auto-stop 则连续5次无新消息自停")
-    session.add_argument("action", choices=("start", "poll", "stop", "status"))
+    session.add_argument("action", choices=("start", "poll", "stop", "status", "wait"))
     session.add_argument("--me")
     session.add_argument("--peer", help="默认：Claude 对 Codex，其余身份对 Claude")
+    session.add_argument("--timeout", type=float, default=1800, help="wait：最长阻塞秒数，超时返回 timeout=true")
+    session.add_argument("--interval", type=float, default=5, help="wait：检查消息日志的间隔秒数")
     session.add_argument("--auto-stop", action="store_true", help="仅 start 有效：恢复连续5次无新消息自动停止")
 
     s = sub.add_parser("send")
@@ -487,7 +512,10 @@ def run(argv: list[str]) -> int:
     # 以某身份写入或读取其信箱时，会话必须与绑定一致
     if args.cmd in ("session", "send", "reply", "inbox", "ack", "lock", "unlock") or (args.cmd == "status" and args.text is not None):
         ch.check(agent(args.me), session)
-    if args.cmd == "session":
+    if args.cmd == "session" and args.action == "wait":
+        peer = agent(args.peer or ("Codex" if agent(args.me) == "Claude" else "Claude"))
+        print(json.dumps(ch.wait(agent(args.me), peer, args.timeout, args.interval), ensure_ascii=False))
+    elif args.cmd == "session":
         print(json.dumps(ch.session(agent(args.me), args.action, agent(args.peer or ("Codex" if agent(args.me) == "Claude" else "Claude")), args.auto_stop), ensure_ascii=False))
     elif args.cmd == "send":
         m = ch.send(agent(args.me), agent(args.to), args.type, args.text, args.re)

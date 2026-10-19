@@ -213,6 +213,18 @@ class CommsTest(unittest.TestCase):
         for _ in range(5):
             _, out = self.cli("session", "poll", "--me", "Claude")
         self.assertFalse(_j.loads(out)["active"], "--auto-stop 保留连续5次空闲自停")
+    def test_c14_wait_returns_on_message_or_timeout(self):
+        import json as _j
+        self.cli("session", "start", "--me", "Claude", "--peer", "Codex")
+        _, out = self.cli("session", "wait", "--me", "Claude", "--timeout", "0.3", "--interval", "0.1")
+        self.assertTrue(_j.loads(out)["timeout"])
+        timer = threading.Timer(0.3, lambda: self.ch().send("Codex", "Claude", "info", "来信"))
+        timer.start()
+        _, out = self.cli("session", "wait", "--me", "Claude", "--timeout", "5", "--interval", "0.1")
+        timer.join()
+        r = _j.loads(out)
+        self.assertEqual([m["text"] for m in r["messages"]], ["来信"])
+        self.assertNotIn("timeout", r)
 
 
 if __name__ == "__main__":
