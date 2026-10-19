@@ -90,3 +90,4 @@ v6.18 | 2026-10-13 | Qoder 成为 feishu-hub 第三执行者并端到端验收�
 - 2026-10-19 RSI-20261019-comms-persist（v6.29）：sire_comms session 默认常驻，用户说结束协作才停；--auto-stop 保留5次空闲自停；契约与 SKILL 增加常驻协作规则。
 - 2026-10-19 RSI-20261019-comms-wait（v6.30）：sire_comms 新增 session wait 进程内阻塞等待，空闲零额度；契约与 SKILL 增加省额度规则。
 - 2026-10-19 RSI-20261019-comms-lock-bind（v6.31）：sire_comms 锁 STALE 与 unlock --stale 审计、未绑定身份自动绑定与警告；契约与 SKILL 增加转述授权约定。
+- 2026-10-19 RSI-20261019-comms-follow（v6.32）：同步会话跟随用户开启协作的会话，session start 带不同 --session 自动切换绑定并通知对方；旧会话仍被拒。

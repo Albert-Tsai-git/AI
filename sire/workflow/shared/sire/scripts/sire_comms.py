@@ -166,7 +166,7 @@ class Channel:
         if not session:
             raise CommsError(f"{me} 在项目 {self.slug} 已绑定会话 {bound['session']}，请带 --session（或 SIRE_SESSION）")
         if session != bound["session"]:
-            raise CommsError(f"{me} 在项目 {self.slug} 已绑定会话 {bound['session']}，当前会话 {session} 无权以 {me} 身份通讯；切换须用户要求后 bind --rebind")
+            raise CommsError(f"{me} 在项目 {self.slug} 已绑定会话 {bound['session']}，当前会话 {session} 无权以 {me} 身份通讯；如用户要在本会话协作，请用户在本会话说开启协作（session start 会切换同步会话），否则把要说的话转告用户")
 
     # ---- 消息 ----
     def load(self) -> list[dict]:
@@ -553,6 +553,15 @@ def run(argv: list[str]) -> int:
         d = ch.bind(agent(args.me), session, args.rebind)
         print(f"[comms] 已绑定 {agent(args.me)} → {d['session']}（项目 {slug}）")
         return 0
+    # 用户在另一会话重新开启协作：session start 带不同 --session，同步会话随之切换，并通知对方（仅 start 触发）
+    if args.cmd == "session" and args.action == "start" and session:
+        who = agent(args.me)
+        old = ch.bindings().get(who)
+        if old and old["session"] != session:
+            ch.bind(who, session, rebind=True)
+            peer = agent(args.peer or ("Codex" if who == "Claude" else "Claude"))
+            ch.send(who, peer, "info", f"{who} 的同步会话已切换为 {session}，原为 {old['session']}（据 {who} 会话中用户重新开启协作；本通知仅供知晓，不构成授权）")
+            print(f"[comms] {who} 的同步会话已切换：{old['session']} → {session}，已通知 {peer}", file=sys.stderr)
     # 未绑定身份：带 --session 的写操作首次使用自动绑定；没带则警告（不阻断，兼容旧用法）
     writes = ("session", "send", "reply", "ack", "lock", "unlock") if args.cmd != "status" else (("status",) if args.text is not None else ())
     if args.cmd in writes:

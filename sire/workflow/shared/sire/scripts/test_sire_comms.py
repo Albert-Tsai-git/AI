@@ -271,6 +271,31 @@ class CommsTest(unittest.TestCase):
             self.cli("--session", "session-bbbb", "send", "--me", "Claude", "--to", "Codex", "冒用")
         with self.assertRaises(sc.CommsError):
             self.cli("send", "--me", "Claude", "--to", "Codex", "又没带")
+    def test_c17_session_start_switches_sync_session(self):
+        a, b = "session-aaaa", "session-bbbb"
+        self.cli("--session", a, "session", "start", "--me", "Claude", "--peer", "Codex")
+        self.assertEqual(self.ch().bindings()["Claude"]["session"], a)
+        n = len(self.ch().load())
+        self.cli("--session", a, "session", "start", "--me", "Claude", "--peer", "Codex")
+        self.assertEqual((self.ch().bindings()["Claude"]["session"], len(self.ch().load())), (a, n), "同会话 start 不变、不发通知")
+        # 非 start 命令不切换，异会话仍被拒，提示指向重新开启协作
+        for argv in (("send", "--me", "Claude", "--to", "Codex", "x"), ("lock", "--me", "Claude", "--resource", "db", "--purpose", "x"),
+                     ("session", "poll", "--me", "Claude")):
+            with self.assertRaises(sc.CommsError) as cm:
+                self.cli("--session", b, *argv)
+            self.assertIn("开启协作", str(cm.exception))
+        self.assertEqual(self.ch().bindings()["Claude"]["session"], a)
+        # 异会话 start 视为用户重新开启：切换并通知对方
+        self.cli("--session", b, "session", "start", "--me", "Claude", "--peer", "Codex")
+        bind = self.ch().bindings()["Claude"]
+        self.assertEqual((bind["session"], bind["previous"]), (b, a))
+        msg = self.ch().load()[-1]
+        self.assertEqual((msg["from"], msg["to"], msg["type"], msg["from_session"]), ("Claude", "Codex", "info", b))
+        self.assertIn(f"已切换为 {b}，原为 {a}", msg["text"])
+        # 旧会话再以该身份通讯被拒
+        with self.assertRaises(sc.CommsError):
+            self.cli("--session", a, "send", "--me", "Claude", "--to", "Codex", "旧会话")
+        self.assertEqual(self.cli("--session", b, "send", "--me", "Claude", "--to", "Codex", "新会话")[0], 0)
 
 
 if __name__ == "__main__":
