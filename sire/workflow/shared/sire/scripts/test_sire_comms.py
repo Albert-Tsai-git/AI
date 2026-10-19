@@ -199,6 +199,20 @@ class CommsTest(unittest.TestCase):
             sc.run(["--session", "session-two", "inbox", "--me", "Claude", "--all-projects"])
         self.assertIn("跳过", buf.getvalue())
         self.assertIn("合计 0 条", buf.getvalue())
+    def test_c13_session_persistent_until_stop(self):
+        import json as _j
+        self.cli("session", "start", "--me", "Claude", "--peer", "Codex")
+        for _ in range(8):
+            _, out = self.cli("session", "poll", "--me", "Claude")
+        st = _j.loads(out)
+        self.assertTrue(st["active"], "常驻模式不因空闲自停")
+        self.assertEqual(st["empty_checks"], 8)
+        self.cli("session", "stop", "--me", "Claude")
+        self.assertFalse(_j.loads(self.cli("session", "status", "--me", "Claude")[1])["active"])
+        self.cli("session", "start", "--me", "Claude", "--peer", "Codex", "--auto-stop")
+        for _ in range(5):
+            _, out = self.cli("session", "poll", "--me", "Claude")
+        self.assertFalse(_j.loads(out)["active"], "--auto-stop 保留连续5次空闲自停")
 
 
 if __name__ == "__main__":

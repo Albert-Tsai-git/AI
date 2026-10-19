@@ -264,7 +264,7 @@ class Channel:
         replied = {m["re"] for m in msgs if m.get("re")}
         return [m for m in msgs if m["from"] == me and m["type"] in NEEDS_REPLY and m["id"] not in replied]
 
-    def session(self, me: str, action: str, peer: str) -> dict:
+    def session(self, me: str, action: str, peer: str, auto_stop: bool = False) -> dict:
         """持久化按需监听状态；不自动发送、确认消息或启动客户端。"""
         if me == peer:
             raise CommsError("通讯对象不能是自己")
@@ -272,11 +272,12 @@ class Channel:
         try:
             state_path = self.dir / f"session_{me}.json"
             state = json.loads(state_path.read_text(encoding="utf-8")) if state_path.exists() else {
-                "active": False, "empty_checks": 0, "seen_ids": [], "peer": peer,
+                "active": False, "empty_checks": 0, "seen_ids": [], "peer": peer, "persistent": True,
             }
             messages = []
             if action == "start":
-                state = {"active": True, "empty_checks": 0, "seen_ids": [], "peer": peer}
+                # 默认常驻：只有 session stop（用户说结束协作）才停止；--auto-stop 恢复连续空闲5次自停
+                state = {"active": True, "empty_checks": 0, "seen_ids": [], "peer": peer, "persistent": not auto_stop}
             elif action == "stop":
                 state["active"] = False
             elif action == "poll" and state["active"]:
@@ -285,7 +286,7 @@ class Channel:
                             if m["from"] == state["peer"] and m["id"] not in seen]
                 state["empty_checks"] = 0 if messages else state["empty_checks"] + 1
                 state["seen_ids"] = sorted(seen | {m["id"] for m in messages})
-                if state["empty_checks"] >= 5:
+                if state["empty_checks"] >= 5 and not state.get("persistent", False):
                     state["active"] = False
             if action != "status":
                 state["updated"] = now()
@@ -396,10 +397,11 @@ def build_parser() -> argparse.ArgumentParser:
     b.add_argument("--me")
     b.add_argument("--rebind", action="store_true", help="替换已有绑定，仅在用户要求切换会话时使用")
 
-    session = sub.add_parser("session", help="按需协作通讯，连续5次无新消息后停止")
+    session = sub.add_parser("session", help="协作通讯：start 后常驻轮询，直到 stop（用户说结束协作）；加 --auto-stop 则连续5次无新消息自停")
     session.add_argument("action", choices=("start", "poll", "stop", "status"))
     session.add_argument("--me")
     session.add_argument("--peer", help="默认：Claude 对 Codex，其余身份对 Claude")
+    session.add_argument("--auto-stop", action="store_true", help="仅 start 有效：恢复连续5次无新消息自动停止")
 
     s = sub.add_parser("send")
     s.add_argument("--me")
@@ -486,7 +488,7 @@ def run(argv: list[str]) -> int:
     if args.cmd in ("session", "send", "reply", "inbox", "ack", "lock", "unlock") or (args.cmd == "status" and args.text is not None):
         ch.check(agent(args.me), session)
     if args.cmd == "session":
-        print(json.dumps(ch.session(agent(args.me), args.action, agent(args.peer or ("Codex" if agent(args.me) == "Claude" else "Claude"))), ensure_ascii=False))
+        print(json.dumps(ch.session(agent(args.me), args.action, agent(args.peer or ("Codex" if agent(args.me) == "Claude" else "Claude")), args.auto_stop), ensure_ascii=False))
     elif args.cmd == "send":
         m = ch.send(agent(args.me), agent(args.to), args.type, args.text, args.re)
         print(f"[comms] 已发送 #{m['id']}（项目 {slug}）")
