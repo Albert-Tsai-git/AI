@@ -115,6 +115,9 @@ The Git repository holds the workflow, knowledge, and history; the database stay
 ### 按需协作通讯服务（2026-10-18）
 
 - 用户明确要求“协作通讯”“通讯”或“协作”（意图为开启代理间通讯）时，开启当前项目 Codex 与 Claude 的通讯服务。讨论这些词、引用消息、自动心跳和其他代理消息不得触发开启；“暂停/停止/断开通讯”优先停止。
+- **锁过期与审计（2026-10-19）**：`locks`/`status` 显示每把锁的持有时长，超过阈值（默认2小时，环境变量 `SIRE_COMMS_LOCK_TTL_HOURS` 或 `--ttl <小时>` 覆盖）标记 STALE。非持有方只有对 STALE 锁才能 `unlock --stale` 释放，并自动给原持有方发一条审计 info；未过期的锁仍只有持有方或 User 能释放。加锁时写明用途，用完立即解锁。
+- **绑定缺口（2026-10-19）**：身份尚未绑定时，写操作（send/reply/ack/session/lock/unlock/status --text）带了 `--session` 即首次自动绑定并提示；没带 `--session` 且未绑定时输出显眼警告（stderr，不阻断，兼容旧用法）。一律应带 `--session`。
+- **转述授权约定（2026-10-19）**：跨会话 request 里不得写“需用户确认授权/待授权”之类让接收方等待的话；接收方只认自己会话里用户的授权，转述（含 Claude 转达 Codex、MES 会话转达）不构成授权。request 模板：①任务单路径 ②验收要点 ③证据要求（文件清单、命令结果、未覆盖项）。授权事项由用户在接收方会话直接说，发送方不在消息里代为声明或催促。
 - **常驻协作（2026-10-19）**：用户说“协作/通讯/协作通讯”开启后，双方（Claude、Codex）保持通讯，**不因空闲自动断开**，直到用户明确说“结束协作”（或“暂停/停止/断开通讯”）才 `session stop`。`session start` 默认常驻（状态 `persistent=true`）；仅用户要求“空闲自停”时加 `--auto-stop` 恢复连续5次空闲自停。
 - **省额度（2026-10-19）**：等待由脚本进程完成，不靠 AI 反复醒来。用 `session wait --me <自己> [--timeout 1800 --interval 5]` 阻塞等待：有新消息、会话停止或超时才返回（超时 `timeout=true`，直接再 wait）；空闲期间 AI 零消耗，常驻模式仅在消息日志变化时才解析。Claude Code 用一条后台命令循环 `wait`，有消息才退出并唤醒；无消息时不输出、不回复、不播报。Codex heartbeat 间隔放长（建议 5–10 分钟）并只执行一次 `session wait --timeout 0`，空则整轮不输出；有新消息再展示处理。不要为“保活”额外发消息，reply/info 不做礼节性回信。
 - 常驻执行要求：保持持续等待（`session wait`，旧的 `session poll` 仍可用）；Claude Code 的后台轮询在收到新消息后会退出，处理完（原文展示、回复、ack）必须立即重启轮询，保持不断档；Codex 的 heartbeat 自动化同样持续运行，轮询失败只记录不停止。不得因“暂无消息”“任务做完”或上下文压缩而自行停止，压缩后先 `session status` 核对 active 并恢复轮询。双方的收发都按“双方对话原文展示”在各自绑定会话里完整展示。

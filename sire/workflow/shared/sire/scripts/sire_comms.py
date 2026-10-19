@@ -52,6 +52,7 @@ RESOURCE_RE = re.compile(r"^[a-z][a-z0-9_-]{0,31}$")
 SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,99}$")
 STALE_GUARD_SECONDS = 10
 MAX_TEXT = 8000
+LOCK_TTL_HOURS = 2.0  # 资源锁超过该时长标记 STALE；环境变量 SIRE_COMMS_LOCK_TTL_HOURS 或 --ttl 覆盖
 SESSION_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{3,127}$")
 
 
@@ -346,14 +347,24 @@ class Channel:
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             json.dump({"holder": me, "purpose": purpose, "time": now()}, f, ensure_ascii=False)
 
-    def unlock(self, me: str, res: str) -> None:
+    def unlock(self, me: str, res: str, stale: bool = False, ttl: float | None = None) -> None:
         p = self._lock_path(res)
         if not p.exists():
             raise CommsError(f"{res} 当前未被占用")
-        holder = json.loads(p.read_text(encoding="utf-8"))["holder"]
+        try:
+            info = json.loads(p.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            info = {"holder": "?", "time": ""}
+        holder = info["holder"]
         if holder != me and me != "User":
-            raise CommsError(f"{res} 由 {holder} 占用，不能代为释放（User 可强制释放）")
+            if not stale:
+                raise CommsError(f"{res} 由 {holder} 占用，不能代为释放（User 可强制释放；锁过期 STALE 时可加 --stale）")
+            if not lock_is_stale(info, ttl):
+                raise CommsError(f"{res} 由 {holder} 占用且未过期（{lock_age_text(info)}），不能用 --stale 释放")
         p.unlink()
+        if holder != me and me != "User" and holder in AGENTS:
+            # 非持有方释放过期锁，留审计消息给原持有方
+            self.send(me, holder, "info", f"[审计] 资源 {res} 的锁已过期（持有 {lock_age_text(info)}，用途：{info.get('purpose', '')}），{me} 用 unlock --stale 释放。如仍在使用请重新加锁。")
 
     def locks(self) -> list[dict]:
         out = []
@@ -381,7 +392,36 @@ def fmt(m: dict) -> str:
     return f"#{m['id']} [{m['time']}] {src}→{dst} {m['type']}{re_part}\n    " + m["text"].replace("\n", "\n    ")
 
 
-def print_status(ch: Channel) -> None:
+def lock_age_seconds(info: dict) -> float | None:
+    try:
+        return (dt.datetime.now() - dt.datetime.strptime(info["time"], "%Y-%m-%d %H:%M:%S")).total_seconds()
+    except (KeyError, ValueError, TypeError):
+        return None
+
+
+def lock_ttl_hours(ttl: float | None = None) -> float:
+    if ttl is not None:
+        return ttl
+    try:
+        return float(os.environ.get("SIRE_COMMS_LOCK_TTL_HOURS", LOCK_TTL_HOURS))
+    except ValueError:
+        return LOCK_TTL_HOURS
+
+
+def lock_is_stale(info: dict, ttl: float | None = None) -> bool:
+    age = lock_age_seconds(info)
+    return age is None or age > lock_ttl_hours(ttl) * 3600  # 无法解析时间的损坏锁视为过期
+
+
+def lock_age_text(info: dict) -> str:
+    age = lock_age_seconds(info)
+    if age is None:
+        return "时长未知"
+    minutes = int(age // 60)
+    return f"已持有 {minutes // 60} 小时 {minutes % 60} 分" if minutes >= 60 else f"已持有 {minutes} 分"
+
+
+def print_status(ch: Channel, ttl: float | None = None) -> None:
     data = ch.status_data()
     for a in AGENTS[:3]:
         d = data.get(a)
@@ -390,7 +430,8 @@ def print_status(ch: Channel) -> None:
     if not ls:
         print("[comms] 锁：无")
     for l in ls:
-        print(f"[comms] 锁 {l['resource']}：{l['holder']}（{l['purpose']}，{l['time']}）")
+        mark = f" [STALE 已超 {lock_ttl_hours(ttl):g} 小时，非持有方可 unlock --stale]" if lock_is_stale(l, ttl) else ""
+        print(f"[comms] 锁 {l['resource']}：{l['holder']}（{l['purpose']}，{l['time']}，{lock_age_text(l)}）{mark}")
 
 
 def print_inbox(ch: Channel, me: str, header: bool = True) -> int:
@@ -463,8 +504,11 @@ def build_parser() -> argparse.ArgumentParser:
     ul = sub.add_parser("unlock")
     ul.add_argument("--me")
     ul.add_argument("--resource", required=True)
+    ul.add_argument("--stale", action="store_true", help="释放已过期（STALE）的他人锁，并给原持有方留审计消息")
+    ul.add_argument("--ttl", type=float, help="过期阈值（小时），默认2或 SIRE_COMMS_LOCK_TTL_HOURS")
 
-    sub.add_parser("locks")
+    lks = sub.add_parser("locks")
+    lks.add_argument("--ttl", type=float, help="过期阈值（小时）")
     sub.add_parser("projects")
     return ap
 
@@ -509,6 +553,17 @@ def run(argv: list[str]) -> int:
         d = ch.bind(agent(args.me), session, args.rebind)
         print(f"[comms] 已绑定 {agent(args.me)} → {d['session']}（项目 {slug}）")
         return 0
+    # 未绑定身份：带 --session 的写操作首次使用自动绑定；没带则警告（不阻断，兼容旧用法）
+    writes = ("session", "send", "reply", "ack", "lock", "unlock") if args.cmd != "status" else (("status",) if args.text is not None else ())
+    if args.cmd in writes:
+        who = agent(args.me)
+        if who not in ch.bindings():
+            if session:
+                ch.bind(who, session)
+                print(f"[comms] 提示：{who} 在项目 {slug} 首次使用，已自动绑定会话 {session}", file=sys.stderr)
+            else:
+                print(f"[comms] ⚠⚠ 警告：{who} 在项目 {slug} 未绑定会话且未带 --session，任何同名会话都能冒用该身份。"
+                      f"请用 --session <会话id> 重新执行（首次使用即自动绑定）。", file=sys.stderr)
     # 以某身份写入或读取其信箱时，会话必须与绑定一致
     if args.cmd in ("session", "send", "reply", "inbox", "ack", "lock", "unlock") or (args.cmd == "status" and args.text is not None):
         ch.check(agent(args.me), session)
@@ -544,10 +599,10 @@ def run(argv: list[str]) -> int:
         ch.lock(agent(args.me), args.resource, args.purpose)
         print(f"[comms] 已占用 {args.resource}")
     elif args.cmd == "unlock":
-        ch.unlock(agent(args.me), args.resource)
+        ch.unlock(agent(args.me), args.resource, args.stale, args.ttl)
         print(f"[comms] 已释放 {args.resource}")
     elif args.cmd == "locks":
-        print_status(ch)
+        print_status(ch, args.ttl)
     return 0
 
 

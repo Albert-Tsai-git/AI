@@ -225,6 +225,52 @@ class CommsTest(unittest.TestCase):
         r = _j.loads(out)
         self.assertEqual([m["text"] for m in r["messages"]], ["来信"])
         self.assertNotIn("timeout", r)
+    def _age_lock(self, ch, res, hours):
+        import datetime as _dt
+        p = ch._lock_path(res)
+        d = json.loads(p.read_text(encoding="utf-8"))
+        d["time"] = (_dt.datetime.now() - _dt.timedelta(hours=hours)).strftime("%Y-%m-%d %H:%M:%S")
+        p.write_text(json.dumps(d, ensure_ascii=False), encoding="utf-8")
+
+    def test_c15_lock_stale_marking_and_forced_release(self):
+        ch = self.ch()
+        ch.lock("Codex", "mes-code", "T02")
+        _, out = self.cli("locks")
+        self.assertIn("已持有 0 分", out)
+        self.assertNotIn("STALE", out)
+        with self.assertRaises(sc.CommsError):
+            self.cli("unlock", "--me", "Claude", "--resource", "mes-code", "--stale")  # 未过期不可
+        self._age_lock(ch, "mes-code", 3)
+        _, out = self.cli("locks")
+        self.assertIn("STALE", out)
+        self.assertIn("已持有 3 小时", out)
+        self.assertNotIn("STALE", self.cli("locks", "--ttl", "5")[1], "--ttl 可调高阈值")
+        with mock.patch.dict("os.environ", {"SIRE_COMMS_LOCK_TTL_HOURS": "5"}):
+            self.assertNotIn("STALE", self.cli("locks")[1], "环境变量可调高阈值")
+        with self.assertRaises(sc.CommsError):  # 过期也必须显式 --stale
+            self.cli("unlock", "--me", "Claude", "--resource", "mes-code")
+        self.assertEqual(self.cli("unlock", "--me", "Claude", "--resource", "mes-code", "--stale")[0], 0)
+        self.assertEqual(ch.locks(), [])
+        audit = ch.load()[-1]
+        self.assertEqual((audit["from"], audit["to"], audit["type"]), ("Claude", "Codex", "info"))
+        self.assertIn("[审计]", audit["text"])
+
+    def test_c16_auto_bind_and_unbound_warning(self):
+        import contextlib
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            self.assertEqual(self.cli("send", "--me", "Claude", "--to", "Codex", "无会话")[0], 0)
+        self.assertIn("警告", err.getvalue())
+        self.assertEqual(self.ch().bindings(), {}, "未带 --session 不绑定")
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            self.assertEqual(self.cli("--session", "session-aaaa", "send", "--me", "Claude", "--to", "Codex", "带会话")[0], 0)
+        self.assertIn("自动绑定", err.getvalue())
+        self.assertEqual(self.ch().bindings()["Claude"]["session"], "session-aaaa")
+        with self.assertRaises(sc.CommsError):  # 绑定后其他会话被拒
+            self.cli("--session", "session-bbbb", "send", "--me", "Claude", "--to", "Codex", "冒用")
+        with self.assertRaises(sc.CommsError):
+            self.cli("send", "--me", "Claude", "--to", "Codex", "又没带")
 
 
 if __name__ == "__main__":
