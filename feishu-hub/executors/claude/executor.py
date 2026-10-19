@@ -82,9 +82,14 @@ def find_desktop_cli():
         if not os.path.isdir(base):
             continue
         for ver in os.listdir(base):
-            exe = os.path.join(base, ver, "claude.exe")
-            if os.path.isfile(exe) and (best is None or _ver_key(ver) > best[0]):
-                best = (_ver_key(ver), exe)
+            # 新版桌面把 claude.exe 放在 <版本>/<哈希>/ 下，旧版直接在 <版本>/ 下，两种都要找
+            vdir = os.path.join(base, ver)
+            cands = [os.path.join(vdir, "claude.exe")]
+            if os.path.isdir(vdir):
+                cands += [os.path.join(vdir, sub, "claude.exe") for sub in os.listdir(vdir)]
+            for exe in cands:
+                if os.path.isfile(exe) and (best is None or _ver_key(ver) > best[0]):
+                    best = (_ver_key(ver), exe)
     return best[1] if best else None
 
 
