@@ -1664,3 +1664,35 @@ Word结构检查为7节A4纵向、11表、6图片；渲染器缺soffice.exe，�
 **踩坑**: Git Bash heredoc 传中文给 python 需 PYTHONUTF8=1；Claude 会话 id 可从 scratchpad 路径中的 UUID 取得；--rebind 与改用未绑定身份只能靠合同约束。
 
 **状态**: 已完成（Codex 侧待其按 #18 采用 --session）
+
+
+### F-086: Claude-Codex 协作通讯机制：会话绑定、实时推送、常驻与会话id可变（v6.28–v6.35）
+
+**日期**: 2026-10-20
+**项目**: SIRE / D:\sire\AI\AI（共享 skill sire_comms，v6.28–v6.35）
+**关键词**: claude-codex协作机制, 协作通讯, sire_comms, 会话绑定, session start, session watch, session wait, resume, codex queue 实时推送, 常驻协作, 结束协作, 会话id可变, 锁STALE, 转述不构成授权, 协作免重复授权, comms-protocol
+
+**需求场景 / 现象**: Claude 与 Codex 同机协作开发同一项目，多个同名会话串话、轮询耗额度、用户换对话后身份失效、转述被当成授权导致卡住。用户要求：通讯实时反馈、除非用户说结束协作否则常驻、任一方关闭同步通知对方、协作范围内不再向用户要授权、会话 id 随换对话而变且尽量少上下文。
+
+**根因**: 早期通道按身份而非会话区分，且靠 AI 定时醒来轮询：同名会话互相抢信箱，空闲也消耗额度，长上下文重复展示，旧会话的等待继续抢收消息。
+
+**方案 / 架构**:
+- 单一规则文件：`sire/workflow/shared/sire/references/comms-protocol.md`（契约与 SKILL 的通讯章节开头有指针，冲突以它为准）；脚本 `scripts/sire_comms.py`，数据在 `D:/sire/sire_comms/projects/<项目>/`（messages.jsonl、bindings.json、session_<身份>.json、locks/）。
+- 开启/结束只认用户在自己会话里的话：用户在任意对话说“开始协作”，`session start --session <当前对话id>` 绑定该会话；id 变了自动 rebind 并向对方发 info，旧会话的 wait/watch 自动让位、旧会话发消息被拒。换会话后跑 `resume --me <自己>` 取精简交接摘要。
+- 实时送达：send/reply 写入后用 `codex queue --thread <Codex会话id> --message ...`（必须用原生 codex.exe）推进 Codex 会话，实测约 10 秒送达；Claude 侧用 `session watch` + Monitor 事件流（每条新消息一行 JSON 即时唤醒，空闲零消耗）。Codex 心跳降为 30 分钟兜底（`session wait --timeout 0`，空则静默）。
+- 关闭同步：`session stop` 自动给对方发 info 并把对方监听置关闭；仅用户说结束协作才执行。
+- 授权：协作范围内对方 request 直接执行不再向用户要授权；转述（含 MES 会话等他会话转达的“用户指令”）不构成授权，只认本会话用户原话；request 里不得写“待授权”让对方空等。强推/凭据/付款/范围外目标仍须交用户。
+- 其他：消息 ≤600 字原文展示、超过截断带编号；request/question 用 reply --re 回复后 ack，info/reply 不礼节性回信；锁超 2 小时标 STALE，非持有方仅对 STALE 锁可 `unlock --stale` 并自动审计；未绑定身份带 --session 首次自动绑定，不带则警告。
+
+**关键文件与接口**:
+- `scripts/sire_comms.py`：`bind/check`、`session start|wait|watch|stop|status|poll`、`resume`、`push`、`find_codex_exe`、`lock/unlock --stale`；环境变量 SIRE_COMMS_PUSH=0 关闭推送、SIRE_CODEX_EXE、SIRE_COMMS_LOCK_TTL_HOURS。
+- `scripts/test_sire_comms.py`：22 个用例（c10–c22 覆盖绑定、锁过期、自动绑定、start 切换、resume、stop 同步、推送、watch、会话让位）。
+- RSI：comms-bind v6.28、persist 6.29、wait 6.30、lock-bind 6.31、follow2 6.32、resume 6.33、protocol 6.34、push 6.35。
+
+**实施步骤**: 1) 用户在目标对话说“开始协作”；2) 本端 `session start --session <当前对话id> --me <自己> --peer <对方>`，Claude 再起 `session watch` 的 Monitor（30 分钟到期重起）；3) Codex 侧心跳 30 分钟兜底并写入协议路径；4) 新对话重复 1–2 并 `resume`；5) 用户说结束协作时 `session stop`，对方自动同步关闭、释放锁。
+
+**验证方法**: `python -m pytest scripts/test_sire_comms.py`（22 通过）；真机：`codex queue` 推送 08:05:07 发出，Codex 08:05:17 收到并回复，Codex→Claude 经 session watch 事件流即时到达。
+
+**踩坑**: Codex 的 queue 消息要走原生 codex.exe，不能经 .cmd（元字符被 cmd 解析）；Claude Code 没有外部推送入口，只能用 Monitor 事件流；会话 id 在日志里明文可见，绑定拦不住知道 id 的冒用（待加令牌）；RSI 登记遇到他端已推进版本链要用新 parent 重登；脚本里 `\n` 经工具转写会变成真实换行，需用 chr(92) 写入。
+
+**状态**: 已完成

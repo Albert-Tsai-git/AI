@@ -2690,6 +2690,101 @@
         "ssh-keyscan unsupported KEX sntrup761x25519",
         "端口占用"
       ]
+    },
+    {
+      "id": "P-20261022",
+      "type": "problem",
+      "title": "Compose internal 网络 API 宿主 loopback 发布的测试部署模式",
+      "file": "global_problem_solutions.md",
+      "line": 1305,
+      "date": "2026-10-19",
+      "project": "MES / D:/code/mes",
+      "status": "已完成",
+      "keywords": [
+        "Docker Compose internal 网络",
+        "loopback 端口映射",
+        "bridge 网络",
+        "PostgreSQL",
+        "NestJS API",
+        "SSH 隧道"
+      ]
+    },
+    {
+      "id": "P-20261023",
+      "type": "problem",
+      "title": "Vite 管理端通过 SSH 隧道接入 loopback 部署 API",
+      "file": "global_problem_solutions.md",
+      "line": 1335,
+      "date": "2026-10-19",
+      "project": "MES / D:/code/mes",
+      "status": "已完成",
+      "keywords": [
+        "Vite MES_SERVER_URL",
+        "本地开发服务器",
+        "SSH本地转发",
+        "loopback代理",
+        "mes-admin",
+        "33100端口"
+      ]
+    },
+    {
+      "id": "P-20261024",
+      "type": "problem",
+      "title": "MES订单工序路线版本与审批实走边界",
+      "file": "global_problem_solutions.md",
+      "line": 1366,
+      "date": "2026-10-19",
+      "project": "MES / D:/code/mes",
+      "status": "部分完成（审批之后的流转待具备测试角色账号后实走）",
+      "keywords": [
+        "MES",
+        "生产订单",
+        "工序路线",
+        "工作流版本",
+        "关联字段",
+        "审批",
+        "免审批流转",
+        "流程快照"
+      ]
+    },
+    {
+      "id": "P-20261025",
+      "type": "problem",
+      "title": "MES生产订单审批角色权限与工作流快照实走",
+      "file": "global_problem_solutions.md",
+      "line": 1392,
+      "date": "2026-10-19",
+      "project": "MES / D:\\code\\mes",
+      "status": "已完成（配置链路验证至待备料；生产执行、质检和完工未覆盖）。",
+      "keywords": [
+        "MES低代码",
+        "生产订单审批角色",
+        "mod:production_order:view",
+        "lowcode:module:view",
+        "工作流快照",
+        "流程版本",
+        "无审批流转",
+        "IAM权限"
+      ]
+    },
+    {
+      "id": "P-20261026",
+      "type": "problem",
+      "title": "生产订单工作流版本V1与V2显示同名",
+      "file": "global_problem_solutions.md",
+      "line": 1422,
+      "date": "2026-10-19",
+      "project": "MES / D:\\code\\mes",
+      "status": "部分完成（标签问题已复现并记录，持久修复未实施）。",
+      "keywords": [
+        "MES生产订单",
+        "工序工作流版本",
+        "V1 V2同名",
+        "版本标签",
+        "订单流程快照",
+        "待备料",
+        "权限复核"
+      ]
     }
   ],
   "features": {
@@ -5699,7 +5794,8 @@
       "P-20261017"
     ],
     "mes-admin": [
-      "P-20261017"
+      "P-20261017",
+      "P-20261023"
     ],
     "mes-server": [
       "P-20261017"
@@ -5805,7 +5901,8 @@
       "P-20261019"
     ],
     "PostgreSQL": [
-      "P-20261020"
+      "P-20261020",
+      "P-20261022"
     ],
     "Kysely": [
       "P-20261020"
@@ -5823,7 +5920,8 @@
       "P-20261020"
     ],
     "流程快照": [
-      "P-20261020"
+      "P-20261020",
+      "P-20261024"
     ],
     "并发发布": [
       "P-20261020"
@@ -5863,6 +5961,102 @@
     ],
     "端口占用": [
       "P-20261021"
+    ],
+    "Docker Compose internal 网络": [
+      "P-20261022"
+    ],
+    "loopback 端口映射": [
+      "P-20261022"
+    ],
+    "bridge 网络": [
+      "P-20261022"
+    ],
+    "NestJS API": [
+      "P-20261022"
+    ],
+    "SSH 隧道": [
+      "P-20261022"
+    ],
+    "Vite MES_SERVER_URL": [
+      "P-20261023"
+    ],
+    "本地开发服务器": [
+      "P-20261023"
+    ],
+    "SSH本地转发": [
+      "P-20261023"
+    ],
+    "loopback代理": [
+      "P-20261023"
+    ],
+    "33100端口": [
+      "P-20261023"
+    ],
+    "MES": [
+      "P-20261024"
+    ],
+    "生产订单": [
+      "P-20261024"
+    ],
+    "工序路线": [
+      "P-20261024"
+    ],
+    "工作流版本": [
+      "P-20261024"
+    ],
+    "关联字段": [
+      "P-20261024"
+    ],
+    "审批": [
+      "P-20261024"
+    ],
+    "免审批流转": [
+      "P-20261024"
+    ],
+    "MES低代码": [
+      "P-20261025"
+    ],
+    "生产订单审批角色": [
+      "P-20261025"
+    ],
+    "mod:production_order:view": [
+      "P-20261025"
+    ],
+    "lowcode:module:view": [
+      "P-20261025"
+    ],
+    "工作流快照": [
+      "P-20261025"
+    ],
+    "流程版本": [
+      "P-20261025"
+    ],
+    "无审批流转": [
+      "P-20261025"
+    ],
+    "IAM权限": [
+      "P-20261025"
+    ],
+    "MES生产订单": [
+      "P-20261026"
+    ],
+    "工序工作流版本": [
+      "P-20261026"
+    ],
+    "V1 V2同名": [
+      "P-20261026"
+    ],
+    "版本标签": [
+      "P-20261026"
+    ],
+    "订单流程快照": [
+      "P-20261026"
+    ],
+    "待备料": [
+      "P-20261026"
+    ],
+    "权限复核": [
+      "P-20261026"
     ]
   },
   "efficiency": {
@@ -6413,6 +6607,6 @@
       "H-006"
     ]
   },
-  "last_updated": "2026-10-19T03:33:44Z",
-  "total_records": 113
+  "last_updated": "2026-10-19T09:12:26Z",
+  "total_records": 118
 }
