@@ -92,3 +92,4 @@ v6.18 | 2026-10-13 | Qoder 成为 feishu-hub 第三执行者并端到端验收�
 - 2026-10-19 RSI-20261019-comms-lock-bind（v6.31）：sire_comms 锁 STALE 与 unlock --stale 审计、未绑定身份自动绑定与警告；契约与 SKILL 增加转述授权约定。
 - 2026-10-19 RSI-20261019-comms-follow2（v6.32，基于 v6.3）：同步会话跟随用户开启协作的会话，session start 带不同 --session 自动切换绑定并通知对方；旧会话仍被拒。
 - 2026-10-19 RSI-20261019-comms-resume（v6.33）：sire_comms 新增 resume 精简交接摘要；长消息展示截断到600字；同步会话只做通讯与转述。
+- 2026-10-20 RSI-20261020-comms-protocol（v6.34）：新增 references/comms-protocol.md 作为统一通讯规则单一来源，契约与 SKILL 加入口指针。

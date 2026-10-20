@@ -122,6 +122,7 @@ Qoder 端没有 `model` 参数（Agent 工具与 `create_chat_session` 都不接
 
 ### 本机通讯（Claude / Codex / Qoder）
 
+- **统一规则文件（2026-10-20）**：本机通讯的完整规则（开启结束、会话绑定、等待唤醒、收到消息处理顺序、授权、锁、交接、命令速查）集中在 `references/comms-protocol.md`，Claude、Codex、Qoder 一律以它为准；下文各条是历史细则，冲突时以该文件为准。
 - 唯一通道：`python <SHARED_SKILL_DIR>\scripts\sire_comms.py`。脚本在共享 skill（Git），数据在 `sire_paths.comms_dir()`（默认 `D:/sire/sire_comms`，可用 `SIRE_COMMS_ROOT` 覆盖，三端相同），按项目分区 `projects/<项目标识>/`；**禁止在业务项目里新建 comms/、msg.py 等通讯文件**。项目默认取当前目录所在 Git 根目录，可用 `--project` 指定路径或标识。
 - 身份：`--me Claude|Codex|Qoder|User`（或环境变量 `SIRE_AGENT`）。类型：`info`/`request`/`question`/`reply`/`handoff`；`request`/`question` 必须用 `reply --re <编号>` 回复。
 - 完整流程任务开始时（R0）执行 `inbox --me <自己>`；收到消息后在对话中逐条写【接收到 <对方> 消息：#编号 要点】，并说明已执行/结果/未执行原因，处理完 `ack`。阶段变化时 `status --me <自己> --text "当前任务 | 进度 | 下一步"`；交接或暂停时发 `handoff`，长内容写进项目文档并在消息里给路径。共享资源（数据库、模拟器等）使用前 `lock`，用完 `unlock`。
