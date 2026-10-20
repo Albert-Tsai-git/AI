@@ -18,6 +18,8 @@ import sire_comms as sc  # noqa: E402
 
 class CommsTest(unittest.TestCase):
     def setUp(self):
+        self.env = mock.patch.dict("os.environ", {"SIRE_COMMS_PUSH": "0"})  # 默认关闭实时推送，避免测试打到真实会话
+        self.env.start()
         self.tmp = tempfile.TemporaryDirectory()
         self.root = Path(self.tmp.name) / "comms"
         self.proj = Path(self.tmp.name) / "proj"
@@ -26,6 +28,7 @@ class CommsTest(unittest.TestCase):
         self.patch.start()
 
     def tearDown(self):
+        self.env.stop()
         self.patch.stop()
         self.tmp.cleanup()
 
@@ -318,6 +321,65 @@ class CommsTest(unittest.TestCase):
         self.assertIn("锁 db", out)
         with self.assertRaises(sc.CommsError):  # 非绑定会话不能接手该身份
             self.cli("--session", "session-bbbb", "resume", "--me", "Claude")
+    def test_c19_stop_closes_peer_and_notifies(self):
+        self.cli("--session", "session-aaaa", "session", "start", "--me", "Claude", "--peer", "Codex")
+        self.cli("--session", "session-bbbb", "session", "start", "--me", "Codex", "--peer", "Claude")
+        n = len(self.ch().load())
+        code, out = self.cli("--session", "session-aaaa", "session", "stop", "--me", "Claude", "--peer", "Codex")
+        self.assertTrue(json.loads(out)["peer_closed"])
+        msg = self.ch().load()[-1]
+        self.assertEqual((len(self.ch().load()), msg["from"], msg["to"], msg["type"]), (n + 1, "Claude", "Codex", "info"))
+        self.assertIn("已 session stop", msg["text"])
+        for who, sid, peer in (("Claude", "session-aaaa", "Codex"), ("Codex", "session-bbbb", "Claude")):
+            st = json.loads(self.cli("--session", sid, "session", "status", "--me", who, "--peer", peer)[1])
+            self.assertFalse(st["active"], who)
+        # 对方已关闭时再 stop 不重复通知
+        n2 = len(self.ch().load())
+        self.cli("--session", "session-aaaa", "session", "stop", "--me", "Claude", "--peer", "Codex")
+        self.assertEqual(len(self.ch().load()), n2)
+    def test_c20_push_to_codex_session(self):
+        ch = self.ch()
+        ch.bind("Codex", "session-bbbb")
+        calls = []
+
+        def fake_run(cmd, **kw):
+            calls.append(cmd)
+            return mock.Mock(returncode=0, stdout="Queued", stderr="")
+
+        with mock.patch.dict("os.environ", {"SIRE_COMMS_PUSH": "1", "SIRE_CODEX_EXE": __file__}),                 mock.patch.object(sc.subprocess, "run", fake_run):
+            ch.send("Claude", "Codex", "request", "长" * 700)
+            ch.send("Codex", "Claude", "info", "不推给 Claude")
+        self.assertEqual(len(calls), 1, "只推给绑定了会话的 Codex")
+        cmd = calls[0]
+        self.assertEqual((cmd[1], cmd[2], cmd[3]), ("queue", "--thread", "session-bbbb"))
+        self.assertIn("全文见 messages.jsonl #1", cmd[-1])
+        self.assertNotIn("长" * 601, cmd[-1])
+        # 推送失败不影响落盘
+        with mock.patch.dict("os.environ", {"SIRE_COMMS_PUSH": "1", "SIRE_CODEX_EXE": __file__}),                 mock.patch.object(sc.subprocess, "run", lambda *a, **k: mock.Mock(returncode=1, stdout="", stderr="busy")):
+            ch.send("Claude", "Codex", "info", "失败也要落盘")
+        self.assertEqual(ch.load()[-1]["text"], "失败也要落盘")
+
+    def test_c21_watch_emits_event_lines_and_closes(self):
+        import contextlib
+        self.cli("--session", "session-aaaa", "session", "start", "--me", "Claude", "--peer", "Codex")
+        threading.Timer(0.4, lambda: self.ch().send("Codex", "Claude", "info", "事件一")).start()
+        threading.Timer(1.2, lambda: self.cli("--session", "session-aaaa", "session", "stop", "--me", "Claude", "--peer", "Codex")).start()
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            sc.run(["--project", str(self.proj), "--session", "session-aaaa", "session", "watch", "--me", "Claude", "--peer", "Codex"])
+        lines = [json.loads(l) for l in buf.getvalue().splitlines() if l.startswith("{")]
+        self.assertEqual(lines[0]["text"], "事件一")
+        self.assertTrue(lines[-1].get("closed"))
+    def test_c22_wait_yields_when_session_superseded(self):
+        self.cli("--session", "session-aaaa", "session", "start", "--me", "Claude", "--peer", "Codex")
+        threading.Timer(0.5, lambda: self.cli("--session", "session-bbbb", "session", "start", "--me", "Claude", "--peer", "Codex")).start()
+        _, out = self.cli("--session", "session-aaaa", "session", "wait", "--me", "Claude", "--timeout", "10", "--interval", "0.1")
+        r = json.loads(out)
+        self.assertTrue(r.get("superseded"))
+        self.assertEqual(self.ch().bindings()["Claude"]["session"], "session-bbbb")
+        # 新会话的等待不受影响（超时返回）
+        _, out = self.cli("--session", "session-bbbb", "session", "wait", "--me", "Claude", "--timeout", "0.3", "--interval", "0.1")
+        self.assertTrue(json.loads(out)["timeout"])
 
 
 if __name__ == "__main__":

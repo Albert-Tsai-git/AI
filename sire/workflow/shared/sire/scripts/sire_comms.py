@@ -36,6 +36,7 @@ import datetime as dt
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -228,7 +229,34 @@ class Channel:
         finally:
             os.close(fd)
             guard.unlink(missing_ok=True)
+        self.push(m)
         return m
+
+    def push(self, m: dict) -> str:
+        """实时推送：消息写入后立即把摘要投递进收件方的会话，收件方无需轮询。目前支持 Codex（codex queue）；
+        Claude 一侧由 session watch 配合 Monitor 事件流唤醒。失败只警告，不影响消息已落盘。"""
+        if m["to"] != "Codex" or not m.get("to_session") or os.environ.get("SIRE_COMMS_PUSH", "1") == "0":
+            return "skip"
+        exe = find_codex_exe()
+        if not exe:
+            print("[comms] 推送跳过：找不到原生 codex.exe（可设 SIRE_CODEX_EXE）", file=sys.stderr)
+            return "no-exe"
+        body = m["text"] if len(m["text"]) <= 600 else m["text"][:600] + f"…（共{len(m['text'])}字，全文见 messages.jsonl #{m['id']}）"
+        re_part = f" re#{m['re']}" if m.get("re") else ""
+        note = (f"【协作消息 {m['from']}→{m['to']} #{m['id']} {m['type']}{re_part}】{body}\n"
+                f"（来自协作通道的实时推送；按 references/comms-protocol.md 处理：展示原文，request/question 用 reply --re {m['id']} 回复后 ack，"
+                f"协作范围内直接执行无需再向用户要授权；项目 {self.slug}）")
+        try:
+            r = subprocess.run([exe, "queue", "--thread", m["to_session"], "--message", note],
+                               capture_output=True, text=True, timeout=30)
+        except (OSError, subprocess.SubprocessError) as e:
+            print(f"[comms] 推送失败：{e}", file=sys.stderr)
+            return "error"
+        if r.returncode != 0:
+            print(f"[comms] 推送失败：{(r.stderr or r.stdout).strip()[:200]}", file=sys.stderr)
+            return "failed"
+        print(f"[comms] 已实时推送到 {m['to']} 会话 {m['to_session'][:8]}", file=sys.stderr)
+        return "ok"
 
     def reply(self, me: str, re_id: int, text: str) -> dict:
         orig = next((m for m in self.load() if m["id"] == re_id), None)
@@ -299,19 +327,25 @@ class Channel:
             os.close(fd)
             guard.unlink(missing_ok=True)
 
-    def wait(self, me: str, peer: str, timeout: float, interval: float) -> dict:
+    def wait(self, me: str, peer: str, timeout: float, interval: float, session: str | None = None) -> dict:
         """阻塞等待对方新消息，整个等待过程在进程内完成、不消耗 AI 额度。
         常驻模式下仅在消息日志变化时才解析轮询；非常驻（--auto-stop）每个间隔都计一次空闲。
         返回：有新消息 / 会话已停止 / 超时（timeout=True，messages 为空，调用方可继续等）。"""
         deadline = time.time() + timeout
         last_sig = None
         while True:
+            bound = self.bindings().get(me)
+            if session and bound and bound["session"] != session:
+                # 用户在别的对话重新开启协作，本会话的等待让位，避免旧会话继续抢收消息
+                return {"active": False, "superseded": True, "messages": [], "project": self.slug, "peer": peer}
             try:
                 stat = self.log.stat()
                 sig = (stat.st_size, stat.st_mtime_ns)
             except OSError:
                 sig = None
             state = self.session(me, "status", peer) if last_sig is not None else None
+            if state is not None and not state["active"]:
+                return {**state, "messages": [], "project": self.slug}  # 会话已被 stop（含对方同步关闭），立即让位
             persistent = state.get("persistent", False) if state else True
             if last_sig is None or sig != last_sig or not persistent:
                 last_sig = sig
@@ -390,6 +424,21 @@ def fmt(m: dict) -> str:
     src = m["from"] + (f"({m['from_session'][:8]})" if m.get("from_session") else "")
     dst = m["to"] + (f"({m['to_session'][:8]})" if m.get("to_session") else "")
     return f"#{m['id']} [{m['time']}] {src}→{dst} {m['type']}{re_part}\n    " + m["text"].replace("\n", "\n    ")
+
+
+def find_codex_exe() -> str | None:
+    """找原生 codex.exe（queue 的消息作为参数，不能经过 .cmd 以免元字符被 cmd 解析）"""
+    env = os.environ.get("SIRE_CODEX_EXE")
+    if env and Path(env).exists():
+        return env
+    which = shutil.which("codex")
+    if not which:
+        return None
+    base = Path(which).resolve().parent
+    for root in (base, base / "node_modules" / "@openai" / "codex"):
+        for exe in root.glob("node_modules/@openai/codex-win32-*/vendor/*/bin/codex.exe"):
+            return str(exe)
+    return which if which.lower().endswith(".exe") else None
 
 
 def lock_age_seconds(info: dict) -> float | None:
@@ -488,7 +537,7 @@ def build_parser() -> argparse.ArgumentParser:
     b.add_argument("--rebind", action="store_true", help="替换已有绑定，仅在用户要求切换会话时使用")
 
     session = sub.add_parser("session", help="协作通讯：start 后常驻轮询，直到 stop（用户说结束协作）；加 --auto-stop 则连续5次无新消息自停")
-    session.add_argument("action", choices=("start", "poll", "stop", "status", "wait"))
+    session.add_argument("action", choices=("start", "poll", "stop", "status", "wait", "watch"))
     session.add_argument("--me")
     session.add_argument("--peer", help="默认：Claude 对 Codex，其余身份对 Claude")
     session.add_argument("--timeout", type=float, default=1800, help="wait：最长阻塞秒数，超时返回 timeout=true")
@@ -606,7 +655,29 @@ def run(argv: list[str]) -> int:
         ch.check(agent(args.me), session)
     if args.cmd == "session" and args.action == "wait":
         peer = agent(args.peer or ("Codex" if agent(args.me) == "Claude" else "Claude"))
-        print(json.dumps(ch.wait(agent(args.me), peer, args.timeout, args.interval), ensure_ascii=False))
+        print(json.dumps(ch.wait(agent(args.me), peer, args.timeout, args.interval, session), ensure_ascii=False))
+    elif args.cmd == "session" and args.action == "watch":
+        # 事件流：每条新消息输出一行 JSON（配合 Monitor 工具，每行即时唤醒 AI，空闲零消耗），会话关闭时输出 closed 并退出
+        me = agent(args.me)
+        peer = agent(args.peer or ("Codex" if me == "Claude" else "Claude"))
+        while True:
+            r = ch.wait(me, peer, 3600, 1, session)
+            for m in r["messages"]:
+                body = m["text"] if len(m["text"]) <= 600 else m["text"][:600] + f"…（共{len(m['text'])}字，全文见 messages.jsonl #{m['id']}）"
+                print(json.dumps({"id": m["id"], "from": m["from"], "type": m["type"], "re": m.get("re"), "text": body}, ensure_ascii=False), flush=True)
+            if not r["active"]:
+                print(json.dumps({"closed": True, "reason": "同步会话已切换到别的对话" if r.get("superseded") else "协作通道已关闭"}, ensure_ascii=False), flush=True)
+                break
+    elif args.cmd == "session" and args.action == "stop":
+        me = agent(args.me)
+        peer = agent(args.peer or ("Codex" if me == "Claude" else "Claude"))
+        result = ch.session(me, "stop", peer)
+        # 任意一方关闭时通知对方并同步关闭其监听状态（对方心跳读到 active=false 后应暂停自动化）
+        if ch.session(peer, "status", me).get("active"):
+            ch.send(me, peer, "info", f"{me} 已 session stop 关闭协作通道（据用户结束协作）。你的监听状态已同步置为关闭：请暂停心跳/后台等待、释放自己持有的锁，不再轮询；用户再次说开始协作前不要重启。本条无需回复。")
+            ch.session(peer, "stop", me)
+            result["peer_closed"] = True
+        print(json.dumps(result, ensure_ascii=False))
     elif args.cmd == "session":
         print(json.dumps(ch.session(agent(args.me), args.action, agent(args.peer or ("Codex" if agent(args.me) == "Claude" else "Claude")), args.auto_stop), ensure_ascii=False))
     elif args.cmd == "send":

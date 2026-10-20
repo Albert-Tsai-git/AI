@@ -93,3 +93,4 @@ v6.18 | 2026-10-13 | Qoder 成为 feishu-hub 第三执行者并端到端验收�
 - 2026-10-19 RSI-20261019-comms-follow2（v6.32，基于 v6.3）：同步会话跟随用户开启协作的会话，session start 带不同 --session 自动切换绑定并通知对方；旧会话仍被拒。
 - 2026-10-19 RSI-20261019-comms-resume（v6.33）：sire_comms 新增 resume 精简交接摘要；长消息展示截断到600字；同步会话只做通讯与转述。
 - 2026-10-20 RSI-20261020-comms-protocol（v6.34）：新增 references/comms-protocol.md 作为统一通讯规则单一来源，契约与 SKILL 加入口指针。
+- 2026-10-20 RSI-20261020-comms-push（v6.35）：发送即推送进 Codex 会话（codex queue），Claude 用 session watch+Monitor 事件流；会话 id 可随时变，start 自动切换且旧会话等待让位；stop 同步关闭对方；协作范围内直接执行。
