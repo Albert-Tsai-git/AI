@@ -444,3 +444,22 @@ flowchart TD
 **踩坑**: 仅设置 `DETACHED_PROCESS` 不等于统一窗口策略；所有子进程调用都应走共用 helper。合并检索仍必须分别写 keyword 与 vector 回执，否则 G0 无法证明两个检索源都被使用。
 
 **状态**: 已完成；RSI-20261016-SILENTFLOW 激活 v6.24；close 迁移文档回退修复 RSI-20261016-CLOSEPATH 激活 v6.25。
+
+
+### E-025: 复用 CI 模板前核实版本源、更新条目和回合路径
+
+**日期**: 2026-10-21
+**项目**: driverSoftware2 / EncoderPlotter CI 模板适配核查
+**关键词**: ci-templates, VERSION_CMD, MODULE_NOT_FOUND, package.json, CHANGELOG, main development, 回合, 发布门禁, 星号条目, 模板兼容
+
+**需求场景 / 现象**: 检查已有项目复用 EncoderPlotter GitLab CI/CD 是否真正一致。driverSoftware2 工作区已 include 软件平台 version-gate/notify，但远端 development 仍无这些改动，main 也不存在，不能凭工作区草稿宣布线上治理已完成。
+
+**根因**: 共享 ci-templates main e05bf7f 的版本门禁和通知脚本均硬读根 package.json，未实现 VERSION_CMD 参数；driverSoftware2 的版本源是 VERSION 和 electron/package.json。共享 changelog.mjs 仅收星号条目，本仓短横线条目解析为空。新MR门禁仅接受主题分支到development和release/hotfix到main，误拒main到development回合。
+
+**方案 / 做法**: 引入共享模板时必须读取模板实际实现，逐项核对消费方目录、版本源、CHANGELOG语法与回合路径；先用 ls-remote 和远端提交文件区分线上状态与未提交草稿，防止“本地已写”等于“线上已生效”的误判。本次只核查，尚未修复，不应据此发布。后续修复方向是明确版本文件接口、兼容两类条目符号、允许main回合集成线，并使用平台解析器校验通知结果。
+
+**关键文件与接口**: ci-templates/templates/version-gate.yml，templates/notify.yml，scripts/notify-lark.mjs:24，scripts/changelog.mjs:23；driverSoftware2/.gitlab-ci.yml:44，scripts/release_gate.py:112；EncoderPlotter_0903_01/scripts/changelog-gate.mjs。
+
+**验证方法**: 在driverSoftware2根执行模板相同的 node -p require表达式，实际MODULE_NOT_FOUND；直接调用 check_merge_request('main','development')，实际REJECT：分支名不符合规范：main；调用共享changelogItemsFrom读取实际CHANGELOG和VERSION，0.19.0实际notificationItems=[]。另已读取远端development真实YAML，无include与staging人工放行。没有运行构建、发版或真实流水线；GitLab未登录，项目保护规则及CI变量未确认。
+
+**状态**: 核查完成，待修复；完整证据在外置台账 R20261021-153304-driversoftware2/audit-report.md。

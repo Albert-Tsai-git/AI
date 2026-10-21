@@ -2785,6 +2785,28 @@
         "待备料",
         "权限复核"
       ]
+    },
+    {
+      "id": "E-025",
+      "type": "efficiency",
+      "title": "复用 CI 模板前核实版本源、更新条目和回合路径",
+      "file": "global_dev_efficiency.md",
+      "line": 449,
+      "date": "2026-10-21",
+      "project": "driverSoftware2 / EncoderPlotter CI 模板适配核查",
+      "status": "核查完成，待修复；完整证据在外置台账 R20261021-153304-driversoftware2/audit-report.md。",
+      "keywords": [
+        "ci-templates",
+        "VERSION_CMD",
+        "MODULE_NOT_FOUND",
+        "package.json",
+        "CHANGELOG",
+        "main development",
+        "回合",
+        "发布门禁",
+        "星号条目",
+        "模板兼容"
+      ]
     }
   ],
   "features": {
@@ -6607,6 +6629,6 @@
       "H-006"
     ]
   },
-  "last_updated": "2026-10-19T09:12:26Z",
-  "total_records": 118
+  "last_updated": "2026-10-21T07:35:43Z",
+  "total_records": 119
 }
