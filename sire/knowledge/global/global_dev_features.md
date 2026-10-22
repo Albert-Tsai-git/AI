@@ -1707,3 +1707,14 @@ Word结构检查为7节A4纵向、11表、6图片；渲染器缺soffice.exe，�
 **关键文件**: CHANGELOG.md、frontend/js/capabilities.js、frontend/js/scope-bar.js、scripts/build.bat、scripts/build_mac.sh。全功能及默认客户版清单存本次固定运行目录。
 **验证**: 31个发布说明段全覆盖。0.12.0虽有本地标签，但dd23150f记录无产物并入0.12.1。陪测加载历史重复应归8c6718dd后0.19.0；AES可选被0.15强制加密替代；DYN瞬时去皮取消；下线不合格可继续但保留不合格。文档已独立审查并修正量零点SKU口径，32条客户用例均待测试，未声称软件真机验收。
 **关键词**: driverSoftware, 提测, L0, 客户包, 0.20.2, 版本变动, 量零点, 档位
+
+
+### F-089: 飞书客户提测文档创建与32项回读核验
+
+**日期**: 2026-10-22
+**项目**: driverSoftware
+**需求场景**: 用户要求将已确认的32项默认客户版白话提测内容写入飞书，标题“舵机上位机客户版提测内容”，不发送群消息。
+**方案**: 使用已有飞书CLI配置。PATH中没有lark-cli，npm官方包@larksuite/cli可通过npx运行并复用已有凭据。user刷新凭据过期，bot身份可通过docs +create创建，返回permission_grant=granted，为当前CLI绑定用户授予full_access；不改公开共享。使用已确认的Markdown内容导入，生成32项操作、预期、注意和结果记录。下划线占位会被Markdown吞为样式，改成中文“（待填写）”后重写本次新文档。
+**关键文件**: 飞书文档 https://kingkong.feishu.cn/docx/HfeldewxTonZPuxHgbrcdATYnme；本次运行目录保留正文与完整回读JSON。
+**验证**: docs +fetch以bot回读成功，revision=11；01至32连续，32个操作说明、预期、注意及待测试记录全部匹配。独立子代理复核通过。文档创建及存储回读已验证；没有执行软件或真机测试，也未声称完成浏览器视觉验收。用户身份授权过期不影响本次bot创建与CLI自动授予绑定账号权限。
+**关键词**: 飞书, 提测文档, driverSoftware, lark-cli, bot, 32项, Markdown, 客户版
