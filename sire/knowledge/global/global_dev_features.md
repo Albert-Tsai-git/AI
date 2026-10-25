@@ -1802,3 +1802,26 @@ Word结构检查为7节A4纵向、11表、6图片；渲染器缺soffice.exe，�
 **验证方法**: 对19个WAV直接检查RIFF/WAVE数据：22050Hz、单声道、16-bit PCM，时长0.065–0.820秒，峰值0.420–0.780；SFX meta GUID唯一且资源名与现有枚举加载合同一致；三路独立静态review及交叉核验PASS。没有打开Unity、播放声音、构建或运行功能测试，故不宣称主观听感/导入通过。
 
 **踩坑**: 运行时可通过缺资源回退ChipAudioSynth，因此仅“能响”不能证明正式素材接入；必须让Resources子路径与Cue字符串完全匹配。Unity `.meta` GUID应从Assets内部相对路径导出，不能从仓库根包含Unity/Assets外层。Python的array本机字节序要确保RIFF PCM输出为小端。纯波形峰值上限无法代替试听时的主观响度和清晰度检查。
+
+### F-103: FC 45毫米炮模型资源Prefab交付
+
+**日期**: 2026-10-26
+**项目**: GAME / Unity FC 重制
+**状态**: Unity Resources Prefab 已生成；游戏内装配验收待授权
+**关键词**: [WPN_FC_Cannon45, Unity Prefab, FBX, Blender, 45毫米炮, FC 重制, 资源导入]
+
+**需求场景**: 为蚊式与Buggy共用的 FC 风格 45 毫米炮提供可复用 Unity 资源Prefab，避免正式模型仅存在于 Blender/FBX 与运行时临时原型。
+
+**方案 / 架构**: 复用既有 Blender 源文件、专属 FBX、预览、`Fc45mmCannonPrefabBuilder` 与 `VisualCatalog` 注册，不另建第二个运行时模型。Unity Editor 通过 `BuildFromCommandLine` 导入 FBX 并创建 `Assets/Resources/Visuals/WPN_FC_Cannon45.prefab`；Prefab 根使用单位变换并嵌套原 FBX 模型。保留 FC 原版精确尺寸未核实的说明。
+
+**关键文件**:
+- `ArtSource/WPN_FC_Cannon45.blend`、`ArtSource/build_fc_45mm_cannon.py`、`ArtSource/Previews/WPN_FC_Cannon45.png`
+- `UNITY/Assets/Models/WPN_FC_Cannon45.fbx` / `.meta`
+- `UNITY/Assets/Resources/Visuals/WPN_FC_Cannon45.prefab` / `.meta`
+- `UNITY/Assets/Scripts/Presentation/Editor/Fc45mmCannonPrefabBuilder.cs`
+- `UNITY/Assets/Scripts/Presentation/Field/FieldPixelCharacterAtlas.cs`、`UNITY/Assets/Scripts/FC/FcDialogue.cs`（Unity资源生成前置编译问题修复）
+- `docs/ART_BIBLE.md`、`docs/FC_REFERENCE.md`
+
+**验证方法**: Unity Editor 6000.6.3f1 的定向资源生成日志报告 Prefab 已写入、bounds `(0.81, 0.64, 1.81)`、31 Renderers，并以返回码 0 退出。生成器在保存前检查炮口/炮尾标记、+Z朝向及bounds门槛。R6A/B/C静态审查与交叉核验 PASS。未运行Play Mode、游戏构建或功能测试。
+
+**限制**: 实际挂点中的镜头比例、战斗外观、材质/光照与运行时加载仍需用户授权后实机验收；Prefab生成日志末尾有Curl error 42提示，但生成成功行和批处理正常退出均在同一日志中。FC原版尺寸及几何不作为已确认事实。
