@@ -1731,3 +1731,18 @@ Word结构检查为7节A4纵向、11表、6图片；渲染器缺soffice.exe，�
 **验证**: 2026-10-24 静态盘点2角色、19部件、17敌人含4赏金首、3城镇、3主线13步、3段对话10行、7逻辑场景；9FBX、9外观prefab、2Animator、17PNG，无发现音频文件或音频代码接线。独立子代理复核素材和机制；第三幕缺失DLG_Act3_Choice、CanMove未接野外移动、ActionsPerTurn未被指令队列消费。没有运行游戏或测试。
 **风险**: 旧GDD已落后；原创三幕3D方向与FC忠实目标冲突；原作内容使用和发布须核实授权；未进行原版全量行为测量，不报相似度百分比或确定工期。
 **适用边界**: 数据为本次静态快照，不等于功能验收；后作犬伙伴和职业系统不自动纳入FC基线。分析产物 D:/sire/sire_ledger/runs/R20261024-103607-game/analysis-report.md。
+
+### F-099: 标题页保留用户显示模式
+
+**日期**: 2026-10-26
+**项目**: GAME / D:\code\GAME
+**状态**: 标题显示模式修正静态复核通过；Unity与显示设备实测待授权
+**关键词**: Unity UI, 标题界面, 分辨率, Screen.SetResolution, 显示模式, CanvasScaler, FC重制
+
+**需求场景**: FC重制标题界面在Start中强制调用1600×900窗口模式，启动游戏会覆盖玩家在操作系统或启动器选择的显示设置；该行为与固定1360×765参考分辨率的CanvasScaler职责无关。
+
+**方案**: 删除标题启动中的固定Screen.SetResolution调用，把显示模式控制权留给Unity Player Settings、系统和启动器；继续使用CanvasScaler的ScaleWithScreenSize及项目标题布局，不改变菜单选择、输入和存档流程。若未来提供分辨率选项，应通过明确的设置UI实现，不藏在标题界面的启动副作用中。
+
+**关键文件**: `UNITY/Assets/Scripts/FC/FcTitleScreen.cs` 的 `Start()`、CanvasScaler初始化、菜单刷新与输入处理。
+
+**验证**: 当前源码静态核对无Screen.SetResolution，CanvasScaler与标题交互/存档入口保留；独立R6A/B/C和交叉核验全PASS。未运行Unity、构建、功能测试或GUI；实际全屏/窗口及4:3/21:9呈现待用户授权测试。源文件为Git未跟踪状态，缺少HEAD diff历史依据。

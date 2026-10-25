@@ -2807,6 +2807,25 @@
         "星号条目",
         "模板兼容"
       ]
+    },
+    {
+      "id": "F-099",
+      "type": "feature",
+      "title": "标题页保留用户显示模式",
+      "file": "global_dev_features.md",
+      "line": 1735,
+      "date": "2026-10-26",
+      "project": "GAME / D:\\code\\GAME",
+      "status": "标题显示模式修正静态复核通过；Unity与显示设备实测待授权",
+      "keywords": [
+        "Unity UI",
+        "标题界面",
+        "分辨率",
+        "Screen.SetResolution",
+        "显示模式",
+        "CanvasScaler",
+        "FC重制"
+      ]
     }
   ],
   "features": {
@@ -4721,6 +4740,27 @@
     ],
     "原文展示": [
       "F-085"
+    ],
+    "Unity UI": [
+      "F-099"
+    ],
+    "标题界面": [
+      "F-099"
+    ],
+    "分辨率": [
+      "F-099"
+    ],
+    "Screen.SetResolution": [
+      "F-099"
+    ],
+    "显示模式": [
+      "F-099"
+    ],
+    "CanvasScaler": [
+      "F-099"
+    ],
+    "FC重制": [
+      "F-099"
     ]
   },
   "problems": {
@@ -6629,6 +6669,6 @@
       "H-006"
     ]
   },
-  "last_updated": "2026-10-21T07:35:43Z",
-  "total_records": 119
+  "last_updated": "2026-10-26T17:50:00Z",
+  "total_records": 120
 }
