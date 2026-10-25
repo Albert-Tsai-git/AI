@@ -1774,3 +1774,31 @@ Word结构检查为7节A4纵向、11表、6图片；渲染器缺soffice.exe，�
 **踩坑**: 用户重复给出已有风格参考不一定需要新材质或重复样式系统；先比对现有 UI 实现，避免范围外重复改造。
 
 **状态**: 部分完成（风格基准与静态覆盖确认；实机显示和可读性待授权验证）。
+### F-102: Unity同名Cue同步的原创SFX WAV资源生成
+
+**日期**: 2026-10-26
+**项目**: GAME / D:\code\GAME
+**状态**: 部分完成（19种原创素材静态生成与核对完成；Unity导入和试听待用户授权）
+**关键词**: Unity SFX, SfxCue, procedural sound effects, PCM WAV, AudioImporter meta, Resources Audio/Sfx, deterministic generator
+
+**需求场景 / 现象**: AudioDirector包含19个SfxCue事件和运行时ChipAudioSynth占位，但Resources/Audio/Sfx缺少正式素材；需要原创短音效，同时不改变已接入的事件路由。
+
+**根因**（问题类必填）: 不适用；这是占位素材升级。
+
+**方案 / 架构**: 使用Python标准库按每个Cue独立设计起落包络、音高扫频、瞬态噪声、低频层或短音符动机，生成单声道16-bit PCM WAV。输出名与Cue一致并放入`Resources/Audio/Sfx/<Cue>.wav`，直接满足AudioDirector现有Resources加载路径。生成器读取AudioDirector的SfxCue枚举并验证设计配置集合一致，减少新增Cue时漏掉素材；固定Cue种子确保重生成可复现。AudioImporter `.meta` GUID按Unity Assets相对路径稳定派生，并保留已有有效GUID。素材原创，不使用商业游戏旋律、录音或采样。
+
+**关键文件与接口**:
+- `tools/generate_fc_inspired_sfx.py` — 19类音效的确定性PCM合成、SfxCue覆盖检查和稳定meta生成。
+- `UNITY/Assets/Resources/Audio/Sfx/` — 与Cue同名WAV和Unity导入meta。
+- `UNITY/Assets/Scripts/Presentation/Audio/AudioDirector.cs` — `Resources.Load<AudioClip>("Audio/Sfx/" + cue)`运行时路径。
+- `docs/AUDIO.md` — 来源、资产状态与听审边界。
+
+**实施步骤**:
+1. 从AudioDirector列出SfxCue和事件用途。
+2. 为菜单、机械上下车、战斗冲击、资源/进度事件设计独立音色分支。
+3. 使用固定种子生成WAV，并从Assets相对路径产生meta GUID。
+4. 静态核对Cue覆盖、WAV头和GUID；保留Unity实机导入与听感验收待授权。
+
+**验证方法**: 对19个WAV直接检查RIFF/WAVE数据：22050Hz、单声道、16-bit PCM，时长0.065–0.820秒，峰值0.420–0.780；SFX meta GUID唯一且资源名与现有枚举加载合同一致；三路独立静态review及交叉核验PASS。没有打开Unity、播放声音、构建或运行功能测试，故不宣称主观听感/导入通过。
+
+**踩坑**: 运行时可通过缺资源回退ChipAudioSynth，因此仅“能响”不能证明正式素材接入；必须让Resources子路径与Cue字符串完全匹配。Unity `.meta` GUID应从Assets内部相对路径导出，不能从仓库根包含Unity/Assets外层。Python的array本机字节序要确保RIFF PCM输出为小端。纯波形峰值上限无法代替试听时的主观响度和清晰度检查。
