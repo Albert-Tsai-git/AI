@@ -1746,3 +1746,31 @@ Word结构检查为7节A4纵向、11表、6图片；渲染器缺soffice.exe，�
 **关键文件**: `UNITY/Assets/Scripts/FC/FcTitleScreen.cs` 的 `Start()`、CanvasScaler初始化、菜单刷新与输入处理。
 
 **验证**: 当前源码静态核对无Screen.SetResolution，CanvasScaler与标题交互/存档入口保留；独立R6A/B/C和交叉核验全PASS。未运行Unity、构建、功能测试或GUI；实际全屏/窗口及4:3/21:9呈现待用户授权测试。源文件为Git未跟踪状态，缺少HEAD diff历史依据。
+
+### F-101: FC重制UI风格复确认时复用既有主题实现
+
+**日期**: 2026-10-26
+**项目**: GAME / D:\code\GAME
+**关键词**: Unity UI 风格、风格复确认、旧钢、暖木、像素人物、用户参考图、UGUI、IMGUI
+
+**需求场景 / 现象**: 用户在推进 FC 重制 UI 阶段时再次提供与既有参考相同的 2.5D 室内图，并要求采用该风格。产品源码已有标题、HUD、菜单、地图、对话和战斗的共享主题实现。
+
+**根因**（问题类必填）: 不适用；本次是设计确认，不是缺陷。
+
+**方案 / 架构**: 先核对美术基线和所有目标 UI 表现，再决定是否修改。将参考图转译为低多边形场景/像素角色的整体气质、旧钢主框、暖木交互区、暖纸文字和少量黄铜焦点；不复制参考图房间布局和素材。若共享纹理和各屏幕已经覆盖，不再重复增加一套主题。真实显示仍应在用户授权后验证。
+
+**关键文件与接口**:
+- `docs/ART_BIBLE.md` — 参考图的风格范围及 UI 材质映射。
+- `UNITY/Assets/Scripts/UI/RetroUiTextures.cs`、`UNITY/Assets/Scripts/Presentation/WornUiSurface.cs` — UGUI/IMGUI 共用钢木纹理。
+- `UNITY/Assets/Scripts/Presentation/FieldUiPresentation.cs`、`UNITY/Assets/Scripts/FC/FcTitleScreen.cs`、`UNITY/Assets/Scripts/FC/FcDialogue.cs`、`UNITY/Assets/Scripts/Battle/BattleController.cs` — 目标 UI 主题使用处。
+
+**实施步骤**:
+1. 搜索已有设计决定和纹理复用记录。
+2. 静态核对标题、HUD、菜单、地图、对话、战斗与城镇原型的主题覆盖。
+3. 覆盖已有时只确认不重复改写；记录 UI 真实运行验收待授权。
+
+**验证方法**: 源码静态核对各界面的 `ApplySteel`/`ApplyWood`/`RetroUiTextures` 使用；本轮未打开 Unity、未运行构建和功能测试。后续获授权后检查正常操作与边界分辨率。
+
+**踩坑**: 用户重复给出已有风格参考不一定需要新材质或重复样式系统；先比对现有 UI 实现，避免范围外重复改造。
+
+**状态**: 部分完成（风格基准与静态覆盖确认；实机显示和可读性待授权验证）。
