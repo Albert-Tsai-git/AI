@@ -1300,3 +1300,33 @@ controller/python/sub_common/DataFormatter.py；controller/python/sub_embedded/A
 **踩坑**: 共享服务器上禁用 `docker system prune`、不要动他人容器和端口；主机指纹若变化须停止并找管理员核对，不要忽略警告；ssh-keyscan 失败不代表网络不通（22 端口可达）。
 
 **状态**: 已完成
+
+### P-20261046: FC游戏UI参考风格确认与标题宽屏版式修正
+
+**日期**: 2026-10-26
+**项目**: D:/code/GAME
+**关键词**: 重装机兵UI, 旧钢暖木界面, Unity CanvasScaler, ultrawide title layout, UI style confirmation
+
+**需求场景 / 现象**: 用户确认游戏第二步做界面UI，并给出高位斜俯视室内参考图，明确要求采用该风格。此前项目已记录旧钢框、暖木交互区、暖纸文字、少量黄铜焦点，并已应用到标题、野外HUD、菜单、地图、对话及战斗界面。
+
+**根因**（问题类必填）: 共享主题已接入，但静态审查发现标题页面按宽度缩放导致超宽启动窗口的纵向内容溢出，且木选项板曾宽于内衬边界。
+
+**方案 / 架构**: 沿用 `RetroUiTextures`/`WornUiSurface` 的单一木钢主题来源，不创建第二套皮肤。标题界面根据 CanvasScaler 当前按宽缩放所对应的逻辑视口高度，压缩标题/菜单文字及纵向位置；将选项板缩到内衬范围。场景布局与素材只取风格特征，不照搬参考图。
+
+**关键文件与接口**:
+- `docs/ART_BIBLE.md` — 暖木旧钢 UI 映射与室外/战车视觉边界。
+- `UNITY/Assets/Scripts/UI/RetroUiTextures.cs` — 共享旧钢、暖木、黄铜和按钮状态纹理。
+- `UNITY/Assets/Scripts/Presentation/WornUiSurface.cs` — UGUI 旧钢/暖木 tiled Sprite 绑定。
+- `UNITY/Assets/Scripts/FC/FcTitleScreen.cs` — 按启动逻辑高度缩放标题版式；740逻辑单位选项底板。
+- `UNITY/Assets/Scripts/Presentation/FieldUiPresentation.cs`, `UNITY/Assets/Scripts/Presentation/Menu/FieldCommandMenu.cs`, `UNITY/Assets/Scripts/FC/FcDialogue.cs`, `UNITY/Assets/Scripts/Battle/BattleController.cs` — 主要 UI 使用共享主题资源。
+
+**实施步骤**:
+1. 查阅 ART_BIBLE 与 UI 代码，确认该风格已经覆盖主要屏幕。
+2. 静态复核后，修正标题宽屏纵向溢出并收窄超出内衬的选项板。
+3. R6A/B/C独立复核及交叉核验通过；不执行Unity/构建/测试。
+
+**验证方法**: `git diff --check -- UNITY/Assets/Scripts/FC/FcTitleScreen.cs` 通过；静态几何核算1360×765参考下内衬宽约806、选项板740、两侧余量33。3440×1440启动视口下纵向边界落在视口内。R6A/B/C全PASS。未实机验证纹理、字体/对比度、窗口运行中改分辨率和用户输入；R7待授权。
+
+**踩坑**: 只看宽度参考分辨率会漏掉超宽屏逻辑高度变小；选项板要与内衬相比，而不是只看自身锚点。`_layoutScale`只在标题Start计算，运行时调窗口宽高比仍需后续验证。
+
+**状态**: UI主题静态覆盖确认，标题版式静态修正完成；真实Unity画面与输入验收待用户授权。
