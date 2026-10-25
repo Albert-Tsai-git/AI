@@ -1356,3 +1356,32 @@ controller/python/sub_common/DataFormatter.py；controller/python/sub_embedded/A
 **踩坑**: INTERFACE里的✅仅代表过去的接口口径认可，可能被误读为内容正典；历史实现记录也不能替代当前实机验收。ART_BIBLE颜色/资产候选不可自行推导原作地点或设施。
 
 **状态**: 总设计文档正典和领域状态口径已对齐；全游戏内容、Unity运行验收和发行授权仍未完成。
+
+### P-20261048: Unity队伍菜单复用FC像素人物帧作为角色头像
+
+**日期**: 2026-10-26
+**项目**: GAME / D:/code/GAME
+**关键词**: Unity队伍菜单, Party menu, 像素头像, FieldPixelCharacterAtlas, FramesFor, CHR_Mechanic, CharacterLook, UGUI Image
+
+**需求场景 / 现象**: FC初代Unity重制采用高位斜俯视室内、3D环境与像素人物的共同风格。队伍菜单已有文字列表和统一木钢主题，但队员项没有人物识别图像，UI无法复用场景人物的像素身份。
+
+**根因**: `FieldCommandMenu` 的通用 `Command` 数据只含文本、动作和启用状态；现有 4×4像素帧图集虽提供 `FramesFor(characterId)`，却没有队伍角色的头像 look 映射入口。
+
+**方案 / 架构**: 给菜单命令增加可选 Sprite icon；仅 Party 成员项从共享 `FieldPixelCharacterAtlas.FramesFor(id)[0]` 绑定图标，设置32×32并给文字留位。头像Image关闭Raycast，由原整行命令底板继续响应鼠标。缓存可通过现有图集类按 look 首次懒初始化一次，不在菜单行创建纹理/精灵。`ResolveLook` 显式把 `CHR_Mechanic` 与场景 NPC ID `NPC_FC_Mechanic` 指向同一个机械师 look。命令列表重建签名包含图标名。
+
+**关键文件与接口**:
+- `UNITY/Assets/Scripts/Presentation/Menu/FieldCommandMenu.cs` — Party页命令增加图集帧，动态创建Image并为文字留位。
+- `UNITY/Assets/Scripts/Presentation/Field/FieldPixelCharacterAtlas.cs` — `FramesFor`共享按look缓存；`CHR_Mechanic`与NPC机械师复用look。
+- `docs/ART_BIBLE.md` — 规定队伍列表复用场景像素角色帧，不另造第二套形象。
+
+**实施步骤**:
+1. 使用Command的可选图标字段，不触碰菜单状态和Action。
+2. 为有头像项建立32×32图像，关闭射线命中；无图标命令保留原内边距。
+3. 将Sprite名称纳入命令列表重建签名，避免动态变化时保留旧图。
+4. 显式映射当前队伍机械师ID到已有机械师look。
+
+**验证方法**: R6A/B/C独立静态复核及交叉核验通过。确认猎人走默认look、机械师映射正确、头像布局及原有整行点击不变。因用户未授权，未运行Unity、构建或测试；头像画面和操作待授权后实测。
+
+**踩坑**: 当前队伍 ID 是 `CHR_Mechanic`，不是场景 NPC ID `NPC_FC_Mechanic`；若只复用NPC映射，招募到的机械师会显示成默认猎人。对缓存要求需区分“帮助类首次懒创建并缓存”与“菜单行重复创建”，前者是已有设计，后者才应禁止。
+
+**状态**: 部分完成（代码和规范静态复核通过；Unity视觉和输入实机验收待用户授权）。
