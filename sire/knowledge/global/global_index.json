@@ -2826,6 +2826,26 @@
         "CanvasScaler",
         "FC重制"
       ]
+    },
+    {
+      "id": "F-105",
+      "type": "feature",
+      "title": "FC重制UI钢板铆钉跨UGUI与IMGUI统一",
+      "file": "global_dev_features.md",
+      "line": 1829,
+      "date": "2026-10-26",
+      "project": "D:\\code\\GAME",
+      "status": "部分完成（视觉细节完成并静态复核；运行时显示与响应式验收待授权）",
+      "keywords": [
+        "FC重制",
+        "Unity UI",
+        "旧钢",
+        "暖木",
+        "铆钉",
+        "UGUI",
+        "IMGUI",
+        "BattleController"
+      ]
     }
   ],
   "features": {
@@ -4742,7 +4762,8 @@
       "F-085"
     ],
     "Unity UI": [
-      "F-099"
+      "F-099",
+      "F-105"
     ],
     "标题界面": [
       "F-099"
@@ -4760,7 +4781,26 @@
       "F-099"
     ],
     "FC重制": [
-      "F-099"
+      "F-099",
+      "F-105"
+    ],
+    "旧钢": [
+      "F-105"
+    ],
+    "暖木": [
+      "F-105"
+    ],
+    "铆钉": [
+      "F-105"
+    ],
+    "UGUI": [
+      "F-105"
+    ],
+    "IMGUI": [
+      "F-105"
+    ],
+    "BattleController": [
+      "F-105"
     ]
   },
   "problems": {
@@ -6669,6 +6709,6 @@
       "H-006"
     ]
   },
-  "last_updated": "2026-10-26T17:50:00Z",
-  "total_records": 120
+  "last_updated": "2026-10-25T21:07:15Z",
+  "total_records": 121
 }

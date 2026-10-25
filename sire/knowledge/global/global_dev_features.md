@@ -1825,3 +1825,30 @@ Word结构检查为7节A4纵向、11表、6图片；渲染器缺soffice.exe，�
 **验证方法**: Unity Editor 6000.6.3f1 的定向资源生成日志报告 Prefab 已写入、bounds `(0.81, 0.64, 1.81)`、31 Renderers，并以返回码 0 退出。生成器在保存前检查炮口/炮尾标记、+Z朝向及bounds门槛。R6A/B/C静态审查与交叉核验 PASS。未运行Play Mode、游戏构建或功能测试。
 
 **限制**: 实际挂点中的镜头比例、战斗外观、材质/光照与运行时加载仍需用户授权后实机验收；Prefab生成日志末尾有Curl error 42提示，但生成成功行和批处理正常退出均在同一日志中。FC原版尺寸及几何不作为已确认事实。
+
+### F-105: FC重制UI钢板铆钉跨UGUI与IMGUI统一
+
+**日期**: 2026-10-26
+**项目**: D:\code\GAME
+**关键词**: FC重制, Unity UI, 旧钢, 暖木, 铆钉, UGUI, IMGUI, BattleController
+
+**需求场景 / 现象**: 用户确认室内切面参考图作为UI风格方向。已有UGUI/IMGUI界面使用旧钢与暖木主题，但图中钢结构的铆接细节尚未映射到正式框体，战斗IMGUI也必须跟随整套UI方向。
+
+**方案 / 架构**: UGUI通过WornUiSurface在钢板面板叠加四个暗色铆钉座与小型暖金属中心，关闭raycastTarget；IMGUI通过RetroUiTextures共享同色色块纹理，并由BattleController的DrawPanel绘制。标题/剧情对话框在木衬创建后追加铆钉；战斗内容区调整至20×缩放边距，给8–18×缩放的装饰外沿留安全间隔。继续复用现有钢木纹理，不复制参考图中的房间布局或素材。
+
+**关键文件与接口**:
+- `UNITY/Assets/Scripts/Presentation/WornUiSurface.cs` — UGUI铆钉绘制helper。
+- `UNITY/Assets/Scripts/UI/RetroUiTextures.cs` — IMGUI共享铆钉纹理与DrawSteelRivets。
+- `UNITY/Assets/Scripts/Presentation/FieldUiPresentation.cs`、`UNITY/Assets/Scripts/FC/FcTitleScreen.cs`、`UNITY/Assets/Scripts/FC/FcDialogue.cs`、`UNITY/Assets/Scripts/Battle/BattleController.cs` — HUD、菜单、地图、标题、对话和战斗正式框体接入。
+- `docs/ART_BIBLE.md` — 记录钢板铆钉为克制结构细节。
+
+**实施步骤**:
+1. 在既有风格基线上扩展铆钉组件，不新增主题系统。
+2. 覆盖UGUI与IMGUI正式钢框，核对内衬/内容绘制顺序。
+3. 独立R6发现战斗面板遗漏与内容边距风险，修复后复核通过。
+
+**验证方法**: 静态源码复核确认五类UGUI框体和战斗IMGUI框体均调用铆钉绘制；UGUI不拦截点击、IMGUI不消费输入；战斗内容与装饰外沿保持2×缩放边距；ART_BIBLE描述相符。三名独立复核者对修复后状态PASS。没有打开Unity、没有构建或运行功能测试；运行时画面/不同分辨率可读性待用户授权。
+
+**踩坑**: 战斗面板用IMGUI独立绘制，UGUI覆盖核对会漏掉它；装饰边缘还需与文字/状态/命令区域保持安全距离。应跨越UI框架检查所有正式面板。
+
+**状态**: 部分完成（视觉细节完成并静态复核；运行时显示与响应式验收待授权）
