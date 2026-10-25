@@ -1311,13 +1311,13 @@ controller/python/sub_common/DataFormatter.py；controller/python/sub_embedded/A
 
 **根因**（问题类必填）: 共享主题已接入，但静态审查发现标题页面按宽度缩放导致超宽启动窗口的纵向内容溢出，且木选项板曾宽于内衬边界。
 
-**方案 / 架构**: 沿用 `RetroUiTextures`/`WornUiSurface` 的单一木钢主题来源，不创建第二套皮肤。标题界面根据 CanvasScaler 当前按宽缩放所对应的逻辑视口高度，压缩标题/菜单文字及纵向位置；将选项板缩到内衬范围。场景布局与素材只取风格特征，不照搬参考图。
+**方案 / 架构**: 沿用 `RetroUiTextures`/`WornUiSurface` 的单一木钢主题来源，不创建第二套皮肤。标题界面使用 CanvasScaler `ScaleWithScreenSize` + `ScreenMatchMode.Expand`，由短边决定比例并动态适应分辨率；选项板与文本框均为740逻辑单位宽，限制在806宽木内衬范围。场景布局与素材只取风格特征，不照搬参考图。
 
 **关键文件与接口**:
 - `docs/ART_BIBLE.md` — 暖木旧钢 UI 映射与室外/战车视觉边界。
 - `UNITY/Assets/Scripts/UI/RetroUiTextures.cs` — 共享旧钢、暖木、黄铜和按钮状态纹理。
 - `UNITY/Assets/Scripts/Presentation/WornUiSurface.cs` — UGUI 旧钢/暖木 tiled Sprite 绑定。
-- `UNITY/Assets/Scripts/FC/FcTitleScreen.cs` — 按启动逻辑高度缩放标题版式；740逻辑单位选项底板。
+- `UNITY/Assets/Scripts/FC/FcTitleScreen.cs` — 使用 `ScaleWithScreenSize` + `ScreenMatchMode.Expand` 动态适配短边；740逻辑单位选项底板及标题文本框。
 - `UNITY/Assets/Scripts/Presentation/FieldUiPresentation.cs`, `UNITY/Assets/Scripts/Presentation/Menu/FieldCommandMenu.cs`, `UNITY/Assets/Scripts/FC/FcDialogue.cs`, `UNITY/Assets/Scripts/Battle/BattleController.cs` — 主要 UI 使用共享主题资源。
 
 **实施步骤**:
@@ -1325,8 +1325,12 @@ controller/python/sub_common/DataFormatter.py；controller/python/sub_embedded/A
 2. 静态复核后，修正标题宽屏纵向溢出并收窄超出内衬的选项板。
 3. R6A/B/C独立复核及交叉核验通过；不执行Unity/构建/测试。
 
-**验证方法**: `git diff --check -- UNITY/Assets/Scripts/FC/FcTitleScreen.cs` 通过；静态几何核算1360×765参考下内衬宽约806、选项板740、两侧余量33。3440×1440启动视口下纵向边界落在视口内。R6A/B/C全PASS。未实机验证纹理、字体/对比度、窗口运行中改分辨率和用户输入；R7待授权。
+**验证方法**: `git diff --check -- UNITY/Assets/Scripts/FC/FcTitleScreen.cs` 通过；静态几何核算1360×765参考下内衬宽约806、选项板740、两侧余量33；标题选项行与提示落在旧钢框内。3440×1440下Expand逻辑画布约1828×765，末行板底614、提示底705，均在内衬内；1024×768逻辑画布约1360×1020。R6A/B/C全PASS。未实机验证纹理、字体/对比度、低分辨率效果和用户输入；未测试，R7因待用户授权记为DEFERRED。普通存档行预计在740宽文本框内，超长或手改savedAt可能换行裁切。
 
-**踩坑**: 只看宽度参考分辨率会漏掉超宽屏逻辑高度变小；选项板要与内衬相比，而不是只看自身锚点。`_layoutScale`只在标题Start计算，运行时调窗口宽高比仍需后续验证。
+**踩坑**: 需将Expand配置在`CanvasScaler.screenMatchMode`（`ScreenMatchMode`），不能赋给`uiScaleMode`；选项板要与内衬相比，而不是只看自身锚点。极低分辨率下实际字号和纹理仍待运行时检查；异常超长savedAt仍可能造成文本换行。
 
-**状态**: UI主题静态覆盖确认，标题版式静态修正完成；真实Unity画面与输入验收待用户授权。
+**状态**: UI主题静态覆盖确认，标题版式静态修正完成；功能与标题排版已完成静态复核，但Unity实机画面与输入验收未测试，等待用户授权。
+
+
+
+
