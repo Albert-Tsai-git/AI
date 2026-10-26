@@ -1881,3 +1881,20 @@ Word结构检查为7节A4纵向、11表、6图片；渲染器缺soffice.exe，�
 **踩坑**: 不要把“触发器中的自动绕树演出”写成玩家手动绕行；不要把乘车状态推断为驾驶自有车辆；区分当前实现事实与FC原版准确性。
 
 **状态**: 部分完成（开发事件已有代码；原版逐项核对与实机验收未完成）
+### F-108: FC拉多开局补给商店隔离
+
+**日期**：2026-10-26
+**项目**：GAME / Unity FC 初代《重装机兵》3D 重制
+**关键词**：FC重制、拉多补给店、GameDB.RegisterShop、campaign runtime、药品、修理包、弹药补给、商店隔离
+
+**需求场景 / 现象**：FC 重制开局中，拉多镇曾复用 SHP_Zhanqiao prototype 商店，库存包含与开局经济不匹配的盐海/高阶内容。核心闭环需要玩家击败战狗并取得蚊式后，回镇补充药品、维修与弹药，再保存旅程。
+
+**方案 / 架构**：在 GameDB 增加 RegisterShop，复用现存 Resources/Shops 字典并按独立 ID 写入一项。FcCampaignBootstrap 创建 SHP_FC_Rado，库存只引用已有 ITM_Tonic、ITM_RepairPack、ITM_AmmoCrate；仅 Rado TownData 指向该商店。波布、奥多仍引用 SHP_Zhanqiao，避免改动其它城镇进程与旧 campaign 库存。
+
+**关键文件**：UNITY/Assets/Scripts/Core/GameDB.cs、UNITY/Assets/Scripts/FC/FcCampaignBootstrap.cs、docs/FC_REMAKE.md。
+
+**验证方法**：静态检查商店 ID、三项道具引用、资源文件存在、GameDB 注册顺序、其他城镇引用保持原状；R6 三路独立复核及三路交叉核验通过。没有运行 Unity、构建、游戏或自动化测试；实机路线测试待用户授权。
+
+**踩坑**：不要把新库存提前加入北洞 7 毫米炮奖励路径；首车主炮已装配，拉多开局商店只需提供消耗品。开发期价格不能当作 FC 原版价格。
+
+**状态**：代码与文档静态实现并复核完成；运行时商店显示、购买效果与闭环仍待用户授权测试。
