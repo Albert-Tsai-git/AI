@@ -1953,3 +1953,29 @@ Word结构检查为7节A4纵向、11表、6图片；渲染器缺soffice.exe，�
 **踩坑**: `Peek == null` 不等于槽位为空；任何显示层需要区分空槽和损坏档时，都应结合 `Exists` 或专门的读取结果类型。
 
 **状态**: 已完成静态实现与复核；运行时验收待授权。
+### F-111: 存档摘要与读取共享最小结构校验
+
+**日期**: 2026-10-26  
+**项目**: GAME / `D:\code\GAME`  
+**关键词**: Unity, FC, 存档校验, SaveSystem.Peek, DoLoad, SaveData, party, inventory, JsonUtility, corrupted save, malformed save, 读档异常
+
+**需求场景 / 现象**: JSON语法可解析但缺失存档必需结构（如版本、玩家队伍、队员ID或inventory列表）时，Peek只反序列化并返回非空摘要；实际读取继续进入SaveSerializer.FromSave，可能因枚举缺失集合而返回Corrupted。于是存档列表可能展示记录时间/金币，却无法加载。
+
+**根因**: Peek仅捕获JSON反序列化异常，没有检查游戏状态还原所依赖的最小根结构；DoLoad只拒绝完全无法反序列化的null对象。
+
+**方案 / 架构**: 在SaveSystem中建立共享最小结构谓词：对象存在、版本号大于0、party非空、每名队员对象和ID非空、inventory列表存在。Peek和DoLoad在读取后共用；Peek将结构无效映射为null，DoLoad将其映射为Corrupted。有效结构继续走现有SaveSerializer.FromSave。
+
+**关键文件与接口**:
+- `UNITY/Assets/Scripts/Core/Save/SaveSystem.cs` — `Peek`、`DoLoad`、`HasRequiredPayload`。
+- `UNITY/Assets/Scripts/Core/Save/SaveSerializer.cs` — 现有版本迁移和状态恢复，本次未改。
+
+**实施步骤**:
+1. 复用一个谓词检查Peek/Load共同依赖的根字段。
+2. 让摘要读取和实际读取对该类无效存档给出一致结果。
+3. 保留已支持历史/未来版本及现有恢复路径。
+
+**验证方法**: 静态核对调用关系与返回结果；R6三路复核、交叉核验和R8静态集成复核均PASS。Unity、构建、测试和浏览器未获授权，未执行。
+
+**踩坑**: `JsonUtility.FromJson<T>` 返回非null只证明JSON可以反序列化为对象，不代表必需的玩家数据集合齐全。区分摘要有效性时应与实际恢复入口使用同一最小根结构约束。
+
+**状态**: 根级结构校验已静态实现并复核；深层数据验证和真实存档路径待后续授权。
