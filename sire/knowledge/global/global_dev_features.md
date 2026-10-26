@@ -1926,3 +1926,30 @@ Word结构检查为7节A4纵向、11表、6图片；渲染器缺soffice.exe，�
 **踩坑**: 存在看起来像“医疗包”的姐姐模型装饰，但不能据此推断互动应免费治疗；应以明确的游戏服务规则为准。另需把开发版选择与原版事实分开记录。
 
 **状态**: 已完成静态实现，运行时验收待授权。
+### F-110: 标题页区分损坏存档与空槽
+
+**日期**: 2026-10-26  
+**项目**: GAME / `D:\code\GAME`  
+**关键词**: Unity, FC, 标题页, 存档槽位, 损坏存档, SaveSystem.Peek, SaveSystem.Exists, continue menu, corrupted save, unreadable slot
+
+**需求场景 / 现象**: 标题页将 `SaveSystem.Peek(slot)` 返回 null 的情况一律显示为空槽；但 Peek 对真实空槽和已存在但损坏/不可读取的存档都会返回 null。玩家选择损坏记录时，Activate 又因 Exists 为 true 而尝试读档并提示错误，造成标题页状态与操作结果矛盾。
+
+**根因**: 标题页只检查反序列化摘要是否为 null，没有像场内 `FieldCommandMenu.SavePage` 一样再查询文件是否存在。
+
+**方案 / 架构**: Peek 返回有效数据时继续显示时间和金币；Peek 为 null 时用 Exists 区分存在但不可读和不存在的槽位。只改显示判定，不改变读档流程、数据格式或修复策略。
+
+**关键文件与接口**:
+- `UNITY/Assets/Scripts/FC/FcTitleScreen.cs` — `Refresh` 的三个存档槽位状态标签。
+- `UNITY/Assets/Scripts/Core/Save/SaveSystem.cs` — Peek 读取失败返回 null；Exists 判断对应文件是否存在。
+- `UNITY/Assets/Scripts/Presentation/Menu/FieldCommandMenu.cs` — 场内页已有相同区分方式，可作为一致性参考。
+
+**实施步骤**:
+1. 计算槽位索引后读取 Peek。
+2. Peek 非空显示保存时间与金币；否则依据 Exists 显示损坏/空。
+3. 保持标题页 Activate 与 LoadGame 路径不变。
+
+**验证方法**: 静态代码检查；R6A/B/C 独立复核和交叉核验 PASS，R8 静态集成复核 PASS。未运行 Unity、构建或测试；真实空槽/有效存档/损坏存档三种界面路径待用户授权。
+
+**踩坑**: `Peek == null` 不等于槽位为空；任何显示层需要区分空槽和损坏档时，都应结合 `Exists` 或专门的读取结果类型。
+
+**状态**: 已完成静态实现与复核；运行时验收待授权。
