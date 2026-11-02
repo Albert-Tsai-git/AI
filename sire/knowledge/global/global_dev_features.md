@@ -2007,3 +2007,42 @@ Word结构检查为7节A4纵向、11表、6图片；渲染器缺soffice.exe，�
 **踩坑**: “✅接口认可”表示技术约定，不证明内容符合原版；“代码/资源存在”表示静态实现，不证明可玩；未授权验收必须保持DEFERRED。
 
 **状态**: 可复用于后续GAME/FC重制待办盘点；每次输出前必须重新读取当前文档与最新台账。
+
+
+### F-119: ai-tool 手机/电脑接入与外网访问方案（Tailscale + serve HTTPS）
+
+**日期**: 2026-11-02
+**项目**: ai-tool（PC 作服务器的私人多 AI 工作台，Fastify + WebSocket，默认监听 0.0.0.0:8787）
+**关键词**: 外网访问, 内网穿透, 手机访问, iPhone, PWA, HTTPS, Tailscale, tailscale serve, MagicDNS, 证书, WebSocket, wss, 局域网, 无鉴权, 加入设备, 多手机, ai-tool, 远程通讯
+
+**背景与结论**: 用户只需要手机和 PC 通讯，协议本身（WebSocket）够用；外网的难点不是协议，而是 PC 在路由器 NAT 后、手机在外网找不到它，且 iPhone 装 PWA / 注册 Service Worker 必须 HTTPS。选定方案：Tailscale 私有网络 + `tailscale serve` 把本机端口转成 tailnet 内 HTTPS。不做路由器端口映射、不用 Funnel（服务当前无登录鉴权，暴露公网等于任何人可指挥本机 AI 读写文件）。
+
+**方案对比（用户问“必须 Tailscale 吗”时的结论）**: ①Tailscale：私有、免费、自带 HTTPS、无需公网 IP，代价是每台手机要装 App 并登录同一账号；②Cloudflare Tunnel：手机免装 App，但需自有域名且服务暴露公网，必须先加鉴权；③ZeroTier/WireGuard：自己配，HTTPS 另处理；④端口映射+域名+证书：需公网 IP，风险最大；⑤自建中继（PC 主动 WebSocket 连出到公网服务器，手机也连它）：不装 Tailscale，但需公网服务器、域名、证书和中继程序，且必须鉴权。无现成公网服务器时选 Tailscale。
+
+**一、账号与网页端（一次性，需用户自己登录）**
+1. 用 Google 账号登录 login.tailscale.com，走完欢迎引导（用途选个人使用；“如何得知”可跳过），进入 Machines 页。登录由用户本人完成，不代输凭据。
+2. 管理后台 DNS 页（/admin/dns）：MagicDNS 新账号默认已开启；HTTPS Certificates 点「Enable HTTPS...」→弹窗确认→提示 “HTTPS enabled”，按钮变「Disable HTTPS...」。弹窗说明：申请证书的机器名会写入公开证书日志且不可移除；机器名含 tailnet 名（随机化）用于混淆。这是账号级设置，操作前须用户确认。
+
+**二、PC 端**
+1. 安装 Tailscale（tailscale.com/download）并用同一账号登录；`tailscale status` 应列出本机，`tailscale serve status` 初始为 `No serve config`。
+2. 先启动 ai-tool 服务：仓库根目录 `.\scripts\start.ps1`（默认 8787）。
+3. 执行 `tailscale serve --bg 8787`。输出 `Available within your tailnet: https://<机器名>.<tailnet名>.ts.net/ |-- proxy http://127.0.0.1:8787`，再 `tailscale serve status` 复核（显示 `(tailnet only)`）。关闭转发：`tailscale serve --https=443 off`。
+4. 地址格式 `https://<机器名>.<tailnet名>.ts.net/`，机器名为 Windows 计算机名小写。
+
+**三、iPhone / 其他手机**
+1. App Store 安装 Tailscale，用同一账号登录，允许添加 VPN 配置，保持开关打开，设备列表里应能看到 PC。
+2. 用 Safari 打开上面的 https 地址（必须 Safari，才能「分享→添加到主屏幕」装 PWA）；此后从主屏幕图标打开即全屏。
+3. 多台手机：每台外网使用的手机都要装 Tailscale 并登录同一账号，各自访问同一地址；会话和历史在 PC 上，多端共享并实时同步。给他人设备用时用 Tailscale「分享设备」或邀请进 tailnet，不要直接用自己的账号登录对方手机。
+4. 在家同一 Wi-Fi 下仍可直接用局域网 `http://<局域网IP>:8787`（不装 Tailscale，但该 HTTP 地址装不了 PWA）；手机打不开时先查 Windows 防火墙是否允许 node.exe 访问专用网络。
+
+**四、数据位置（用户问“对话记到哪、怎么看”）**: 全部在 PC：`~/.aitool/aitool.sqlite3`，表 sessions / messages / events / attachments / native_sessions（建表见 server/src/store.ts）；附件文件在 `~/.aitool/attachments/`；服务日志 `~/.aitool/server.log`、`server.error.log`。手机和浏览器只显示不存储。查看：在页面侧栏点会话即加载历史；或复制 sqlite 文件后用 DB Browser for SQLite 只读打开。库内为明文对话，备份分享需注意。Claude/Codex 各自的原生历史不在此库。
+
+**踩坑与风险**
+- 服务监听 0.0.0.0，tailnet IP 上的 HTTP 也可达；建议最终让服务只监听 127.0.0.1，外部只走 serve 的 HTTPS（局域网访问需另行取舍）。
+- 服务本身无登录鉴权（单用户设计）：能进你 tailnet 的设备即可使用 AI；家里自用可接受，若共享给他人或改用 Cloudflare Tunnel/端口映射，必须先加访问令牌或登录。
+- 外网使用要求：PC 开机、服务在运行、手机 Tailscale 开关打开。开机自启（PLAN G2）与 serve 配置重启后是否保留尚未验证。
+- Service Worker 注册此前在内置浏览器里失败，需用 iPhone 的 HTTPS 地址再验证。
+
+**验证情况**: `tailscale status` 显示本机在线、`tailscale serve --bg 8787` 输出与 `serve status` 均已实际读取；用户反馈 iPhone 线路走通。本次未做自动化测试，Service Worker 注册、serve 重启后保留、自动切换 Codex、审批弹窗仍待验证。tailnet 名、机器名、账号邮箱未写入本条，以本机 `tailscale status` / 控制台为准。
+
+**状态**: 已归档（部署与操作类知识；对应 PLAN 阶段 G3 的实测依据，docs/INSTALL.md 尚未写）
