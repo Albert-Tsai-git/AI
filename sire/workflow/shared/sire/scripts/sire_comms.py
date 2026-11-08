@@ -21,11 +21,13 @@ SIRE 本机通讯：Claude / Codex / Qoder / User 之间的消息、进度与资
   sire_comms.py locks
 项目：
   sire_comms.py projects                                    各项目消息数与各方未读数
-会话绑定（按项目，把身份固定到用户指定的对话）：
-  sire_comms.py --session <会话id> bind --me Claude [--rebind]  绑定；已绑其他会话时须 --rebind（仅用户要求时）
-  sire_comms.py bind                                        查看本项目绑定
-  身份已绑定后，以该身份收发、确认、轮询、读信箱、上报、加解锁必须带 --session <会话id>
-  （或环境变量 SIRE_SESSION）且与绑定一致，否则拒绝，避免同名的其他会话串话。
+会话配对（会话级 1 对 1，2026-11-06 起取代旧的身份绑定）：
+  sire_comms.py --session <会话id> pair start --me Claude [--peer Codex] [--pick <配对id>]
+      在本会话开始协作：无人发起则新建待配对；对端已发起则认领并固定双方会话；本会话已在配对中则只提示已就绪
+  sire_comms.py pair list                                   查看本项目全部配对
+  配对后以该身份收发、确认、轮询、读信箱、上报、加解锁必须带 --session <会话id>（或环境变量 SIRE_SESSION），
+  脚本按“身份 + 会话”定位唯一配对，未配对或他人会话一律拒绝；配对期间双方会话不可更改，结束（stop/空闲超时）后释放。
+  session start 是 pair start 的别名；bind/--rebind 已废弃。
 
 --me 可省略，改用环境变量 SIRE_AGENT。类型：info / request / question / reply / handoff。
 """
@@ -54,6 +56,7 @@ SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,99}$")
 STALE_GUARD_SECONDS = 10
 MAX_TEXT = 8000
 LOCK_TTL_HOURS = 2.0  # 资源锁超过该时长标记 STALE；环境变量 SIRE_COMMS_LOCK_TTL_HOURS 或 --ttl 覆盖
+IDLE_SECONDS = 3600.0  # 协作空闲上限（2 次 30 分钟心跳 = 1 小时）；环境变量 SIRE_COMMS_IDLE_SECONDS 覆盖
 SESSION_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{3,127}$")
 
 
@@ -115,15 +118,119 @@ def resolve_project(spec: str | None, cwd: Path | None = None) -> tuple[str, Pat
 class Channel:
     """单个项目的通讯目录"""
 
-    def __init__(self, slug: str, path: Path | None):
+    def __init__(self, slug: str, path: Path | None, pair: str | None = None):
         self.slug = slug
-        self.dir = comms_dir() / "projects" / slug
+        self.pair = pair  # 配对 id；None 表示项目级通道（登记配对、放资源锁）
+        self.base = comms_dir() / "projects" / slug
+        # 每个配对独占一个目录：消息、绑定、监听状态、进度互不串；资源锁在项目级共享
+        self.dir = self.base / "pairs" / pair if pair else self.base
         self.dir.mkdir(parents=True, exist_ok=True)
-        (self.dir / "locks").mkdir(exist_ok=True)
-        meta = self.dir / "project.json"
+        (self.base / "locks").mkdir(exist_ok=True)
+        meta = self.base / "project.json"
         if path and not meta.exists():
             meta.write_text(json.dumps({"path": str(path), "created": now()}, ensure_ascii=False), encoding="utf-8")
         self.log = self.dir / "messages.jsonl"
+
+    # ---- 配对登记（项目级，pairs.json）----
+    def pairs(self) -> dict:
+        p = self.base / "pairs.json"
+        if not p.exists():
+            return {}
+        try:
+            return json.loads(p.read_text(encoding="utf-8"))
+        except (ValueError, OSError):
+            raise CommsError(f"配对登记损坏，请检查 {p}") from None
+
+    def _save_pairs(self, data: dict) -> None:
+        temporary = self.base / "pairs.tmp"
+        temporary.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+        temporary.replace(self.base / "pairs.json")
+
+    def find_pair(self, session: str, me: str | None = None) -> tuple[str, dict, str] | None:
+        """按会话 id 找未关闭的配对，返回 (配对id, 记录, 本会话身份)；找不到返回 None"""
+        for pid, r in self.pairs().items():
+            if r["state"] == "closed":
+                continue
+            for who, sid in r["members"].items():
+                if sid == session and (me is None or who == me):
+                    return pid, r, who
+        return None
+
+    def pair_start(self, me: str, peer: str | None, session: str, pick: str | None = None, tag: str | None = None) -> dict:
+        """用户在某会话说“与 X 开始协作”（入队）。规则：
+        1) 本会话已在未关闭的配对里 → 不新建、不改绑，提示已就绪/等待对方；
+        2) 队列里有对方发起、指向我、标签相同、尚未被认领的待配对 → 按入队先后（FIFO）认领最早的一个（pick 可指定）；
+           标签（tag）相同才互相匹配：同一项目多组并存时，用不同标签让各组互不干扰；不带标签的只和不带标签的匹配；
+        3) 否则以本会话 id 新建待配对（必须点名对象），等对方会话说开始协作。
+        配对一旦 active，双方会话 id 固定，不可更改；要换会话只能结束后重新配对，或另开新会话建新的一对。"""
+        if not SESSION_RE.match(session or ""):
+            raise CommsError("会话 id 无效：需为 4–128 位字母、数字或 . _ : -")
+        fd, guard = self._guard()
+        try:
+            data = self.pairs()
+            ttl = idle_seconds()
+            for r in data.values():  # 无人认领超时的待配对自动作废
+                if r["state"] == "pending" and time.time() - r["created_ts"] >= ttl:
+                    r.update(state="closed", closed=now(), reason="待配对超时无人认领")
+            mine = next(((pid, r) for pid, r in data.items()
+                         if r["state"] != "closed" and r["members"].get(me) == session), None)
+            if mine:  # 已入队/已配对：只提示，不新建、不改绑
+                pid, r = mine
+                other = r["target"] if r["creator"] == me else r["creator"]
+                self._save_pairs(data)
+                return {"result": "ready" if r["state"] == "active" else "waiting", "pair": pid, "peer": other, "peer_session": r["members"].get(other),
+                        "asked_peer": peer if peer and peer != other else None}
+            cands = sorted((pid for pid, r in data.items()
+                            if r["state"] == "pending" and r["target"] == me and (peer is None or r["creator"] == peer)
+                            and (r.get("tag") or None) == (tag or None)), key=lambda pid: data[pid]["created_ts"])
+            if pick:
+                if pick not in cands:
+                    raise CommsError(f"待配对 {pick} 不存在、标签不符或不是发给 {me} 的")
+                cands = [pick]
+            if cands:  # FIFO：最早入队的先配
+                pid = cands[0]
+                r = data[pid]
+                r["members"][me] = session
+                r.update(state="active", claimed=now())
+                self._save_pairs(data)
+                return {"result": "claimed", "pair": pid, "peer": r["creator"], "peer_session": r["members"][r["creator"]]}
+            if not peer:
+                raise CommsError("没有等我的待配对，新建配对必须点名对象：--peer Codex|Claude|Qoder")
+            target = peer
+            if target == me:
+                raise CommsError("通讯对象不能是自己")
+            pid = "p" + dt.datetime.now().strftime("%y%m%d%H%M%S") + "-" + os.urandom(2).hex()
+            data[pid] = {"state": "pending", "creator": me, "target": target, "members": {me: session},
+                         "created": now(), "created_ts": time.time(), "tag": tag or None}
+            self._save_pairs(data)
+            return {"result": "created", "pair": pid, "peer": target}
+        finally:
+            os.close(fd)
+            guard.unlink(missing_ok=True)
+
+    def pair_update(self, pid: str, **fields) -> None:
+        """更新配对登记里的字段（ping_id、keep 等）；已关闭的配对不再改"""
+        fd, guard = self._guard()
+        try:
+            data = self.pairs()
+            if pid in data and data[pid]["state"] != "closed":
+                data[pid].update(fields)
+                self._save_pairs(data)
+        finally:
+            os.close(fd)
+            guard.unlink(missing_ok=True)
+
+    def pair_close(self, pid: str, reason: str) -> None:
+        """结束配对：登记置 closed，双方会话随之解除；通道目录与消息记录保留供查阅"""
+        fd, guard = self._guard()
+        try:
+            data = self.pairs()
+            if pid in data and data[pid]["state"] != "closed":
+                data[pid].update(state="closed", closed=now(), reason=reason)
+                self._save_pairs(data)
+        finally:
+            os.close(fd)
+            guard.unlink(missing_ok=True)
 
     # ---- 会话绑定 ----
     def bindings(self) -> dict:
@@ -146,6 +253,8 @@ class Channel:
         try:
             data = self.bindings()
             old = data.get(me)
+            if old and old["session"] != session and self.pair:
+                raise CommsError(f"{me} 已与会话 {old['session']} 配对，配对期间不可更改；要换会话请先结束协作再重新配对")
             if old and old["session"] != session and not rebind:
                 raise CommsError(f"{me} 已绑定会话 {old['session']}；仅在用户要求切换时加 --rebind")
             data[me] = {"session": session, "time": now()}
@@ -155,6 +264,20 @@ class Channel:
             temporary.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
             temporary.replace(self.dir / "bindings.json")
             return data[me]
+        finally:
+            os.close(fd)
+            guard.unlink(missing_ok=True)
+
+    def unbind(self, who: str) -> None:
+        """协作结束后释放身份绑定，避免之后新建的会话被旧绑定拦截或误当同步会话"""
+        fd, guard = self._guard()
+        try:
+            data = self.bindings()
+            if who in data:
+                del data[who]
+                temporary = self.dir / "bindings.tmp"
+                temporary.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+                temporary.replace(self.dir / "bindings.json")
         finally:
             os.close(fd)
             guard.unlink(missing_ok=True)
@@ -293,20 +416,23 @@ class Channel:
         replied = {m["re"] for m in msgs if m.get("re")}
         return [m for m in msgs if m["from"] == me and m["type"] in NEEDS_REPLY and m["id"] not in replied]
 
-    def session(self, me: str, action: str, peer: str, auto_stop: bool = False) -> dict:
-        """持久化按需监听状态；不自动发送、确认消息或启动客户端。"""
+    def session(self, me: str, action: str, peer: str, persistent: bool = False) -> dict:
+        """持久化按需监听状态；不自动发送、确认消息或启动客户端。
+        默认空闲满 IDLE_SECONDS（无任何方向的新消息）自动结束，返回 expired=True 由调用方同步关闭对方；
+        start --persistent 才常驻到用户说结束。"""
         if me == peer:
             raise CommsError("通讯对象不能是自己")
         fd, guard = self._guard()
         try:
             state_path = self.dir / f"session_{me}.json"
             state = json.loads(state_path.read_text(encoding="utf-8")) if state_path.exists() else {
-                "active": False, "empty_checks": 0, "seen_ids": [], "peer": peer, "persistent": True,
+                "active": False, "empty_checks": 0, "seen_ids": [], "peer": peer, "persistent": False,
             }
             messages = []
+            expired = False
             if action == "start":
-                # 默认常驻：只有 session stop（用户说结束协作）才停止；--auto-stop 恢复连续空闲5次自停
-                state = {"active": True, "empty_checks": 0, "seen_ids": [], "peer": peer, "persistent": not auto_stop}
+                state = {"active": True, "empty_checks": 0, "seen_ids": [], "peer": peer,
+                         "persistent": persistent, "last_activity": time.time()}
             elif action == "stop":
                 state["active"] = False
             elif action == "poll" and state["active"]:
@@ -315,21 +441,32 @@ class Channel:
                             if m["from"] == state["peer"] and m["id"] not in seen]
                 state["empty_checks"] = 0 if messages else state["empty_checks"] + 1
                 state["seen_ids"] = sorted(seen | {m["id"] for m in messages})
-                if state["empty_checks"] >= 5 and not state.get("persistent", False):
+            if state["active"] and action in ("poll", "status") and not state.get("persistent", False):
+                # 旧状态文件没有 last_activity：从现在起算，不立刻过期
+                last = state.get("last_activity") or time.time()
+                try:
+                    last = max(last, self.log.stat().st_mtime)  # 任一方向的新消息都算活动
+                except OSError:
+                    pass
+                if messages:
+                    last = time.time()
+                state["last_activity"] = last
+                if time.time() - last >= idle_seconds():
                     state["active"] = False
-            if action != "status":
+                    expired = True
+            if action != "status" or expired:
                 state["updated"] = now()
                 temporary = state_path.with_suffix(".tmp")
                 temporary.write_text(json.dumps(state, ensure_ascii=False), encoding="utf-8")
                 temporary.replace(state_path)
-            return {**state, "messages": messages, "project": self.slug}
+            return {**state, "messages": messages, "project": self.slug, "expired": expired}
         finally:
             os.close(fd)
             guard.unlink(missing_ok=True)
 
     def wait(self, me: str, peer: str, timeout: float, interval: float, session: str | None = None) -> dict:
         """阻塞等待对方新消息，整个等待过程在进程内完成、不消耗 AI 额度。
-        常驻模式下仅在消息日志变化时才解析轮询；非常驻（--auto-stop）每个间隔都计一次空闲。
+        常驻模式下仅在消息日志变化时才解析轮询；非常驻（默认）每个间隔都检查一次空闲是否超时。
         返回：有新消息 / 会话已停止 / 超时（timeout=True，messages 为空，调用方可继续等）。"""
         deadline = time.time() + timeout
         last_sig = None
@@ -370,7 +507,7 @@ class Channel:
     def _lock_path(self, res: str) -> Path:
         if not RESOURCE_RE.match(res):
             raise CommsError("资源名需为小写字母开头的 1–32 位小写字母、数字、_、-")
-        return self.dir / "locks" / f"{res}.lock"
+        return self.base / "locks" / f"{res}.lock"
 
     def lock(self, me: str, res: str, purpose: str) -> None:
         p = self._lock_path(res)
@@ -402,12 +539,94 @@ class Channel:
 
     def locks(self) -> list[dict]:
         out = []
-        for p in sorted((self.dir / "locks").glob("*.lock")):
+        for p in sorted((self.base / "locks").glob("*.lock")):
             try:
                 out.append({"resource": p.stem, **json.loads(p.read_text(encoding="utf-8"))})
             except (OSError, json.JSONDecodeError):
                 out.append({"resource": p.stem, "holder": "?", "purpose": "锁文件损坏", "time": ""})
         return out
+
+
+def idle_seconds() -> float:
+    try:
+        return float(os.environ.get("SIRE_COMMS_IDLE_SECONDS", IDLE_SECONDS))
+    except ValueError:
+        return IDLE_SECONDS
+
+
+def close_collab(ch: "Channel", me: str, peer: str, reason: str) -> tuple[dict, bool]:
+    """关闭本方协作并同步关闭对方（通知对方），然后释放双方会话绑定。返回 (本方状态, 对方是否被关闭)"""
+    result = ch.session(me, "stop", peer)
+    peer_closed = False
+    if ch.session(peer, "status", me).get("active"):
+        ch.send(me, peer, "info", f"{me} 已关闭协作通道（{reason}）。你的监听状态已同步置为关闭：请暂停心跳/后台等待、释放自己持有的锁，不再轮询；用户再次说开始协作前不要重启。本条无需回复。")
+        ch.session(peer, "stop", me)
+        peer_closed = True
+    if ch.pair:
+        Channel(ch.slug, None).pair_close(ch.pair, reason)  # 配对作废，双方会话自动解除，可重新配对
+    else:
+        ch.unbind(me)
+        ch.unbind(peer)
+    return result, peer_closed
+
+
+def peer_for(ch: "Channel", me: str, given: str | None) -> str:
+    """配对通道的对端取自配对记录（不可改）；项目级通道才按身份取默认值"""
+    if ch.pair:
+        r = Channel(ch.slug, None).pairs().get(ch.pair)
+        if r:
+            return r["target"] if r["creator"] == me else r["creator"]
+    return agent(given or ("Codex" if me == "Claude" else "Claude"))
+
+
+def do_pair_start(ch0: "Channel", me: str, peer: str | None, session: str, pick: str | None, persistent: bool = False, tag: str | None = None) -> dict:
+    """在本会话开始协作：登记配对，并为新建/认领的配对绑定会话、启动本方监听状态"""
+    r = ch0.pair_start(me, peer, session, pick, tag)
+    res = r["result"]
+    sid = session[:8]
+    if res in ("created", "claimed"):
+        pch = Channel(ch0.slug, None, r["pair"])
+        pch.bind(me, session)
+        pch.session(me, "start", r["peer"], persistent)
+        if res == "claimed":
+            send_ping(pch, me, r["peer"], r["pair"])  # 连通自测：对方回 pong 才算连通
+            r["message"] = f"已配对：{me} 会话 {sid} ↔ {r['peer']} 会话 {r['peer_session'][:8]}（配对 {r['pair']}），配对期间不可更改；已发连通测试，等 {r['peer']} 回 pong"
+        else:
+            r["message"] = f"已入队等待：请到 {r['peer']} 会话说“开始协作”，将自动按先后顺序认领本会话 {sid}（配对 {r['pair']}" + (f"，标签 {tag}" if tag else "") + "）"
+    elif res == "ready":
+        r["message"] = f"已就绪：本会话 {sid} 已与 {r['peer']} 会话 {str(r.get('peer_session') or '')[:8]} 配对（配对 {r['pair']}），无需再开始"
+    elif res == "waiting":
+        r["message"] = f"已就绪：本会话 {sid} 已发起与 {r['peer']} 的配对（配对 {r['pair']}），仍在等对方会话说“开始协作”"
+    if r.get("asked_peer"):
+        r["message"] += f"；注意：本会话已固定与 {r['peer']} 配对，不能改成 {r['asked_peer']}，要换对象请先结束协作"
+    return r
+
+
+def send_ping(pch: "Channel", me: str, peer: str, pair: str) -> dict:
+    """连通自测：发一条 question，对方 reply 即视为连通；ping 的编号记进配对登记"""
+    m = pch.send(me, peer, "question", f"【连通测试 {pair}】ping。收到后立即用 reply --re <本条编号> 回复 pong（连通测试必须回，不算礼节性回信）。")
+    pch.pair_update(pair, ping_id=m["id"], ping_from=me)
+    return m
+
+
+def pair_verified(ch0: "Channel", pid: str, r: dict) -> bool:
+    """配对是否已连通：存在对 ping 的回复"""
+    ping = r.get("ping_id")
+    if not ping:
+        return False
+    return any(m.get("re") == ping for m in Channel(ch0.slug, None, pid).load())
+
+
+def print_pairs(ch0: "Channel") -> None:
+    data = ch0.pairs()
+    live = {k: v for k, v in data.items() if v["state"] != "closed"}
+    print(f"[comms] 项目 {ch0.slug} 配对：进行中 {len(live)} 个，已结束 {len(data) - len(live)} 个")
+    for pid, r in live.items():
+        mem = "，".join(f"{who} {sid[:8]}" for who, sid in r["members"].items())
+        wait = "" if r["state"] == "active" else f"（等 {r['target']} 认领）"
+        extra = (f" 标签={r['tag']}" if r.get("tag") else "") + (" 保持" if r.get("keep") else "")
+        link = "" if r["state"] != "active" else (" 已连通" if pair_verified(ch0, pid, r) else " 未连通(等 pong)")
+        print(f"[comms] {pid} {r['state']}{wait}{link}{extra}：{mem}（{r['created']}）")
 
 
 def all_channels() -> list[Channel]:
@@ -490,7 +709,7 @@ def clip(text: str, limit: int) -> str:
 
 def print_resume(ch: Channel, me: str, last: int = 5, limit: int = 200) -> None:
     """新会话开启协作后一次输出精简交接摘要，免重读全部历史"""
-    peer = "Codex" if me == "Claude" else "Claude"
+    peer = peer_for(ch, me, None)
     print(f"[resume] 项目 {ch.slug}  身份 {me}")
     binds = ch.bindings()
     for who, d in binds.items():
@@ -536,13 +755,23 @@ def build_parser() -> argparse.ArgumentParser:
     b.add_argument("--me")
     b.add_argument("--rebind", action="store_true", help="替换已有绑定，仅在用户要求切换会话时使用")
 
-    session = sub.add_parser("session", help="协作通讯：start 后常驻轮询，直到 stop（用户说结束协作）；加 --auto-stop 则连续5次无新消息自停")
+    session = sub.add_parser("session", help="协作通讯：start 后轮询，用户说结束（stop）或空闲满1小时自动结束；加 --persistent 才常驻到 stop")
     session.add_argument("action", choices=("start", "poll", "stop", "status", "wait", "watch"))
     session.add_argument("--me")
     session.add_argument("--peer", help="默认：Claude 对 Codex，其余身份对 Claude")
     session.add_argument("--timeout", type=float, default=1800, help="wait：最长阻塞秒数，超时返回 timeout=true")
     session.add_argument("--interval", type=float, default=5, help="wait：检查消息日志的间隔秒数")
-    session.add_argument("--auto-stop", action="store_true", help="仅 start 有效：恢复连续5次无新消息自动停止")
+    session.add_argument("--persistent", action="store_true", help="仅 start 有效：常驻，不因空闲自动结束（仅用户明确要求时）")
+    session.add_argument("--auto-stop", action="store_true", help="已是默认行为，保留仅为兼容旧命令")
+
+    pr = sub.add_parser("pair", help="会话级 1 对 1 配对：start=入队（匹配同项目同标签最早的待配对，否则新建并等待），list=查看，ping=连通测试，done=完成并清理，keep=用户明确要求保持")
+    pr.add_argument("action", choices=("start", "list", "ping", "done", "keep"))
+    pr.add_argument("--tag", help="标签：同一项目多组并存时，相同标签才互相匹配（不带标签的只和不带标签的匹配）")
+    pr.add_argument("--off", action="store_true", help="keep：取消保持")
+    pr.add_argument("--me")
+    pr.add_argument("--peer", help="对端身份；认领时省略则接受任何指向我的待配对")
+    pr.add_argument("--pick", help="有多个待配对时，指定要认领的配对 id")
+    pr.add_argument("--persistent", action="store_true", help="常驻，不因空闲自动结束（仅用户明确要求时）")
 
     s = sub.add_parser("send")
     s.add_argument("--me")
@@ -601,85 +830,114 @@ def run(argv: list[str]) -> int:
             meta = ch.dir / "project.json"
             path = json.loads(meta.read_text(encoding="utf-8"))["path"] if meta.exists() else "?"
             counts = "，".join(f"{a} 未读 {len(ch.unread(a))}" for a in AGENTS[:3])
-            print(f"[comms] {ch.slug}  {path}  消息 {len(ch.load())} 条；{counts}")
+            live = sum(1 for r in ch.pairs().values() if r["state"] != "closed")
+            print(f"[comms] {ch.slug}  {path}  进行中配对 {live} 个；项目级消息 {len(ch.load())} 条；{counts}")
         return 0
     if args.cmd == "inbox" and args.all_projects:
         me = agent(args.me)
         total = 0
-        for ch in all_channels():
-            bound = ch.bindings().get(me)
-            if bound and bound["session"] != session:
-                print(f"[comms] 跳过 {ch.slug}：{me} 已绑定会话 {bound['session']}" + ("，未提供 --session" if not session else "，与当前会话不符"))
+        for c0 in all_channels():
+            f = c0.find_pair(session, me) if session else None
+            if not f:
                 continue
+            ch = Channel(c0.slug, None, f[0])
             if ch.unread(me) or ch.waiting(me):
                 total += print_inbox(ch, me)
         print(f"[comms] {me} 全部项目未读合计 {total} 条")
         return 0
 
     slug, path = resolve_project(args.project)
-    ch = Channel(slug, path)
-    if args.cmd == "bind":
-        if not args.me:
-            data = ch.bindings()
-            print(f"[comms] 项目 {slug} 绑定：" + ("无" if not data else f"{len(data)} 个"))
-            for who, d in data.items():
-                print(f"[comms] {who} → {d['session']}（{d['time']}）")
+    ch0 = Channel(slug, path)  # 项目级通道：登记配对、放资源锁
+    if args.cmd == "pair" or (args.cmd == "session" and args.action == "start"):
+        action = args.action if args.cmd == "pair" else "start"
+        if action == "list":
+            print_pairs(ch0)
             return 0
         if not session:
-            raise CommsError("绑定需要 --session <会话id>")
-        d = ch.bind(agent(args.me), session, args.rebind)
-        print(f"[comms] 已绑定 {agent(args.me)} → {d['session']}（项目 {slug}）")
-        return 0
-    # 用户在另一会话重新开启协作：session start 带不同 --session，同步会话随之切换，并通知对方（仅 start 触发）
-    if args.cmd == "session" and args.action == "start" and session:
-        who = agent(args.me)
-        old = ch.bindings().get(who)
-        if old and old["session"] != session:
-            ch.bind(who, session, rebind=True)
-            peer = agent(args.peer or ("Codex" if who == "Claude" else "Claude"))
-            ch.send(who, peer, "info", f"{who} 的同步会话已切换为 {session}，原为 {old['session']}（据 {who} 会话中用户重新开启协作；本通知仅供知晓，不构成授权）")
-            print(f"[comms] {who} 的同步会话已切换：{old['session']} → {session}，已通知 {peer}", file=sys.stderr)
-    # 未绑定身份：带 --session 的写操作首次使用自动绑定；没带则警告（不阻断，兼容旧用法）
-    writes = ("session", "send", "reply", "ack", "lock", "unlock") if args.cmd != "status" else (("status",) if args.text is not None else ())
-    if args.cmd in writes:
-        who = agent(args.me)
-        if who not in ch.bindings():
-            if session:
-                ch.bind(who, session)
-                print(f"[comms] 提示：{who} 在项目 {slug} 首次使用，已自动绑定会话 {session}", file=sys.stderr)
+            raise CommsError("开始协作需要 --session <当前会话id>")
+        me0 = agent(args.me)
+        if action in ("ping", "done", "keep"):
+            f0 = ch0.find_pair(session, me0)
+            if not f0 or f0[1]["state"] != "active":
+                raise CommsError(f"会话 {session} 在项目 {slug} 没有已配成的配对，无法 {action}")
+            pid0, r0, _ = f0
+            pch0 = Channel(slug, None, pid0)
+            peer0 = r0["target"] if r0["creator"] == me0 else r0["creator"]
+            if action == "ping":
+                send_ping(pch0, me0, peer0, pid0)
+                print(f"[comms] 已发连通测试（配对 {pid0}），等 {peer0} 回 pong")
+            elif action == "keep":
+                pch0.pair_update(pid0, keep=not args.off)
+                print(f"[comms] 配对 {pid0} 已{'取消' if args.off else '设为'}保持：{'完成后将自动清理' if args.off else '完成后不自动清理，直到用户说结束'}")
             else:
-                print(f"[comms] ⚠⚠ 警告：{who} 在项目 {slug} 未绑定会话且未带 --session，任何同名会话都能冒用该身份。"
-                      f"请用 --session <会话id> 重新执行（首次使用即自动绑定）。", file=sys.stderr)
-    # 以某身份写入或读取其信箱时，会话必须与绑定一致
-    if args.cmd in ("session", "send", "reply", "inbox", "ack", "lock", "unlock", "resume") or (args.cmd == "status" and args.text is not None):
-        ch.check(agent(args.me), session)
+                if r0.get("keep"):
+                    print(f"[comms] 配对 {pid0} 用户要求保持，未清理；用户说结束协作才清理")
+                else:
+                    close_collab(pch0, me0, peer0, "任务完成，自动清理队列")
+                    print(f"[comms] 任务完成：配对 {pid0} 已清理，双方会话已释放；再次协作需重新入队")
+            return 0
+        print(json.dumps(do_pair_start(ch0, me0, agent(args.peer) if args.peer else None, session, getattr(args, "pick", None), getattr(args, "persistent", False), getattr(args, "tag", None)), ensure_ascii=False))
+        return 0
+    if args.cmd in ("bind", "projects", "locks") or (args.cmd in ("log", "status") and not session and not (args.cmd == "status" and args.text is not None)):
+        if args.cmd == "bind" and args.me:
+            raise CommsError("绑定已改为配对：请在会话中说“与X开始协作”（pair start），配对期间不可更改")
+        if args.cmd == "locks":
+            print_status(ch0, args.ttl)
+            return 0
+        print_pairs(ch0)
+        if args.cmd == "status":
+            print_status(ch0)
+        return 0
+    # 其余命令都以“身份 + 会话”定位到唯一配对；未配对的会话一律拒绝，避免串话
+    if args.cmd in ("log", "status") and getattr(args, "me", None) is None:
+        found = ch0.find_pair(session) if session else None
+        if not found:
+            raise CommsError(f"会话 {session} 在项目 {slug} 没有进行中的配对")
+        me_for_pair = found[2]
+    else:
+        me_for_pair = agent(args.me)
+    if not session:
+        raise CommsError(f"{me_for_pair} 的通讯需带 --session <会话id>（或环境变量 SIRE_SESSION）")
+    found = ch0.find_pair(session, me_for_pair)
+    if not found:
+        raise CommsError(f"会话 {session} 在项目 {slug} 没有进行中的配对：请先在本会话说“与X开始协作”")
+    ch = Channel(slug, None, found[0])
+    ch.check(me_for_pair, session)
     if args.cmd == "session" and args.action == "wait":
-        peer = agent(args.peer or ("Codex" if agent(args.me) == "Claude" else "Claude"))
-        print(json.dumps(ch.wait(agent(args.me), peer, args.timeout, args.interval, session), ensure_ascii=False))
+        peer = peer_for(ch, me_for_pair, args.peer)
+        r = ch.wait(agent(args.me), peer, args.timeout, args.interval, session)
+        if r.get("expired"):
+            close_collab(ch, agent(args.me), peer, f"空闲满 {idle_seconds() / 3600:g} 小时自动结束")
+        print(json.dumps(r, ensure_ascii=False))
     elif args.cmd == "session" and args.action == "watch":
         # 事件流：每条新消息输出一行 JSON（配合 Monitor 工具，每行即时唤醒 AI，空闲零消耗），会话关闭时输出 closed 并退出
         me = agent(args.me)
-        peer = agent(args.peer or ("Codex" if me == "Claude" else "Claude"))
+        peer = peer_for(ch, me, args.peer)
         while True:
             r = ch.wait(me, peer, 3600, 1, session)
+            if r.get("expired"):
+                close_collab(ch, me, peer, f"空闲满 {idle_seconds() / 3600:g} 小时自动结束")
             for m in r["messages"]:
                 body = m["text"] if len(m["text"]) <= 600 else m["text"][:600] + f"…（共{len(m['text'])}字，全文见 messages.jsonl #{m['id']}）"
                 print(json.dumps({"id": m["id"], "from": m["from"], "type": m["type"], "re": m.get("re"), "text": body}, ensure_ascii=False), flush=True)
             if not r["active"]:
-                print(json.dumps({"closed": True, "reason": "同步会话已切换到别的对话" if r.get("superseded") else "协作通道已关闭"}, ensure_ascii=False), flush=True)
+                print(json.dumps({"closed": True, "reason": "同步会话已切换到别的对话" if r.get("superseded") else ("空闲超时自动结束" if r.get("expired") else "协作通道已关闭")}, ensure_ascii=False), flush=True)
                 break
     elif args.cmd == "session" and args.action == "stop":
         me = agent(args.me)
-        peer = agent(args.peer or ("Codex" if me == "Claude" else "Claude"))
-        result = ch.session(me, "stop", peer)
-        # 任意一方关闭时通知对方并同步关闭其监听状态（对方心跳读到 active=false 后应暂停自动化）
-        if ch.session(peer, "status", me).get("active"):
-            ch.send(me, peer, "info", f"{me} 已 session stop 关闭协作通道（据用户结束协作）。你的监听状态已同步置为关闭：请暂停心跳/后台等待、释放自己持有的锁，不再轮询；用户再次说开始协作前不要重启。本条无需回复。")
-            ch.session(peer, "stop", me)
+        peer = peer_for(ch, me, args.peer)
+        # 任意一方关闭时通知对方并同步关闭其监听状态，同时释放双方会话绑定
+        result, peer_closed = close_collab(ch, me, peer, "据用户结束协作")
+        if peer_closed:
             result["peer_closed"] = True
         print(json.dumps(result, ensure_ascii=False))
     elif args.cmd == "session":
-        print(json.dumps(ch.session(agent(args.me), args.action, agent(args.peer or ("Codex" if agent(args.me) == "Claude" else "Claude")), args.auto_stop), ensure_ascii=False))
+        me = agent(args.me)
+        peer = peer_for(ch, me, args.peer)
+        r = ch.session(me, args.action, peer, args.persistent)
+        if r.get("expired"):
+            close_collab(ch, me, peer, f"空闲满 {idle_seconds() / 3600:g} 小时自动结束")
+        print(json.dumps(r, ensure_ascii=False))
     elif args.cmd == "send":
         m = ch.send(agent(args.me), agent(args.to), args.type, args.text, args.re)
         print(f"[comms] 已发送 #{m['id']}（项目 {slug}）")

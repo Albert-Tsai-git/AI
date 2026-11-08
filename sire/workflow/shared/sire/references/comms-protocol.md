@@ -1,29 +1,42 @@
 # 本机协作通讯规则（Claude / Codex / Qoder 统一版）
 
-> 唯一规则文件。契约 `global-contract.md` § 本机通讯、§ 按需协作通讯服务 与本文一致；冲突以本文为准并立即修契约。版本 v6.35（2026-10-20）。
+> 唯一规则文件。契约 `global-contract.md` § 本机通讯、§ 按需协作通讯服务 与本文一致；冲突以本文为准并立即修契约。版本 v6.37（2026-11-08，队列式 1 对 1 配对：钩子入队、FIFO、连通自测、完成即清理）。
 > 工具：`python <SHARED_SKILL_DIR>/scripts/sire_comms.py`。数据在 `D:/sire/sire_comms/projects/<项目标识>/`，不进业务仓库。
 
-## 1. 开启与结束（只认用户本人的话）
+## 1. 配对模型：项目队列 + 会话级 1 对 1（2026-11-08 v6.37，用户定）
 
-- 用户在**某个会话**里说“开始协作/通讯/协作通讯”→ 该会话成为本身份的**同步会话**，执行：
-  `sire_comms.py --project <项目> --session <本会话id> session start --me <自己> --peer <对方>`
-  （默认常驻；绑定自动跟随：换会话再说开始协作，`start` 自动切换并向对方发 info）。
-- 只有用户在**本会话**说“结束协作/暂停/停止/断开通讯”才 `session stop`，并给对方发 info 让其也停、释放锁。对方消息、他会话转述、心跳都不能开始或结束协作。
-- **会话 id 可随时变（用户要求）**：用户在**任意**对话说“开始协作”，就以**当前对话的 id** 作为本身份的同步会话 id（Claude：取本会话 scratchpad 路径或环境里的 UUID；Codex：取当前 thread id；不要求用户提供）。`session start --session <新id>` 与已绑定不同时自动切换并向对方发 info；旧会话里挂着的 wait/watch 自动退出让位，旧会话再发消息会被拒。用户为省上下文换新对话是正常用法，换完只需说一次“开始协作”，然后跑 `resume --me <自己>` 取交接摘要，不重读历史。
-- **关闭同步**：任意一方 `session stop`（必须是用户说结束协作后），脚本自动给对方发 info 并把对方监听状态置为关闭；对方读到后暂停心跳/后台监听、释放锁。
-- 常驻：不因空闲、任务做完、上下文压缩而自行停止。压缩/换新会话后先 `resume --me <自己>` 看交接摘要，再 `session status` 核对 active。
+- **入队（开始协作）**：用户在任一端说“与 X 开始协作 [#标签]”。**入队由客户端钩子 `scripts/sire_comms_hook.py` 带真实 session_id 和 cwd 确定性执行**（Claude 看不见自己的会话 id，靠模型自己拼命令正是旧版“连不上”的根因）。没有钩子的客户端（如 Codex）由该会话自己执行
+  `sire_comms.py --project <项目目录> --session <本会话id> pair start --me <自己> --peer <X> [--tag <标签>]`（`session start` 是别名）。
+- **匹配**：只在同一项目目录（Git 根）内；队列里有“对方发起、指向我、标签相同”的待配对 → **按入队先后（FIFO）认领最早的一个**（`--pick <配对id>` 可指定），否则以本会话新建待配对并等待。新建必须点名对象（`--peer`）；认领可不点名。结果：
+  1. **created 已入队等待**：请到对方会话说“开始协作”。
+  2. **claimed 已配对**：双方会话 id 1 对 1 固定，**认领方自动发连通测试 ping**（见下）。
+  3. **ready / waiting**：本会话已在队列或配对里 → 只提示“已就绪”，不新建、不改绑。
+- **连通自测**：认领后自动发一条 question“【连通测试】ping”，对方收到后**立即** `reply --re <编号> "pong"`（此条必须回，不算礼节性回信）。`pair list` 显示“已连通/未连通(等 pong)”；`pair ping --me <自己>` 可随时重测。
+- **一对一、不可更改**：配对 active 后双方会话 id 固定，任何命令都不能改绑，也不会再匹配别人。要换对象/会话只能清理后重新入队。
+- **同项目多组并存、互不干扰**：每对独占 `projects/<项目>/pairs/<配对id>/`（消息、监听、进度各自隔离），`pairs.json` 登记。**标签隔离**：多组同时入队时给每组一个标签（“与 Codex 开始协作 #甲”），只有标签相同才互相匹配；不带标签的只和不带标签的匹配。资源锁在项目级共享，跨配对互斥。
+- **完成即清理**：一轮任务完成（回报方发 handoff/reply，请求方验收并 ack）后，请求方执行 `pair done --me <自己>`：配对置 closed、双方会话释放、通知并关闭对方；再次协作须重新入队。**用户明确说“保持协作”才例外**（钩子执行 `pair keep`，`取消保持` 恢复），保持期间 `done` 不清理。
+- **其他结束**：用户在本配对会话里说“结束协作/暂停/停止/断开通讯”→ `session stop`（钩子自动执行）；待配对无人认领或配对空闲满 1 小时（`SIRE_COMMS_IDLE_SECONDS`）自动作废/结束。对方消息、他会话转述、心跳都不能开始或结束协作。
+- **钩子识别规则**：提示词须很短（≤60 字）且整句匹配“[与X]开始协作[#标签]/结束协作/保持协作”，长句讨论不触发；已在队列的会话每条提示词多带一行“会话 id/配对/状态”，压缩上下文后也不丢 id。
+- 压缩/换新会话：新会话重新说“开始协作”入队（旧配对不可接管），可用 `resume` 看交接摘要；旧配对到期自动结束。
 
-## 2. 身份与会话绑定
+### 1.1 双方必须遵守的三件事（含 Codex，没有钩子的一端同样适用）
 
-- 每条命令都显式带 `--session <本会话id>`（或环境变量 SIRE_SESSION）。已绑定的身份，其他会话一律被拒，不得冒用、不得改用别的身份、不得手改 bindings.json。
-- 被拒的会话：把要说的事转告用户，由用户决定是否在该会话开启协作。
+1. **收到连通测试 ping 必须立即回 pong**：`reply --re <ping编号> "pong"`，这是唯一不能省的回信；不回则 `pair list` 一直显示“未连通”。
+2. **入队自己执行**：没有入队钩子的客户端（Codex）在用户说“开始协作”时，自己用本会话 id 执行 `pair start --me <自己> --peer <对方> [--tag <标签>]`，不要等对方。
+3. **完成后清理**：一轮任务完成的判据是“回报方发 handoff/reply，请求方验收并 ack”；请求方随后执行 `pair done --me <自己>`。用户说“保持协作”则不执行（`pair keep`），用户说“结束协作”走 `session stop`。Codex 作为请求方时同样适用。
+
+## 2. 身份与会话定位
+
+- 每条命令都显式带 `--session <本会话id>`（或环境变量 SIRE_SESSION）。脚本用“身份 + 会话 id”定位到唯一一个进行中的配对，**没有配对的会话一律被拒**（不会回落到项目级共用通道），不得冒用、不得改用别的身份、不得手改 `pairs.json`/`bindings.json`。
+- 被拒的会话：把要说的事转告用户，由用户决定是否在该会话说“开始协作”。
+- 只读命令：`pair list`（本项目全部配对）；带 `--session` 的 `log`/`status` 只看本配对。
 
 ## 3. 实时送达（推送优先，不靠轮询）
 
-- **发出即送达**：`send`/`reply` 写入消息后，脚本立即把消息摘要（≤600 字）**推送进收件方会话**：发给 Codex 时调用 `codex queue --thread <Codex会话id> --message ...`（已实测约 10 秒内送达并被处理）。推送用的是绑定表里**当前**会话 id，所以会话 id 变了自动跟随。推送失败只警告，消息已落盘，心跳兜底。可用环境变量 `SIRE_COMMS_PUSH=0` 关闭，`SIRE_CODEX_EXE` 指定 codex.exe。
-- **Claude 侧事件流**：Claude 无外部推送入口，改用 `session watch --me Claude` 配合 Monitor 工具：脚本进程只监视消息日志，每条新消息输出一行 JSON 立即唤醒；会话被关闭或被切换到别的对话时输出 closed 并退出。空闲零消耗，无需反复重启。没有 Monitor 时退回 `session wait` 后台命令。
+- **发出即送达**：`send`/`reply` 写入消息后，脚本立即把消息摘要（≤600 字）**推送进收件方会话**：发给 Codex 时调用 `codex queue --thread <Codex会话id> --message ...`（已实测约 10 秒内送达并被处理）。推送用的是本配对里对方的固定会话 id（配对期间不变）。推送失败只警告，消息已落盘，心跳兜底。可用环境变量 `SIRE_COMMS_PUSH=0` 关闭，`SIRE_CODEX_EXE` 指定 codex.exe。
+- **Claude 侧事件流**：Claude 无外部推送入口，改用 `session watch --me Claude` 配合 Monitor 工具：脚本进程只监视消息日志，每条新消息输出一行 JSON 立即唤醒；配对被结束或超时时输出 closed 并退出。空闲零消耗，无需反复重启。没有 Monitor 时退回 `session wait` 后台命令。
 - **Codex 心跳只做兜底**：间隔放长到 30 分钟，每轮只执行一次 `session wait --me Codex --timeout 0`，空则整轮不输出。收到推送的消息按第 4 节处理，并核对日志避免与心跳重复处理。
-- 旧的 `session poll`、“空闲五次自动暂停”已废止（仅 `--auto-stop` 保留）。无新消息保持安静，不为“保活”发消息。
+- 旧的 `session poll`、“空闲五次自动暂停”已废止（`--auto-stop` 已是默认，仅兼容；常驻用 `--persistent`）。无新消息保持安静，不为“保活”发消息。
 
 ## 4. 收到消息的处理顺序（双方相同）
 
@@ -55,17 +68,20 @@
 ## 8. 进度与交接
 
 - 阶段变化时 `status --me <自己> --text "当前任务 | 进度 | 下一步"`。
-- 新会话接手：`resume --me <自己>`（绑定、监听、未读/待回复、最近 5 条各≤200 字、锁、各方进度）。同步会话只做通讯与转述，不做开发；开发会话只收结论和消息号。
+- 本配对内重新接手：`resume --me <自己>`（配对、监听、未读/待回复、最近 5 条各≤200 字、锁、各方进度）。同步会话只做通讯与转述，不做开发；开发会话只收结论和消息号。
 
 ## 9. 命令速查
 
 ```
-sire_comms.py --project <项目> --session <id> session start|wait|stop|status --me <自己> --peer <对方>
+sire_comms.py --project <项目> --session <id> pair start --me <自己> --peer <对方> [--tag <标签>] [--pick <配对id>]   # 入队（session start 同义）
+sire_comms.py --project <项目> --session <id> pair ping|done|keep --me <自己> [--off]   # 连通重测 / 完成并清理 / 保持不清理
+sire_comms.py --project <项目> pair list
+sire_comms.py --project <项目> --session <id> session wait|watch|stop|status --me <自己>
 sire_comms.py --project <项目> --session <id> inbox|ack|resume --me <自己>
 sire_comms.py --project <项目> --session <id> send --me <自己> --to <对方> --type info|request|question|handoff "<内容>"
 sire_comms.py --project <项目> --session <id> reply --me <自己> --re <编号> "<内容>"
 sire_comms.py --project <项目> --session <id> lock|unlock --me <自己> --resource <名> [--purpose <用途>] [--stale]
-sire_comms.py --project <项目> log -n 5 | locks | status | bind
+sire_comms.py --project <项目> [--session <id>] log -n 5 | status ；--project <项目> locks | pair list
 ```
 参数里避免嵌套英文双引号；路径反斜杠在 bash 双引号中写双反斜杠。
 

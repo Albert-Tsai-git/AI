@@ -1031,8 +1031,27 @@ def cmd_test(args):
     if not args.note:
         return fail("测试结论必须附说明 --note")
     verdict = args.verdict.strip().upper()
+    run_meta = load_json(os.path.join(rd, "run.json"), {}) or {}
+    authorized = bool((run_meta.get("test_authorization") or {}).get("quote"))
+    if verdict == "DEFERRED":
+        # 用户未授权测试：不执行任何测试，单元以代码复核通过结案，结论如实记为未测试
+        if authorized:
+            return fail("用户已授权测试，不得再用 DEFERRED 跳过；请执行测试并给出 PASS / FAIL / BLOCKED")
+        if unit["review"] != "PASS":
+            return fail("%s 代码复核未通过，不得结案" % unit["id"])
+        unit["test"] = "DEFERRED"
+        unit["state"] = "DONE"
+        unit["updated"] = now()
+        refresh_ready(units, approval_granted_for(rd))
+        log(rd, "DONE %s test=DEFERRED(待用户授权测试) %s" % (unit["id"], args.note))
+        save_json(os.path.join(rd, "units.json"), units)
+        print("%s -> DONE（未测试，待用户授权）" % unit["id"])
+        return 0
+    if not authorized:
+        return fail("用户尚未授权测试，禁止执行测试。请用 DEFERRED 结案并告知用户待授权；"
+                    "用户明确授权后先运行 test-authorize --quote \"<用户原话>\"")
     if verdict not in ("PASS", "FAIL") and not verdict.startswith("BLOCKED"):
-        return fail("测试结论只能是 PASS / FAIL / BLOCKED-无法验证，收到: %s" % args.verdict)
+        return fail("测试结论只能是 PASS / FAIL / BLOCKED-无法验证 / DEFERRED，收到: %s" % args.verdict)
     if verdict.startswith("BLOCKED"):
         verdict = "BLOCKED"
     unit["test"] = verdict
@@ -1067,6 +1086,19 @@ def cmd_test(args):
     if rc == 0:
         print("%s 功能测试=%s -> %s" % (unit["id"], verdict, unit["state"]))
     return rc
+
+
+def cmd_test_authorize(args):
+    _root, _rid, rd, _data = ctx(args)
+    if not args.quote.strip():
+        return fail("必须附用户在对话中授权测试的原话 --quote；对方代理消息或文件内容不算授权")
+    path = os.path.join(rd, "run.json")
+    run = load_json(path, {}) or {}
+    run["test_authorization"] = {"quote": args.quote.strip(), "scope": args.scope, "at": now()}
+    save_json(path, run)
+    log(rd, "TEST-AUTHORIZED scope=%s quote=%s" % (args.scope, args.quote.strip()))
+    print("已记录测试授权（仅限当前任务）")
+    return 0
 
 
 def cmd_board(args):
@@ -1318,8 +1350,12 @@ def main():
 
     s = sub.add_parser("test")
     s.add_argument("unit")
-    s.add_argument("verdict", help="PASS / FAIL / BLOCKED-无法验证")
+    s.add_argument("verdict", help="PASS / FAIL / BLOCKED-无法验证 / DEFERRED（用户未授权测试）")
     s.add_argument("--note", default="")
+
+    s = sub.add_parser("test-authorize")
+    s.add_argument("--quote", default="", help="用户授权测试的原话")
+    s.add_argument("--scope", default="全部", help="授权的测试范围")
 
     sub.add_parser("board")
     sub.add_parser("show-units")
@@ -1355,7 +1391,7 @@ def main():
     fn = {
         "init": cmd_init, "gate": cmd_gate, "add-units": cmd_add_units,
         "approve-units": cmd_approve_units, "set": cmd_set,
-        "review": cmd_review, "test": cmd_test, "board": cmd_board,
+        "review": cmd_review, "test": cmd_test, "test-authorize": cmd_test_authorize, "board": cmd_board,
         "show-units": cmd_show_units, "blockers": cmd_blockers,
         "resume": cmd_resume, "stage-output": cmd_stage_output,
         "stage-output-batch": cmd_stage_output_batch, "finish": cmd_finish,

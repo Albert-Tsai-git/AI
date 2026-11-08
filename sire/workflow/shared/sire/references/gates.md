@@ -20,6 +20,8 @@ The executor records the change, commands, outputs, assumptions, and blockers. A
 
 ## R7 — Functional acceptance
 
+**Authorization gate:** R7 runs only after the user explicitly authorizes testing in chat (`sire_run.py test-authorize --quote ...`). Without it, record R7 as 跳过 (待用户授权测试), close units with verdict `DEFERRED`, and report 未测试. The rest of this section applies only once authorized.
+
 Before execution, list test ID, user operation steps, expected result, actual result, evidence location, and conclusion. Exercise the real user path for app/UI/system work, including one normal and one boundary/error route. For code, data, files, and Git, run the actual command/data path and inspect resulting state. Static inspection is supporting evidence only. If the required environment is unavailable, use `BLOCKED-无法真实验证`.
 
 ## R8/R9 — Integration and whole-task review

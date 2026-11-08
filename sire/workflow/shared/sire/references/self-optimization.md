@@ -77,6 +77,15 @@ R1 收集观察
 
 本地数据库表 `improvement_proposals`、`improvement_metrics` 和 `workflow_versions` 是 RSI 审计记录的权威来源，可通过 `scripts/sire_rsi.py` 执行提案、评估、激活、状态查询和回滚。写命令先写机器级归档库（`SIRE_ARCHIVE_DB` 或 `SIRE_ARCHIVE_ROOT`，或 `--archive-db`），再写仓库库；解析不到归档库时拒绝写入（仅测试可用 `--repo-only`）。`status` 只读。`snapshot_db.py` 发现仓库库有而归档库缺失的 RSI 记录时拒绝发布。
 
+### 多提案先合并再激活（2026-11-08，用户定）
+
+每次触发 RSI（登记新提案、评估或激活）前，先 `sire_rsi.py status` 列出所有未完成的提案（`PROPOSED` / `EVALUATED_PASS`，含只存在于一个库里的记录），**先做合并分析再动库**：
+1. 逐条核对内容是否仍然有效（改动文件是否还在、假设是否已被后来的机制取代）。
+2. 重复登记的、已被取代的、用户说不要的 → 作废（`rollback` 并写明理由）；仍有效的 → **合并成一个最新提案**，一次评估、一次激活，链头始终是最新内容。
+3. 把“合并分析 + 将要执行的步骤”先发给用户，用户确认后再写库；写库分小批，每批后核对仓库库与归档库一致。
+不要逐个激活旧提案：每次激活都会让版本链前进，使其余提案的父版本过期而被拒（`版本链已被他端推进`）。
+`config-hash` 取**提交之后**的 `git -C <仓库根> rev-parse HEAD:sire/workflow/shared/sire`，因此顺序是：登记 → 改动 → 提交 → 评估 → 激活。
+
 ## 5.2 遥测驱动的自动发现
 
 `scripts/sire_telemetry.py` 是 RSI 的自动观察来源：Claude、Codex、Qoder 三端的钩子记录每个任务各阶段耗时（Qoder 由 `scripts/sire_qoder.py install` 注册，多接一个 `PostToolUseFailure` 以准确记录失败；本端装完后需重启客户端才加载钩子，用 `sire_qoder.py verify` 复核），遥测库 `DATA_DIR/sire_telemetry.sqlite3`，保留 60 天，不进 Git，任务结束后后台 `analyze` 按 `RULES` 中的规则与阈值累计命中，状态流转为 `OPEN → PROPOSED →（修复）FIXED`；修复后同类问题再次累积到阈值记为 `REGRESSED`，提示回滚或重做；不适合自动修复的记为 `IGNORED`。7 天内未再出现的 `OPEN` 发现重新计数。处理流程见 `global-contract.md` § RSI 自动发现与自我优化；`sire_run.py finish` 会强制核对 pending（未处理即 BLOCKED，留 `pending-check.json`）。采集存活自检 `COLLECTION_DEAD` 从客户端配置推导应采集的 client 名单（`SIRE_CLIENT_CONFIGS` 可覆盖），长时间无事件即报发现，30 分钟去重。新增检测规则同样是工作流改动，须走 5.1 门禁。采集面本身出问题也算机制缺陷：某客户端已配置钩子但长时间无事件，按 `rsi_unregistered_change` 同级对待，登记提案修复（历史教训见知识库 P-20260931：Claude 侧曾静默断流而无人发现）。
