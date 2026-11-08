@@ -7,3 +7,10 @@ sire/data/sire_vectors.sqlite3
 
 # SIRE 任务遥测库（本机运行数据，不进 Git）
 sire/data/sire_telemetry.sqlite3*
+.env
+.env.*
+!.env.example
+.DS_Store
+node_modules/
+__pycache__/
+*.log
