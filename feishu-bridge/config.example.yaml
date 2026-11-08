@@ -1,0 +1,71 @@
+# 复制为 config.yaml 后修改。${VAR} 会从环境变量 / .env 读取。
+
+feishu:
+  appId: ${FEISHU_APP_ID}
+  appSecret: ${FEISHU_APP_SECRET}
+  domain: feishu            # 国际版 Lark 填 lark
+  # 允许使用机器人的人。先留空启动，给机器人发任意消息，它会回复你的 open_id，填进来后重启。
+  allowedOpenIds: []
+  replyInThread: true       # 回复落在话题里（一个会话 = 一个话题）
+
+# 分析不出来时交给谁
+defaultAgent: claude
+
+# 给意图分析用的助手说明：写清楚你希望什么活交给谁（下面只是示例，按自己习惯改）
+agents:
+  claude:
+    description: 需要理解上下文的复杂任务：排查问题、重构、设计方案、写文档
+  codex:
+    description: 边界清楚的具体编码任务：写单元测试、写脚本、小改动
+
+analyzer:
+  mode: llm                 # llm = 用本机 Claude Code 分析（不需要额外 API Key）；rules = 只按关键词和默认值
+  # model: haiku            # 可选：分析用的模型，填 Claude Code 支持的名字；不填用 Claude Code 默认模型
+  confirmBelow: 0.6         # 模型置信度低于该值时，发卡片让你选
+  timeoutMs: 30000
+  keywords:                 # rules 模式、或模型分析失败时使用
+    codex: [单测, 单元测试, 脚本]
+    claude: [重构, 文档, 方案, 排查]
+
+# 项目：飞书里只能使用这里列出的目录，不能传任意路径
+projects:
+  web:
+    path: ~/code/web
+    aliases: [前端]
+  api:
+    path: ~/code/api
+    aliases: [后端]
+    # agent: codex          # 可选：这个项目固定交给谁，跳过分析
+defaultProject: web         # 消息里没提项目时用哪个
+
+claude:
+  # default：需要权限的操作发飞书卡片让你确认（沿用你在 ~/.claude/settings.json 里的 allow 规则）
+  # acceptEdits：自动允许改文件，命令仍需确认；dontAsk：没预先允许的一律拒绝；bypassPermissions：全部放行（不建议）
+  permissionMode: default
+  # model: sonnet
+  # 在飞书续聊一个"正在终端里打开着"的会话时：fork = 分叉出新会话继续（安全）；resume = 直接续上；reject = 拒绝
+  whenLive: fork
+  approvalTimeoutSec: 600   # 审批卡片多久没人点就按拒绝处理
+
+codex:
+  # Codex 无头执行不能中途审批，权限在这里预先定好
+  sandboxMode: workspace-write     # read-only / workspace-write / danger-full-access
+  approvalPolicy: never
+  networkAccessEnabled: false
+  skipGitRepoCheck: false          # Codex 默认只在 git 仓库里干活
+  # model: gpt-5-codex
+
+# 本地终端里的 Claude Code / Codex 会话同步到飞书（配合 hooks，见 README）
+ingest:
+  enabled: true
+  host: 127.0.0.1
+  port: 7788
+  # token: 随便一串字符      # 可选：hooks 需带 x-bridge-token 头
+  # mirrorToOpenId: ou_xxx   # 同步给谁，默认 allowedOpenIds 第一个
+  forwardNotifications: true # 终端里的 AI 在等你确认 / 输入时，也提醒到飞书
+
+ui:
+  updateIntervalMs: 1500    # 执行中卡片的刷新间隔
+  maxCardChars: 6000        # 结果超过这个长度时，卡片里放开头，全文作为文件发送
+
+storagePath: data/bridge.db

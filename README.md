@@ -34,3 +34,11 @@ claude-cloud-repo
 - SIRE 工作流（v6 Skill 规范）：[`workflows/sire/`](workflows/sire/README.md)
 - SIRE 数据库（结构摘要、精选知识、检索评测）：[`database/sire/`](database/sire/README.md)
 - 导出说明与边界：[`docs/sire-export.md`](docs/sire-export.md)
+
+## 文档
+
+- [飞书 × 多 AI 中枢（AI Hub）方案设计](docs/feishu-ai-hub-design.md)
+
+## 项目
+
+- [feishu-bridge](feishu-bridge/)：飞书 ↔ Claude Code / Codex 本地桥接服务（方案的本地版实现）
