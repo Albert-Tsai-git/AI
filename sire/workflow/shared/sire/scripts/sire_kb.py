@@ -150,12 +150,14 @@ def build_index(records):
     return idx
 
 
-def cmd_reindex(_args):
+def cmd_reindex(args):
     records, conflicts = parse_records()
     if conflicts:
         items = ["%s(%s)" % (k, ",".join(sorted(set(v)))) for k, v in sorted(conflicts.items())]
         print("WARN 编号重复: " + "; ".join(items))
-        return 1
+        # 归档 worker 以 --warn-conflicts 调用：告警但继续建索引，避免一条重复编号卡住全部归档 job
+        if not getattr(args, "warn_conflicts", False):
+            return 1
     idx = build_index(records)
     os.makedirs(KB_DIR, exist_ok=True)
     with open(INDEX_PATH, "w", encoding="utf-8") as fh:
@@ -579,7 +581,9 @@ def cmd_stats(_args):
 def main():
     parser = argparse.ArgumentParser(description="SIRE v6 知识库 CLI")
     sub = parser.add_subparsers(dest="cmd")
-    sub.add_parser("reindex")
+    p_reindex = sub.add_parser("reindex")
+    p_reindex.add_argument("--warn-conflicts", action="store_true",
+                           help="编号重复时只告警并继续建索引（归档 worker 使用）")
     p = sub.add_parser("search", aliases=["search-database", "database-search"])
     p.set_defaults(database=False)
     p.add_argument("query", nargs="+")

@@ -55,9 +55,15 @@ def enqueue(run_dir: str | Path, project: str, env: dict[str, str] | None = None
     env = dict(os.environ if env is None else env)
     run_dir = Path(run_dir).resolve()
     archive = archive_database_path()
-    archive_path = str(Path(env.get("SIRE_ARCHIVE_DB") or env.get("SIRE_ARCHIVE_ROOT", "") and
-                            (Path(env["SIRE_ARCHIVE_ROOT"]) / "sire_vectors.sqlite3") or
-                            (archive or "")).expanduser().resolve())
+    # 未配置归档库时保持空串：旧写法会把 Path("") 解析成当前目录，worker 误判为“已配置”
+    if env.get("SIRE_ARCHIVE_DB"):
+        archive_path = str(Path(env["SIRE_ARCHIVE_DB"]).expanduser().resolve())
+    elif env.get("SIRE_ARCHIVE_ROOT"):
+        archive_path = str((Path(env["SIRE_ARCHIVE_ROOT"]).expanduser() / "sire_vectors.sqlite3").resolve())
+    elif archive:
+        archive_path = str(archive.resolve())
+    else:
+        archive_path = ""
     queue_file = QUEUE / f"{run_dir.name}.json"
     prior = {}
     if queue_file.exists():
@@ -120,6 +126,15 @@ def verify_database(path: Path, run_id: str, run_dir: Path) -> None:
             raise RuntimeError(f"final run.json missing or differs in database: {path}")
 
 
+def queue_order(path: Path) -> tuple:
+    """失败次数少的 job 先处理，避免队头长期失败的 job 阻塞其余归档。"""
+    try:
+        attempts = int(json.loads(path.read_text(encoding="utf-8")).get("attempts", 0))
+    except (OSError, ValueError, AttributeError):
+        attempts = 0
+    return (attempts, path.name)
+
+
 def worker() -> int:
     QUEUE.mkdir(parents=True, exist_ok=True)
     lock = QUEUE / "worker.lock"
@@ -134,7 +149,7 @@ def worker() -> int:
         return 0
     os.close(fd)
     try:
-        for queue_file in sorted(QUEUE.glob("*.json")):
+        for queue_file in sorted(QUEUE.glob("*.json"), key=queue_order):
             job = {}
             try:
                 job = json.loads(queue_file.read_text(encoding="utf-8"))
@@ -149,7 +164,7 @@ def worker() -> int:
                 job.update(state="running", attempts=int(job.get("attempts", 0)) + 1,
                            updated_at=stamp(), last_error="")
                 write_json(queue_file, job)
-                run_step([sys.executable, str(SCRIPTS / "sire_kb.py"), "reindex"], env)
+                run_step([sys.executable, str(SCRIPTS / "sire_kb.py"), "reindex", "--warn-conflicts"], env)
                 for database in dict.fromkeys((job["working_db"], str(archive_db.resolve()))):
                     run_step([sys.executable, str(SCRIPTS / "sire_vector_db.py"), "--db", database, "index"], env)
                     run_step([sys.executable, str(SCRIPTS / "sire_vector_db.py"), "--db", database, "migrate"], env)
@@ -164,8 +179,14 @@ def worker() -> int:
                 job.update(state="done", updated_at=stamp(), last_error="")
                 write_json(queue_file, job)
             except Exception as exc:  # keep the durable queue entry for the next SIRE trigger
+                print(f"{stamp()} {queue_file.name} 失败: {exc}", flush=True)
+                if not job:  # 队列文件读取失败时不能用空对象覆盖原记录
+                    continue
                 job.update(state="pending", updated_at=stamp(), last_error=str(exc))
-                write_json(queue_file, job)
+                try:
+                    write_json(queue_file, job)
+                except OSError as write_exc:  # 写回被占用时只记录，不终止 worker，其余 job 继续
+                    print(f"{stamp()} {queue_file.name} 状态写回失败: {write_exc}", flush=True)
     finally:
         try:
             lock.unlink()
