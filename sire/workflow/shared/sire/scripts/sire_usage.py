@@ -42,9 +42,11 @@ def project_dir(cwd: str) -> Path | None:
 
 def latest_transcript(cwd: str) -> Path | None:
     d = project_dir(cwd)
-    if d is None:
-        return None
-    files = [f for f in d.glob("*.jsonl") if f.is_file()]
+    files = [f for f in d.glob("*.jsonl") if f.is_file()] if d is not None else []
+    if not files:
+        # 当前目录对应不到转录（例如在共享技能目录里运行脚本、统计的却是别的项目）：
+        # 退而取全机最近修改的主转录；子代理转录在 subagents 子目录里，不参与选择
+        files = [f for f in PROJECTS.glob("*/*.jsonl") if f.is_file()]
     return max(files, key=lambda f: f.stat().st_mtime) if files else None
 
 
