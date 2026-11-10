@@ -10,6 +10,7 @@ from datetime import datetime
 from pathlib import Path
 
 from sire_paths import ledger_runs_dir
+from sire_codex_cache import read_events, locate_session
 
 FIELDS = ("input_tokens", "output_tokens", "cached_input_tokens",
           "cache_write_input_tokens", "reasoning_output_tokens", "total_tokens")
@@ -44,27 +45,23 @@ def counters(value):
             if type(value.get(k)) is int and value[k] >= 0}
 
 
-def load(path: Path) -> dict:
+def load(path: Path, use_cache=True) -> dict:
     if path.suffix != ".jsonl":
         raise ValueError("暂不支持压缩转录；没有真实记录，不猜测")
-    rows, warnings = [], []
-    with path.open(encoding="utf-8") as stream:
-        for line in stream:
-            try:
-                row = json.loads(line)
-                if isinstance(row, dict):
-                    rows.append(row)
-            except ValueError:
-                warnings.append("转录存在未完整写入或无效行")
+    rows, warnings = read_events(path, use_cache=use_cache)
     meta = next((r.get("payload", {}) for r in rows if r.get("type") == "session_meta"), {})
-    turns, samples, snapshots = [], [], []
+    turns, samples, snapshots, candidates = [], [], [], []
     current_turn, model, previous = None, "未知模型", None
-    detailed = set()
-    has_cumulative = any(
-        (r.get("type") == "token_usage_record" and counters(r.get("payload", {}).get("thread_token_usage")))
-        or (r.get("type") == "event_msg" and r.get("payload", {}).get("type") == "token_count"
-            and counters((r.get("payload", {}).get("info") or {}).get("total_token_usage")))
-        for r in rows)
+    # 同一回合有可去重的响应明细时，仅统计明细；不再与累计快照相加。
+    detail_turns, details = set(), {}
+    context_turn = None
+    for row in rows:
+        p = row.get("payload") or {}
+        if row.get("type") == "turn_context" or (row.get("type") == "event_msg" and p.get("type") == "task_started"):
+            context_turn = p.get("turn_id") or context_turn
+        if row.get("type") == "token_usage_record" and p.get("response_id") and counters(p.get("usage")) is not None:
+            detail_turns.add(p.get("turn_id") or context_turn)
+    candidate_previous = None
     for row in rows:
         ts, kind = stamp(row.get("timestamp")), row.get("type")
         p = row.get("payload") or {}
@@ -92,6 +89,20 @@ def load(path: Path) -> dict:
         else:
             continue
         turn_id = p.get("turn_id") or current_turn
+        if turn_id in detail_turns:
+            if kind == "token_usage_record" and p.get("response_id") and single is not None:
+                details[(turn_id, p["response_id"])] = {"ts": ts, "turn_id": turn_id,
+                                                       "model": model, "usage": single, "method": "detail"}
+                if total is not None:
+                    if previous is not None and any(total[k] < previous[k] for k in ("input_tokens", "output_tokens")):
+                        warnings.append("累计回退后重新起算：按唯一响应明细计数，不等待累计值超过旧高水位；仅统计已落盘明细")
+            elif kind == "token_usage_record":
+                warnings.append("响应明细缺少有效 usage 或 response_id，未计入；本回合仅统计已落盘明细")
+            # 明细回合不叠加累计量，但末尾快照仍是下一回合的真实累计基线。
+            if total is not None:
+                previous = total
+                candidate_previous = None
+            continue
         delta = None
         if total is not None:
             if previous is None:
@@ -103,24 +114,24 @@ def load(path: Path) -> dict:
                 else:
                     warnings.append("首个累计快照缺少基线，未计入该快照")
             elif any(total[k] < previous[k] for k in ("input_tokens", "output_tokens")):
-                warnings.append("累计用量回退，区间不完整；保留原高水位，回退及恢复快照不重复计入")
+                warnings.append("累计回退：无法区分重置与乱序，区间不完整；低位候选增量单列，不并入已确认总量")
+                if candidate_previous is not None and all(total[k] >= candidate_previous[k] for k in ("input_tokens", "output_tokens")):
+                    candidates.append({"ts": ts, "turn_id": turn_id, "model": model,
+                                       "usage": {k: total[k] - candidate_previous[k]
+                                                 for k in ("input_tokens", "output_tokens")}})
+                candidate_previous = total
                 continue
             else:
                 delta = {k: total[k] - previous[k] for k in total.keys() & previous.keys()
                          if total[k] >= previous[k]}
             previous = total
-        elif single is not None and not has_cumulative:
-            response_id = p.get("response_id")
-            if response_id and response_id not in detailed:
-                detailed.add(response_id)
-                delta = single
-            elif not response_id:
-                warnings.append("单次用量缺少 response_id，无法可靠去重，未计入")
+            candidate_previous = None
         elif single is not None:
             warnings.append("无累计锚点的明细未单独叠加，防止与累计序列重复")
         if delta is not None:
             samples.append({"ts": ts, "turn_id": turn_id, "model": model, "usage": delta})
-    return {"meta": meta, "rows": rows, "turns": turns, "samples": samples,
+    samples.extend(details.values())
+    return {"meta": meta, "rows": rows, "turns": turns, "samples": samples, "candidates": candidates,
             "snapshots": snapshots, "warnings": list(dict.fromkeys(warnings))}
 
 
@@ -131,8 +142,6 @@ def select(data, since=0, until=math.inf, turn_id=None):
 
 def usage(data, since=0, until=math.inf, turn_id=None):
     selected = select(data, since, until, turn_id)
-    if not selected:
-        return "额度消耗：没有真实记录（该区间没有可归属的 Codex usage 事件）"
     parts = []
     for model in sorted({s["model"] for s in selected}):
         items = [s["usage"] for s in selected if s["model"] == model]
@@ -141,7 +150,16 @@ def usage(data, since=0, until=math.inf, turn_id=None):
         for key, label in (("cached_input_tokens", "缓存输入"), ("reasoning_output_tokens", "推理输出")):
             text += f"；{label} {totals[key]:,}" if key in totals else f"；{label}没有真实记录"
         parts.append(text)
-    return "额度消耗：" + "；".join(parts) + "（缓存、推理为子集，不重复相加；非账号额度扣减）"
+    text = ("额度消耗：" + "；".join(parts) + "（缓存、推理为子集，不重复相加；非账号额度扣减）") if selected else "额度消耗：没有真实记录（该区间没有可归属的 Codex usage 事件）"
+    if any(s.get("method") == "detail" for s in selected):
+        text += "；响应明细部分仅统计已落盘明细，不保证完整覆盖回合"
+    possible = [s for s in data.get("candidates", []) if since <= s["ts"] < until
+                and (turn_id is None or s["turn_id"] == turn_id)]
+    if possible:
+        text += (f"；候选增量 输入 {sum(s['usage']['input_tokens'] for s in possible):,} / "
+                 f"输出 {sum(s['usage']['output_tokens'] for s in possible):,} token"
+                 "（无法区分重置与乱序，可能与确认量重叠，未并入已确认总量）")
+    return text
 
 
 def find_source(args):
@@ -154,11 +172,8 @@ def find_source(args):
             raise ValueError("没有当前 Codex session_id；请显式指定 --session-id 或 --file，不猜测最近会话")
         # 不将用户输入拼接成 glob，避免通配匹配其他会话。
         root = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex") / "sessions"
-        matches = [p for p in root.rglob("rollout-*.jsonl") if p.name.endswith("-" + requested + ".jsonl")]
-        if len(matches) != 1:
-            raise ValueError("没有找到唯一的 Codex rollout（压缩文件暂不支持）；没有真实记录")
-        path = matches[0]
-    data = load(path)
+        path = locate_session(root, requested, use_cache=not args.no_cache)
+    data = load(path, use_cache=not args.no_cache)
     meta = data["meta"]
     if not meta.get("id") or not meta.get("cwd"):
         raise ValueError("Codex 转录缺少 session_meta.id/cwd；没有真实记录")

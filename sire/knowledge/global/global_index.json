@@ -5362,7 +5362,7 @@
       "line": 3436,
       "date": "2026-11-10",
       "project": "SIRE Codex 用量适配",
-      "status": "已完成实现与评估，版本激活以 RSI 记录为准。",
+      "status": "已实现评审修复；本次未测试，版本激活以 RSI 记录为准。",
       "keywords": [
         "Codex",
         "rollout",
@@ -11918,6 +11918,6 @@
       "H-009"
     ]
   },
-  "last_updated": "2026-11-10T07:53:43Z",
+  "last_updated": "2026-11-10T08:54:50Z",
   "total_records": 251
 }

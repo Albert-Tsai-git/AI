@@ -372,6 +372,7 @@ def main() -> int:
     ap.add_argument("--session-id", help="显式绑定会话，优先于客户端环境变量")
     ap.add_argument("--turn-id", help="Codex 回合 ID；默认最近的 task_started")
     ap.add_argument("--run-id", help="额外隔离运行记录；默认使用当前回合")
+    ap.add_argument("--no-cache", action="store_true", help="Codex 强制流式重读并重新定位，不使用派生缓存")
     ap.add_argument("--by-day", action="store_true")
     ap.add_argument("--plan-mark", type=float, metavar="五小时%", help="记录一次 5 小时额度读数（任务开始时调用）")
     ap.add_argument("--plan-end", type=float, metavar="五小时%", help="配合 --final：结束时的 5 小时额度读数")
@@ -401,7 +402,7 @@ def main() -> int:
             return 2
     # Claude 旧统计及渲染保留；日志按会话、回合起点、run 隔离，不再读全局旧日志。
     main_file = Path(args.file) if args.file else latest_transcript(args.cwd)
-    requested_session = args.session_id or os.environ.get("CLAUDE_SESSION_ID")
+    requested_session = args.session_id or (None if args.file else os.environ.get("CLAUDE_SESSION_ID"))
     if requested_session and not args.file:
         project = project_dir(args.cwd)
         main_file = next((f for f in project.glob("*.jsonl") if f.stem == requested_session), None) if project else None
@@ -419,10 +420,11 @@ def main() -> int:
         key = hashlib.sha256(scope.encode()).hexdigest()[:24]
         base = ledger_runs_dir() / ("usage-" + key)
         # 覆盖路径仍隔离到相邻的带 scope 文件，不能复用其他会话的内容。
-        stage_base = Path(os.environ.get("SIRE_STAGE_LOG") or base / "stages.jsonl")
-        plan_base = Path(os.environ.get("SIRE_PLAN_LOG") or base / "plan.jsonl")
-        STAGE_LOG = stage_base.with_name(stage_base.stem + "-" + key + stage_base.suffix)
-        PLAN_LOG = plan_base.with_name(plan_base.stem + "-" + key + plan_base.suffix)
+        stage_override, plan_override = os.environ.get("SIRE_STAGE_LOG"), os.environ.get("SIRE_PLAN_LOG")
+        stage_base = Path(stage_override) if stage_override else base / "stages.jsonl"
+        plan_base = Path(plan_override) if plan_override else base / "plan.jsonl"
+        STAGE_LOG = stage_base.with_name(stage_base.stem + "-" + key + stage_base.suffix) if stage_override else stage_base
+        PLAN_LOG = plan_base.with_name(plan_base.stem + "-" + key + plan_base.suffix) if plan_override else plan_base
     if args.stage_start or args.stage_end:
         print(stage_mark("start" if args.stage_start else "end", args.stage_start or args.stage_end, args.cwd, main_file))
         return 0

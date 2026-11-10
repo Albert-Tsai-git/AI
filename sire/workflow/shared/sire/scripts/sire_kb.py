@@ -160,9 +160,19 @@ def cmd_reindex(args):
             return 1
     idx = build_index(records)
     os.makedirs(KB_DIR, exist_ok=True)
-    with open(INDEX_PATH, "w", encoding="utf-8") as fh:
-        json.dump(idx, fh, ensure_ascii=False, indent=2)
-    print("reindex ok -> %s" % INDEX_PATH)
+    unchanged = False
+    try:
+        with open(INDEX_PATH, encoding="utf-8") as fh:
+            previous = json.load(fh)
+        unchanged = (isinstance(previous, dict)
+                     and {k: v for k, v in previous.items() if k != "last_updated"}
+                     == {k: v for k, v in idx.items() if k != "last_updated"})
+    except (OSError, ValueError):
+        pass
+    if not unchanged:
+        with open(INDEX_PATH, "w", encoding="utf-8") as fh:
+            json.dump(idx, fh, ensure_ascii=False, indent=2)
+    print("reindex %s -> %s" % ("unchanged" if unchanged else "ok", INDEX_PATH))
     print("total_records=%d" % idx["total_records"])
     by = {}
     for r in records:

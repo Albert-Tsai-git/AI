@@ -63,10 +63,17 @@ class CodexUsageCliTest(unittest.TestCase):
         self.transcript.write_text("".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8")
         return self.transcript
 
-    def cli(self, *args, transcript=None, cwd=None, session_id=None, client="codex"):
+    def cli(self, *args, transcript=None, cwd=None, session_id=None, client="codex",
+            env_overrides=None, use_stage_log=True):
         env = os.environ.copy()
+        env["SIRE_LEDGER_ROOT"] = str(self.root / "ledger-default")
         env.pop("CODEX_THREAD_ID", None)  # 保证 fixture 身份由显式 --session-id 决定
-        env["SIRE_STAGE_LOG"] = str(self.stage_log)
+        if use_stage_log:
+            env["SIRE_STAGE_LOG"] = str(self.stage_log)
+        else:
+            env.pop("SIRE_STAGE_LOG", None)
+        if env_overrides:
+            env.update(env_overrides)
         transcript = transcript or self.transcript
         cwd = cwd or self.cwd
         session_id = self.session_id if session_id is None else session_id
@@ -149,6 +156,7 @@ class CodexUsageCliTest(unittest.TestCase):
         self.write_fixture()
         decoy.write_text(self.transcript.read_text(encoding="utf-8"), encoding="utf-8")
         env = os.environ.copy()
+        env["SIRE_LEDGER_ROOT"] = str(self.root / "ledger-default")
         env.pop("CODEX_THREAD_ID", None)
         env.pop("CODEX_SESSION_ID", None)
         env["CODEX_HOME"] = str(self.root / "codex-home")
@@ -309,6 +317,136 @@ class CodexUsageCliTest(unittest.TestCase):
         self.assertIn(f"快照 {snapshot_time} 已用 12%", result.stdout)
         self.assertIn("10% → 12%", result.stdout)
         self.assertNotIn("已用 40%", result.stdout)
+
+    def test_c15_response_details_recover_after_cumulative_rollback_and_deduplicate(self):
+        rows = [
+            self.row("session_meta", {"id": self.session_id, "cwd": self.cwd}),
+            self.row("event_msg", {"type": "task_started", "turn_id": "turn-1"}, 1),
+            self.row("turn_context", {"turn_id": "turn-1", "model": "fixture-model", "cwd": self.cwd}, 2),
+            self.row("token_usage_record", {
+                "thread_id": self.session_id, "turn_id": "turn-1", "response_id": "r1",
+                "usage": {"input_tokens": 1000, "output_tokens": 100},
+                "thread_token_usage": {"input_tokens": 1000, "output_tokens": 100},
+            }, 3),
+            self.row("token_usage_record", {
+                "thread_id": self.session_id, "turn_id": "turn-1", "response_id": "r2",
+                "usage": {"input_tokens": 30, "output_tokens": 3},
+                "thread_token_usage": {"input_tokens": 30, "output_tokens": 3},
+            }, 4),
+            self.row("token_usage_record", {
+                "thread_id": self.session_id, "turn_id": "turn-1", "response_id": "r2",
+                "usage": {"input_tokens": 30, "output_tokens": 3},
+                "thread_token_usage": {"input_tokens": 30, "output_tokens": 3},
+            }, 5),
+            self.row("token_usage_record", {
+                "thread_id": self.session_id, "turn_id": "turn-1", "response_id": "r3",
+                "usage": {"input_tokens": 20, "output_tokens": 2},
+                "thread_token_usage": {"input_tokens": 50, "output_tokens": 5},
+            }, 6),
+            self.row("event_msg", {"type": "token_count", "turn_id": "turn-1", "info": {
+                "total_token_usage": {"input_tokens": 50, "output_tokens": 5}}, "rate_limits": {}}, 7),
+        ]
+        self.write_fixture(rows)
+        result = self.cli("--turn")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("输入 1,050", result.stdout)
+        self.assertIn("输出 105", result.stdout)
+        self.assertIn("仅统计已落盘明细", result.stdout)
+        self.assertIn("回退后重新起算", result.stdout)
+
+    def test_c16_ambiguous_cumulative_rollback_does_not_confirm_candidate_delta(self):
+        rows = [
+            self.row("session_meta", {"id": self.session_id, "cwd": self.cwd}),
+            self.row("event_msg", {"type": "task_started", "turn_id": "turn-1"}, 1),
+            self.row("turn_context", {"turn_id": "turn-1", "model": "fixture-model", "cwd": self.cwd}, 2),
+            self.row("event_msg", {"type": "token_count", "turn_id": "turn-1", "info": {
+                "total_token_usage": {"input_tokens": 120, "output_tokens": 12}}, "rate_limits": {}}, 3),
+            self.row("event_msg", {"type": "token_count", "turn_id": "turn-1", "info": {
+                "total_token_usage": {"input_tokens": 80, "output_tokens": 8}}, "rate_limits": {}}, 4),
+            self.row("event_msg", {"type": "token_count", "turn_id": "turn-1", "info": {
+                "total_token_usage": {"input_tokens": 90, "output_tokens": 9}}, "rate_limits": {}}, 5),
+            self.row("event_msg", {"type": "token_count", "turn_id": "turn-1", "info": {
+                "total_token_usage": {"input_tokens": 120, "output_tokens": 12}}, "rate_limits": {}}, 6),
+        ]
+        self.write_fixture(rows)
+        result = self.cli("--turn")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("候选增量", result.stdout)
+        self.assertIn("无法区分重置与乱序", result.stdout)
+        self.assertNotIn("输入 40", result.stdout)
+        self.assertNotIn("输出 4", result.stdout)
+
+    def claude_fixture(self):
+        path = self.root / "fixture_claude_stage_session.jsonl"
+        cwd = str(self.root / "claude_stage_project")
+        rows = [
+            {"timestamp": "2026-11-10T01:00:00Z", "type": "user", "message": {"content": "hello"}},
+            {"timestamp": "2026-11-10T01:00:01Z", "type": "assistant", "message": {
+                "id": "claude-stage-response", "model": "fixture-claude-model",
+                "usage": {"input_tokens": 21, "output_tokens": 7},
+            }},
+        ]
+        path.write_text("".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8")
+        return path, cwd
+
+    def test_c17_claude_explicit_file_ignores_session_env_but_explicit_id_must_match(self):
+        path, cwd = self.claude_fixture()
+        env = {"CLAUDE_SESSION_ID": "other"}
+        accepted = self.cli("--session", transcript=path, cwd=cwd, session_id="",
+                            client="claude", env_overrides=env)
+        self.assertEqual(accepted.returncode, 0, accepted.stderr)
+        self.assertIn("fixture-claude-model", accepted.stdout)
+        rejected = self.cli("--session", transcript=path, cwd=cwd, session_id="other",
+                            client="claude", env_overrides=env)
+        self.assertNotEqual(rejected.returncode, 0)
+
+    def test_c18_claude_stage_log_key_is_applied_once_for_default_and_custom_paths(self):
+        path, cwd = self.claude_fixture()
+        ledger_root = self.root / "ledger"
+        env = {"SIRE_LEDGER_ROOT": str(ledger_root)}
+        default = self.cli("--stage-start", "R1", transcript=path, cwd=cwd,
+                           session_id=path.stem, client="claude", env_overrides=env,
+                           use_stage_log=False)
+        self.assertEqual(default.returncode, 0, default.stderr)
+        default_logs = list(ledger_root.glob("runs/usage-*/stages.jsonl"))
+        self.assertEqual(len(default_logs), 1)
+        key = default_logs[0].parent.name.removeprefix("usage-")
+        self.assertTrue(key)
+
+        custom_base = self.root / "custom_stage.jsonl"
+        custom = self.cli("--stage-start", "R1", transcript=path, cwd=cwd,
+                          session_id=path.stem, client="claude",
+                          env_overrides={**env, "SIRE_STAGE_LOG": str(custom_base)})
+        self.assertEqual(custom.returncode, 0, custom.stderr)
+        expected_custom = self.root / f"custom_stage-{key}.jsonl"
+        self.assertTrue(expected_custom.is_file())
+        self.assertEqual(list(self.root.glob("custom_stage-*.jsonl")), [expected_custom])
+
+    def test_c19_detail_turn_baseline_carries_into_later_cumulative_only_turn(self):
+        rows = [
+            self.row("session_meta", {"id": self.session_id, "cwd": self.cwd}),
+            self.row("event_msg", {"type": "task_started", "turn_id": "turn-A"}, 1),
+            self.row("turn_context", {"turn_id": "turn-A", "model": "fixture-model", "cwd": self.cwd}, 2),
+            self.row("token_usage_record", {
+                "thread_id": self.session_id, "turn_id": "turn-A", "response_id": "turn-a-response",
+                "usage": {"input_tokens": 10, "output_tokens": 1},
+                "thread_token_usage": {"input_tokens": 110, "output_tokens": 11},
+            }, 3),
+            self.row("event_msg", {"type": "token_count", "turn_id": "turn-A", "info": {
+                "total_token_usage": {"input_tokens": 120, "output_tokens": 12}}, "rate_limits": {}}, 4),
+            self.row("event_msg", {"type": "task_started", "turn_id": "turn-B"}, 10),
+            self.row("turn_context", {"turn_id": "turn-B", "model": "fixture-model", "cwd": self.cwd}, 11),
+            self.row("event_msg", {"type": "token_count", "turn_id": "turn-B", "info": {
+                "total_token_usage": {"input_tokens": 130, "output_tokens": 13},
+                "last_token_usage": {"input_tokens": 10, "output_tokens": 1}}, "rate_limits": {}}, 12),
+        ]
+        self.write_fixture(rows)
+        result = self.cli("--turn")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("输入 10", result.stdout)
+        self.assertIn("输出 1", result.stdout)
+        self.assertNotIn("输入 20", result.stdout)
+        self.assertNotIn("输出 2", result.stdout)
 
 
 if __name__ == "__main__":
