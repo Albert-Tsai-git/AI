@@ -191,7 +191,36 @@ def stage_mark(kind: str, stage: str, cwd: str) -> str:
         agg = aggregate(msgs, start, now)
         weighted = int(sum(sum(a[k] * WEIGHT[k] for k in KEYS) for a in agg.values()))
     cost = f";额度折算约 {weighted:,}(估算)" if weighted is not None else ";额度:未读到 usage"
+    with STAGE_LOG.open("a", encoding="utf-8") as f:
+        f.write(json.dumps({"ts": now, "kind": "end", "stage": stage, "start": start, "sec": now - start,
+                            "weighted": weighted or 0}) + "\n")
     return f"{stage} 耗时:{dur(now - start)}({hms(start)} → {hms(now)}){cost}"
+
+
+def stage_rank(turn_start: float) -> str:
+    """本轮各阶段耗时与额度折算的排名：哪个阶段耗时最长、哪个阶段消耗最多。"""
+    rows: dict[str, dict] = {}
+    try:
+        for line in STAGE_LOG.read_text(encoding="utf-8").splitlines():
+            try:
+                r = json.loads(line)
+            except ValueError:
+                continue
+            if r.get("kind") == "end" and r.get("start", 0) >= turn_start - 5:
+                a = rows.setdefault(r["stage"], {"sec": 0.0, "weighted": 0})
+                a["sec"] += r["sec"]          # 同一阶段多次进入则累加
+                a["weighted"] += r["weighted"]
+    except OSError:
+        pass
+    if not rows:
+        return "阶段排名:本轮没有阶段计时记录(阶段没有用 --stage-start/--stage-end 计时),不估算"
+    longest = max(rows.items(), key=lambda kv: kv[1]["sec"])
+    costly = max(rows.items(), key=lambda kv: kv[1]["weighted"])
+    order = "；".join(f"{k} {dur(v['sec'])}/折算 {v['weighted']:,}"
+                      for k, v in sorted(rows.items(), key=lambda kv: -kv[1]["sec"]))
+    return (f"执行最长的阶段:{longest[0]}({dur(longest[1]['sec'])});消耗额度最多的阶段:{costly[0]}"
+            f"(折算约 {costly[1]['weighted']:,},估算)。各阶段:{order}。"
+            "未计时的阶段不在排名内")
 
 
 def plan_line(turn_start: float, five_end: float | None, weekly_end: float | None) -> str:
@@ -355,6 +384,7 @@ def main() -> int:
         print(timing_line(timing(main_file, time.time())))
         print(one_line(aggregate(msgs, since)))
         print(plan_line(since, args.plan_end, args.weekly))
+        print(stage_rank(since))
         return 0
     if args.turn:
         since = turn_since

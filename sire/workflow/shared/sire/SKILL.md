@@ -84,7 +84,7 @@ Before R7 starts, list each test ID, real user operation steps, expected behavio
 
 ## Output and evidence contract
 
-每个阶段和角色的“执行中”“执行完毕”“跳过”（含原因）、产物、验证结果和阻塞项，写入本次运行目录的台账和证据文件。对话里采用“边执行边汇报”（v6.48）：R0–R10 与模型选择门禁**每个阶段都单独发消息**——进入阶段先运行 `sire_usage.py --stage-start R1`，发加粗标题 `**R1 - 检索 - 执行中,请等待…**`；完成后发 `**R1 - 检索 - 已完成**`，下面分行写结果、详情、建议/风险、耗时、额度（耗时和额度取自 `sire_usage.py --stage-end R1` 的输出，不手写）；不执行的阶段发 `**R3 - 拆解 - 已跳过**` 并写原因；全部结束发 `**全部完成**`——汇总消息必须自带完整的阶段清单（R0–R10 与模型选择门禁逐个列出，含结果、详情、耗时/额度或跳过原因），因为中途消息可能被折叠看不到；清单后再写总耗时、总额度消耗、风险、建议、未测试。每个阶段不论多短、是否跳过都完整写出，不得省略、合并或写“同上”。台账路径只在出错时给。详见 `references/global-contract.md` § SIRE 输出契约。
+每个阶段和角色的“执行中”“执行完毕”“跳过”（含原因）、产物、验证结果和阻塞项，写入本次运行目录的台账和证据文件。对话里采用“边执行边汇报”（v6.51）：R0–R10 与模型选择门禁每个阶段都单独发消息——进入阶段先运行 `sire_usage.py --stage-start R1`，发 `R1 - 检索 - 执行中`；完成发 `R1 - 检索 - 完成`，下面固定写 结果、建议、风险、待确认 四项（没有写“无”，结果里带执行者与耗时额度，取自 `sire_usage.py --stage-end R1`，不手写）；**允许跳过但不允许不告诉用户**：发 `R3 - 拆解 - 跳过` 并写 原因；全部结束发 `汇总`，汇总必须自带完整阶段清单（界面会折叠中途消息），再写耗时、额度消耗、阶段排名（哪个阶段执行最长、哪个阶段消耗额度最多，取自 `sire_usage.py --final`）、未测试及其他信息。每个阶段不论多短、是否跳过都完整写出，不得省略、合并或写“同上”。详见 `references/global-contract.md` § SIRE 输出契约。
 
 Use the local run ledger and scripts when available. Record failed reviews/tests, repair actions, retry counts, and final evidence. Do not call a stage complete merely because a command returned successfully; inspect the resulting data and state.
 
