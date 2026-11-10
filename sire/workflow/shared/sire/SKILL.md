@@ -11,6 +11,10 @@ Every response must include this exact line: `[SIRE v6] 已使用 SIRE 工作流
 
 Before doing any task, read [`references/global-contract.md`](references/global-contract.md). It contains the user's complete mandatory SIRE process, output contract, R7/R10 real-scenario rules, and task-end archive requirement. This shared skill is the only workflow source; app-level instructions must point here rather than restate the rules.
 
+**Hard rule: all replies in Chinese (2026-11-10).** Conversation, stage reports, ledger text, commit messages and subagent replies/briefs are written in Chinese; only proper terms (token, RSI, commit, model names), code, commands, paths, identifiers and quoted errors stay as-is. Briefs to subagents say "用中文回复". Details: `references/global-contract.md` § 强制规则：所有回复使用中文.
+
+**Hard rule: report quota use.** Every full-workflow final reply carries one line `额度消耗：…` produced by `scripts/sire_usage.py --turn --line` (token usage read from the Claude transcript, per model and main/subagent; the weighted figure is an estimate and must be labelled so; never invent numbers). Details: `references/global-contract.md` § 强制规则：回复要告知额度消耗.
+
 **Hard rule: never create a git worktree** (no `git worktree add`, `EnterWorktree`, `isolation: "worktree"`, `--worktree`); work in the current directory and branch. Applies to every task, subagent and fast path. Details: `references/global-contract.md` § 强制规则：禁止创建 git worktree.
 
 **Hard rule: no tests without the user's authorization.** Finish implementing the whole requirement (plus R6 code review), then tell the user it is done and awaiting test authorization; never run tests, builds-as-verification, servers, or browsers for verification until the user explicitly says to. Unauthorized R7 is recorded as `跳过：待用户授权测试`; units close with `sire_run.py test <unit> DEFERRED`. Final reply must say "未测试". Details: `references/global-contract.md` § 强制规则：测试须用户授权.
@@ -120,6 +124,7 @@ Any change to files in this shared skill directory is a workflow mechanism chang
 - Learning, self-optimization, and RSI gate: [references/self-optimization.md](references/self-optimization.md)
 - Claude adapter role files: [agents/claude/](agents/claude/)
 - Qoder client adapter (hooks, junction, selftest/verify): [agents/qoder/](agents/qoder/)
+- Quota usage report (token usage from Claude transcripts): scripts/sire_usage.py
 - One-call R9 closure (stages + finish + queued background archive; ledger stays outside projects): scripts/sire_close.py
 - Codex discovery metadata: [agents/openai.yaml](agents/openai.yaml)
 
