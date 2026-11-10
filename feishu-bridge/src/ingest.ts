@@ -82,6 +82,9 @@ export function startIngestServer(
     } catch {
       return reply(400);
     }
+    // 请求体必须是 JSON 对象：字面量 null、数组、数字会让后面的 body.session_id 抛 TypeError，
+    // 在 async 回调里变成未处理的 rejection 导致桥接进程退出
+    if (body === null || typeof body !== 'object' || Array.isArray(body)) return reply(400);
     reply(200);
 
     const origin = typeof req.headers['x-bridge-origin'] === 'string' ? req.headers['x-bridge-origin'] : undefined;

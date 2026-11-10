@@ -451,7 +451,9 @@ def cmd_next_id(args):
         print("ERROR 类型必须是 F/P/E/H")
         return 2
     nums = []
-    for r in load_records():
+    # load_records() 在库里有记录时只返回库内记录，已写进 md 但还没 index 的记录取不到，
+    # 连续两次 add 会撞号；所以编号额外并入 md 记录（parse_records），再并入库里的编号
+    for r in list(load_records()) + list(parse_records()[0]):
         if r["letter"] != letter:
             continue
         tail = r["id"].split("-")[1]
@@ -536,7 +538,9 @@ def cmd_add(args):
         print("ERROR 不满足可复用知识模板（见 %s）: %s" % (TEMPLATE_PATH, "；".join(issues)))
         print("补全后重试，或加 --force 强制写入")
         return 1
-    nums = [int(m.group(1)) for r in load_records() for m in [re.match(r"^%s-(\d+)$" % letter, r["id"])] if m]
+    # 同 next-id：并入 md 里尚未 index 的记录，避免连续 add 撞号
+    nums = [int(m.group(1)) for r in list(load_records()) + list(parse_records()[0])
+            for m in [re.match(r"^%s-(\d+)$" % letter, r["id"])] if m]
     nums.extend(_db_record_numbers(letter))
     rid = "%s-%03d" % (letter, (max(nums) + 1) if nums else 1)
     target = os.path.join(KB_DIR, TARGET_FILE[letter])

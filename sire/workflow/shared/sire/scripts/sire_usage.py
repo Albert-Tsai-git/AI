@@ -59,6 +59,11 @@ def is_prompt(obj: dict) -> bool:
     """真正的用户提示：user 消息且内容不是工具结果。"""
     if obj.get("type") != "user" or obj.get("isSidechain") or obj.get("isMeta"):
         return False
+    # 子代理完成通知等系统消息也以 user 条目出现，不是用户提示，否则会把本轮起点错位到通知时刻
+    origin = obj.get("origin")
+    if obj.get("promptSource") == "system" or obj.get("turnOrigin") == "task_notification" \
+            or (isinstance(origin, dict) and origin.get("kind") == "task-notification"):
+        return False
     content = (obj.get("message") or {}).get("content")
     if isinstance(content, str):
         return bool(content.strip())

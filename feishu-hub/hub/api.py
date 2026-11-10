@@ -50,6 +50,9 @@ def make_handler(token):
             if method == "POST":
                 try:
                     n = int(self.headers.get("Content-Length") or 0)
+                    # 负数长度会让 rfile.read(-1) 一直读到连接关闭，把工作线程挂住
+                    if n < 0:
+                        return self._err(400, "BAD_REQUEST", "Content-Length 不能为负数")
                     if n > 1024 * 1024:
                         return self._err(413, "BAD_REQUEST", "请求体超过 1MB")
                     body = json.loads(self.rfile.read(n).decode("utf-8") or "{}") if n else {}

@@ -7,7 +7,7 @@ import sys
 import time
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "workflow" / "codex" / "ai-dev-sire-workflow" / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "workflow" / "shared" / "sire" / "scripts"))
 import sire_vector_db as v  # noqa: E402
 
 DB = Path(os.environ.get("SIRE_VECTOR_DB") or Path(__file__).resolve().parents[1] / "data" / "sire_vectors.sqlite3")

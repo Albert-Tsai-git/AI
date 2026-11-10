@@ -161,7 +161,13 @@ def check_clients(c: sqlite3.Connection, now: float, stale_seconds: float) -> No
                       (fid, "COLLECTION_DEAD", "PROPOSED", 1, now, now,
                        json.dumps([item], ensure_ascii=False), RULES["COLLECTION_DEAD"][1]))
             continue
-        status = row["status"] if row["status"] in ("PROPOSED", "REGRESSED") else "PROPOSED"
+        # 已知并接受的忽略项不再重开；已修复的发现再次断流记为回归，而不是倒退成新提案
+        if row["status"] == "IGNORED" and row["ignore_kind"] == "accepted":
+            continue
+        if row["status"] in ("PROPOSED", "REGRESSED"):
+            status = row["status"]
+        else:
+            status = "REGRESSED" if row["status"] == "FIXED" else "PROPOSED"
         evidence = (json.loads(row["evidence"] or "[]") + [item])[-10:]
         c.execute("UPDATE findings SET status=?,hits=?,last_seen=?,evidence=? WHERE finding_id=?",
                   (status, (row["hits"] or 0) + 1, now, json.dumps(evidence, ensure_ascii=False), fid))
@@ -169,7 +175,7 @@ def check_clients(c: sqlite3.Connection, now: float, stale_seconds: float) -> No
 DECAY_SECONDS = 30 * 86400  # 30 天没再出现才清零计数（原 7 天过短，低频问题永远攒不够）
 
 SECRET_PATTERNS = (
-    re.compile(r"(?i)(token|password|passwd|secret|api[_-]?key|authorization|bearer)([\"'=: ]+)[^\s\"',;]+"),
+    re.compile(r"(?i)(token|password|passwd|secret|api[_-]?key|authorization|bearer)([\"'=: ]+)(?:bearer\s+)?[^\s\"',;]+"),
     re.compile(r"\b(sk-[A-Za-z0-9_-]{10,}|ghp_[A-Za-z0-9]{10,}|glpat-[A-Za-z0-9_-]{10,}|xox[abp]-[A-Za-z0-9-]{10,})"),
 )
 
