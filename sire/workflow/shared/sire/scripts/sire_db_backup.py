@@ -16,7 +16,7 @@ def main() -> int:
     backup_root = Path("D:/sire/db-backups")
     ap.add_argument("--db", type=Path, default=DATABASE_PATH)
     ap.add_argument("--backup-dir", type=Path, default=Path(os.environ.get("SIRE_DB_BACKUP_DIR") or backup_root))
-    ap.add_argument("--keep", type=int, default=14)
+    ap.add_argument("--keep", type=int, default=2)  # 用户定：只保留最近 2 份，其余自动删除
     args = ap.parse_args()
     args.backup_dir.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
