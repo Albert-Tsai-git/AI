@@ -1,6 +1,7 @@
 """SIRE 额度消耗统计：读取 Claude 转录里每条助手消息的 usage，按模型、主控/子代理汇总 token。
 
 用法：
+  python sire_usage.py --final           分阶段计时：--stage-start R1 / --stage-end R1（每个阶段进入和完成时各调一次）
   python sire_usage.py --final           最终回复用：“耗时”（精确到秒）+“额度消耗”+“5小时额度”三行（任务开始先 --plan-mark <读数>，结束 --final --plan-end <读数>）
   python sire_usage.py --turn            当前会话自上一条用户提示以来（本轮）的消耗；R9 最终回复的“额度消耗”行用它
   python sire_usage.py --session         当前会话累计
@@ -25,6 +26,7 @@ from pathlib import Path
 from sire_paths import DATA_DIR
 
 HOME = Path(os.environ.get("CLAUDE_HOME") or Path.home() / ".claude")
+STAGE_LOG = Path(os.environ.get("SIRE_STAGE_LOG") or DATA_DIR / "stage_usage.jsonl")
 PLAN_LOG = Path(os.environ.get("SIRE_PLAN_LOG") or DATA_DIR / "plan_usage.jsonl")
 PROJECTS = HOME / "projects"
 KEYS = ("input_tokens", "output_tokens", "cache_creation_input_tokens", "cache_read_input_tokens")
@@ -161,6 +163,37 @@ def plan_mark(five: float, weekly: float | None) -> None:
         f.write(json.dumps({"ts": time.time(), "five_hour": five, "weekly": weekly}) + "\n")
 
 
+def stage_mark(kind: str, stage: str, cwd: str) -> str:
+    """分阶段计时：start 记开始时刻；end 用开始时刻到现在的转录消息算该阶段真实耗时和额度折算。"""
+    STAGE_LOG.parent.mkdir(parents=True, exist_ok=True)
+    now = time.time()
+    if kind == "start":
+        with STAGE_LOG.open("a", encoding="utf-8") as f:
+            f.write(json.dumps({"ts": now, "kind": "start", "stage": stage}) + "\n")
+        return f"{stage} 开始 {hms(now)}"
+    start = None
+    try:
+        for line in STAGE_LOG.read_text(encoding="utf-8").splitlines():
+            try:
+                row = json.loads(line)
+            except ValueError:
+                continue
+            if row.get("stage") == stage and row.get("kind") == "start":
+                start = row["ts"]
+    except OSError:
+        pass
+    if start is None:
+        return f"{stage} 耗时:未记录开始时刻,不估算"
+    main = latest_transcript(cwd)
+    weighted = None
+    if main is not None:
+        msgs, _ = collect(session_files(main))
+        agg = aggregate(msgs, start, now)
+        weighted = int(sum(sum(a[k] * WEIGHT[k] for k in KEYS) for a in agg.values()))
+    cost = f";额度折算约 {weighted:,}(估算)" if weighted is not None else ";额度:未读到 usage"
+    return f"{stage} 耗时:{dur(now - start)}({hms(start)} → {hms(now)}){cost}"
+
+
 def plan_line(turn_start: float, five_end: float | None, weekly_end: float | None) -> str:
     """本任务占用的额度百分点 = 结束读数 − 本轮开始后最早的一次读数。"""
     if five_end is None:
@@ -289,11 +322,16 @@ def main() -> int:
     ap.add_argument("--by-day", action="store_true")
     ap.add_argument("--plan-mark", type=float, metavar="五小时%", help="记录一次 5 小时额度读数（任务开始时调用）")
     ap.add_argument("--plan-end", type=float, metavar="五小时%", help="配合 --final：结束时的 5 小时额度读数")
+    ap.add_argument("--stage-start", metavar="阶段", help="阶段开始计时,例如 R1")
+    ap.add_argument("--stage-end", metavar="阶段", help="阶段结束，输出该阶段真实耗时与额度折算")
     ap.add_argument("--weekly", type=float, help="周额度读数（可选，配合 --plan-mark / --plan-end）")
     ap.add_argument("--line", action="store_true", help="只输出一行摘要")
     ap.add_argument("--cwd", default=os.getcwd())
     args = ap.parse_args()
     sys.stdout.reconfigure(encoding="utf-8")
+    if args.stage_start or args.stage_end:
+        print(stage_mark("start" if args.stage_start else "end", args.stage_start or args.stage_end, args.cwd))
+        return 0
     if args.plan_mark is not None:
         plan_mark(args.plan_mark, args.weekly)
         print(f"已记录额度读数:5小时 {args.plan_mark:g}%")
