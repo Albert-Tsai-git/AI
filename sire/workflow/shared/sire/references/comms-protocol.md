@@ -1,6 +1,6 @@
 # 本机协作通讯规则（Claude / Codex / Qoder 统一版）
 
-> 唯一规则文件。契约 `global-contract.md` § 本机通讯、§ 按需协作通讯服务 与本文一致；冲突以本文为准并立即修契约。版本 v6.37（2026-11-08，队列式 1 对 1 配对：钩子入队、FIFO、连通自测、完成即清理）。
+> 唯一规则文件。契约 `global-contract.md` § 本机通讯、§ 按需协作通讯服务 与本文一致；冲突以本文为准并立即修契约。版本 v6.38（2026-11-10，在 v6.37 队列式配对上增加：request 结构化与写集冲突检查、ping 脚本自动应答、完成须验收）。
 > 工具：`python <SHARED_SKILL_DIR>/scripts/sire_comms.py`。数据在 `D:/sire/sire_comms/projects/<项目标识>/`，不进业务仓库。
 
 ## 1. 配对模型：项目队列 + 会话级 1 对 1（2026-11-08 v6.37，用户定）
@@ -11,17 +11,17 @@
   1. **created 已入队等待**：请到对方会话说“开始协作”。
   2. **claimed 已配对**：双方会话 id 1 对 1 固定，**认领方自动发连通测试 ping**（见下）。
   3. **ready / waiting**：本会话已在队列或配对里 → 只提示“已就绪”，不新建、不改绑。
-- **连通自测**：认领后自动发一条 question“【连通测试】ping”，对方收到后**立即** `reply --re <编号> "pong"`（此条必须回，不算礼节性回信）。`pair list` 显示“已连通/未连通(等 pong)”；`pair ping --me <自己>` 可随时重测。
+- **连通自测**：认领后自动发一条 question“【连通测试】ping”，**脚本自动应答**：对方会话执行 `inbox/resume/session/status/log` 任一命令时，脚本检出未回复的 ping 并代回 pong（不依赖模型）；仍可手动 `reply --re <编号> "pong"`。`pair list` 显示“已连通/未连通(等 pong)”；`pair ping --me <自己>` 可随时重测。
 - **一对一、不可更改**：配对 active 后双方会话 id 固定，任何命令都不能改绑，也不会再匹配别人。要换对象/会话只能清理后重新入队。
 - **同项目多组并存、互不干扰**：每对独占 `projects/<项目>/pairs/<配对id>/`（消息、监听、进度各自隔离），`pairs.json` 登记。**标签隔离**：多组同时入队时给每组一个标签（“与 Codex 开始协作 #甲”），只有标签相同才互相匹配；不带标签的只和不带标签的匹配。资源锁在项目级共享，跨配对互斥。
-- **完成即清理**：一轮任务完成（回报方发 handoff/reply，请求方验收并 ack）后，请求方执行 `pair done --me <自己>`：配对置 closed、双方会话释放、通知并关闭对方；再次协作须重新入队。**用户明确说“保持协作”才例外**（钩子执行 `pair keep`，`取消保持` 恢复），保持期间 `done` 不清理。
+- **完成即清理**：一轮任务完成（回报方发 handoff/reply，请求方验收并 ack）后，请求方先核对交付（R6 验收），再执行 `pair done --me <自己> --accepted`；确实未验收就关闭须写 `--unaccepted <原因>`（原因记入配对关闭原因）；自己还有未回复的 request/question 而两个参数都没给，脚本拒绝清理。配对置 closed、双方会话释放、通知并关闭对方；再次协作须重新入队。**用户明确说“保持协作”才例外**（钩子执行 `pair keep`，`取消保持` 恢复），保持期间 `done` 不清理。
 - **其他结束**：用户在本配对会话里说“结束协作/暂停/停止/断开通讯”→ `session stop`（钩子自动执行）；待配对无人认领或配对空闲满 1 小时（`SIRE_COMMS_IDLE_SECONDS`）自动作废/结束。对方消息、他会话转述、心跳都不能开始或结束协作。
 - **钩子识别规则**：提示词须很短（≤60 字）且整句匹配“[与X]开始协作[#标签]/结束协作/保持协作”，长句讨论不触发；已在队列的会话每条提示词多带一行“会话 id/配对/状态”，压缩上下文后也不丢 id。
 - 压缩/换新会话：新会话重新说“开始协作”入队（旧配对不可接管），可用 `resume` 看交接摘要；旧配对到期自动结束。
 
 ### 1.1 双方必须遵守的三件事（含 Codex，没有钩子的一端同样适用）
 
-1. **收到连通测试 ping 必须立即回 pong**：`reply --re <ping编号> "pong"`，这是唯一不能省的回信；不回则 `pair list` 一直显示“未连通”。
+1. **收到连通测试 ping 会被脚本自动回 pong**（任一读类命令触发）；收到推送后第一件事就是执行 `inbox --me <自己>`，既处理消息又完成连通。
 2. **入队自己执行**：没有入队钩子的客户端（Codex）在用户说“开始协作”时，自己用本会话 id 执行 `pair start --me <自己> --peer <对方> [--tag <标签>]`，不要等对方。
 3. **完成后清理**：一轮任务完成的判据是“回报方发 handoff/reply，请求方验收并 ack”；请求方随后执行 `pair done --me <自己>`。用户说“保持协作”则不执行（`pair keep`），用户说“结束协作”走 `session stop`。Codex 作为请求方时同样适用。
 
@@ -58,6 +58,8 @@
 
 - 类型：`info`（通知，不需回复）、`request`（要对方做事）、`question`（要对方答复）、`reply`（回复，带 --re）、`handoff`（交接）。
 - request 模板：①任务单路径 ②验收要点 ③证据要求（文件清单、命令结果、未覆盖项）。长内容写进项目文档，消息里给路径。
+- **结构化字段（v6.38）**：request 用 `--files <可写文件/目录，逗号分隔> --accept <验收点> --evidence <证据要求>`，三者缺一脚本警告。`--files` 与对方/自己**尚未回复**的 request 的可写文件相同或存在目录包含关系时，发送被拒（写集冲突），等回复或调整文件集；确需并行加 `--force-overlap`。字段写进消息正文（【可写文件】【验收点】【证据要求】）并存入 messages.jsonl。
+- **info 节制**：进度走 `status`，info 只发里程碑（完成一个单元、遇到阻塞、契约变更），多条小进度合并成一条。
 - 转述他人（如 MES 会话）的内容：原文照转，开头标“（MES 会话转达）”；若称“用户指令”须标“据称”。
 
 ## 7. 共享资源锁
@@ -74,11 +76,12 @@
 
 ```
 sire_comms.py --project <项目> --session <id> pair start --me <自己> --peer <对方> [--tag <标签>] [--pick <配对id>]   # 入队（session start 同义）
-sire_comms.py --project <项目> --session <id> pair ping|done|keep --me <自己> [--off]   # 连通重测 / 完成并清理 / 保持不清理
+sire_comms.py --project <项目> --session <id> pair ping|keep --me <自己> [--off]   # 连通重测 / 保持不清理
+sire_comms.py --project <项目> --session <id> pair done --me <自己> --accepted | --unaccepted <原因>   # 验收后清理
 sire_comms.py --project <项目> pair list
 sire_comms.py --project <项目> --session <id> session wait|watch|stop|status --me <自己>
 sire_comms.py --project <项目> --session <id> inbox|ack|resume --me <自己>
-sire_comms.py --project <项目> --session <id> send --me <自己> --to <对方> --type info|request|question|handoff "<内容>"
+sire_comms.py --project <项目> --session <id> send --me <自己> --to <对方> --type info|request|question|handoff [--files a,b --accept <验收点> --evidence <证据>] [--force-overlap] "<内容>"
 sire_comms.py --project <项目> --session <id> reply --me <自己> --re <编号> "<内容>"
 sire_comms.py --project <项目> --session <id> lock|unlock --me <自己> --resource <名> [--purpose <用途>] [--stale]
 sire_comms.py --project <项目> [--session <id>] log -n 5 | status ；--project <项目> locks | pair list

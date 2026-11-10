@@ -324,7 +324,14 @@ class Channel:
                 time.sleep(0.05)
         raise CommsError(f"发送锁被占用，确认无人发送后可删除 {guard}")
 
-    def send(self, me: str, to: str, typ: str, text: str, re_id: int | None = None) -> dict:
+    def open_requests(self, msgs: list[dict]) -> list[dict]:
+        """尚未收到回复、且带可写文件集的 request（用于写集冲突检查）"""
+        replied = {m["re"] for m in msgs if m.get("re")}
+        return [m for m in msgs if m["type"] == "request" and m.get("files") and m["id"] not in replied]
+
+    def send(self, me: str, to: str, typ: str, text: str, re_id: int | None = None,
+             files: list[str] | None = None, accept: str | None = None, evidence: str | None = None,
+             force_overlap: bool = False) -> dict:
         if typ not in TYPES:
             raise CommsError(f"未知类型 {typ}，可选：{'/'.join(TYPES)}")
         if me == to:
@@ -332,6 +339,18 @@ class Channel:
         text = text.strip()
         if not text:
             raise CommsError("消息内容不能为空")
+        if (files or accept or evidence) and typ != "request":
+            raise CommsError("--files/--accept/--evidence 只用于 request")
+        if typ == "request":
+            if not (files and accept and evidence):
+                print("[comms] 警告：request 缺少 --files（可写文件集）/--accept（验收点）/--evidence（证据要求），"
+                      "建议补全，否则无法做写集冲突检查和验收", file=sys.stderr)
+            if files:
+                text += "\n【可写文件】" + "；".join(files)
+            if accept:
+                text += "\n【验收点】" + accept
+            if evidence:
+                text += "\n【证据要求】" + evidence
         if len(text) > MAX_TEXT:
             raise CommsError(f"消息过长（>{MAX_TEXT} 字），请改为写文件并在消息里给出路径")
         fd, guard = self._guard()
@@ -339,7 +358,19 @@ class Channel:
             msgs = self.load()
             if re_id is not None and not any(m["id"] == re_id for m in msgs):
                 raise CommsError(f"要回复的消息 #{re_id} 不存在")
+            if files and not force_overlap:
+                for o in self.open_requests(msgs):
+                    hit = sorted({a for a in files for b in o["files"] if a == b or a.startswith(b.rstrip("/") + "/") or b.startswith(a.rstrip("/") + "/")})
+                    if hit:
+                        raise CommsError(f"写集冲突：{hit} 已在未回复的 request #{o['id']}（{o['from']}→{o['to']}）的可写文件内；"
+                                         "等对方回复或调整文件集，确需并行时加 --force-overlap")
             m = {"id": (msgs[-1]["id"] + 1) if msgs else 1, "time": now(), "from": me, "to": to, "type": typ, "text": text}
+            if files:
+                m["files"] = files
+            if accept:
+                m["accept"] = accept
+            if evidence:
+                m["evidence"] = evidence
             if re_id is not None:
                 m["re"] = re_id
             # 记录双方绑定会话，便于在各自对话中对照
@@ -609,6 +640,24 @@ def send_ping(pch: "Channel", me: str, peer: str, pair: str) -> dict:
     return m
 
 
+PING_MARK = "【连通测试"
+
+
+def auto_pong(ch: "Channel", me: str) -> int:
+    """收到连通测试 ping 时由脚本代为回 pong，不依赖模型；命令被执行即视为本端已连通。返回回复条数"""
+    msgs = ch.load()
+    replied = {m["re"] for m in msgs if m.get("re")}
+    n = 0
+    for m in msgs:
+        if m["to"] == me and m["type"] == "question" and m["text"].startswith(PING_MARK) and m["id"] not in replied:
+            ch.reply(me, m["id"], "pong（脚本自动应答）")
+            ch.ack(me, [str(m["id"])])
+            n += 1
+    if n:
+        print(f"[comms] 已自动应答连通测试 {n} 条", file=sys.stderr)
+    return n
+
+
 def pair_verified(ch0: "Channel", pid: str, r: dict) -> bool:
     """配对是否已连通：存在对 ping 的回复"""
     ping = r.get("ping_id")
@@ -768,6 +817,8 @@ def build_parser() -> argparse.ArgumentParser:
     pr.add_argument("action", choices=("start", "list", "ping", "done", "keep"))
     pr.add_argument("--tag", help="标签：同一项目多组并存时，相同标签才互相匹配（不带标签的只和不带标签的匹配）")
     pr.add_argument("--off", action="store_true", help="keep：取消保持")
+    pr.add_argument("--accepted", action="store_true", help="done：我已验收对方交付（reply/handoff 已核对）")
+    pr.add_argument("--unaccepted", metavar="原因", help="done：未验收就关闭，必须写原因，会记入配对关闭原因")
     pr.add_argument("--me")
     pr.add_argument("--peer", help="对端身份；认领时省略则接受任何指向我的待配对")
     pr.add_argument("--pick", help="有多个待配对时，指定要认领的配对 id")
@@ -778,6 +829,10 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--to", required=True)
     s.add_argument("--type", default="info")
     s.add_argument("--re", type=int)
+    s.add_argument("--files", help="request：本任务可写的文件/目录，逗号分隔；与未回复 request 重叠时拒绝")
+    s.add_argument("--accept", help="request：验收点")
+    s.add_argument("--evidence", help="request：要求交付的证据（文件清单、命令结果、未覆盖项）")
+    s.add_argument("--force-overlap", action="store_true", help="明确允许与未回复 request 的可写文件重叠")
     s.add_argument("text")
 
     r = sub.add_parser("reply")
@@ -873,7 +928,17 @@ def run(argv: list[str]) -> int:
                 if r0.get("keep"):
                     print(f"[comms] 配对 {pid0} 用户要求保持，未清理；用户说结束协作才清理")
                 else:
-                    close_collab(pch0, me0, peer0, "任务完成，自动清理队列")
+                    pending = pch0.waiting(me0)
+                    if args.accepted:
+                        reason = "已验收，清理队列"
+                    elif args.unaccepted:
+                        reason = f"关闭未验收：{args.unaccepted}"
+                    elif pending:
+                        raise CommsError(f"还有 {len(pending)} 条自己发出的 request/question 未收到回复 {[m['id'] for m in pending]}："
+                                         "核对交付后加 --accepted，或用 --unaccepted <原因> 明确未验收关闭")
+                    else:
+                        reason = "任务完成（未声明验收），清理队列"
+                    close_collab(pch0, me0, peer0, reason)
                     print(f"[comms] 任务完成：配对 {pid0} 已清理，双方会话已释放；再次协作需重新入队")
             return 0
         print(json.dumps(do_pair_start(ch0, me0, agent(args.peer) if args.peer else None, session, getattr(args, "pick", None), getattr(args, "persistent", False), getattr(args, "tag", None)), ensure_ascii=False))
@@ -903,6 +968,8 @@ def run(argv: list[str]) -> int:
         raise CommsError(f"会话 {session} 在项目 {slug} 没有进行中的配对：请先在本会话说“与X开始协作”")
     ch = Channel(slug, None, found[0])
     ch.check(me_for_pair, session)
+    if args.cmd in ("inbox", "resume", "session", "status", "log"):
+        auto_pong(ch, me_for_pair)
     if args.cmd == "session" and args.action == "wait":
         peer = peer_for(ch, me_for_pair, args.peer)
         r = ch.wait(agent(args.me), peer, args.timeout, args.interval, session)
@@ -939,7 +1006,9 @@ def run(argv: list[str]) -> int:
             close_collab(ch, me, peer, f"空闲满 {idle_seconds() / 3600:g} 小时自动结束")
         print(json.dumps(r, ensure_ascii=False))
     elif args.cmd == "send":
-        m = ch.send(agent(args.me), agent(args.to), args.type, args.text, args.re)
+        files = [f.strip().replace("\\", "/") for f in args.files.split(",") if f.strip()] if args.files else None
+        m = ch.send(agent(args.me), agent(args.to), args.type, args.text, args.re,
+                    files, args.accept, args.evidence, args.force_overlap)
         print(f"[comms] 已发送 #{m['id']}（项目 {slug}）")
     elif args.cmd == "reply":
         m = ch.reply(agent(args.me), args.re, args.text)

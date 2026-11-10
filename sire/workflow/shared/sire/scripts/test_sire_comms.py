@@ -381,6 +381,34 @@ class CommsTest(unittest.TestCase):
         self.cli("--session", self.A, "pair", "ping", "--me", "Claude")
         self.assertFalse(sc.pair_verified(self.ch(), pid, self.ch().pairs()[pid]))
 
+    def test_c28_request_files_conflict_and_force(self):
+        pid = self.pair_up()
+        pch = self.pch(pid)
+        pch.send("Claude", "Codex", "request", "改 B", files=["src/a.py", "docs"], accept="a", evidence="b")
+        with self.assertRaises(sc.CommsError):
+            pch.send("Claude", "Codex", "request", "冲突", files=["docs/x.md"])  # 目录包含
+        with self.assertRaises(sc.CommsError):
+            pch.send("Codex", "Claude", "info", "x", files=["a"])  # 只有 request 可带字段
+        m = pch.send("Claude", "Codex", "request", "强制并行", files=["docs/x.md"], force_overlap=True)
+        self.assertEqual(m["files"], ["docs/x.md"])
+        first = next(x for x in pch.load() if x["type"] == "request")
+        pch.reply("Codex", first["id"], "done")
+        pch.send("Claude", "Codex", "request", "回复后可再占", files=["src/a.py"])
+
+    def test_c29_auto_pong_and_done_acceptance(self):
+        pid = self.pair_up()
+        pch = self.pch(pid)
+        ping = next(x for x in pch.load() if x["text"].startswith(sc.PING_MARK))
+        self.assertEqual(sc.auto_pong(pch, "Claude"), 1)
+        self.assertEqual(sc.auto_pong(pch, "Claude"), 0, "不重复应答")
+        self.assertTrue(sc.pair_verified(self.ch(), pid, self.ch().pairs()[pid]))
+        self.assertTrue(any(x.get("re") == ping["id"] for x in pch.load()))
+        pch.send("Claude", "Codex", "request", "干活")
+        with self.assertRaises(sc.CommsError):
+            self.cli("--session", self.A, "pair", "done", "--me", "Claude")  # 有未回复 request 且未声明
+        self.cli("--session", self.A, "pair", "done", "--me", "Claude", "--unaccepted", "对方未交付")
+        self.assertIn("关闭未验收：对方未交付", self.ch().pairs()[pid]["reason"])
+
     def test_c27_done_cleans_queue_unless_keep(self):
         pid = self.pair_up()
         # 用户说保持：完成后不清理
