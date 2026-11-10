@@ -1,7 +1,7 @@
 """SIRE 额度消耗统计：读取 Claude 转录里每条助手消息的 usage，按模型、主控/子代理汇总 token。
 
 用法：
-  python sire_usage.py --final           最终回复用：“耗时”（精确到秒）+“额度消耗”两行
+  python sire_usage.py --final           最终回复用：“耗时”（精确到秒）+“额度消耗”+“5小时额度”三行（任务开始先 --plan-mark <读数>，结束 --final --plan-end <读数>）
   python sire_usage.py --turn            当前会话自上一条用户提示以来（本轮）的消耗；R9 最终回复的“额度消耗”行用它
   python sire_usage.py --session         当前会话累计
   python sire_usage.py --days 7          近 N 天全部会话累计（--by-day 按天拆分）
@@ -22,7 +22,10 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
+from sire_paths import DATA_DIR
+
 HOME = Path(os.environ.get("CLAUDE_HOME") or Path.home() / ".claude")
+PLAN_LOG = Path(os.environ.get("SIRE_PLAN_LOG") or DATA_DIR / "plan_usage.jsonl")
 PROJECTS = HOME / "projects"
 KEYS = ("input_tokens", "output_tokens", "cache_creation_input_tokens", "cache_read_input_tokens")
 WEIGHT = {"input_tokens": 1.0, "output_tokens": 5.0, "cache_creation_input_tokens": 1.25, "cache_read_input_tokens": 0.1}
@@ -151,6 +154,39 @@ def one_line(agg: dict) -> str:
 PAUSE_TOOLS = {"askuserquestion", "exitplanmode"}
 
 
+def plan_mark(five: float, weekly: float | None) -> None:
+    """记下一次账号额度读数（百分比来自应用的 get_usage 工具，脚本自己读不到）。"""
+    PLAN_LOG.parent.mkdir(parents=True, exist_ok=True)
+    with PLAN_LOG.open("a", encoding="utf-8") as f:
+        f.write(json.dumps({"ts": time.time(), "five_hour": five, "weekly": weekly}) + "\n")
+
+
+def plan_line(turn_start: float, five_end: float | None, weekly_end: float | None) -> str:
+    """本任务占用的额度百分点 = 结束读数 − 本轮开始后最早的一次读数。"""
+    if five_end is None:
+        return "5小时额度:未提供结束读数"
+    marks = []
+    try:
+        for line in PLAN_LOG.read_text(encoding="utf-8").splitlines():
+            try:
+                marks.append(json.loads(line))
+            except ValueError:
+                pass
+    except OSError:
+        pass
+    start = next((m for m in marks if m["ts"] >= turn_start - 5), None)
+    if start is None:
+        return f"5小时额度:未记录本任务开始读数(当前 {five_end:g}%)"
+    delta = five_end - start["five_hour"]
+    extra = ""
+    if weekly_end is not None and start.get("weekly") is not None:
+        extra = f";周额度 {start['weekly']:g}% → {weekly_end:g}%"
+    note = "(百分比为整数、账号全局,并行会话的消耗会混入)"
+    if delta < 0:
+        return f"5小时额度:读数 {start['five_hour']:g}% → {five_end:g}%,窗口可能已重置,本任务占用无法计算{extra}"
+    return f"5小时额度:本任务约 {delta:g} 个百分点(读数 {start['five_hour']:g}% → {five_end:g}%){extra}{note}"
+
+
 def turn_entries(main: Path) -> list[tuple[float, dict]]:
     """主线程的 user/assistant 条目（按时间顺序）。"""
     try:
@@ -251,10 +287,17 @@ def main() -> int:
     g.add_argument("--days", type=float, help="近 N 天全部会话")
     g.add_argument("--file", help="指定转录文件")
     ap.add_argument("--by-day", action="store_true")
+    ap.add_argument("--plan-mark", type=float, metavar="五小时%", help="记录一次 5 小时额度读数（任务开始时调用）")
+    ap.add_argument("--plan-end", type=float, metavar="五小时%", help="配合 --final：结束时的 5 小时额度读数")
+    ap.add_argument("--weekly", type=float, help="周额度读数（可选，配合 --plan-mark / --plan-end）")
     ap.add_argument("--line", action="store_true", help="只输出一行摘要")
     ap.add_argument("--cwd", default=os.getcwd())
     args = ap.parse_args()
     sys.stdout.reconfigure(encoding="utf-8")
+    if args.plan_mark is not None:
+        plan_mark(args.plan_mark, args.weekly)
+        print(f"已记录额度读数:5小时 {args.plan_mark:g}%")
+        return 0
     if args.days:
         since = time.time() - args.days * 86400
         files = [(f, "subagents" in f.parts) for f in PROJECTS.rglob("*.jsonl") if f.stat().st_mtime >= since]
@@ -273,6 +316,7 @@ def main() -> int:
         since = turn_since
         print(timing_line(timing(main_file, time.time())))
         print(one_line(aggregate(msgs, since)))
+        print(plan_line(since, args.plan_end, args.weekly))
         return 0
     if args.turn:
         since = turn_since
