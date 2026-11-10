@@ -2,6 +2,7 @@
 """[Claude执行器] 按 PROTOCOL.md v1 从中间服务领任务，在已确认目录中用 Claude Code CLI 执行并上报结果。
 只与中间服务通信，不直接连飞书，不与其他执行器通信。
 用法：python executors/claude/executor.py    （在 feishu-hub 目录下）"""
+import glob
 import json
 import logging
 import os
@@ -77,6 +78,10 @@ def find_desktop_cli():
     if os.path.isdir(pkgs):
         bases += [os.path.join(pkgs, n, "LocalCache", "Roaming", "Claude", "claude-code")
                   for n in os.listdir(pkgs) if n.lower().startswith("claude_")]
+    # 新版桌面（2.1.3xx 起）把 claude.exe 放在 Claude-Data 与 claude-desktop-profiles 下，旧位置已不再更新
+    bases += glob.glob(os.path.join(os.environ.get("LOCALAPPDATA", ""), "Claude-Data", "claude_*", "claude-code"))
+    bases += glob.glob(os.path.join(os.environ.get("APPDATA", ""), "claude-desktop-profiles", "profiles", "*",
+                                    "user-data", "claude-code"))
     best = None
     for base in bases:
         if not os.path.isdir(base):
@@ -187,7 +192,8 @@ class ClaudeExecutor:
                     return
             if rep.lost.is_set():
                 return
-            self._report_exit(rep, task, rc, out_path, err_path)
+            if self._report_exit(rep, task, rc, out_path, err_path) == "TOO_LONG":
+                self._retry_fresh(rep, task, real, prompt, run_dir, proc)
         except LeaseLost:
             kill_tree(proc["p"])
         except Exception as e:  # noqa: BLE001
@@ -203,7 +209,66 @@ class ClaudeExecutor:
         finally:
             rep.finish()
 
-    def _report_exit(self, rep, task, rc, out_path, err_path):
+    def _handoff_text(self, session_id, turns=6, limit=500):
+        """[衔接] 从原会话 jsonl 取最近几轮的文字，供新会话衔接上下文；取不到返回空串。"""
+        if not session_id:
+            return ""
+        hits = glob.glob(os.path.join(self.cfg["claude_config_dir"], "projects", "*", session_id + ".jsonl"))
+        if not hits:
+            return ""
+        items = []
+        try:
+            with open(hits[0], "r", encoding="utf-8", errors="replace") as f:
+                for line in f:
+                    try:
+                        rec = json.loads(line)
+                    except ValueError:
+                        continue
+                    role = rec.get("type")
+                    if role not in ("user", "assistant"):
+                        continue
+                    parts = (rec.get("message") or {}).get("content") or []
+                    if isinstance(parts, str):
+                        parts = [{"type": "text", "text": parts}]
+                    text = "\n".join(p.get("text", "") for p in parts
+                                     if isinstance(p, dict) and p.get("type") == "text").strip()
+                    if text:
+                        items.append((role, text))
+        except OSError:
+            return ""
+        lines = []
+        for role, text in items[-turns * 2:]:
+            text = text.replace("\n", " ")
+            lines.append("%s：%s" % ("用户" if role == "user" else "助手", text[:limit] + ("…" if len(text) > limit else "")))
+        return "\n".join(lines)
+
+    def _retry_fresh(self, rep, task, real, prompt, run_dir, proc):
+        """[降级] 原会话上下文超限无法续接：同目录新开会话，带入最近几轮摘要继续，结果里注明；不再递归重试。"""
+        LOG.warning("[Claude执行器] 会话过长，自动新开会话 %s", task["task_id"])
+        summary = self._handoff_text(task.get("session_id"))
+        head = ("（原会话上下文过长无法续接，已新开会话。以下是原会话最近几轮的摘要，仅供衔接，以下面的新消息为准）\n%s\n\n（新消息）\n"
+                % summary) if summary else ""
+        fresh = dict(task, mode="new", session_id=None)
+        out_path = os.path.join(run_dir, "%s-%s-fresh.out" % (task["task_id"], task["attempt"]))
+        err_path = out_path[:-4] + ".err"
+        with open(out_path, "wb") as out, open(err_path, "wb") as err:
+            p = subprocess.Popen(self.build_cmd(fresh), cwd=real, env=self.build_env(task),
+                                 stdin=subprocess.PIPE, stdout=out, stderr=err, creationflags=NO_WINDOW)
+            proc["p"] = p
+            p.stdin.write((head + prompt).encode("utf-8"))
+            p.stdin.close()
+            try:
+                rc = p.wait(timeout=int((task.get("limits") or {}).get("timeout_sec", 1800)))
+            except subprocess.TimeoutExpired:
+                kill_tree(p)
+                rep.send("interrupted", {"reason": "执行超时"})
+                return
+        if rep.lost.is_set():
+            return
+        self._report_exit(rep, fresh, rc, out_path, err_path,
+                          prefix="⚠️ 原会话上下文过长，已自动新开会话%s继续。\n\n" % ("并带入最近几轮摘要" if summary else ""))
+
+    def _report_exit(self, rep, task, rc, out_path, err_path, prefix=""):
         with open(out_path, "rb") as f:
             raw = f.read().decode("utf-8", "replace").strip()
         with open(err_path, "rb") as f:
@@ -221,13 +286,15 @@ class ClaudeExecutor:
             sid = res.get("session_id") or task.get("session_id") or ""
             if sid and sid != task.get("session_id"):
                 rep.send("session", {"session_id": sid})
-            rep.send("result", {"text": res.get("result") or "", "session_id": sid})
+            rep.send("result", {"text": prefix + (res.get("result") or ""), "session_id": sid})
             return
         detail = ((res or {}).get("result") or err or raw)[-800:]
         if rc == 0 and res is None:
             rep.send("failed", {"code": "NO_RESULT", "message": "进程正常退出但没有结果输出 %s" % detail[-300:],
                                 "retryable": False})
             return
+        if task["mode"] == "resume" and "prompt is too long" in (err + raw + detail).lower():
+            return "TOO_LONG"  # 交给 run_task 自动新开会话，不直接报失败
         code = "SESSION_NOT_FOUND" if "no conversation found" in (err + raw).lower() else \
             "AUTH_REQUIRED" if ("login" in err.lower() or "401" in err) else "EXEC_ERROR"
         rep.send("failed", {"code": code, "message": "rc=%s %s" % (rc, detail), "retryable": False})

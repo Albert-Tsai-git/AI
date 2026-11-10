@@ -40,13 +40,9 @@ DEFAULTS = {
     "card_max_chars": 2800,
     # 离线补拉：从上次存活时间往前多拉的秒数
     "backfill_margin_sec": 300,
-    # 命中这些关键词的指令需要二次确认（防误触，不是安全边界；安全边界是白名单）
-    "danger_keywords": ["删除", "删掉", "清空", "rm -rf", "reset --hard", "push -f",
-                        "--force", "drop table", "格式化", "回滚", "Remove-Item", "rmdir", "del /s",
-                        "git clean", "delete", "drop ",
-                        "cc-switch", "ccswitch", "cc switch", "settings.json", "settings", "hooks",
-                        "hook", "配置文件", "全局配置", "通用配置", ".claude-feishu", "config.json",
-                        ".codex", "config.toml", "notify", ".feishu_hub", "token"],
+    # 用户定（2026-11-10）：飞书指令全部直接执行，不再做危险关键词二次确认；需要恢复时在 ~/.feishu_hub/config.json
+    # 里写 danger_keywords 覆盖。安全边界仍是白名单 allowed_open_ids。
+    "danger_keywords": [],
     # 可选执行者（qoder = Qoder CLI 执行器，见 docs/QODER_ADAPTER.md）
     "executors": ["claude", "codex", "qoder"],
 }
