@@ -13,7 +13,7 @@ Before doing any task, read [`references/global-contract.md`](references/global-
 
 **Hard rule: all replies in Chinese (2026-11-10).** Conversation, stage reports, ledger text, commit messages and subagent replies/briefs are written in Chinese; only proper terms (token, RSI, commit, model names), code, commands, paths, identifiers and quoted errors stay as-is. Briefs to subagents say "用中文回复". Details: `references/global-contract.md` § 强制规则：所有回复使用中文.
 
-**Hard rule: report quota use.** Every full-workflow final reply carries one line `额度消耗：…` produced by `scripts/sire_usage.py --turn --line` (token usage read from the Claude transcript, per model and main/subagent; the weighted figure is an estimate and must be labelled so; never invent numbers). Details: `references/global-contract.md` § 强制规则：回复要告知额度消耗.
+**Hard rule: report quota use.** Every full-workflow final reply carries one line `额度消耗：…` produced by `scripts/sire_usage.py --final` (which also prints the real `耗时:` line: start/end clock time to the second plus think/exec/pause split, taken from transcript timestamps; never estimate or hand-write it) (token usage read from the Claude transcript, per model and main/subagent; the weighted figure is an estimate and must be labelled so; never invent numbers). Details: `references/global-contract.md` § 强制规则：回复要告知额度消耗.
 
 **Hard rule: never create a git worktree** (no `git worktree add`, `EnterWorktree`, `isolation: "worktree"`, `--worktree`); work in the current directory and branch. Applies to every task, subagent and fast path. Details: `references/global-contract.md` § 强制规则：禁止创建 git worktree.
 
@@ -84,7 +84,7 @@ Before R7 starts, list each test ID, real user operation steps, expected behavio
 
 ## Output and evidence contract
 
-Each stage and role records “执行中”, “执行完毕”, or “跳过” with a reason, plus artifacts, verification results, and blockers, in the run ledger/evidence under the current run directory, not in the chat. In the chat, speak only when there is a result, a blocker, or a decision the user must make; the final reply gives only the result, risks ("无" if none), and suggestions, each in one to three lines, optionally with one verification line and the ledger path. No step narration, file recaps, or repeated logs.
+Each stage and role records “执行中”, “执行完毕”, or “跳过” with a reason, plus artifacts, verification results, and blockers, in the run ledger/evidence under the current run directory, not in the chat. In the chat, speak only when there is a result, a blocker, or a decision the user must make; the final reply follows the fixed B+C template in `references/global-contract.md` § SIRE 输出契约 (declaration line, 进度, 子代理降级, 结果, 风险, 未测试, 建议, 耗时, 额度消耗), with one 进度 line sent at each stage change while working; the ledger path only on errors. No step narration, file recaps, or repeated logs.
 
 Use the local run ledger and scripts when available. Record failed reviews/tests, repair actions, retry counts, and final evidence. Do not call a stage complete merely because a command returned successfully; inspect the resulting data and state.
 

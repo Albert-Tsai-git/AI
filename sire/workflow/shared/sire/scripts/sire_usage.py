@@ -1,6 +1,7 @@
 """SIRE 额度消耗统计：读取 Claude 转录里每条助手消息的 usage，按模型、主控/子代理汇总 token。
 
 用法：
+  python sire_usage.py --final           最终回复用：“耗时”（精确到秒）+“额度消耗”两行
   python sire_usage.py --turn            当前会话自上一条用户提示以来（本轮）的消耗；R9 最终回复的“额度消耗”行用它
   python sire_usage.py --session         当前会话累计
   python sire_usage.py --days 7          近 N 天全部会话累计（--by-day 按天拆分）
@@ -147,10 +148,105 @@ def one_line(agg: dict) -> str:
     return "额度消耗：" + "；".join(parts) + f"（输出 {out:,} token；折算=输入 token 等价，估算值）"
 
 
+PAUSE_TOOLS = {"askuserquestion", "exitplanmode"}
+
+
+def turn_entries(main: Path) -> list[tuple[float, dict]]:
+    """主线程的 user/assistant 条目（按时间顺序）。"""
+    try:
+        lines = main.read_text(encoding="utf-8", errors="ignore").splitlines()
+    except OSError:
+        return []
+    out = []
+    for line in lines:
+        try:
+            obj = json.loads(line)
+        except ValueError:
+            continue
+        if obj.get("isSidechain") or obj.get("type") not in ("user", "assistant"):
+            continue
+        ts = parse_ts(obj.get("timestamp") or "")
+        if ts:
+            out.append((ts, obj))
+    return out
+
+
+def turn_start_index(entries: list[tuple[float, dict]]) -> int | None:
+    """本轮起点 = 上一次回合结束（助手 stop_reason=end_turn）之后的第一条用户提示。
+    回合中途用户追发的消息不重置起点，这样算出的是任务从开始到现在的真实时间。"""
+    start = None
+    for i, (_, obj) in enumerate(entries):
+        if obj.get("type") == "assistant" and (obj.get("message") or {}).get("stop_reason") == "end_turn":
+            start = None
+        elif start is None and is_prompt(obj):
+            start = i
+    return start
+
+
+def hms(ts: float) -> str:
+    return time.strftime("%H:%M:%S", time.localtime(ts))
+
+
+def dur(sec: float) -> str:
+    sec = int(round(sec))
+    h, rest = divmod(sec, 3600)
+    m, s = divmod(rest, 60)
+    return (f"{h}时" if h else "") + (f"{m}分" if h or m else "") + f"{s}秒"
+
+
+def timing(main: Path, now: float) -> dict | None:
+    """从转录时间戳还原本轮真实耗时：开始=上一条用户提示，结束=调用时刻；
+    思考=工具结果（或用户提示）到下一条助手消息的间隔，执行=助手发出工具调用到结果返回的间隔，
+    暂停=等用户回答的工具（AskUserQuestion/ExitPlanMode）的整段间隔。
+    注意：最后一段最终回复的生成发生在调用之后，没有计入；Stop 钩子会在任务结束时记下精确结束时间。"""
+    entries = turn_entries(main)
+    start_i = turn_start_index(entries)
+    if start_i is None:
+        return None
+    start = entries[start_i][0]
+    names: dict[str, str] = {}
+    think = run = pause = 0.0
+    slowest = (0.0, "")
+    prev = start
+    for ts, obj in entries[start_i + 1:]:
+        gap = max(0.0, ts - prev)
+        prev = ts
+        content = (obj.get("message") or {}).get("content")
+        blocks = content if isinstance(content, list) else []
+        if obj.get("type") == "assistant":
+            think += gap
+            for b in blocks:
+                if isinstance(b, dict) and b.get("type") == "tool_use":
+                    names[b.get("id", "")] = str(b.get("name", ""))
+        else:
+            ids = [b.get("tool_use_id", "") for b in blocks if isinstance(b, dict) and b.get("type") == "tool_result"]
+            tool = names.get(ids[0], "") if ids else ""
+            if tool.lower() in PAUSE_TOOLS:
+                pause += gap
+            else:
+                run += gap
+            if gap > slowest[0]:
+                slowest = (gap, tool or "工具")
+    total = max(0.0, now - start)
+    tail = max(0.0, now - prev)
+    think += tail  # 最后一次工具返回到现在：模型正在生成最终回复
+    return {"start": start, "end": now, "total": total, "think": think, "exec": run, "pause": pause, "slowest": slowest}
+
+
+def timing_line(t: dict | None) -> str:
+    if not t:
+        return "耗时:未读到本轮转录时间戳"
+    tot = t["total"] or 1.0
+    return (f"耗时:{hms(t['start'])} → {hms(t['end'])},总 {dur(t['total'])};思考 {t['think'] / tot:.0%}({dur(t['think'])}) / "
+            f"执行 {t['exec'] / tot:.0%}({dur(t['exec'])}) / 暂停 {t['pause'] / tot:.0%}({dur(t['pause'])});"
+            f"最慢单步 {t['slowest'][1]} {dur(t['slowest'][0])}(结束时刻为统计时刻,最终回复文字生成另计数秒)")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="SIRE 额度消耗统计（读 Claude 转录 usage）")
     g = ap.add_mutually_exclusive_group()
     g.add_argument("--turn", action="store_true", help="本轮（自上一条用户提示）")
+    g.add_argument("--final", action="store_true", help="最终回复用：先输出“耗时”行，再输出“额度消耗”行")
     g.add_argument("--session", action="store_true", help="当前会话累计")
     g.add_argument("--days", type=float, help="近 N 天全部会话")
     g.add_argument("--file", help="指定转录文件")
@@ -170,8 +266,16 @@ def main() -> int:
         print("没有找到当前目录对应的 Claude 转录", file=sys.stderr)
         return 2
     msgs, prompts = collect(session_files(main_file))
+    ents = turn_entries(main_file)
+    ti = turn_start_index(ents)
+    turn_since = ents[ti][0] if ti is not None else (prompts[-1] if prompts else 0.0)
+    if args.final:
+        since = turn_since
+        print(timing_line(timing(main_file, time.time())))
+        print(one_line(aggregate(msgs, since)))
+        return 0
     if args.turn:
-        since = prompts[-1] if prompts else 0.0
+        since = turn_since
         agg = aggregate(msgs, since)
         print(one_line(agg) if args.line else render(agg, "本轮额度消耗（自上一条用户提示起）"))
     else:
