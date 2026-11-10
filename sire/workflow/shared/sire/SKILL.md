@@ -84,7 +84,7 @@ Before R7 starts, list each test ID, real user operation steps, expected behavio
 
 ## Output and evidence contract
 
-Each stage and role records “执行中”, “执行完毕”, or “跳过” with a reason, plus artifacts, verification results, and blockers, in the run ledger/evidence under the current run directory, not in the chat. In the chat, speak only when there is a result, a blocker, or a decision the user must make; the final reply follows the fixed B+C template in `references/global-contract.md` § SIRE 输出契约 (declaration line, 进度, 子代理降级, 结果, 风险, 未测试, 建议, 耗时, 额度消耗), with one 进度 line sent at each stage change while working; the ledger path only on errors. No step narration, file recaps, or repeated logs.
+Each stage and role records “执行中”, “执行完毕”, or “跳过” with a reason, plus artifacts, verification results, and blockers, in the run ledger/evidence under the current run directory, not in the chat. In the chat, speak only when there is a result, a blocker, or a decision the user must make; the final reply follows the fixed "A 结果 + B 详细情况" template in `references/global-contract.md` § SIRE 输出契约: block A = 结论/风险/未测试/需要你决定; block B = a table listing EVERY stage R0–R10 plus the model-selection gate with 状态 (完成/跳过/阻塞), what was done or the reason it was skipped, executor, and a real duration or "—", then 子代理降级, 耗时, 额度, with one 进度 line sent at each stage change while working; the ledger path only on errors. No step narration, file recaps, or repeated logs.
 
 Use the local run ledger and scripts when available. Record failed reviews/tests, repair actions, retry counts, and final evidence. Do not call a stage complete merely because a command returned successfully; inspect the resulting data and state.
 
