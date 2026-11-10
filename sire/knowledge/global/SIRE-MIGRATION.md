@@ -95,3 +95,5 @@ v6.18 | 2026-10-13 | Qoder 成为 feishu-hub 第三执行者并端到端验收�
 - 2026-10-20 RSI-20261020-comms-protocol（v6.34）：新增 references/comms-protocol.md 作为统一通讯规则单一来源，契约与 SKILL 加入口指针。
 - 2026-10-20 RSI-20261020-comms-push（v6.35）：发送即推送进 Codex 会话（codex queue），Claude 用 session watch+Monitor 事件流；会话 id 可随时变，start 自动切换且旧会话等待让位；stop 同步关闭对方；协作范围内直接执行。
 - 2026-10-20 RSI-20261020-comms-workflow（v6.36）：协作通讯并入 SIRE 工作流（触发词、R0 取交接、阶段上报、收尾回复、快速通道、协作免授权）。
+R20261026-052638-game | GAME | Added cached pixel portraits to Party menu and documented current look mapping; R7 deferred pending test authorization.
+2026-10-27 GAME: SaveData v11 adds rental vehicle ownership, return-town and battle-gold multiplier fields.

@@ -1698,6 +1698,34 @@ Word结构检查为7节A4纵向、11表、6图片；渲染器缺soffice.exe，�
 **状态**: 已完成
 
 
+### F-087: 用户手册外部版隐藏与测试 tag 序号
+
+**日期**: 2026-10-21
+**项目**: EncoderPlotter_0903_01
+**关键词**: EncoderPlotter, 用户手册, 外部版, isInternal, 内部版, test tag, test-v4.10.0
+
+**需求场景 / 现象**: 外部版需要隐藏用户手册入口，同时同步手册内容；提交时需依据当前版本及已有测试 tag 提供下一个规范 tag 名称。
+
+**方案 / 架构**: 设置页手册链接使用现有统一 isInternal 标志，只在内部版渲染。手册内容记录当前实现，并明确代码没有统一逐系列固件版本矩阵。测试 tag 用 test-vX.Y.Z-NN[-描述]；版本取 package.json，NN 在同版本已有最大序号上递增。本次未创建 tag，仅提供建议。
+
+**关键文件与接口**:
+- components/analyzer/version.html — 设置页入口绑定 v-if="isInternal"。
+- components/manual/manualData.js — 手册功能及错误参考内容。
+- CHANGELOG.md — Unreleased 用户可见变更。
+- package.json — 当前版本 4.10.0。
+
+**实施步骤**:
+1. 检查当前分支与 upstream，确认 feature/iap-ota-sn → origin/feature/iap-ota-sn。
+2. 更新设置入口和手册，补充 changelog。
+3. 提交并推送后，建议测试 tag test-v4.10.0-92-外部版隐藏手册入口；不自动打 tag。
+
+**验证方法**: node 静态加载检查手册 9 个章节、68 个唯一条目及 related 链接；git diff --check；提交后 HEAD 与 upstream 均为 54c3ec21，工作区干净。
+
+**踩坑**: PowerShell 把未引号的 @{upstream} 解释为哈希表表达式；应给 ref 加引号或直接使用已确认的 upstream ref。
+
+**状态**: 已完成
+
+
 ### F-088: driverSoftware 0.8至0.20.2提测范围与客户档边界
 
 **日期**: 2026-10-22
@@ -1719,6 +1747,25 @@ Word结构检查为7节A4纵向、11表、6图片；渲染器缺soffice.exe，�
 **验证**: docs +fetch以bot回读成功，revision=11；01至32连续，32个操作说明、预期、注意及待测试记录全部匹配。独立子代理复核通过。文档创建及存储回读已验证；没有执行软件或真机测试，也未声称完成浏览器视觉验收。用户身份授权过期不影响本次bot创建与CLI自动授予绑定账号权限。
 **关键词**: 飞书, 提测文档, driverSoftware, lark-cli, bot, 32项, Markdown, 客户版
 
+
+### F-091: MES交接续做组成能力与SN入口清理
+
+**关键词**: MES, composition, 分母, 生效时间, SN, 平台边界
+
+**需求场景**: 用户要求继续执行Claude交接，推进明确授权的代码文档项，等待新流程且不测试。
+
+# 交接续做结果（未测试）
+C1/C3代码已实现：分母/有效区间/同字段递归、共享类型与依赖保护、dependencies.test字面量类型。COMP-UNIT-001至005、007、008及依赖字段断言已编写未执行。
+B部分：删除旧SN前端文件与双端路由、BUSINESS_NAV、通用追溯snHits/SnService耦合；exec/runHits及SN后端/权限/迁移因A依赖保留，B未整体完成。
+F：新增现行口径，修订20份历史设计/手册/任务记录，PDF/Word等历史导出未重生成。
+静态复核：独立review代理R4/R6无Blocker/Major，兼容用例建议已补；主控另行读取差异。没有执行测试/构建/类型运行检查/服务/浏览器/部署/库写入/提交。
+未执行建议命令：npm test -w mes-server；npm run test:integration -w mes-server；npm run build。真实浏览器验收旧SN页面不可用、通用追溯权限边界、设计器新配置正常与非法分母/日期边界均待用户授权。
+环境风险：TESTING.md要求唯一测试业务库，交接称本机业务库；本次未选择数据源、未导入、未改运行配置。
+后续依赖：A/E用户新流程；C2序号起点口径；C4随执行改造合成集成测试；D等待导入指示；G测试授权及部署条件；bom_entry能力配置尚未写入运行系统。
+SIRE台账实际登记晚于部分实现（流程偏差保留），未伪造阶段执行时间。工具要求三路初审与交叉核验，本轮实际独立复核一路，未伪造其余复核，单元延后收敛；实现结果不等于功能验收通过。
+
+
+
 ### F-092: GAME对照FC初代重装机兵的差距与制作优先级
 
 **日期**: 2026-10-24
@@ -1731,6 +1778,197 @@ Word结构检查为7节A4纵向、11表、6图片；渲染器缺soffice.exe，�
 **验证**: 2026-10-24 静态盘点2角色、19部件、17敌人含4赏金首、3城镇、3主线13步、3段对话10行、7逻辑场景；9FBX、9外观prefab、2Animator、17PNG，无发现音频文件或音频代码接线。独立子代理复核素材和机制；第三幕缺失DLG_Act3_Choice、CanMove未接野外移动、ActionsPerTurn未被指令队列消费。没有运行游戏或测试。
 **风险**: 旧GDD已落后；原创三幕3D方向与FC忠实目标冲突；原作内容使用和发布须核实授权；未进行原版全量行为测量，不报相似度百分比或确定工期。
 **适用边界**: 数据为本次静态快照，不等于功能验收；后作犬伙伴和职业系统不自动纳入FC基线。分析产物 D:/sire/sire_ledger/runs/R20261024-103607-game/analysis-report.md。
+
+
+### F-093: GAME 复古俯视 3D UI 主题与视口锚点实现
+
+**日期**: 2026-10-25
+**项目**: GAME / D:\code\GAME
+**关键词**: Unity UI, UGUI, IMGUI, CanvasScaler, 视口锚点, 暖木, 锈钢, 黄铜, 复古俯视 3D, 重装机兵
+
+**需求场景 / 现象**: FC 初代 3D 重制项目需要将标题、野外 HUD、主菜单/地图、剧情对话和战斗界面统一为用户给定的暖木室内、锈钢包边、暖光与像素角色叠加的复古风格，同时保留现有菜单业务和 StoryService/BattleSystem 输入流程。
+
+**根因**（问题类必填）: 不适用；这是主题统一与信息层级完善，不是缺陷根因记录。
+
+**方案 / 架构**: 沿用现有 UGUI 野外/菜单层和 IMGUI 战斗/逻辑对话层，只改表现层色板、边框、选择态与布局，不引入游戏状态。使用木棕面板、暖纸字色、黄铜线和暖色块状高亮；主菜单/地图框使用 Canvas 视口百分比锚点，CanvasScaler 宽高折中；标题点击区域使用实际可见底板边界。实机测试必须另获用户授权。
+
+**关键文件与接口**:
+- `UNITY/Assets/Scripts/Presentation/FieldUiPresentation.cs` — 全局 UI 色板、标题/菜单/地图面板、视口锚点与 CanvasScaler。
+- `UNITY/Assets/Scripts/Presentation/Menu/FieldCommandMenu.cs` — 菜单视口和命令选中/未选中底色；业务 Action 回调保持原样。
+- `UNITY/Assets/Scripts/FC/FcTitleScreen.cs` — 钢框/木色内衬、记录行底板与点击热区。
+- `UNITY/Assets/Scripts/FC/FcDialogue.cs`、`UNITY/Assets/Scripts/Field/DialogueDebugUI.cs` — Canvas/IMGUI 对话选项底板与输入反馈。
+- `UNITY/Assets/Scripts/Battle/BattleController.cs` — 战斗状态/日志/命令分区、敌群换行、队伍滚动和主题样式。
+
+**实施步骤**:
+1. 先检查现有野外/菜单/地图/对话/战斗覆盖，沿用已有路由和服务。
+2. 将战斗及对话呈现映射到暖木与黄铜主题，保留现有输入语义。
+3. 将野外/主菜单/地图/标题调色板统一，菜单和地图外框改为视口锚点。
+4. 把标题行鼠标热区缩到实际底板，修正超宽窗口固定框高裁切设计。
+5. 用户授权前只做静态代码复核；不运行测试、构建或 Unity。
+
+**验证方法**: 静态复核通过；真实 T01–T05 未执行，需用户授权后按菜单/地图/剧情/战斗正常流程与 4:3、16:9、21:9 边界路径验收。不得将静态复核表述为运行通过。
+
+**踩坑**: 标题菜单文字 Rect 比可见底板宽，会使鼠标热区重叠；应使用行底板 Rect 做命中。固定像素宽高的菜单/地图框在 CanvasScaler 只匹配宽度的超宽屏下会超出屏高；外框宜用视口 anchors，留住内部参考单位边距。另需注意保持分辨率设置是独立启动行为，不应混入视觉配色改动。
+
+**状态**: 部分完成（视觉实现与静态复核完成；未授权真实运行验收）。
+
+
+### F-094: GAME Unity UGUI 程序化旧钢与暖木平铺材质
+
+**日期**: 2026-10-25
+**项目**: GAME / D:\\code\\GAME
+**关键词**: Unity UGUI, Image.Type.Tiled, TextureWrapMode.Repeat, 程序化木纹, 锈钢 UI, Sprite.Create, 跨程序集可见性
+
+**需求场景 / 现象**: 将 FC 初代重制的 Unity UI 贴近用户选定的 3D 室内参考图：暖木板、旧化锈钢、黄铜强调。原 UI 已有配色但主面板大多是纯色。
+
+**根因**（问题类必填）: 旧实现仅表达颜色，没有木/钢材质细节；UGUI 外框、选项底板本身均为运行时 Image。
+
+**方案 / 架构**: 使用公共静态 `WornUiSurface` 生成并缓存各一张 128×128 RGBA 钢板与木板 Sprite，TextureWrapMode.Repeat，UGUI Image.Type.Tiled + SpriteMeshType.FullRect 平铺。用周期正弦纹理函数让 tile 首尾接缝一致；钢板只用于主要外框，木纹用于内衬/命令行，保留暖纸字色和黄铜选中 tint。辅助器需 `public`，因为 `Game.FC` 的独立 asmdef 调用 `Game.Presentation`。
+
+**关键文件与接口**:
+- `UNITY/Assets/Scripts/Presentation/WornUiSurface.cs` — 公共静态材质生成/缓存辅助器，`ApplySteel` / `ApplyWood`。
+- `UNITY/Assets/Scripts/Presentation/FieldUiPresentation.cs` — 野外 HUD、交互提示、菜单/地图框和按钮。
+- `UNITY/Assets/Scripts/Presentation/Menu/FieldCommandMenu.cs` — 内容视口与命令行。
+- `UNITY/Assets/Scripts/FC/FcTitleScreen.cs` — 钢框、木内衬与记录选项。
+- `docs/FC_REMAKE.md` — 描述材质风格和验收边界。
+
+**实施步骤**:
+1. 在程序代码里生成 128²可平铺钢板/木纹纹理并缓存 Sprite。
+2. 将纹理只接入 UI Image 绘制层，选中态保留高对比暖黄铜底色。
+3. 静态审查 Unity UGUI API、程序集引用、纹理周期和原输入回调；等待用户授权后再做运行验收。
+
+**验证方法**: 三路独立静态审查及交叉复核通过；审查中发现的 `internal` 跨 asmdef 可见性风险改为 `public`，随后复核通过。未运行 Unity、构建、自动化测试或实机验收；实际显示观感仍待授权。
+
+**踩坑**: `Game.Presentation` 中的 `internal` helper 不能被独立 asmdef `Game.FC` 的标题界面访问；跨程序集共享绘制工具需使用公开 API。UGUI tiled sprite 必须使用 Repeat 纹理及完整矩形 Sprite；无缝周期函数和 tile 边缘板缝减少接缝跳变。
+
+**状态**: 部分完成（材质绘制已静态复核；运行观感未测试）
+
+
+### F-095: Additive 美术场景中的室内样片与安全传送接入
+
+**日期**: 2026-10-25
+**项目**: D:/code/GAME（Unity FC 重制）
+**关键词**: Unity additive scene, SceneManager.sceneLoaded, RuntimeInitializeOnLoadMethod, FieldGroundSurface, Terrain.SampleHeight, ScenePortal, SpawnPoint, TownGate, room interior, cutaway room
+
+**需求场景 / 现象**: 在既有逻辑世界与 additive 美术场景中，为同一逻辑地图新增可进出的室内样片；不重建或覆盖已有的未提交美术场景。
+
+**根因**（问题类必填）: 无单一根因。既有 `ArtSceneLoader` 异步叠加美术场景，而玩家生成点/门/城镇安全区属于逻辑场景，需要协调两个场景的加载时序与高度。
+
+**方案 / 架构**: 在 Presentation 层通过 `BeforeSceneLoad` 注册 `SceneManager.sceneLoaded`，只处理目标 `_Art` 场景；检查唯一 root 并将程序生成物迁入 art scene，使其随该场景卸载。室内保持在逻辑场景同一地图，通过双向 `ScenePortal` 和 `SpawnPoint` 传送。additive art scene 装入后从同场景 `Terrain` 取样，统一对齐室内地板、门触发器、出生点和安全区；`FieldGroundSurface` 提供稳定寻地标记。房间边界需与 TownGate、EncounterZone、道路和洞窟入口逐项计算，使用单一公开常量供逻辑层和相机复用。
+
+**关键文件与接口**:
+- `UNITY/Assets/Scripts/Presentation/FC/FcRadoInnArtBuilder.cs` — art-scene lifecycle hook、程序化地板/锈钢墙板/家具/灯光及高度对齐。
+- `UNITY/Assets/Scripts/FC/FcWorldBuilder.cs` — portal、spawn、TownGate、`TownService.Rest` 与室内相机范围。
+- `UNITY/Assets/Scripts/Core/ArtSceneLoader.cs` — additive art-scene 生命周期与 `TerrainReady`。
+- `UNITY/Assets/Scripts/Field/FieldPlayerController.cs` — `Teleport` 通过 `FieldGroundSurface` 寻地，art scene 加载后再次 SnapToGround。
+
+**实施步骤**:
+1. 先检查 `ArtSceneLoader`、玩家寻地、portal/spawn 和遭遇区逻辑，确定不覆盖用户本地场景。
+2. 在 art scene 生命周期钩子中构建唯一、可随场景卸载的运行时视觉 root。
+3. 在逻辑场景配置双向传送、出生点、安全区和交互，保证入口目标与另一侧 spawn id 对应。
+4. 使门触发区避开出生点；前墙切面为出口留足碰撞门洞。
+5. 以独立静态审查核对组件依赖、坐标范围和地形高度。
+
+**核心代码片段**（可选，只放最关键的 5~30 行）:
+```csharp
+[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+private static void Register()
+{
+    SceneManager.sceneLoaded -= OnSceneLoaded;
+    SceneManager.sceneLoaded += OnSceneLoaded;
+}
+
+private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+{
+    if (scene.name != ArtSceneName) return;
+    foreach (var root in scene.GetRootGameObjects())
+        if (root.name == RootName) return;
+    var host = new GameObject(RootName);
+    SceneManager.MoveGameObjectToScene(host, scene);
+    host.AddComponent<FcRadoInnArtBuilder>().Build();
+}
+```
+
+**验证方法**: 静态核对 SceneManager event 注册/去重、additive root scene 归属、room 与 encounter/town 边界、每个 portal 的 target spawn、地面标记和 Rest 调用。功能验收应在用户授权后运行 Unity：正常进入/住宿/离开、金币不足、满 HP 三条路径。本轮未获授权，未运行 Unity、构建或测试。
+
+**踩坑**: 若将已带 `surfaceOffset` 的世界坐标传入会自动叠加同一偏移的 Box helper，窗框会在非零地形高度下产生双倍 Y 偏移；调用前应先还原基准坐标，或将 helper 改成接收明确的 world/local 坐标。不同空间必须避免再次应用偏移。
+
+**状态**: 部分完成（室内样片静态实现完成；实机验收未完成）。
+
+
+### F-096: Unity UI跨UGUI/IMGUI共享旧钢与暖木材质
+
+**日期**: 2026-10-25
+**项目**: GAME Unity FC 重制
+**关键词**: Unity UI, shared Texture2D, UGUI Tiled, IMGUI DrawTextureWithTexCoords, GUIStyle background scaling, ScrollRect, GUI scroll view
+
+**需求场景 / 现象**: 用户要求将战斗、剧情和原型界面统一成参考图的旧钢、暖木、黄铜与暖纸色主题，并保持不同程序集共用材质且不改变输入行为。
+
+**方案 / 架构**: 在 Game.Runtime 内集中生成懒缓存的 Texture2D，避免依赖 Presentation/FC。Game.Presentation 只创建 Sprite wrapper 并为 UGUI Image 设置 Tiled；IMGUI 的 GUIStyle 背景不会因为 TextureWrapMode.Repeat 而自动平铺，面板应通过 GUI.DrawTextureWithTexCoords 以明确 UV 重复，短按钮使用共享 1×1 木色状态纹理。共享 HideAndDontSave 资源需在新播放会话重置时销毁并清空静态引用，不能由场景组件各自销毁。长选项列表需同步滚动位置与当前选择；键盘/鼠标路径都应保证当前焦点可见。
+
+**关键文件与接口**:
+- `UNITY/Assets/Scripts/UI/RetroUiTextures.cs` — Game.Runtime共享材质源、缓存重置、IMGUI显式平铺。
+- `UNITY/Assets/Scripts/Presentation/WornUiSurface.cs` — 同源 Sprite wrapper 与 UGUI Image.Type.Tiled。
+- `UNITY/Assets/Scripts/FC/FcDialogue.cs` — StoryService对话窗口与滚轮/键盘焦点可见性。
+- `UNITY/Assets/Scripts/Field/DialogueDebugUI.cs` — 原型对话滚动和活动选择同步。
+- `UNITY/Assets/Scripts/Battle/BattleController.cs`、`FieldHUD.cs`、`TownDebugMenu.cs` — 共用钢面板与木色状态。
+
+**验证方法**: 静态核对 asmdef 依赖方向、共享缓存/释放、UGUI/IMGUI绘制路径、选择焦点同步，三路独立 R6 与交叉复核通过。未运行 Unity、构建或功能测试；实际纹理观感、多分辨率和滚轮行为仍待用户授权测试。
+
+**踩坑**: GUIStyleState.background 直接赋 128×128 Repeat 纹理仍会按面板矩形缩放；要显式UV平铺。纯键盘实现加上 scroll view 不够，键盘移动后需把焦点滚入视口；滚轮变化也必须更新当前选项，否则 Enter 可能确认不可见项。鼠标滚轮和点击同帧时应先刷新焦点再处理点击。
+
+**状态**: 部分完成（样式与静态复核完成；实机验收待授权）。
+
+
+### F-097: FC 重制室内切面美术基线与车辆版本锚点
+
+**日期**: 2026-10-25
+**项目**: GAME Unity FC 重制
+**关键词**: Unity art bible, isometric cutaway room, pixel sprites, weathered steel, warm wood, FC vehicle slots, Mount_Sub, interior art direction, 俯视切面, 室内美术基线
+
+**需求场景 / 现象**: 用户为 Unity FC 初代重制提供室内游戏截图，要求采用相同风格；项目同时残留了旧原创车辆概念和临时 UI/室内样片方向，需要把用户选择转成可复用美术合同，而不误改全局荒野/战车基线。
+
+**根因**（问题类必填）: 既有 ART_BIBLE 是更早的通用废土提案，缺少 3D 室内与像素人物混合规范，并把 75mm/7.7mm 六轮原创车概念留作首个车辆模型提案，与当前 FC 首车内容冲突。
+
+**方案 / 架构**: 在 ART_BIBLE 明确室内采用高位斜俯视无顶切面3D房间、暖木板/锈钢板、暗色框架、少量黄铜和暖灯窗光；玩家/队友/NPC 使用清晰像素角色并接 3D 地面阴影；UI 使用旧钢框、暖木内容区、黄铜焦点和暖纸色文字。明确室内/室外风格边界与原创性。车辆设计锚定 FC_REFERENCE 和游戏部件/挂点数据，区分初始无副炮装备与 Mount_Sub 模型接口，旧原创方案退出 FC 制作范围。
+
+**关键文件与接口**:
+- `docs/ART_BIBLE.md` — 项目视觉方向、室内色板、FC车辆参考锚点、Blender/Unity模型合同。
+- `docs/FC_REFERENCE.md` — 当前首车及装备参照，并标记待 FC 原版核对的事实。
+- `UNITY/Assets/Scripts/FC/FcCampaignBootstrap.cs` — `CreateFirstTank()` 当前实现的蚊式装备状态。
+- `UNITY/Assets/Scripts/Presentation/Editor/FcLightTankModelBuilder.cs` — 当前模型生成器定义的 `Mount_Main`/`Mount_Sub`。
+- `UNITY/Assets/Scripts/UI/RetroUiTextures.cs`, `UNITY/Assets/Scripts/Presentation/WornUiSurface.cs` — 现有旧钢/暖木 UI 纹理实现。
+
+**实施步骤**:
+1. 先搜索共享 UI/室内美术知识和现有 FC 内容对照。
+2. 将截图特征拆成镜头、墙/地/家具、角色、光照、UI、适用范围与原创性规则。
+3. 对照 FC 首车代码和资料，淘汰 ART_BIBLE 中冲突的旧原创战车设定。
+4. 用静态阅读与三路独立复核确保规范与现有样片一致，并注明实机风格效果未测试。
+
+**验证方法**: `git diff --check -- docs/ART_BIBLE.md` 无空白错误；R6A/B/C 和三路交叉核验全 PASS，逐项检查 AC1–AC10。未运行 Unity、构建、截图或测试；像素人物/室内画面的运行效果仍待用户授权实测。
+
+**踩坑**: “取得时无副炮”是装备状态，不能写成底盘没有副炮挂点；当前 `Mount_Sub` 接口不证明 FC 原版是否有相同行为，需分开标注。前墙被切开还需明确留下连到室外且角色可步行通过的门洞，否则“有切面构图”不保证可玩路线。
+
+**状态**: 部分完成（视觉基准文档和静态复核完成；游戏运行视觉、FC 原版车辆细节和完整重制仍未验收/未完成）。
+
+
+### F-098: FC重制用户参考图风格扩展到整套UI
+
+**日期**: 2026-10-25
+**项目**: GAME / Unity FC 重制
+**关键词**: Unity UI 风格、暖木旧钢、黄铜焦点、像素人物、参考图、标题 HUD 菜单 地图 对话 战斗
+
+**需求场景 / 现象**: 用户在确认故事主题之后进入 UI 阶段，并以暖木地板、旧钢墙板、暖灯和像素人物的室内切面游戏截图明确 UI 风格。参考图确立材质与构图气质，不要求复制房间布局或角色造型。
+
+**方案 / 架构**: 将视觉职责写入 `docs/ART_BIBLE.md`：标题、野外 HUD、菜单、地图、剧情对话、战斗均沿用旧钢框体/信息面板、暖木交互与对话面、暖纸文字和少量黄铜焦点。区域按信息层级调节钢木比例；文本使用低纹理底板，选中状态用颜色和指示符共同表达，禁用状态仍可读。现有 Unity UI 通过共享 `RetroUiTextures` 和 UGUI `WornUiSurface` 提供暖木/旧钢主题；本轮只明确视觉合同，不更改玩法或输入代码。
+
+**关键文件**:
+- `docs/ART_BIBLE.md` — UI映射和用户确认的风格范围。
+- `UNITY/Assets/Scripts/UI/RetroUiTextures.cs` — UGUI/IMGUI共享钢木材质。
+- `UNITY/Assets/Scripts/Presentation/FieldUiPresentation.cs`、`FC/FcTitleScreen.cs`、`FC/FcDialogue.cs`、`Battle/BattleController.cs` — 当前主题使用处。
+
+**验证**: 独立静态复核确认标题、野外 HUD/菜单/地图、对话和战斗实现与材料职责相符。未运行 Unity、构建或功能测试；材质对比、文字可读和分辨率表现仍需用户授权后实机验收。
+
 
 ### F-099: 标题页保留用户显示模式
 
@@ -1746,6 +1984,31 @@ Word结构检查为7节A4纵向、11表、6图片；渲染器缺soffice.exe，�
 **关键文件**: `UNITY/Assets/Scripts/FC/FcTitleScreen.cs` 的 `Start()`、CanvasScaler初始化、菜单刷新与输入处理。
 
 **验证**: 当前源码静态核对无Screen.SetResolution，CanvasScaler与标题交互/存档入口保留；独立R6A/B/C和交叉核验全PASS。未运行Unity、构建、功能测试或GUI；实际全屏/窗口及4:3/21:9呈现待用户授权测试。源文件为Git未跟踪状态，缺少HEAD diff历史依据。
+
+
+### F-100: FC 45毫米炮独立运行时模型原型与挂装路径
+
+**日期**: 2026-10-26
+**项目**: GAME / D:\code\GAME
+**状态**: 45毫米炮运行时模型原型实现并完成静态复核；美术源资产与Unity实测未完成
+**关键词**: FC重装机兵, 45毫米炮, VisualCatalog, 运行时模型工厂, Unity挂点, Mesh缓存, URP fallback
+
+**需求场景**: FC首车蚊式与波布Buggy当前使用同一45毫米炮数据，但初始模型临时复用了75毫米炮。必须使45毫米炮外观独立可替换，并在车辆与战斗表现路径一致装配。
+
+**方案/架构**: 通过 `Fc45mmCannonModelFactory` 运行时生成暖旧钢/橄榄色低多边形炮尾、炮盾、短炮管、炮口与瞄具原型。为 `WPN_FC_Cannon45` 与 `WPN_FC_BuggyCannon` 注册独立工厂，避免已有75毫米模型alias优先命中。车辆外观及战斗表现路径统一经 `VisualCatalog.InstantiateModel` 在现有武器挂点生成；Cylinder/Frustum 网格和按色材质以固定键静态缓存，材质优先使用Resources中的 `Combat/CombatFallback`，避免反复换装增长Mesh对象或只依赖可能被裁剪的字符串Shader查询。保留 `WPN_FC_Cannon7mm` 到75毫米外观的既有临时映射和玩法数据。
+
+**关键文件**:
+- `UNITY/Assets/Scripts/Presentation/FC/Fc45mmCannonModelFactory.cs` — 运行时低模原型与有限Mesh/材质缓存。
+- `UNITY/Assets/Scripts/FC/FcCampaignBootstrap.cs` — 两个FC45毫米ID注册工厂。
+- `UNITY/Assets/Scripts/Presentation/Tank/TankVisual.cs` 与 `UNITY/Assets/Scripts/Presentation/Combat/CombatPresentationBootstrap.cs` — 野外/车库及战斗挂装入口。
+- `docs/ART_BIBLE.md`、`docs/FC_REFERENCE.md` — 原型状态和未完成的正式美术交付边界。
+
+**验证方法**: 静态检查注册、挂点、+Z枪口朝向、共享Mesh缓存、Resources fallback、数据快照、代码范围及三路独立复核/交叉核验均PASS；`git diff --check`未发现空白错误。没有运行Unity、构建、游戏或测试；外观比例、材质和镜头识别度待授权实机核验。FC原版尺寸与细节没有实机依据，源资产Blender/FBX/预览仍未交付；FC bootstrap在任务开始前已是Git未跟踪文件，因此以预编辑读取快照比对数据，不能宣称有完整HEAD diff证明。
+
+**踩坑**: `VisualCatalog.InstantiateModel`会先尝试资源Prefab并按alias解析，然后才走工厂；因此必须移除目标ID的旧alias才能触发工厂。既有 `TankVisual` 和 `CombatPresentationBootstrap` 武器路径调用 `Model()`直接拿Prefab，工厂不会触发，需改成 `InstantiateModel(..., mount, false)`。
+
+**状态**: 部分完成（运行时原型与挂装接线完成；正式Blender源文件、FBX、预览与授权后的Unity画面验收仍待完成）。
+
 
 ### F-101: FC重制UI风格复确认时复用既有主题实现
 
@@ -1774,6 +2037,8 @@ Word结构检查为7节A4纵向、11表、6图片；渲染器缺soffice.exe，�
 **踩坑**: 用户重复给出已有风格参考不一定需要新材质或重复样式系统；先比对现有 UI 实现，避免范围外重复改造。
 
 **状态**: 部分完成（风格基准与静态覆盖确认；实机显示和可读性待授权验证）。
+
+
 ### F-102: Unity同名Cue同步的原创SFX WAV资源生成
 
 **日期**: 2026-10-26
@@ -1826,6 +2091,26 @@ Word结构检查为7节A4纵向、11表、6图片；渲染器缺soffice.exe，�
 
 **限制**: 实际挂点中的镜头比例、战斗外观、材质/光照与运行时加载仍需用户授权后实机验收；Prefab生成日志末尾有Curl error 42提示，但生成成功行和批处理正常退出均在同一日志中。FC原版尺寸及几何不作为已确认事实。
 
+
+### F-104: FC重制巨蚁Blender/FBX/Unity资源交付
+
+# F-104: FC重制巨蚁Blender/FBX/Unity资源交付
+
+**日期**：2026-10-26  
+**项目**：GAME / D:\code\GAME
+**关键词**：FC重制、巨蚁、Blender源模型、FBX、Unity Prefab、资源ID、低多边形、轴向转换、GUID保留
+
+**需求与状态**：为Unity FC重制补齐一个普通敌人的独立建模源文件与可加载资源。`ENM_FC_GiantAnt` 已交付Blender工程、FBX、预览PNG、5种材质和Resources Prefab；原创低多边形模型包含头胸腹分节、复眼、触角、大颚与三对腿。最终Unity资源边界约 `(2.37, 1.31, 2.80)` 米，底部Y=0，前向约+Z，77个Renderer；原Prefab GUID保持 `20133215c96389e4e85d543b4b48d1f5`。
+
+**方案**：Blender源场景Z-up/-Y前向，FBX导出至Y-up/-Z格式；Unity资源生成器保留导入器轴转换节点，并在身份Prefab根下实例化模型。以头/腹坐标、FBX米制包围盒、6个股节节点和原Prefab GUID作为生成器约束；同一生成器按对象名分配外壳、装甲、边缘、深色关节、复眼五种材料。模型源在导出前把最低顶点归零。
+
+**资源路径**：`ArtSource/ENM_FC_GiantAnt.blend`、`UNITY/Assets/Models/FC/ENM_FC_GiantAnt.fbx`、`ArtSource/Previews/ENM_FC_GiantAnt.png`、`UNITY/Assets/Resources/Visuals/ENM_FC_GiantAnt.prefab`。`CombatPresentationBootstrap` 按 `Resources.Load("Visuals/{敌人ID}")` 查敌人prefab；VisualCatalog采用相同路径约定，但当前战斗路径没有直接调用VisualCatalog。
+
+**验证与限制**：Blender与Unity Editor仅作为内容生成器写出源、FBX、预览和Prefab；静态生成日志记录bounds、+Z方向、Renderer/腿数、GUID和资源引用，三路独立R6及三路交叉核验PASS。未运行游戏、动画、碰撞或实机战斗/镜头测试；接地画面和运行时材质效果仍待用户授权后验收。不得把这个原创资产说成原版FC精确模型。
+
+**返修记录**：首次Unity生成时曾重置导入模型根旋转，导致Y/Z边界错误，修为保留导入器轴转换；复核发现最低顶点比原点高0.03米，随后在Blender源生成器归零并重生成Prefab。旧Prefab/meta副本保留在 `D:/sire/sire_ledger/runs/R20261026-043136-game/evidence/U-01/`。
+
+
 ### F-105: FC重制UI钢板铆钉跨UGUI与IMGUI统一
 
 **日期**: 2026-10-26
@@ -1852,6 +2137,7 @@ Word结构检查为7节A4纵向、11表、6图片；渲染器缺soffice.exe，�
 **踩坑**: 战斗面板用IMGUI独立绘制，UGUI覆盖核对会漏掉它；装饰边缘还需与文字/状态/命令区域保持安全距离。应跨越UI框架检查所有正式面板。
 
 **状态**: 部分完成（视觉细节完成并静态复核；运行时显示与响应式验收待授权）
+
 
 ### F-106: FC波布机械师绕院事件状态与文档核对边界
 
@@ -1881,6 +2167,33 @@ Word结构检查为7节A4纵向、11表、6图片；渲染器缺soffice.exe，�
 **踩坑**: 不要把“触发器中的自动绕树演出”写成玩家手动绕行；不要把乘车状态推断为驾驶自有车辆；区分当前实现事实与FC原版准确性。
 
 **状态**: 部分完成（开发事件已有代码；原版逐项核对与实机验收未完成）
+
+
+### F-107: FC重制UI语义色板跨UGUI与IMGUI统一
+
+**日期**：2026-10-26
+**项目**：GAME / Unity FC 初代《重装机兵》3D 重制
+**关键词**：FC重制 UI、RetroUiColors、UGUI、IMGUI、旧钢、暖木、语义色板、RichText
+
+**需求场景 / 现象**：用户以斜俯视旧钢墙、暖木地板、暖灯与像素人物的室内图确认 UI 视觉方向。多个 UI 系统已复用钢木纹理，但角色颜色在标题、野外 HUD/地图/菜单、剧情对话、战斗与城镇原型间分散，战斗 IMGUI RichText 还有独立 HEX 状态色。
+
+**方案 / 架构**：在 `Game.UI.RetroUiColors` 中按语义定义暖纸正文、次级/弱化/禁用文字、黄铜焦点、选中/悬停、锈色、阵亡/受损/奖励/失败、钢/木染色、暗底/信息面板、分割线和铆钉色。IMGUI RichText 使用相同颜色的 HEX 字符串 token；`RetroUiTextures`、`WornUiSurface` 继续负责生成与铺设材质。ART_BIBLE 记录 RGBA HEX、用途和纹理对比不得压过文字的规则。只复用颜色职责，不把场景参考图的房间布局套到 UI。
+
+**关键文件**：
+- `UNITY/Assets/Scripts/UI/RetroUiTextures.cs` — `RetroUiColors` 与共享纹理颜色。
+- `UNITY/Assets/Scripts/Presentation/FieldUiPresentation.cs`、`Presentation/Menu/FieldCommandMenu.cs` — HUD、菜单、地图。
+- `UNITY/Assets/Scripts/FC/FcTitleScreen.cs`、`FcDialogue.cs` — 标题、剧情对话。
+- `UNITY/Assets/Scripts/Battle/BattleController.cs` — IMGUI 战斗与 RichText 状态。
+- `UNITY/Assets/Scripts/Field/FieldHUD.cs`、`DialogueDebugUI.cs`、`TownDebugMenu.cs` — 逻辑场景原型/调试界面。
+- `docs/ART_BIBLE.md` — UI HEX token 与层级规则。
+
+**验证方法**：静态检查语义颜色定义、所有目标 UI 的 token 调用、战斗 RichText HEX 引用及 ART_BIBLE 映射；三路独立静态复核和交叉核验通过。未运行 Unity、构建或功能测试；不同分辨率下的实际对比度、字体可读性和材质观感仍待用户授权真实界面验收。
+
+**踩坑**：只搜 UGUI 会漏掉 BattleController/DialogueDebugUI 等 IMGUI 界面；战斗状态还可能在 RichText 标签里使用直接 HEX。开始改动前记录任务基线，避免把长期工作区里已有的逻辑/布局脏改误归到颜色统一单元，更不能为通过纯视觉 review 回滚它们。
+
+**状态**：已实现并静态复核通过；真实 Unity 界面验收待授权。
+
+
 ### F-108: FC拉多开局补给商店隔离
 
 **日期**：2026-10-26
@@ -1898,6 +2211,8 @@ Word结构检查为7节A4纵向、11表、6图片；渲染器缺soffice.exe，�
 **踩坑**：不要把新库存提前加入北洞 7 毫米炮奖励路径；首车主炮已装配，拉多开局商店只需提供消耗品。开发期价格不能当作 FC 原版价格。
 
 **状态**：代码与文档静态实现并复核完成；运行时商店显示、购买效果与闭环仍待用户授权测试。
+
+
 ### F-109: 拉多恢复服务统一
 
 # 拉多恢复服务统一
@@ -1926,6 +2241,8 @@ Word结构检查为7节A4纵向、11表、6图片；渲染器缺soffice.exe，�
 **踩坑**: 存在看起来像“医疗包”的姐姐模型装饰，但不能据此推断互动应免费治疗；应以明确的游戏服务规则为准。另需把开发版选择与原版事实分开记录。
 
 **状态**: 已完成静态实现，运行时验收待授权。
+
+
 ### F-110: 标题页区分损坏存档与空槽
 
 **日期**: 2026-10-26  
@@ -1953,6 +2270,8 @@ Word结构检查为7节A4纵向、11表、6图片；渲染器缺soffice.exe，�
 **踩坑**: `Peek == null` 不等于槽位为空；任何显示层需要区分空槽和损坏档时，都应结合 `Exists` 或专门的读取结果类型。
 
 **状态**: 已完成静态实现与复核；运行时验收待授权。
+
+
 ### F-111: 存档摘要与读取共享最小结构校验
 
 **日期**: 2026-10-26  
@@ -1979,6 +2298,8 @@ Word结构检查为7节A4纵向、11表、6图片；渲染器缺soffice.exe，�
 **踩坑**: `JsonUtility.FromJson<T>` 返回非null只证明JSON可以反序列化为对象，不代表必需的玩家数据集合齐全。区分摘要有效性时应与实际恢复入口使用同一最小根结构约束。
 
 **状态**: 根级结构校验已静态实现并复核；深层数据验证和真实存档路径待后续授权。
+
+
 ### F-112: GAME待办状态的证据分层
 
 **日期**: 2026-10-26  
@@ -2007,6 +2328,190 @@ Word结构检查为7节A4纵向、11表、6图片；渲染器缺soffice.exe，�
 **踩坑**: “✅接口认可”表示技术约定，不证明内容符合原版；“代码/资源存在”表示静态实现，不证明可玩；未授权验收必须保持DEFERRED。
 
 **状态**: 可复用于后续GAME/FC重制待办盘点；每次输出前必须重新读取当前文档与最新台账。
+
+
+### F-113: Unity 乘车事件复用旧前置条件并加强车辆归属守卫
+
+**日期**: 2026-10-27
+**项目**: GAME / D:/code/GAME
+**关键词**: Unity, vehicle ownership, VehicleRecord, assignedCharacterId, party driver, event trigger, CanTrigger, garage, game event guard
+
+**需求场景 / 现象**: 场景事件已有进度标志与步行状态前置条件，但乘车事件还应确认有效驾驶员实际乘坐登记并归属匹配的未停放车辆。与此同时，现有编辑器 smoke-test 可能直接调用较宽松的旧触发谓词。
+
+**方案 / 架构**: 保留原有共享谓词及其既有调用语义，新增更严格的事件入口谓词：先复用进度与步行条件，再找到存活且正在乘车的活动队伍成员，按其 TankLoadout 引用查找 VehicleRecord，并要求记录未停放且 assignedCharacterId 匹配驾驶员。实际事件入口使用严格谓词；这样可以增强运行入口而不改变已有纯逻辑调用者。
+
+**关键文件与接口**:
+- `UNITY/Assets/Scripts/FC/FcWorldBuilder.cs` — `PobMechanicRideEvent.CanTriggerWithOwnedVehicle` 与 `OnTriggerEnter`。
+- `UNITY/Assets/Scripts/Tank/Runtime/VehicleService.cs` — `VehicleService.Of` 的载具引用查找与 `Normalize` 归属同步。
+- `docs/FC_REMAKE.md`、`docs/FC_REFERENCE.md` — 区分开发守卫与原版事实。
+
+**实施步骤**:
+1. 保留原有共享条件谓词，增加只供实际乘车事件使用的严格守卫。
+2. 在开启演出协程之前检查存活驾驶员、车辆记录、归属和停放状态。
+3. 文档明确说明这是开发版行为；未核实的原版条件继续标注未知。
+
+**验证方法**: 可先静态确认事件入口调用严格守卫，且守卫依次包含驾驶员、VehicleRecord、owner ID 与 parked 检查；取得测试授权后再覆盖正常自有车辆、步行、无车记录、错配owner、停放车辆及存档后车辆同步。当前实现轮只做源码静态检查，未运行测试、构建或 Unity。
+
+**踩坑**: 运行时初始化可能通过 `VehicleService.Normalize` 从活动队伍引用重建归属，因此对异常旧存档的行为要区分“启动时规范化”与“事件守卫拒绝”；不要为使事件触发而移除归属条件。既有 smoke-test 调用旧谓词时，新增约束应放在实际事件入口，避免无关测试语义改变。
+
+**状态**: 部分完成；代码与文档已静态复核，真实运行验收待用户授权，原版条件待指定版本资料核对。
+
+
+### F-114: Unity FC系统菜单接入显示控制并复用木钢交互
+
+**日期**: 2026-10-27
+**项目**: GAME / D:/code/GAME
+**关键词**: Unity 6, Screen.SetResolution, Screen.resolutions, FullScreenWindow, borderless fullscreen, windowed mode, resolution picker, AudioDirector, System menu
+
+**需求场景 / 现象**: 复古风格游戏的系统分页已有存读档、音乐与音效音量控制，但缺显示模式/分辨率选项，也没有把 AudioDirector 已有的主音量控制暴露给玩家。需要补齐能力，同时保留现有FC木钢界面主题和菜单交互。
+
+**方案 / 架构**: 复用现有命令列表行、滚动、选择色与反馈。通过 `Screen.fullScreenMode` 显示当前模式，并用 `Screen.SetResolution(width,height,FullScreenMode)` 在 `Windowed` 与 `FullScreenWindow` 间切换。用 `Screen.resolutions` 形成分辨率项，按宽高去重后循环，并把当前窗口尺寸加入候选；无其他选项时显示禁用说明。离开全屏时使用桌面尺寸的安全比例、并限制最大逻辑窗口尺寸，避免打开几乎铺满桌面的可移动窗口。总音量调用现有 `AudioDirector.SetMasterVolume`，不重复实现声音状态。
+
+**关键文件与接口**:
+- `UNITY/Assets/Scripts/Presentation/Menu/FieldCommandMenu.cs` — System分页、显示模式/分辨率控制和主音量选项。
+- `UNITY/Assets/Scripts/Presentation/Audio/AudioDirector.cs` — 既有音量状态与`SetMasterVolume`。
+- `docs/FC_REMAKE.md` — 更新系统菜单能力及验收状态。
+
+**实施步骤**:
+1. 核对System页现有存读档和音量菜单及AudioDirector接口。
+2. 用Unity Screen API显示并切换模式/分辨率；复用Unity自身的显示设置持久化，不创建重复的PlayerPrefs键。
+3. 沿用菜单列表视觉和反馈，增加主音量控制。
+4. 明确记录平台差异及未获授权时不得运行Unity/构建/游戏。
+
+**验证方法**: 静态检查Screen API、尺寸去重/循环、无候选时的禁用状态、音量和存读档旧入口、文档描述。实际验收需切换全屏/窗口、不同分辨率、重启持久化、窗口可移动、4:3/16:9/21:9和小屏可读性；本轮未运行测试、Unity、构建或浏览器。
+
+**踩坑**: Unity 6已经通过PlayerPrefs持久化分辨率/全屏模式，因此不应额外维护同一设置的应用层副本。Screen.SetResolution在当前帧结束后才应用，反馈文案应说“已请求”而非“已生效”。Screen.resolutions可能同尺寸存在多个刷新率，UI只需按宽高去重；当前窗口可能是非标准尺寸，应保留当前项以便用户循环回去。
+
+**状态**: 已静态实现与复核；显示平台、窗口尺寸和多分辨率实机行为待授权验收。
+
+
+### F-115: Unity战斗C装置行动次数贯通与提交边界
+
+**日期**: 2026-10-27
+**项目**: GAME / D:/code/GAME
+**关键词**: Unity, C装置, CUnitData, actionsPerTurn, BattleSystem.SubmitCommands, 多次行动, action queue, ammo reservation, item stack reservation
+
+**需求场景 / 现象**: CUnitData 含有每回合行动次数，但战斗命令阶段原先只给玩家角色一个行动槽，战斗核心也没有防止公开提交入口收到超额度或非当前队员动作。
+
+**根因**（问题类必填）: 数据层的 `actionsPerTurn` 尚未贯通到角色有效属性、命令队列、战斗结算和部件详情 UI。UI 的槽位重复本身不足以约束直接调用战斗系统的输入；多槽提前排队还可能重复消费有限弹药或同一物品堆叠。
+
+**方案 / 架构**: 将有效行动数接入 Combatant；命令控制器按额度创建槽位并显示进度，跨槽投影上/下车状态并预留有限弹药和物品数量。BattleSystem 再按每名玩家队员限制手动提交动作数，拒绝不在当前玩家 roster 的 actor；自动助战按额度生成动作并为有限弹药做本轮局部预留。同角色多次动作保持提交顺序。原版FC行动规则和数据未核实时，文档必须标为开发数据行为和待核事实。
+
+**关键文件与接口**:
+- `UNITY/Assets/Scripts/Battle/Combatant.cs` — `ActionsPerTurn` 有效额度。
+- `UNITY/Assets/Scripts/Battle/BattleController.cs` — 命令槽、槽号、状态投影及手动资源预留。
+- `UNITY/Assets/Scripts/Battle/BattleSystem.cs` — `SubmitCommands` roster/次数边界、自动动作与弹药预算、角色动作顺序。
+- `UNITY/Assets/Scripts/Presentation/Menu/FieldCommandMenu.cs` — C装置部件显示行动数。
+- `docs/FC_REMAKE.md`、`docs/FC_REFERENCE.md` — 开发行为与原版未知项说明。
+
+**实施步骤**:
+1. 静态追踪 CUnitData 到 Combatant 的额度数据流。
+2. 接入命令队列、槽位显示、Undo、跨槽状态投影和资源预算。
+3. 在战斗系统入口再验证当前玩家 roster 与逐角色行动次数；自动队员单独按额度结算。
+4. 交叉审查边界时修复非 roster actor 可绕过次数验证的问题。
+5. 静态审查通过后，未获测试授权时将动态验收记为 DEFERRED。
+
+**验证方法**: 静态核对至少一个槽、手动/自动队员额度、roster校验、超额提交、Undo、板载状态投影、手动/自动弹药和道具预留、同角色顺序、部件 UI 和 FC 待核标注。本次三名审查者及交叉核验通过；未运行测试、构建、Unity Editor 或游戏。动态覆盖应待用户授权后进行。
+
+**踩坑**: 只在 UI 限制槽数不能保护 `SubmitCommands` 这样的公开入口；复核中发现非玩家 roster actor 能绕过逐人额度，应在入队之前过滤。自动队员多槽也要在生成动作时预留同一武器的有限弹药，否则每次选择都可能看到同一发子弹。不要把开发资产中 Twin 为 2 次行动写成 FC 原版结论。
+
+**状态**: 开发版功能已静态实现和审查；动态验收未获授权，FC原版行为与数值待核。
+
+
+### F-116: FC重制Rocco北路切片的地图注册与边界核算
+
+**日期**: 2026-10-27
+**项目**: GAME / D:\code\GAME
+**关键词**: FC重装机兵, Rocco, 罗克镇, Unity FC campaign, WorldMapData, TownGate, EncounterZone, GameDB, 特殊砲弹商店, 城镇地图扩展
+
+**需求场景 / 现象**: FC地图原型仅含拉多、波布、奥多等开局地点；全量重制仍需连续扩展城镇、地图、游戏服务和原版对照。
+
+**方案 / 架构**: Rocco作为本轮北路推进切片接入现有通用注册路径。`FcCampaignBootstrap` 创建 TownData、ShopData、WorldMapData；TownData.shopId链接特殊砲弹店；所有资产进入 RegistryAssets 后由 GameDB 注册。`FcWorldBuilder` 继续复用TownGate、TownData驱动的车库/赏金/商店服务和EncounterZone，不引入独立城镇服务系统。罗克地图点与城镇中心设在(55,80)；城镇安全区和道路深度均28.5，并按墙体碰撞边界留距；普通遭遇覆盖入口前，TownGate内遭遇暂停。
+
+**关键文件与接口**:
+- `UNITY/Assets/Scripts/FC/FcCampaignBootstrap.cs` — `Rocco` TownData、`LOC_FC_Rocco`、`SHP_FC_Rocco_Shells`注册及中文名。
+- `UNITY/Assets/Scripts/FC/FcWorldBuilder.cs` — `BuildRocco`、`BuildTown(..., safeDepth, roadDepth)`、北路遭遇范围。
+- `UNITY/Assets/Scripts/WorldMap/WorldMapData.cs` — 地点的mapId/position/discovery radius。
+- `UNITY/Assets/Scripts/Field/TownGate.cs` — 镇区安全边界；镇内无遭遇。
+- `docs/FC_REFERENCE.md` — 来源置信、开发近似和未完成北方路线。
+
+**实施步骤**:
+1. 先从官方/二手来源分离FC已验证事实与NES攻略线索；只将Rocco在奥多北面和有改造/砲弹服务作为二手线索。
+2. 新增城镇、商店和可发现地图点；将六类开发版特殊砲弹从拉多补给店移至罗克店，价格/库存继续标记为未校准。
+3. 延伸北路并核算town gate、道路和地图边缘的坐标区间；将镇路深度与安全区统一以避免视觉越界。
+4. 记录真实路线/边界/地图存档测试，但未获授权时R7必须DEFERRED，不得以静态核对替代。
+
+**验证方法**: 静态代码查找与区间算式；R6三路独立审查和互相交叉核验。真实路径验收：新档击败Big Cannon→走北路→发现/进入Rocco→操作车库和砲弹店；绕行/地图边界；发现旗标保存读档。当前这些Unity运行路径均待用户授权，不能宣称可玩通过。
+
+**踩坑**: 原town gate与路面共用尺寸时，新镇紧邻既有镇/北山会发生区域重叠；必须同时核对门区间与碰撞体的近侧边缘，不能只按墙中心坐标判断。R8发现路面比山体碰撞边界越出0.5单位，改用镇专用roadDepth后解除；最终保留0.25间距。静态证据/独立复核文件必须随修复同步更新，避免归档继续陈述旧结论。
+
+**状态**: 部分完成（罗克静态地图与服务接入、独立审查通过；R7待授权；FC原版核对与北方主线内容未完成）。
+
+
+### F-117: EncoderPlotter 内部调试文件解析工具
+
+**日期**: 2026-10-28
+**项目**: EncoderPlotter_0903_01
+**关键词**: 内部调试工具, debug_tool.py, IAP ZIP, kingkong, ArgumentsHeader, j72, ZIP Slip, 调试日志, data.log
+
+**需求场景 / 现象**: 桌面应用需要从设置页导入 BIN、IAP ZIP、调试日志 ZIP 和加密 Python/data 日志，解密并结构化展示。IAP 和调试日志 ZIP 可能包含二进制数据块及加密成员。
+
+**根因**: 数据格式规则分散在已有 Python BIN 解析器、DataFormatter、Protector 和 logger 加密实现中；UI 不能独立假定传输加密状态，ZIP 还需要防止成员路径逃逸。
+
+**方案 / 架构**: 设置入口打开独立长文档窗口；窗口上方固定选择文件区，下方滚动显示分节报告并支持逐节/全文复制。主进程提供内部版受限的文件选择 IPC，由 Python 单次 CLI 入口复用现有解析/解密逻辑；输出写入 logs/<输入同名目录>。ZIP 成员路径 resolve 后必须位于压缩包内容根目录。IAP j72 按 ArgumentsHeader 的 series/argumentsVersion 选择 DataFormatter 类型；历史布局缺少 SN 尾字段时按 EncoderBase 的规则回退。BIN 无法单独推断传输加密，展示为未知。
+
+**关键文件与接口**:
+- `controller/python/debug_tool.py` — analyze、ZIP 安全解包、日志解密、参数结构解析。
+- `controller/python/main.py` — `--debug-tool kind source output` CLI 入口。
+- `main/index.js` — `open-debug-tool-file` IPC 和内部版门禁。
+- `components/analyzer/version.html` — 内部版设置入口。
+- `asset/debug-tool.html`、`asset/js/debug-tool.js`、`asset/css/debug-tool.css` — 独立报告窗口和文档式长内容视图。
+
+**实施步骤**:
+1. 通过主进程文件对话框按类型选择文件并将输入输出路径交给 Python。
+2. 复用现有 BIN/IAP/logger 解密和解析逻辑。
+3. 按文件类型展示分区、完整结果及可复制文本，并写入同名 logs 子目录。
+4. ZIP 解包进行路径校验；失败解密内容以状态和 rawHex 显示，不冒充结构化解析。
+
+**验证方法**: CLI 实样覆盖明文/加密 BIN、IAP 第一阶段 ZIP、调试日志 ZIP、data.log、Python 日志和无效 BIN/非 ZIP。所有 CLI 样本解析通过，静态编译检查通过。Electron UI 真实交互受 Windows `GetCursorPos` 拒绝访问阻塞，故设置入口、复制粘贴和外部版 UI 未验收。
+
+**踩坑**: logger 数据需逐行剥除填充并还原取反 hex；Python 子进程强制 UTF-8 避免 Windows GBK 输出 emoji 时失败。ctypes 参数结构需递归转 JSON；历史短布局需兼容无 SN 尾字段；debug ZIP 解密失败的 snapshot 不应并入日志文本。
+
+**状态**: 部分完成（CLI解析实样通过，Electron真实UI验收待完成）
+
+
+
+### F-118: EncoderPlotter 五仓 Git Flow 发版与打包规则（2026-09-07 更新版）
+
+**日期**: 2026-10-28
+**项目**: EncoderPlotter1（主仓 + sub_embedded/sub_common/sub_automation/sub_algorithm）
+**关键词**: 打包规则, 发版, 发布流程, git flow, feature, release, hotfix, 回合, back-merge, back-merge-check, 桥接分支, backmerge, tag, encoder-plotter-v, rc-v, test-v, release-line-gate, changelog-gate, ALLOW_BACKMERGE_DEBT, gitlink, 子先父后, 子模块指针, sub_algorithm, 4.9.2, 正式包, RC包, 测试包, 打包
+
+**触发与行为（用户定）**: 用户问“打包规则/发版规则/怎么发版/怎么打 tag/回合/hotfix 怎么走”，或要求按打包/发版规则执行（开分支、打 tag、合 main、回合、挪 gitlink）时，先按下方清单给出“应该怎么做”的提示（含当前该步的前置检查与门禁会挡什么），再执行；执行时逐步对照，缺前置条件就停下说明。细节以仓库 docs/branching.md、ADR 0006、branching-standards-audit.md 为准，文档与本条不一致时以文档为准、文档错了改文档。
+
+**一、分支**: feature/<主题> 从 develop 出、合回 develop；release/x.y.z 从 develop 出，在其上改版本号与 CHANGELOG，合入 main 和 develop；hotfix/x.y.z（x.y.z 为将发布的新版本号）从 main 出，客户现场急修唯一出口，合入 main 和 develop。均为短命分支，合完即删，超 4 周未合入算异常。热修期间若有 release/* 在制，热修改动合入那条 release 分支而非 develop。
+
+**二、三条硬规矩**:
+1. 一律 merge commit，禁 squash、禁 rebase merge（squash 换 SHA，主仓锁的子模块指针悬空）。
+2. 正式 tag（encoder-plotter-vX.Y.Z）只打在 main；rc-vX.Y.Z-N 打在 release/* 或 hotfix/*；test-vX.Y.Z-NN[-描述] 任意分支。
+3. 子先父后：改过的子仓先各自走完发布并打 tag，主仓再把 gitlink 挪到该提交，重新验证后才能合 main。gitlink 变更不单独建 MR，须与使用它的父仓代码同一 MR。
+
+**三、回合（main → develop）**: 每次合入 main 后立刻回合，不攒。
+- 回合前 `bash scripts/back-merge-check.sh check`；看两边共同触碰的文件，不看冲突数量（语义冲突 git 不报）。
+- 回合 MR 源分支是受保护的 main，冲突时不能点“解决冲突”，改走桥接分支 `feature/backmerge-<版本号>`，保留 merge commit 禁 squash。
+- 冲突由写 hotfix 的人解（保住 hotfix 意图、形式服从 develop 结构）；解完回到该 bug 复现场景在 develop 上真机复验，能编译/无冲突不算验证。
+- 回合后 `bash scripts/back-merge-check.sh verify <merge-commit>` 查空合并（git merge -s ours 会造出“宣称已含、实际没进”的提交）。
+- 不回合的后果：下一版发不出去（门禁④拦），且已交付的修复会被 develop 拉出的 feature 静默带回去。
+
+**四、门禁（打正式 tag 时 release-line-gate 逐条判）**: ①提交被 main 可达；②sub_embedded/sub_common/sub_automation 三个 gitlink 各自被子仓 main 可达；③sub_algorithm 只打印所在远端引用，为空则拦；④上一个正式 tag 已回合进 develop（急事可设 `ALLOW_BACKMERGE_DEBT=<理由>` 放行，理由进流水线日志）。RC 须在 release/* 或 hotfix/* 上。另有 changelog-gate：CHANGELOG.md 须有与 package.json 同名的版本段。门禁拉不到 refs 时一律停下报错，不用本地缓存继续判。
+
+**五、发版步骤（对照 AGENTS.md）**: release/x.y.z 上改 package.json version，CHANGELOG 条目写进当前版本段（release/hotfix 分支上不写 [Unreleased]；develop 上写 [Unreleased]），条目前缀仅 新增：/修复：/移除：，正文 ≤30 字、一条一件事、不写实现；→ 合 main（merge commit）→ 打正式 tag（CI 出包，本地不出正式包）→ 立刻回合 develop。验包用 dev-<描述> tag 让 runner 出包，验完删 tag。
+
+**六、登记例外**: ①sub_algorithm 归算法部门维护，不加分支保护、不进 gitlink 门禁，其 release 是活跃线、main 是僵尸分支；发正式版前由发版人人工确认其 gitlink 所在分支/提交，结果贴进发版 MR，为空停发。②4.9.2 已合入 main 但暂不打 tag，内容在 CHANGELOG「待发布」段；此时 main 顶端不等于已发布版本，判断客户手里版本看 tag 不看 main。
+
+**限制**: 本条来自用户 2026-10-28 粘贴的《Git Flow 标准流程（2026-09-07 更新版）》，未逐项对照仓库实际脚本核验；4.9.2 未打 tag 的状态会随发布变化，使用前以 git tag 与 CHANGELOG 现状为准。
+
+**状态**: 已归档（规则类知识，非代码实现）
 
 
 ### F-119: ai-tool 手机/电脑接入与外网访问方案（Tailscale + serve HTTPS）
@@ -2046,3 +2551,89 @@ Word结构检查为7节A4纵向、11表、6图片；渲染器缺soffice.exe，�
 **验证情况**: `tailscale status` 显示本机在线、`tailscale serve --bg 8787` 输出与 `serve status` 均已实际读取；用户反馈 iPhone 线路走通。本次未做自动化测试，Service Worker 注册、serve 重启后保留、自动切换 Codex、审批弹窗仍待验证。tailnet 名、机器名、账号邮箱未写入本条，以本机 `tailscale status` / 控制台为准。
 
 **状态**: 已归档（部署与操作类知识；对应 PLAN 阶段 G3 的实测依据，docs/INSTALL.md 尚未写）
+
+
+### F-120: DYN-200 换普通 USB-RS485 线的兼容适配 (自动查找/记住线/兜底/握手重试)
+
+**日期**: 2026-11-04
+**项目**: driverSoftware (D:\code\driverSoftware), 分支 fix/dyn200-new-rs485-cable, 提交 593aad7b + c0d8f013 + 432e6954(文档)
+**关键词**: DYN-200, 扭矩传感器, 换通讯线, USB-RS485, 真透传 dongle, Prolific PL2303GR, 067B:23A3, 6B6B:0001, 自动查找失败, 没找到 DYN-200 分析仪, 读到 0B, 总线无响应/波特率不对, discover_direct_fallback, dyn200_last.json, _OTHER_OWNERS, register_port_owner, 485 继电器, 兼容
+
+**需求场景 / 现象**: 扭矩传感器通讯线从金钢分析仪(V1-CDC, VID:PID 6B6B:0001)换成普通 USB-RS485 线(Prolific PL2303GR, 067B:23A3)后, DYN-200 启动恒报「没找到 DYN-200 分析仪 (按 VID/PID 0x6B6B/0x0001 找)」, 手填端口(COM42)能通。另一次现象: 自动查找报「COM42: 读扭矩单位(0x0030)失败: 读到 0B, 期望 9B」, 再点一次又好。
+
+**根因**:
+1. 自动查找只认分析仪 VID:PID, 真透传 dongle 不在候选里。
+2. 启动握手连读多项配置, 每项只试一次, 普通 USB-485 线偶发丢一帧就整次失败(总线实际是通的: 随后轮询 63 Hz、0 错误)。
+
+**方案 / 架构**:
+- 记住线: 握手成功后把 (VID, PID, 序列号) 写 ~/.kingkong_driver/dyn200_last.json, 下次自动查找把它排在候选最前; 按身份不按 COM 号, 换口号也认得; 没有序列号不记。
+- 兜底: 没有分析仪候选且无记住的线时, 对没被占用的 USB 串口各做一次只读握手, 最多 FALLBACK_MAX=4 个; 跳过分析仪、无 VID 的口、已被本进程别的功能占用的口; 全失败时报错带每个口的原因。
+- 占用台账: server.py 把「485 继电器」也 register_port_owner, 兜底不碰继电器正开着的口。
+- 握手重试: _read_cfg_u32 每项最多 CFG_READ_TRIES=3 次, 间隔 0.08s(只读, 无副作用)。
+- 被否决/可选: 想更保守可去掉兜底只留「记住的口」, 代价是换新线第一次要手填。
+
+**关键文件与接口**:
+- core/dyn200_sensor.py — LAST_PORT_PATH, _port_identity, _save_last_identity, _is_remembered, discover_direct_fallback, discover_candidates, start(), _start_one, _read_cfg_u32
+- server.py — register_port_owner("485 继电器", ...), /api/dyn200/{start,stop,ports,status}
+- tests/unit/test_dyn200_fallback.py — 6 条单测
+- docs/skills/dyn200_sensor_link.md — 完整说明与排查表; AGENTS.md 模块必读表已挂入口
+
+**验证方法**: 真机 COM42(Prolific, 序列号 DPEAB111216, COM41 同型号但读到 0B 非传感器): 手填握手成功(小数点3位/量程10 Nm/单位Nm); 清记忆后 auto 兜底找到 COM42; 停后再 auto 走记住的口; 下线检测 /sensor/start 返回 fresh; 连续读数约 63 Hz、帧龄≤16ms、0 错误。dyn200 相关 135 条单测通过。
+
+**踩坑**: 两个 COM 口(COM41/COM42)同型号时只有一个是传感器, 靠逐口握手区分; 页面显示「未启动」而后端其实在跑时, 先查 GET /api/dyn200/status 的 running。
+
+**限制**: 老分析仪路径(6B6B:0001)未在真机重测, 只有原有单测; 测试时空载 0.0 Nm, 加力后读数是否跟着变未验证; 「丢一帧」重试没有专门单测。
+
+**状态**: 已完成(未推送, 待并入 fix/field-feedback-batch)
+
+### F-121: dv3-admin 打包→GitLab CI→SSH 上传→浏览器下载 全链路（develop 分支，Windows Runner）
+
+**日期**: 2026-11-05
+**项目**: quality-testing/dv3-admin（GitLab 192.168.1.200:8888，项目 ID 159）
+**关键词**: GitLab CI, .gitlab-ci.yml, deploy-agent-exe, build-agent-exe, PyInstaller, encoder-agent.exe, SSH_PRIVATE_KEY, File 变量, scp, ssh, Windows Runner, powershell executor, nginx, autoindex, artifacts, 10.0.64.2, autotest, 打包部署下载
+
+**需求场景**: 把 backend/local_agent 打成 exe，由 CI 自动上传到服务器，并能在浏览器里打开目录、点击下载。
+
+**方案 / 架构（全链路）**:
+1. 触发：推送 develop，或在 GitLab 里对 develop 手动 Run pipeline（API：POST /projects/159/pipeline?ref=develop）。`.gitlab-ci.yml` 只在 develop 分支，master 上没有；job 的 only 写的是 main/develop/tags，默认分支叫 master 所以 master 不触发。
+2. 打包：`build-agent-exe`（tag windows）在 Runner 上用 PyInstaller 生成 backend/local_agent/dist/encoder-agent.exe，artifacts 保留 30 天。Runner 是 DESKTOP-0AAVQN0（gitlab-runner 18.10.1，shell/powershell executor，以 SYSTEM 身份运行）。
+3. 上传：`deploy-agent-exe`（needs build-agent-exe，自动取得 exe 产物）读 File 类型 CI 变量 SSH_PRIVATE_KEY，复制到临时副本并收紧权限，`ssh mkdir -p` 后 `scp` 到服务器 10.0.64.2 账号 autotest 的相对路径 backend/local_agent/dist，即 /home/autotest/backend/local_agent/dist/encoder-agent-<短SHA>.exe（同一提交重复部署会覆盖同名文件）。
+4. 下载：服务器上用 nginx `location /dist/ { alias /home/autotest/backend/local_agent/dist/; autoindex on; add_header Content-Disposition "attachment"; }` 提供目录列表。10.0.64.2:8080 已被 MaxKB 占用，应换端口（建议 8081）。未配 nginx 时的替代：GitLab 里该 job 的 Browse artifacts，或 `/-/jobs/artifacts/develop/download?job=build-agent-exe`（需 GitLab 登录，保留 30 天）。
+
+**前置条件**: ① GitLab 项目 CI 变量 SSH_PRIVATE_KEY（File 类型、Protected，值末尾留一个换行）；② develop 是受保护分支；③ 对应公钥已追加到服务器 autotest 的 ~/.ssh/authorized_keys；④ Runner 机器有 ssh/scp 且能连服务器；⑤ nginx 运行账号对 /home/autotest 路径有读权限（对各级目录 chmod o+x，对 dist 目录 o+rx）。建议给 CI 单独生成一对密钥，不复用个人密钥，私钥只放 GitLab 变量，不经聊天或仓库传递。
+
+**关键文件**: .gitlab-ci.yml（提交 bf88025d 起至 92ad00b8，deploy 阶段位于文件末尾）。
+
+**验证方法**: 流水线 5686（推送 92ad00b8）及 5688、5689、5690（API 手动触发）build 与 deploy 均成功，deploy 日志有 `[deploy] upload OK`（build 约 27s，deploy 约 8s）。本地另用假私钥与桩 ssh/scp 在 PowerShell 5.1 中验证了私钥副本权限收紧、用后删除、残留自愈。
+
+**踩坑**: 见 P-20261104（私钥权限与残留文件）、P-20261105（中文提交信息破坏变量注入）。上传路径曾改过一次：旧目录 /home/autotest/deploy/encoder-agent 仍留有 encoder-agent-c5d71439.exe。
+
+**限制**: nginx 下载入口只给出方案，未在服务器上落地、未验证；服务器目录内容未登录核对，只依据 job 日志；只测过一台 Runner、develop 分支，未测 tag 与 main；下载目录无认证；文件名带提交号会累积，无自动清理。
+
+**状态**: 打包与上传链路已验证（4 次成功）；浏览器下载入口待服务器侧落地
+
+
+### F-122: Encoder-next全功能对照P0及只读功能的副作用边界
+
+**需求场景**：EncoderPlotter_0903_01 的encoder-next按DD003全功能替代，必须先区分真实可见功能、禁用占位和未挂载代码，避免用按钮或新WS存在推定旧HTTP已经兼容。
+
+**方案**：逐项稳定编号，字段模板展开；旧入口、实际命令或IPC/HTTP、本地/设备/外部副作用、可见条件、新实现证据并列。2026-11-08快照415项：43静态已实现、36部分、336未实现，17域，P1-P9覆盖；未挂载counter/clock、v-if=false CSV导入和HTTP501占位不计现网成功功能。手动配置会先上电再DataGet；确认配置可能刷新DefaultMoreOption。中值检测开始时写SN，再持续采集与保存，不能视为只读检测。旧批量升级仅有driver:batch-update事件，未发现components监听者，执行完整性未知。新图已有曲线/轴/轮播操作，独立离线窗口仍另验。
+
+**关键文件**：D:/code/EncoderPlotter_0903_01/encoder-next/docs/feature-parity.md为本轮交付；依据components/analyzer/selector.js:425、components/encoder/device.js:4922/4953、components/share/iap.js:513。22个生产写字段来自arguments-panel/index.js:16起白名单；MES有33固定配置字段和动态不良项映射，不记录凭据内容。
+
+**验证**：只读源码及20项静态抽样、独立复核无阻断；核对415行和分包覆盖。未运行测试/应用/服务、未连设备、未执行Git。静态实现不是全型号/真机验收；旧系统下线仍要逐条运行通过，写设备外部开放前必须有恢复证据。台账D:/sire/sire_ledger/runs/T-P0-20261108-codex。复用F-022的进程及标定/IAP产物背景，本轮行号以当前源码重核，不沿用历史测试成功。
+
+**关键词**：EncoderPlotter, encoder-next, DD003, feature-parity, MES, IAP, 中值检测, 手动配置, 静态盘点
+
+
+### F-123: Encoder-next P1查询供电恢复与真机SN未通过边界
+
+**需求场景**：EncoderPlotter_0903_01的encoder-next P1仅后端补齐构建信息、首次启动信息、按命令读SN和上下电，须保持外部默认边界并做真机恢复验证。
+
+**方案**：端口→legacy/simulator→EncoderService→RPC/能力/契约，5个新方法及独立能力。RELEASE_CEILING和默认场景不变，内部宿主显式组装internal_policy；查询使用已读到的设备Arguments，不隐含探测。SN版本先拆三元组，4010不是大于422；Startup要求DPT15/RS485/4065/NoMulti。旧桥StatusSuccess还须检查内层status，empty SN与超时分开。上下电是模式变化；off/unknown禁止探测和起读、清缓存，上电作活动恢复出口；失败不自动重试；事件只报安全文字。
+
+**关键文件**：encoder-next/server/encoder_next/domain/encoder_queries.py、adapters/legacy/gateway.py、application/encoder_service.py、application/capability_catalog.py、tests/test_card_operations.py；任务回报docs/tasks/T-P1-readonly-ops.md。旧Encoder.py的BuildInfo/StartupInfo/ReadSerialNumber可直接经ServerBridge复用，不用改子仓。ER退出会复位；新自动查询太快会无应答，仅P1查询补0.8秒稳定等待，不能据此改默认probe/readout行为。
+
+**验证**：214单测通过、1既有警告，最终8.55秒。真机读取器20260420173117/COM3，DPT15/RS485/软件4.2.8/算法4060；构建信息在稳定等待后成功，Startup因4060正确拒绝；按命令SN按旧参数202/2.5M/none且等稳定仍HARDWARE_TIMEOUT，未通过，不得伪报empty或猜固件支持。供电前全参数/版本备份，off后新错误拒绝读数/探测，on后idle，回读参数/版本一致，读到EBAT帧。8783与COM3均已释放。前端/子仓/Git未动；SN真机及Startup成功路径仍需后续硬件/固件证据。本记录不替代全型号恢复验证，也不允许开放新外部能力。
+
+**关键词**：EncoderPlotter, encoder-next, P1, BuildInfo, StartupInfo, SN, EncoderPower, 恢复出口, 默认拒绝, ER启动等待

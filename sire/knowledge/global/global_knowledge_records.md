@@ -1,7 +1,7 @@
 # 知识记录（数据库导出副本）
 
 > 由 `sire_kb.py export-md` 生成，数据库 knowledge_records 为正式来源；请勿手工编辑，修改请走 `sire_kb.py add` 或原始 md。
-> 生成时间: 2026-09-24 09:00，共 58 条
+> 生成时间: 2026-10-25 22:56，共 115 条
 
 #### E-007: 先确认发布构建归属，避免在本地误跑长构建
 
@@ -875,6 +875,268 @@ v0.13.2 已生成发布提交并推送 `development` 与 tag；远端 tag 满足
 
 **关键词**: driverSoftware, release.py, CI Runner, GitLab, tag, vX.Y.Z, build-win-release, build-mac-release
 
+#### F-029: Codex 桌面会话与飞书完整可见对话同步及续跑
+
+**类型**: F  **来源**: @USER_HOME@\.feishu_bridge\hook_codex_notify.py
+**关键词**: 飞书, Feishu, Codex notify, transcript JSONL, 用户消息, 助手可见回复, 分卡, 游标, 重启恢复, codex exec resume, msg_map
+
+**目标**：飞书查看 Codex 当前会话的完整可见文字，并通过回复已同步卡片把指令交回同一 Codex 会话。
+
+**实现**：Codex notify 回调按 thread-id 定位 ~/.codex/sessions 下 JSONL。只导出 response_item 中 user 的 input_text 与 assistant 的 commentary/final_answer output_text；过滤 developer、reasoning、工具调用和工具输出。用 message id 作游标，首轮回填完整可见历史，后续增量同步。约 2400 字符分卡，每张卡保存 msg_map(message_id→session_id,cwd,codex)，飞书回复沿用监听器已有 codex exec resume。图片原文可读时文件名/路径随用户文字发送；只有不可解码的 image 输入块而无名称/路径时，卡片明确标记名称/路径未记录。
+
+**可靠性**：SQLite 持久化每会话游标和 codex_sync_pending。每张卡获接口确认并保存映射后推进游标；发送异常保留待办，由飞书监听器每分钟重试，重启后从最后确认的消息继续。网络结果不确定时允许重复一张已发送卡，优先避免丢失；不是严格 exactly-once。
+
+**验证**：2026-09-24 本机 py_compile 通过；实际会话 135 条可见消息、约 33337 字符切成 16 张卡，单条超长文本可逐字还原；飞书发送 API 接受 16 张卡且 msg_map 建立，随后重启监听器并标记待同步，启动恢复又发 1 张增量卡、清空待办、推进游标。当前会话实际 UI 展示及用户在 Feishu 回复后入站执行仍需用户在 Feishu 实际回复测试卡验证；Windows 当前没有可用共享 app-server，不能把 CLI queue 视作桌面实时投递已验证。
+
+**补充验收**：注入一次发送异常后，待办保持且游标不前移；恢复发送后批次发送完成、游标前移、待办清空。该项所有功能断言通过；Windows 仅在清理测试临时 SQLite 目录时遇文件锁，清理命令被本机策略拒绝，遗留的是 Temp 下的测试目录，不影响桥接数据。真实飞书界面核对与飞书用户回复仍待用户操作。
+
+#### F-030: 飞书回复 Codex 桌面会话队列与回调关联
+
+**类型**: K  **来源**: @USER_HOME@\.feishu_bridge\listener.py
+**关键词**: 飞书, Codex, codex queue, active writer, thread-store conflict, notify hook, 消息回帖, WAITING_CODEX, 待关联任务, 重启恢复
+
+目标：飞书回复必须路由到固定 Codex 会话/工作目录执行，并将结果回帖原飞书消息。旧方案 codex exec resume 在桌面 Codex 线程遇到 thread-store active writer；自动重试三次仍冲突，不能重复重试。Codex CLI 的 codex queue --thread <session> --message <text> -C <cwd> 返回 Queued message ID，说明只确认入队，不能据此宣称已执行。桥接必须先持久化 pending(task_id,session_id,cwd,turn_id,queue_id)，再入队；Codex notify completion 用 session_id 取最早 pending，调用 hook_notify.deliver 回帖原 Feishu 消息，再把完整可见文本增量同步到同一回复；发送失败保留 RESULT_READY/pending，成功后删 pending。本机 2026-09-24：活动写锁触发失败；已改 listener 使用 codex queue，Hook 根据 pending 关联回帖，py_compile 通过并重启 FeishuClaudeBridge。真实完成回调仍未通过：桌面线程保持 idle，accepted queue 未产生新的 user response_item；任务标记 WAITING_CODEX，不得重复入队，不得报告端到端通过。重启后 WAITING_CODEX 保留，但队列执行/回调恢复需进一步验证。
+
+#### F-031: 飞书回复按通知消息映射选择 Claude 或 Codex
+
+**类型**: K  **来源**: @USER_HOME@\.feishu_bridge\listener.py
+**关键词**: 飞书, Claude, Codex, parent_id, msg_map, backend, session_id, cwd, 消息路由
+
+当前桥接不会根据回复正文中的“Claude/Codex”字样切换执行者。飞书事件 parent_id 指向被回复的机器人消息，listener 用该 message_id 查询 msg_map(message_id, session_id, cwd, backend)，并将 backend/session_id/cwd写入任务账本后路由。要选 Claude，就回复 Claude 的完成通知/会话卡；要选 Codex，就回复 Codex 的完成通知或 Codex 对话记录卡。回复文本仅作为该目标会话的 prompt。新发私聊或无法映射的消息会提示必须回复任务通知。跨 AI 切换需要回复目标 AI 自己的卡，因为两边会话 ID 和工作目录不同；不能只在同一消息正文写切换词。若未来要支持显式前缀，应设计为经授权的路由选择，并在切换 agent 时明确目标会话和工作目录。
+
+#### F-032: 飞书回复显式指定 Claude/Codex 并按工作目录安全路由
+
+**类型**: F  **来源**: @USER_HOME@\.feishu_bridge\listener.py
+**关键词**: 飞书, Claude执行, Codex执行, 显式路由, 执行者前缀, parent_id, msg_map, session_id, cwd, 多会话歧义
+
+需求：用户可在飞书回复正文指定执行者，例如“Claude执行：复核刚才的分析并实现”；需剥离路由前缀后把剩余内容作为目标 AI prompt。实现于 listener.py：仅识别消息开头的显式前缀（Claude执行：、让Claude执行：、Codex执行:、由 Claude 来执行：）；无前缀时保持回复父卡片映射的 backend/session。跨后端切换保持父卡片 cwd，在 msg_map 中查询同 cwd、指定 backend 的会话；唯一候选才执行，零候选或多候选均拒绝投递并回复原因，避免猜错项目上下文。目标执行结果卡片标题显示 AI 名称，msg_map 保存新后端及 session，使后续回复继续正确路由。当前 @CODE_ROOT@\EncoderPlotter3 映射下 Claude 会话唯一，Codex 会话多于一个，因此 Codex 分析卡→Claude 执行可唯一解析，反向则安全拒绝歧义。验证：py_compile 通过；5 类前缀/无前缀断言通过；目录会话解析唯一及歧义断言通过。未执行真实飞书端到端消息测试，需用户授权后验证；整体端到端状态 BLOCKED。 实际验证补充：用户已授权发一条 ROUTE_OK 测试，但当前没有可控制已登录飞书用户账号的 UI 自动化工具；机器人身份消息不会等同于白名单用户回复，因此未伪造真实端到端测试。 实际路由验证补充：飞书测试回复“claude执行：只回复ROUTE_OK”被解析为 backend=claude，session_id 为同目录 Claude 会话，工作目录保留 @CODE_ROOT@\EncoderPlotter3，前缀已从 prompt 剥离；错误回复回到飞书原消息。Claude 返回 session limit，重置时间提示为 13:00 Asia/Shanghai，故只证明路由/错误回传通过，不证明 Claude 成功执行。未自动重试。
+
+#### F-033: 飞书显式 AI 路由真实用户测试的授权与工具边界
+
+**类型**: K  **来源**: @USER_HOME@\.feishu_bridge\listener.py
+**关键词**: 飞书, 真实测试, 授权, 用户身份, UI自动化, Claude执行, ROUTE_OK, R7 BLOCKED
+
+用户已授权一次飞书真实路由测试“Claude执行：只回复 ROUTE_OK”。当前可用工具没有登录飞书用户身份的 UI 操作能力；桥接机器人账号发出的消息不能冒充白名单用户回复，直接调用内部处理器也不能作为真实 UI 证据。故未发送伪造事件或测试消息。下一步由用户在 Codex 飞书卡片下实际回复该文本；监听器应路由到同目录唯一 Claude 会话并将 ROUTE_OK 回帖原消息。验收证据：飞书原消息、任务账本 backend=claude/status=DONE、结果回帖及映射记录。当前 R7 BLOCKED-无法真实验证。
+
+#### F-034: 飞书显式 Claude 路由已验证，执行受订阅限额阻断
+
+**类型**: K  **来源**: @USER_HOME@\.feishu_bridge\listener.py
+**关键词**: 飞书, Claude执行, ROUTE_OK, 路由验证, session limit, 订阅限额, 错误回传
+
+真实飞书回复“claude执行：只回复ROUTE_OK”已触发一次任务。账本证据：backend=claude；session 为 EncoderPlotter3 同目录 Claude 会话；cwd=@CODE_ROOT@\EncoderPlotter3；存储 prompt 为“只回复ROUTE_OK”（路由前缀正确移除）；attempt=1，rc=1。runs 日志：You've hit your session limit · resets 1pm (Asia/Shanghai)。飞书向用户回传错误。结论：显式执行者解析、Claude 会话选择、目录继承与错误回传通过；Claude 成功执行未通过，原因是订阅会话限额，非桥接路由错误。未自动重试或回退 Codex。后续可在 13:00 后重试，或由用户明确指定 Codex。
+
+#### F-035: Codex 桌面可见对话通过 Stop 钩子与游标轮询补漏同步飞书
+
+**类型**: K  **来源**: @USER_HOME@\.feishu_bridge\hook_codex_notify.py
+**关键词**: Codex, Feishu, 飞书, Stop Hook, hooks.json, transcript cursor, 对话补漏, 重启恢复, 完整可见消息
+
+适用场景：Codex 桌面会话需要将可见用户/助手文字持续同步到飞书，并在钩子漏触发或电脑/监听服务重启后补齐。
+
+问题：旧桥接只依赖 config.toml 的 notify 命令，当前会话游标之后累积 46 条可见消息未同步；该入口不能保证桌面每轮都触发，且旧过滤会跳过 client 字段缺失的独立事件。
+
+方案：hook_codex_notify.py 同时接受旧 notify argv 与 Codex 原生 Stop 生命周期事件的 stdin JSON，按 session_id/cwd/transcript_path 读取可见对话并沿用持久游标；原 Feishu 任务仍先发结果卡，再将完整增量回复到原消息，发送成功后才清除 pending。listener.py 的 60 秒守护循环额外扫描已有 transcript cursor 的 Codex 会话，仅补发新内容，避开仍在发送的 pending session。
+
+验证：Python 编译通过；mock 测试覆盖 Stop stdin 字段映射、legacy 独立通知过滤、待处理 Feishu 任务结果+完整对话回帖+成功后清 pending、守护循环只扫有游标且跳过 pending；真实补发当前会话积压 6 张飞书卡，API 返回成功，msg_map 建立、游标前移、codex_sync_pending 清零；服务重启后仍 Running，恢复扫描/待恢复任务数均为 0。随后守护循环又确认发送 1 张新增量卡。
+
+约束：Codex 原生 Stop hook 需在 Codex 客户端 review/trust 后才能运行；为已有游标会话提供 60 秒轮询兜底。新会话首次完整同步仍依赖 Stop hook 被信任或另行建立初始游标。飞书 UI 未通过原生桌面操作工具核验，API 接收成功不等于 UI 人工验收。
+
+相关风险：已有一个 Codex queue 完成卡的文本似乎与原 Feishu prompt 不一致；未自动重投，需单独核验 queue 与完成回调关联。
+
+#### F-036: 飞书桥接当前实现缺口与验收优先级
+
+**类型**: K  **来源**: @USER_HOME@\.feishu_bridge\listener.py
+**关键词**: 飞书, Codex, Claude, 会话纳管, Stop Hook, 消息元数据, 工作目录, 附件清单, WAITING_CODEX, 队列恢复, 回调关联, 幂等, R7, 共享规则, 多AI扩展
+
+适用场景：评估本机 FeishuClaudeBridge 是否覆盖用户提出的 Codex/Claude 双向通讯、完整上下文、显式执行者选择和重启恢复。
+
+已确认实现：Feishu 回复卡片可按 parent message 映射 backend/session/cwd；正文显式“Claude执行/Codex执行”时跨后端选择同 cwd 唯一会话，多候选安全拒绝；Codex可见消息按游标增量发送，用户文本与assistant commentary/final文本被提取；桥接任务在用户登录时启动，异常退出会重启。
+
+待实现/补强，按优先级：P0 1) 完整会话纳管：新Codex会话目前无游标时不会被60秒扫描发现，Stop Hook还依赖客户端review/trust；加明确的会话注册/首次游标初始化和可观测健康状态。2) 消息信封：当前Feishu卡可见cwd但不显示session ID；映射只含当前backend的session，未在跨AI任务卡同时列出Codex session ID、Claude session ID、task/mode、cwd和内容。3) 附件清单：input_image当前只生成“名称/路径未写入会话文本”占位，未提取用户要求的文件名/路径；补可读元数据提取及未知值明确标记。4) Codex队列恢复与关联：启动recover处理RUNNING/INTERRUPTED/RESULT_READY/QUEUED，但无WAITING_CODEX恢复；通知Hook按同一session最早pending关联，非queue_id精确匹配，异常/并发/重启可能卡住或错配。应以queue/turn ID关联、超时标记与人工安全恢复为准，绝不盲目重新入队。5) R7真实场景验收：飞书客户端正常路径、回复后执行、错误/限额、服务重启及电脑重启，检查消息可见、cwd与原消息映射。
+
+P1：结果卡和完整对话卡的发送/SQLite落账之间建立持久outbox与幂等重试/去重；当前不确定发送结果时可能重复卡片。Claude路由功能已有真实触发证据，但执行因订阅限额rc=1；额度可用后只需成功场景验证，不应静默切换Codex。
+
+条件性后续：若仍纳入用户早前诉求，建立Claude/Codex共用规则与资料目录并定义安全读取/热更新；用Provider Adapter扩展到其他AI；线上控制面+本机执行器。后两项不是完成当前本地双向链路的前置。
+
+限制：当前service计划任务为用户登录触发，PC开机但未登录时本地执行器不会运行。Feishu API成功/本机日志不能替代飞书客户端UI验收。证据来源：listener.py、hook_codex_notify.py、hook_notify.py、install_service.ps1及F-029/F-030/F-032/F-034/F-035。
+
+#### F-037: 飞书与多AI通过唯一中间服务通讯的单中枢架构
+
+**类型**: K  **来源**: @USER_HOME@\.feishu_bridge\listener.py
+**关键词**: 飞书, 中间服务, 消息中枢, 单一通信入口, Codex, Claude, Provider Adapter, 任务路由, 消息账本, Outbox, 会话ID, 工作目录
+
+架构决策：中间服务是唯一消息交换、路由和状态记录中心。飞书只与中间服务的Feishu Adapter通讯；Codex、Claude及后续AI只与各自Provider Adapter/中间服务通讯，任何AI不直接向飞书发消息，AI之间也不直接通讯。
+
+流程：1) Feishu Adapter接收回复并校验身份、事件去重；2) 先把原始消息、parent/root消息ID和任务记录持久化；3) Router按显式执行者前缀路由；没有前缀时按父消息绑定的agent/session继续，缺映射或候选歧义时询问用户，不猜测；默认只发给一个AI，只有用户明确要求协作时才建立父任务/子任务；4) Provider Adapter将同一任务封装交给本机已登录的Codex/Claude会话；5) 执行端只将progress/completed/failed及result返回Broker，必须携带task_id和provider/session/turn或queue标识；6) Broker落结果、更新任务状态并写持久outbox；7) Feishu Adapter按原parent_message_id回帖；后续飞书回复再通过消息映射继续原会话。
+
+规范化消息信封至少含：event_id、task_id、conversation_id、collaboration_mode、selected_provider、provider_session_ids（Codex和Claude）、cwd、feishu_message_id、parent/root_message_id、sender_id、完整可见文本、attachments清单（名称/路径/缺失状态）、status与时间戳。凭据不进入信封或云端日志。
+
+目标约束：中间服务持有唯一任务账本与Inbox/Outbox；Provider Adapter不得调用飞书API，Feishu Adapter不得绕过Broker直发执行器；每个结果按task_id准确关联。若中间服务部署云端，本地执行器使用主动出站安全连接并保留订阅凭据/桌面会话在本机；机器未运行时不承诺本地项目执行。
+
+当前差距：本地listener与SQLite已经承担部分broker职责，但hook_notify.py/hook_codex_notify.py在回调路径中仍直接调用bridge_sender发送飞书，并直接访问共享SQLite；属于共置脚本的半中心化实现，不是严格的Broker API/队列边界。需后续把hooks改为只投递到本地Broker（HTTP/命名管道/持久队列之一），由Broker独占飞书收发、状态机、消息关联、重试和审计。当前未作代码修改；此条记录保存用户确认的目标架构，不代表已实现或验收。
+
+#### F-038: 当前飞书桥接与单一中间服务架构的比较结论
+
+**类型**: K  **来源**: @USER_HOME@\.feishu_bridge\listener.py
+**关键词**: 飞书, 中间服务, 单一Broker, 架构比较, Codex, Claude, 订阅额度, 本地执行器, 渐进迁移, Provider Adapter
+
+结论：按用户的目标（飞书、Codex、Claude均只和中间服务通讯；按指定执行者分发；输出回Broker后再回Feishu；没有明确协作指令时不触发AI间协作），单一中间服务作为最终架构更优。当前本机FeishuClaudeBridge作为已运行原型/迁移基础更有价值，不建议推倒重写。
+
+当前实现：Feishu长连接listener+共享SQLite+CLI/桌面hook。优点：本机订阅授权和原工作目录可用，显式前缀/parent映射已有实现，Codex已有Stop Hook和游标补漏，改动成本低。局限：Hook回调直接调用bridge_sender发Feishu并直读写SQLite，尚无严格Broker事件/API边界；新会话纳管、WAITING_CODEX恢复/精确队列关联、附件元数据、完整session信封、UI端到端验收仍有缺口。
+
+目标Broker架构：Feishu Adapter写持久Inbox→Broker校验/去重/状态机/路由→只把任务交给指定Provider Adapter→AI结果事件带task_id/session/turn/queue标识回Broker→持久Outbox→Feishu Adapter回帖原消息。默认一个agent；只有用户明确说明协作才建立多agent父子任务。各AI不直接调用Feishu API或另一个AI。
+
+权衡：目标架构更易扩展、审计、消息关联和去重，但中间服务是关键依赖，需要持久队列、健康监测、备份、回压/重试和单点故障恢复。为遵守不额外购买API额度的约束，Claude/Codex Provider Adapter及订阅凭据应留在用户电脑的已登录环境；云端Broker若未来采用，靠本地Worker主动安全连接，电脑离线时不能承诺本地会话执行。
+
+建议迁移：1) 不换现有Feishu长连接/SQLite，先定义统一Envelope、任务状态机、持久Inbox/Outbox与task_id关联；2) 将hook_notify.py/hook_codex_notify.py改为只向本地Broker HTTP/命名管道/队列上报，不直接发送Feishu；Broker独占Feishu API与消息映射；3) 将Claude/Codex包成Provider Adapter并明确 session/cwd、quota/error、进度/完成事件；4) 完成Feishu UI正常/边界及服务/电脑重启测试；5) 通过后再考虑云端Broker或更多provider。先做本地单进程/模块化Broker，不必一开始引入微服务/Kafka。
+
+#### F-039: 单Broker飞书多AI系统的深层逻辑与失效模式审查
+
+**类型**: K  **来源**: @USER_HOME@\.feishu_bridge\bridge_config.py
+**关键词**: Feishu, 单一中间服务, Broker, 安全边界, bypassPermissions, 工作目录白名单, 任务状态机, 幂等, 队列恢复, 多AI协作, 上下文回环, 附件, 取消, 并发, 隐私
+
+目的：在单一Broker架构下审查消息路由、权限、安全、上下文、并发、故障恢复与用户操作中容易遗漏的逻辑。
+
+P0安全门：当前 bridge_config.py 默认 permission_mode=bypassPermissions，Codex参数含 --dangerously-bypass-approvals-and-sandbox；Feishu回复可触发本机执行。listener.resolve_cwd主要检查目录存在，NEED_DIR可让白名单用户提供路径；_is_danger是关键词子串提示，不构成权限边界。目标架构必须改成最小权限、固定workspace allowlist、按任务能力授予、危险操作真人确认和可审计撤销；凭据留本机。否则Broker虽单一，却成为远程高权限执行入口。
+
+P0消息与任务一致性：Feishu event_id去重应和持久Inbox原子提交，事件确认不能早于入库；每条任务固定task_id、Feishu message/parent/root IDs、provider session/turn/queue IDs、路由和cwd快照。Agent回调必须按精确task/queue ID匹配，不能按session FIFO；包括 UNKNOWN_OUTCOME/WAITING_PROVIDER/RESULT_READY/SENDING等状态与lease/fencing，重启后未知是否入队时不能自动重复执行非幂等任务。Inbox/Outbox持久化、发送幂等或重复检测；不能以“接口成功”作为UI送达确认。当前recover遗漏WAITING_CODEX，pending按session最早任务领取。
+
+P0路由/对话语义：支持无parent的新任务启动（选AI、cwd、已有/新会话）和未知/多候选时询问；收到消息时冻结路由，默认单AI；“Codex分析、Claude执行”是显式父子工作流，须把上游产物/版本/来源传给下游并记录审批/依赖，而不只是把下一条文本切换backend；用户未说明协作绝不跨AI传上下文。运行中收到新回复要定义排队、分支、取消或拒绝并保留，不要无声忽略；支持取消、重试、放弃、超时。
+
+P0上下文一致性：定义规范对话账本和方向/来源标识，避免Broker回注AI、AI输出又被转成新指令形成回环；排序、修订、重发与分片使用序号/hash，不只靠message ID假设内容永不变化。明确可见文字范围（用户、assistant commentary/final；不转发隐藏推理/工具输出），附件清单和实际可访问性；当前Feishu入口拒绝非文本，Codex image block仅占位；仅有本机路径时云端/不同执行器不一定可读。Claude桌面回填hook_sync有30000字符截断，需要明确截断提示/摘要或分段回填。
+
+P0可用性：服务启动/登录、电脑离线、Feishu WS断开、Agent额度/认证失效、broker崩溃、磁盘满/SQLite损坏、任务超时分别定义状态、告警和恢复责任。机器未登录/本机worker离线时只排队，不宣称已执行；已接收/执行中/已完成/结果已回帖分开展示。用户登录触发和provider订阅session都要通过重启实测。
+
+P1数据治理与运维：保留期限、备份/恢复、加密、访问审计、日志脱敏、删除/导出；完整同步到Feishu可能泄露可见回复里的凭据，需明确红action/敏感内容策略。Feishu消息卡长度/速率/权限、文件上传类型/大小、失败退避、死信和人工重放；provider protocol/version/capability和quota error映射。工作区/会话并发锁需同时考虑规范化workspace与provider session，跨AI写同一repo应默认串行或隔离worktree。
+
+当前源码证据：listener.py仅接收text消息；无parent时提示回复映射卡；运行态指令没有完整cancel/append策略；task recovery处理RUNNING/RESULT_READY/QUEUED等但遗漏WAITING_CODEX；_is_danger按关键字；bridge_config.py有bypass flags；hook_sync.py限制单次回填30000字符。当前是审查结论，不表示缺口已修复。
+
+#### F-040: 飞书机器人私聊直接发起AI任务的会话入口逻辑
+
+**类型**: K  **来源**: @USER_HOME@\.feishu_bridge\listener.py
+**关键词**: 飞书机器人, 私聊, 新任务入口, parent_id, conversation_id, 显式路由, Claude, Codex, 工作目录, 会话绑定
+
+用户补充需求：无需先找到或回复已有任务卡片；用户可以直接私聊机器人，消息经唯一中间服务入账、选定Claude/Codex等执行者后触发任务，结果再由服务回复这条私聊消息。该入口仍遵守所有AI只和Broker/适配器通信，不是Feishu直连AI。
+
+新DM逻辑：Feishu Adapter对用户校验、事件去重并持久化消息；Broker按（tenant/user open_id + chat_id，必要时再加thread/root）查conversation binding。已有绑定时继承provider/session/cwd；消息开头显式执行者前缀可覆盖本轮目标。无绑定的新DM若缺少provider或cwd/session，先在原私聊线程追问选择，不猜默认agent、不触发多AI协作。可用“Codex执行：…”/“Claude执行：…”以及显式cwd/新会话指令完成初始化。
+
+Broker应创建conversation_id、task_id及消息映射，保存route snapshot、session IDs、cwd、feishu message/root/parent IDs；Provider Adapter执行并携task_id/session/turn/queue标识回报；Broker统一状态与结果，再reply原私聊消息。后续裸消息可沿该私聊conversation binding继续；切换provider必须显式并解析同目录唯一session，否则询问。新建/清空/切换工作目录应是显式控制动作并验证工作区allowlist。
+
+并发语义：同一私聊会话执行中收到另一条消息，应明确排队、创建分支、取消/补充或拒绝并记录，不能丢弃；机器人自身回帖及Agent同步事件按来源ID过滤，防回环。群聊是否支持需另定@bot和成员授权，不由私聊需求自动推导。
+
+当前缺口：listener.py无parent_id时直接提示用户回复已有任务完成卡；当前消息只支持text，且没有持久conversation-level provider/session/cwd binding。因此直接DM作为新任务入口尚未实现。推荐先支持白名单用户p2p私聊；首轮显式选择Agent和工作目录/会话，成功后持久绑定；随后允许自然语言连续对话。
+
+#### F-045#2: MPT arguments 解耦：'a'指令字段自描述查询（V4.2.1）
+
+**类型**: F  **来源**: D:\sire\AI\AI\sire\knowledge\global\global_dev_features.md
+**关键词**: MPT, arguments解耦, 'a'指令, ARGUMENTS字段自描述查询, queryArgumentsField, getArgumentsByFieldQuery, argumentsLayoutToBuffer, verifyArgumentsFieldQuery, argumentsReadMethod, argumentsVersion=6, EncoderArgumentsV6, batSpeedMode, argumentsFieldLayoutTable, USARTInterface_Recali.c, fieldCount, ArgumentsErrorStatus, 'R'整块读取, EncoderBase.py, Analyzer, A~F协议回归, IAP, series=104, V4.2.1, a3950c3
+
+**日期**: 2026-10-10
+**项目**: Analyzer_Encoder_DebugTest（C:\Users\Administrator\Downloads\Analyzer_Encoder_DebugTest；Test Script + Test Report，2026-10-09 V4.2.1 第6轮报告）
+**关键词**: MPT, arguments解耦, 'a'指令, ARGUMENTS字段自描述查询, queryArgumentsField, getArgumentsByFieldQuery, argumentsLayoutToBuffer, verifyArgumentsFieldQuery, argumentsReadMethod, argumentsVersion=6, EncoderArgumentsV6, batSpeedMode, argumentsFieldLayoutTable, USARTInterface_Recali.c, fieldCount, ArgumentsErrorStatus, 'R'整块读取, EncoderBase.py, Analyzer, A~F协议回归, IAP, series=104, V4.2.1, a3950c3
+
+**需求场景 / 现象**: MPT 固件的 ARGUMENTS 结构体加字段/改布局（argumentsVersion 3→5→6）时，上位机用 'R' 整块读回 + ctypes 按版本硬解析，必须每版同步改结构体，固件与上位机强耦合。MPT V4.2.1 起固件新增 'a' 指令（提交 a3950c3），让每个字段自描述（名字/偏移/大小/类型/值），上位机据此解耦。
+
+**方案 / 架构**:
+- 请求：`'a' + fieldIndex(u8) + CRC8`；响应：`status + payload + CRC8`，payload 小端：schemaVersion(1) argumentsVersion(4) fieldCount(1) fieldIndex(1) fieldOffset(2) fieldSize(1) fieldType(1: 0=u8/1=u16/2=u32) nameLength(1) name value。
+- fieldIndex >= fieldCount 时固件回 status=ArgumentsErrorStatus(2)，作为遍历结束信号。真机 34 个字段，值与 'R' 整块逐字节一致（2026-10-08 验证）。
+- 上位机：从 index=0 遍历到结束信号，校验响应回显 index、fieldCount==实际条数、上限 64 个字段；任一步失败整体返回 None，不返回半成品。
+- 兼容策略（折中，并未彻底去掉结构体）：`argumentsLayoutToBuffer` 按 offset 把字段值拼回原始字节（空洞补 0，总长按 4 字节向上取整，真机 72B），再喂给原有 `ArgumentsHeader/EncoderArgumentsV5/V6.from_buffer_copy` 解析，所以下游代码零改动；通过 `modes["argumentsReadMethod"]`（"R" 默认 / "a"）或 `getArguments(readMethod=)` 切换，`layout` 同时保存在 `Arguments.argumentsLayout` 里。
+- `byName` 字典（name→小端整数）可直接按字段名取值，是真正解耦用法的入口，目前未被主流程使用。
+
+**关键文件与接口**（Test Script 目录）:
+- `EncoderBase.py:1101-1248` — ARGUMENTS_FIELD_QUERY=ord('a')、queryArgumentsField（state: ok/end/status/fail，重试3次）、getArgumentsByFieldQuery、argumentsLayoutToBuffer、verifyArgumentsFieldQuery（'R' vs 'a' 逐字段对照 + 未覆盖区间非零检测）
+- `EncoderBase.py:1306` getArguments(readMethod) ；`EncoderBase.py:2728+` Arguments.__init__/initArgumentsFromBuffer 里 readMethod=="a" 分支；`EncoderBase.py:2814-2822` argumentsVersion 5/6 → EncoderArgumentsV5/V6
+- `DataFormatter.py` EncoderArgumentsV6（V5 末尾多 batSpeedMode，其余偏移不变）
+- `test_mpt_protocol_regression_AtoF.py:1729` 回归脚本显式切 'a'；`test_iap_mpt20_standalone.py` IAP 刷机流程
+- 协议脚本：mpt_0x64_protocol.py(RS485/422 0x64，5/7字节两种帧)、mpt_ssi_protocol.py、mpt_bus_protocol.py、mpt_t485_protocol.py、bissc_protocol.py；CRC.py(CRC8 多项式 x8+x7+x4+x2+x1+1)、Analyzer.py(M487_Universal 读取器 USB)
+
+**验证结果**（报告 V4.2.1_L6EB981C478199E94，2026-10-09，真机）:
+- IAP：1941/1941 包、496736 字节、43.3s，整区擦除(page7~127+Bank2)+0x5EE5 校验+0x6FF6 复位，刷机后 argumentsVersion 3→6、series 105→104。
+- 全程 'a' 路径读 Arguments 的 A~F 回归：20 项主流程全 PASS，42 组分辨率覆盖矩阵全 PASS，CRC 失败 0，656.1s。'a' 路径首次在完整回归下验证通过。
+- 基线 Arguments（'a'读出）：series=104, interface=202, baudrate=2500000, busID=31, internalResolution multi16/single17, hallNumber=9, rotorSize=15, sectionNumber=36, software=67240192, algoVersion=4060, batSpeedMode=0。
+
+**踩坑 / 限制**:
+- 固件字段表 `argumentsFieldLayoutTable`（USARTInterface_Recali.c）是人工维护静态数组：固件给 ARGUMENTS 加字段忘加表项时，'a' 会静默漏字段；用 verifyArgumentsFieldQuery 查 uncoveredRanges 里 nonZero 区间来发现。
+- 'a' 不报告对齐空洞/尾部 padding，拼回时补 0。
+- 老固件（argumentsVersion<6、series=105 等）不支持 'a'，需回退 'R'；刷机前读取仍走旧路径。
+- 'a' 每字段一次往返（34 次），比 'R' 慢，高频读取场景别用。
+- 后续解耦待办：主流程仍依赖 ctypes 结构体；若要彻底解耦，应改用 byName/字段名 + offset 的动态映射，并保留 'R' 兜底；写入侧（getUpdateArguments/dict_to_init_arguments）仍按 argumentsVersion 分支硬编码，未解耦。
+
+**状态**: 已完成（只读分析归档；未改动任何脚本/固件）
+
+#### F-088#2: MES交接续做组成能力与SN入口清理
+
+**类型**: F  **来源**: D:\sire\AI\AI\sire\knowledge\global\global_dev_features.md
+**关键词**: MES, composition, 分母, 生效时间, SN, 平台边界
+
+**关键词**: MES, composition, 分母, 生效时间, SN, 平台边界
+
+**需求场景**: 用户要求继续执行Claude交接，推进明确授权的代码文档项，等待新流程且不测试。
+
+# 交接续做结果（未测试）
+C1/C3代码已实现：分母/有效区间/同字段递归、共享类型与依赖保护、dependencies.test字面量类型。COMP-UNIT-001至005、007、008及依赖字段断言已编写未执行。
+B部分：删除旧SN前端文件与双端路由、BUSINESS_NAV、通用追溯snHits/SnService耦合；exec/runHits及SN后端/权限/迁移因A依赖保留，B未整体完成。
+F：新增现行口径，修订20份历史设计/手册/任务记录，PDF/Word等历史导出未重生成。
+静态复核：独立review代理R4/R6无Blocker/Major，兼容用例建议已补；主控另行读取差异。没有执行测试/构建/类型运行检查/服务/浏览器/部署/库写入/提交。
+未执行建议命令：npm test -w mes-server；npm run test:integration -w mes-server；npm run build。真实浏览器验收旧SN页面不可用、通用追溯权限边界、设计器新配置正常与非法分母/日期边界均待用户授权。
+环境风险：TESTING.md要求唯一测试业务库，交接称本机业务库；本次未选择数据源、未导入、未改运行配置。
+后续依赖：A/E用户新流程；C2序号起点口径；C4随执行改造合成集成测试；D等待导入指示；G测试授权及部署条件；bom_entry能力配置尚未写入运行系统。
+SIRE台账实际登记晚于部分实现（流程偏差保留），未伪造阶段执行时间。工具要求三路初审与交叉核验，本轮实际独立复核一路，未伪造其余复核，单元延后收敛；实现结果不等于功能验收通过。
+
+#### F-090: MES 当前界面易用性审查：待办、导航与低代码配置缺口
+
+**类型**: F  **来源**: D:\sire\AI\AI\sire\knowledge\global\global_dev_features.md
+**关键词**: MES 易用性, 待办直达, 人员指派待办, 移动端导航, 明细行设计器, 低代码用户体验, 操作手册过期
+
+**日期**: 2026-10-23
+**项目**: MES / D:\code\mes
+**关键词**: MES 易用性, 待办直达, 人员指派待办, 移动端导航, 明细行设计器, 低代码用户体验, 操作手册过期
+
+**需求场景 / 现象**: 对当前 MES 工作区的业务端和管理端做静态易用性审查。发现待办卡片仅跳转到模块而不定位记录；待办未按节点指派执行人过滤；业务端窄屏菜单退化为横向滚动栏；明细行运行时能力无可视化配置入口；老手册正文仍保留生产执行旧入口；列表操作隐藏在行尾菜单，明细行在窄屏横向滚动。
+
+**根因**: UI 交互路径与最新能力配置不同步：TodoPage 只构造模块路由；组织指派能力没有同步到工作台查询；BusinessLayout 的 mobile class 直接采用横向 flex；detailLines 配置只在 schema/runtime 支持，没有设计器编辑器；手册保留历史章节。
+
+**方案 / 架构**: 本轮只读审查，不改代码。按影响建议先处理待办记录直达和执行人匹配，再优化移动导航、补齐明细行设计器，并更新当前操作手册。
+
+**关键文件与接口**:
+- `packages/runtime/src/lowcode/pages/TodoPage.tsx:23-26` — 待办卡片目标只到 `/app/<moduleCode>`。
+- `packages/runtime/src/components/layout/BusinessLayout.tsx:27-33` — 窄屏导航横向滚动。
+- `packages/runtime/src/lowcode/components/DetailLines.tsx:45-84` — 明细行由运行时 schema 驱动；窄屏表格横向滚动在 92-123 行。
+- `docs/PROGRESS.md:466-480` — 设计器缺明细行配置；待办仍按角色统计而非指派人。
+- `docs/manual/MES系统完整操作手册-白话文版.md:3` — 手册标注旧流程过期，但正文仍保留旧入口。
+
+**实施步骤**:
+1. 静态读取当前组件、设计契约、操作手册和最新进度条目。
+2. 对照源代码确认每条交互路径，区分已知实现缺口与需浏览器验证的推断。
+
+**验证方法**: 只读代码/文档核对。未启动服务或浏览器、未运行测试/构建；需用户授权后通过岗位用户和窄屏真实路径验收。
+
+**踩坑**: 老手册第一页有过期声明，但长正文和 PDF 仍保留旧流程内容；单看声明或文件标题会误以为它可作当前新手指南。
+
+**状态**: 已完成（静态审查，运行时未验证）
+
+#### F-FRONTEND-MINPLAN: 最小前端项目开发计划模板
+
+**类型**: F  **来源**: @SIRE_ROOT@\sire_vectors.sqlite3
+**关键词**: 前端, 项目计划, 最小交付, 验收
+
+最简单前端项目计划的可复用模板：1. 明确一个页面和核心目标；2. 初始化项目并完成静态结构；3. 添加必要样式和一个核心交互；4. 在桌面与移动端检查正常路径及空数据/错误输入边界；5. 构建并发布。验收标准应包括页面可访问、核心流程可完成、响应式基本正常、无明显控制台错误。
+
+#### F-MD-20260924-001: 寄存器梳理 TXT 转 Markdown
+
+**类型**: F  **来源**: @USER_HOME@\Documents\Codex\2026-09-24\zhuan\outputs\v3.4.6-registers.md
+**关键词**: Markdown, 寄存器, 文本转换, 原始顺序, 空字段, 异常字段
+
+**日期**: 2026-09-24
+**项目**: 文档转换
+**需求**: 将寄存器梳理 TXT 转成 Markdown。
+
+**结果**: 已生成 Markdown 表格文件，按原文分组和顺序保留 185 个地址条目；异常字段不做猜测，并单独记录原始尾部字段。
+
+**验证**: 9 个分组、185 个地址行、重复 0x42 保留。
+
+**关键词**: Markdown, 寄存器, 文本转换, 原始顺序, 空字段, 异常字段
+
 #### H-002: GitLab 操作优先使用可见网页
 
 **类型**: H  **来源**: @USER_HOME@\sire_global\global_dev_habits.md
@@ -906,12 +1168,166 @@ v0.13.2 已生成发布提交并推送 `development` 与 tag；远端 tag 满足
 
 用户确认 driverSoftware 对应的舵机固件仓库路径为 @CODE_ROOT@/driver。已写入 @USER_HOME@/.kingkong_driver/workspace.json 的 repos.firmware.path。验证：JSON 可解析，配置值完全匹配；目录存在性已检查为 True。
 
+#### K-CODEBASE-MAP-20260924: @CODE_ROOT@ 全部项目：仓库清单与架构关系
+
+**类型**: K  **来源**: @CODE_ROOT@\.sire\runs\R20260924-202722\requirements.md
+**关键词**: codebase map, repository inventory, EncoderPlotter, driverSoftware, analyzer, MES, submodule
+
+当前工作区项目总览。14 个顶层 Git 根：analyzer_code、driver、driverSoftware、EncoderPlotter1-5、EncoderPlotter_0703_01/02/03、EncoderPlotter_0903_01、recalibration、tools_credential_generator；3 个无 Git 源码目录：claude-code、mes、mes-admin。EncoderPlotter 九个快照及 recalibration 复用 sub_algorithm/sub_automation/sub_common/sub_embedded 四组件类型，父仓 gitlink pin 见逐项目记录。设备软件链：EncoderPlotter/driverSoftware 经 analyzer_code/Analyzer 与 RS485 连接 driver 固件；mes 提供编码器生产/release/calibration 工作流。仓库清单、分支/HEAD、架构和测试/构建入口的来源证据在 .sire/runs/R20260924-202722/evidence/U-01..U-04/impl/analysis.md。本次仅静态分析；未运行项目测试、构建、硬件或发布。仅新增摘要/任务记录，不导入全量源码 chunks、.env、日志、样本或二进制。
+
+#### K-MODULE-SUB-ALGORITHM-20260924: 子模块类型：sub_algorithm 标定算法
+
+**类型**: K  **来源**: @CODE_ROOT@\EncoderPlotter1\controller\python\sub_algorithm
+**关键词**: sub_algorithm, calibration, V4060, runtime config, algorithm
+
+跨仓组件类型摘要：sub_algorithm 承担编码器角度计算、再标定与 V4060 等算法/配置。被 9 个 EncoderPlotter 快照和 recalibration 复用，父仓 gitlink 固定可复现版本，各快照 pin 不同。关键静态风险：recalibration 当前检出 step4_GenerateV4060.py 引入 sub_common.dpbFlashLayout，但当前 common 检出无该文件；其父仓 gitlink 与算法检出也不一致。只存组件职责与 pin 关系，不导入算法源码/测量样本。
+
+#### K-MODULE-SUB-AUTOMATION-20260924: 子模块类型：sub_automation 环境与工厂自动化
+
+**类型**: K  **来源**: @CODE_ROOT@\EncoderPlotter1\controller\python\sub_automation
+**关键词**: sub_automation, automation, factory, environment, PCBA, flash
+
+跨仓组件类型摘要：sub_automation 封装环境设备、气泵、工厂刷写与 PCBA 自动化；不同 EncoderPlotter 快照 pin 可不同，0703_03 有专门 flash/PCBA 工具。自动化和直接硬件 CLI 会发出实体控制命令；本次仅做静态分析，未连接/操作设备。
+
+#### K-MODULE-SUB-COMMON-20260924: 子模块类型：sub_common 协议与公共结构
+
+**类型**: K  **来源**: @CODE_ROOT@\EncoderPlotter1\controller\python\sub_common
+**关键词**: sub_common, protocol, structs, config, logging, gitlink
+
+Cross-repository summary: sub_common is the Python common layer for protocol frames, structs/registers, definitions/configuration, and logging. JavaScript and firmware have separate corresponding implementations that must remain aligned; each parent gitlink pins the exact common version. EncoderPlotter4 has an uncommitted TPB overlay modifying Defines.py/config.py/utilities.py. recalibration has a sub_algorithm gitlink/checkout mismatch, and the current algorithm imports a dpbFlashLayout module absent from the checked-out common layer.
+
+#### K-MODULE-SUB-EMBEDDED-20260924: 子模块类型：sub_embedded Analyzer 与设备通信
+
+**类型**: K  **来源**: @CODE_ROOT@\EncoderPlotter1\controller\python\sub_embedded
+**关键词**: sub_embedded, Analyzer, embedded, device communication, IAP
+
+Cross-repository summary: sub_embedded handles Analyzer/device communications, device drivers, and selected IAP/Flash operations. Each parent gitlink pins the implementation. HTTP IAP gates are defined in the parent project's qa_api route layer only where that API exists; applicability varies by snapshot and EncoderPlotter_0703_03 has no qa_api. Firmware writing can affect hardware; static repository analysis is not hardware validation.
+
 #### K-OTA-V4065-POWERLOSS-HALL-20260922: OTA 功能支持断电检测错误 Hall
 
 **类型**: F  **来源**: @CODE_ROOT@/EncoderPlotter1/controller/python/startup_info.py
 **关键词**: OTA, V4065, DPT15, RS485, NoMulti, 断电检测, 错误Hall, 首次启动信息, 0x8A, Build ID
 
 功能记录：EncoderPlotter 已支持 DPT15、V4065、NoMulti、RS485 设备的首次启动信息查询，用于 OTA 后断电检测错误 Hall。软件手动发送设备命令 0x8A，通过现有通信调度接收 37 字节响应，校验标识 0x56385342、协议版本 1、数据长度 36、CRC8(poly 0x97)及字段关联关系；两个 64 位 Build ID 以十六进制字符串保存。页面显示读取完成、掉电记录有效性、内外圈历史 Hall、是否传入算法、启动状态、判断来源和选定 Hall。设备条件：arguments.algorithm=4065、rotorInnerSize=15、model=0 或缺失、DPT/RS485。验收向量已通过，Python/JavaScript 静态检查和 13 项协议测试通过；真实硬件 OTA 场景仍需现场验证。
+
+#### K-REPO-ANALYZER-CODE-20260924: analyzer_code：USB分析仪桥接固件
+
+**类型**: K  **来源**: @CODE_ROOT@\analyzer_code\main.c
+**关键词**: analyzer_code, Nuvoton M487, M480, USB, RS485, RS422, BiSS, SSI, Keil
+
+静态分析基线：HEAD c6bf7e7d0551a6d7a0af53641a931dafc096d24c，detached、干净。Cortex-M4 Nuvoton M487/M480 固件，连接 USB 与 RS485/RS422、BiSS/SSI 编码器。入口 main.c:105-154，进入 AnalyzerLoop/USBLoop；USB 收发分派见 USB/usb.c:168-211,273-355，命令实现见 Devices/analyzer.c:179-187。Keil 工程 Analyzer.uvprojx。未发现标准 README、CI 或自动测试门禁；本次未构建/接设备。协议与 driverSoftware、EncoderPlotter 有跨仓耦合，构建依赖 Keil 工具链。
+
+#### K-REPO-CLAUDE-CODE-20260924: claude-code：不完整的 Electron/Python 样板
+
+**类型**: K  **来源**: @CODE_ROOT@\claude-code\src\main\index.ts
+**关键词**: claude-code, Electron, Vue3, JSON-RPC, NDJSON, IPC, no Git
+
+无 Git 根、无 README。Electron/Vite + Vue 3/TypeScript；main 启用 contextIsolation 并禁用 nodeIntegration。IPC 有 python:call、python:status、app:versions；只有 python:call 调用 Python 方法。bridge.ts 以 JSON-RPC 2.0/NDJSON stdio 启动子进程，支持 timeout、重启退避和优雅退出。当前快照缺少 py/main.py、preload 和 renderer 源目录；配置和 py:build 指向缺失后台。静态完整性缺口，未尝试运行。
+
+#### K-REPO-CREDENTIAL-GENERATOR-20260924: tools_credential_generator：PBKDF2 凭据生成器
+
+**类型**: K  **来源**: @CODE_ROOT@\tools_credential_generator\src\preload\index.js
+**关键词**: credential generator, Electron, PBKDF2, SHA-256, IPC security
+
+Git 分支 feature/optimize-ui，HEAD 4beeb72fcf8298d1029691f12e80816801277596；未跟踪 .idea/ 与 yarn.lock。Electron-Vite + Vue 3；preload 使用 16-byte random salt、PBKDF2-SHA256 200k rounds 生成 32-byte 派生值，写入 Electron temp 的 .credentials；产物为加盐校验值，不是加密内容。输入 type=text 不遮蔽。Renderer API 暴露通用 child_process.exec、resolve、readFile、write2File；temp path 被插入 Explorer exec 命令，建议窄化 IPC/参数化启动。无自动测试。
+
+#### K-REPO-DRIVER-20260924: driver：STM32G473 BLDC/伺服固件
+
+**类型**: K  **来源**: @CODE_ROOT@\driver\Core\Src\main.cpp
+**关键词**: driver, STM32G473, BLDC, servo, RS485, bootloader, DBANK, firmware
+
+静态分析基线：HEAD af0abcb4b86d613a81e8ee0835a08746b2251d66，detached，tag v3.4.6；存在未跟踪 .idea。STM32G473QETx APP+Bootloader 固件。APP 入口 Core/Src/main.cpp；USART1 RS485/DMA/CRC 命令分派见 Core/Src/register_protocol.cpp:60-185，FOC/电流/PWM/安全控制在 Core/Src。Keil MDK-ARM/driver.uvprojx；after-build 走 extract_full.py 生成 release/driver.bin 与 release/BUILD_INFO.txt。tests 混合主机测试和需设备脚本。Core/Src/system_init.cpp:10-51 可修改 DBANK Option Bytes 并重启，属于硬件敏感路径；本次未构建/刷写/运行硬件测试。
+
+#### K-REPO-DRIVERSOFTWARE-20260924: driverSoftware：FastAPI/Electron 操作员桌面端
+
+**类型**: K  **来源**: @CODE_ROOT@\driverSoftware\server.py
+**关键词**: driverSoftware, FastAPI, Electron, HID, Analyzer, protocol, calibration, Nuitka
+
+静态分析基线：分支 feature/offline-detection-dev，HEAD 6e09c7688c5eec51671c9cc83c09d416ea2abedb，干净。FastAPI 后端 + ESM 前端 + Electron；server.py:635-665 创建服务，REST/WebSocket 路由约 :953+；core/protocol.py 与 commands.py 实现协议/命令，reader_mp.py 隔离 Analyzer reader，fullpipe_worker.py 负责标定管线，fw_profile.py 管固件配置。通信链：桌面端→FastAPI→HID/Analyzer→RS485→driver 固件。scripts/build.bat 调 Nuitka/electron-builder；pytest.ini 限定 tests/unit，硬件脚本需设备。本仓 VERSION/electron package 为 0.13.11，但 describe 是 win-smoke-v0.14.0-beta.1，发布前需核对版本来源；未运行测试/构建。
+
+#### K-REPO-ENCODERPLOTTER-0703-01-20260924: EncoderPlotter_0703_01：DPB409 硬件上位机
+
+**类型**: K  **来源**: @CODE_ROOT@\EncoderPlotter_0703_01\controller\python\Encoder.py
+**关键词**: EncoderPlotter_0703_01, DPB409, Electron, Vue2, Python, hardware CLI, submodule
+
+静态分析基线：feature/dpb-409，HEAD 9649f4af49fb504413b64c3022773804a3747d0c；两个未跟踪硬件脚本 command_sender.py、xxxx.py。版本 4.10.0；父仓 pin：algorithm e297c0d、automation 3332eb2、common e717cd7、embedded 78f228f。npm start/build:app；dev-setup 四项 Python 测试，CI 六项（另含 product_info 与 DPB flash layout）。command_sender 可上/断电、设 LED preset、发自定义硬件命令；xxxx.py 进入/退出再标定并读 Hall，自述不写 Flash；均不属于 HEAD。提供 qa_api/loopback HTTP。未运行硬件或测试。
+
+#### K-REPO-ENCODERPLOTTER-0703-02-20260924: EncoderPlotter_0703_02：develop 硬件上位机
+
+**类型**: K  **来源**: @CODE_ROOT@\EncoderPlotter_0703_02\controller\python\Encoder.py
+**关键词**: EncoderPlotter_0703_02, develop, Electron, Vue2, Python, IAP, submodule
+
+静态分析基线：develop，HEAD 6bf8c66c6de9e1b61a7bd5dddf6c2e8addbd863f，干净，版本 4.10.0。子模块 pin：algorithm 8af2836、automation 3332eb2、common 017a0d9、embedded fd87399。npm start/build:app；CI/dev-setup 列 build_info、safe_name、V4060 runtime config、qa_api 四项 Python 测试。旧版 IAP 使用调用方 chosenSoftwareVersion 查版本参数；有 qa_api HTTP 接口。未运行测试/设备。
+
+#### K-REPO-ENCODERPLOTTER-0703-03-20260924: EncoderPlotter_0703_03：旧版工厂刷写与 PCBA
+
+**类型**: K  **来源**: @CODE_ROOT@\EncoderPlotter_0703_03\package.json
+**关键词**: EncoderPlotter_0703_03, factory tools, PCBA, flash, 4.7.17, no CI
+
+静态分析基线：feature/flash-and-pcba，HEAD 1f5c515a9ffaa21cc475381bfb99591eef5413ca，干净；相对本地跟踪 ref ahead 1，未 fetch。版本 4.7.17。无 .gitlab-ci.yml、docs/dev-setup.md 或 qa_api。package.json 提供 npm start、npm test（node controller/test/testRunner.js）、build-flash、build-flash-v2、build-pcba、build-factory-tools 及 dist 打包。子模块 pin：algorithm 8af2836、automation 30b1c3f、common 8c06f41、embedded 85d1274。sub_algorithm 本地 feature/algoV4000 相对本地 origin behind 8，automation 本地分支 ahead 1，检出仍匹配 gitlink。无 HTTP IAP 路径。
+
+#### K-REPO-ENCODERPLOTTER-0903-01-20260924: EncoderPlotter_0903_01：新版 IAP BIN/Footer 解析
+
+**类型**: K  **来源**: @CODE_ROOT@\EncoderPlotter_0903_01\controller\python\Encoder.py
+**关键词**: EncoderPlotter_0903_01, IAP, parse_iap_bin, flash_layout, Footer, submodule
+
+静态分析基线：feature/iap，HEAD dd1278c2103cc43406b28e083a1fcfd62ccb0d6d，干净，版本 4.10.0。子模块 pin：algorithm b1d539a、automation 3332eb2、common c53a7b2、embedded 226a010。npm start/build:app；CI/dev-setup 四项 Python 测试：build_info、safe_name、V4060 runtime config、qa_api。与前三个旧快照不同，此版有 parse_iap_bin.py 和 flash_layout.py 解析 BIN/Footer；HTTP IAP 需显式 --http-enable-iap。未运行测试/设备操作。
+
+#### K-REPO-ENCODERPLOTTER1-20260924: EncoderPlotter1：V4065 与 IAP 快照
+
+**类型**: K  **来源**: @CODE_ROOT@\EncoderPlotter1\controller\server.js
+**关键词**: EncoderPlotter1, Electron, Vue2, Python, V4065, IAP, submodule
+
+静态分析基线：feature/lingxi-dpt-iap-preserve-zero，HEAD b9784c457b410bda20cfaac257abe374e6edf54c，干净；本地 origin/develop ref ahead 29（未 fetch）。Electron/Vue2/Vuex + Python 上位机，入口 controller/server.js，Python main.py→Server.py→Encoder.py，JS/Python 以二进制 stdin/stdout 帧通信。子模块 pin：algorithm b1d539a、automation 3332eb2、common b8d898b、embedded 5da3d89。支持 V4065 查询与相关 IAP 改动；npm start/build:app。共享 Python 测试四项：build_info、safe_name、V4060 runtime config、qa_api。IAP 默认关闭/需显式开关；旧注释“未实机验证”与指南/ADR 的防止刷坏设备理由不一致，本次未验证硬件。
+
+#### K-REPO-ENCODERPLOTTER2-20260924: EncoderPlotter2：MPT-G 参数兼容快照
+
+**类型**: K  **来源**: @CODE_ROOT@\EncoderPlotter2\controller\server.js
+**关键词**: EncoderPlotter2, MPT-G, Electron, Vue2, Python, submodule, encoder
+
+静态分析基线：feature/mpt-g-remerge-2，HEAD 0d5897b5a94c95fa5a7c13071c5d656293032dfb，干净；本地 origin/develop ref ahead 8（未 fetch）。共用 Electron/Vue2/Vuex + Python 通信架构；MPT-G 参数兼容。子模块 pin：algorithm fd85f15、automation 3332eb2、common ce132d2、embedded bb45bb4。npm start/build:app；CI 与 docs/dev-setup 同列四项 Python 测试：build_info、safe_name、V4060 runtime config、qa_api。未运行测试/构建。
+
+#### K-REPO-ENCODERPLOTTER3-20260924: EncoderPlotter3：SN/IAP 与 Linux 包路径快照
+
+**类型**: K  **来源**: @CODE_ROOT@\EncoderPlotter3\controller\server.js
+**关键词**: EncoderPlotter3, SN, statorsn, IAP, Linux packaging, Electron, submodule
+
+静态分析基线：feature/xingdongjiyuan-sn，HEAD 6878681a76087f8233904f5c1a877b5b21c375a0，干净；本地 origin/develop ref ahead 14（未 fetch）。Electron/Vue2/Vuex + Python 上位机，含 SN/IAP 修正与 Linux 包目录名修复。子模块 pin：algorithm f67de7d、automation 3332eb2、common 516031a、embedded bce0bac。npm start/build:app；CI 与 docs/dev-setup 同列 build_info、safe_name、V4060 runtime config、qa_api 四项。未运行测试/构建。
+
+#### K-REPO-ENCODERPLOTTER4-20260924: EncoderPlotter4：含未提交 TPB overlay
+
+**类型**: K  **来源**: @CODE_ROOT@\EncoderPlotter4\controller\server.js
+**关键词**: EncoderPlotter4, TPB, Electron, Vue2, dirty worktree, IAP, submodule
+
+静态分析基线：codex/feature/tpb-requirements，HEAD 6bf8c66c6de9e1b61a7bd5dddf6c2e8addbd863f；主仓五处修改且 sub_common dirty，无 upstream。改动路径：controller/defines.js、controller/encoder.js、controller/python/qa_api/encoder_profile.py、routes_iap.py、tests/test_profile.py；common Defines.py/config.py/utilities.py。与 EP5 已提交 HEAD/gitlinks 相同，当前工作树含未提交 TPB 部分实现。TPB productInfoList 为空，版本/算法/Flash 地址未配齐，routes_iap 要求登记版本，不能声称支持 TPB IAP。pin：algorithm 8af2836、automation 3332eb2、common 017a0d9、embedded fd87399。需按 HEAD 与 dirty overlay 分开理解；没有对 dirty overlay 的独立测试覆盖结论。
+
+#### K-REPO-ENCODERPLOTTER5-20260924: EncoderPlotter5：develop 干净基线
+
+**类型**: K  **来源**: @CODE_ROOT@\EncoderPlotter5\controller\server.js
+**关键词**: EncoderPlotter5, develop, Electron, Vue2, Python, submodule, encoder
+
+静态分析基线：develop，HEAD 6bf8c66c6de9e1b61a7bd5dddf6c2e8addbd863f，干净。与 EP4 的已提交 HEAD/gitlinks 相同，但无其未提交 TPB overlay。子模块 pin：algorithm 8af2836、automation 3332eb2、common 017a0d9、embedded fd87399。npm start/build:app；CI 与 docs/dev-setup 四项 Python 测试为 build_info、safe_name、V4060 runtime config、qa_api。共享架构入口与 IAP 门禁见 EncoderPlotter 系列记录；本次未运行测试/构建。
+
+#### K-REPO-MES-20260924: mes：Vue/Express MES 与编码器生产模块
+
+**类型**: K  **来源**: @CODE_ROOT@\mes\backend\src\index.ts
+**关键词**: mes, MES, Express, TypeORM, Vue3, Pinia, SQLite, PostgreSQL
+
+无 Git 根。README 自称 React 18，但当前 frontend/package.json、main.ts 和 Vue 页面使用 Vue 3/Pinia/Vue Router。Node/Express + TypeORM 后端支持 SQLite/PostgreSQL，Electron 壳；routes 覆盖 auth、工单、库存、质检、追溯、设备和 encoder production/release/calibration。database.ts 设置 synchronize:true，启动时 seed；生产迁移行为需谨慎核对。README/docker compose 含演示凭据/fallback，不保存实际值或 .env。存在 unit/integration/Playwright 脚本，本次未运行。
+
+#### K-REPO-MES-ADMIN-20260924: mes-admin：本地演示数据管理界面
+
+**类型**: K  **来源**: @CODE_ROOT@\mes-admin\src\App.vue
+**关键词**: mes-admin, Vue3, TypeScript, Vite, Electron, mock data, no backend
+
+无 Git 根。Vue 3 + TypeScript + Vite + Electron 管理界面样板；App.vue 用本地数组模拟用户/角色/状态，无 API、数据库或认证后端。Electron main 只加载前端，preload 仅暴露平台名。npm test 是 Node smoke test，npm run build 为 vue-tsc + Vite；本次未运行。
+
+#### K-REPO-RECALIBRATION-20260924: recalibration：在线标定与文件回放
+
+**类型**: K  **来源**: @CODE_ROOT@\recalibration\RecalibrationV0_4.py
+**关键词**: recalibration, calibration, Analyzer, replay, sub_algorithm, gitlink
+
+静态分析基线：分支 feature/debug-from-file，HEAD b9f73c5fa6f7b0534fa9e298a7281ed8d9320646；root 的 sub_algorithm 为 modified。父仓 gitlink 固定 f8eee4a，当前检出 a3c7526，不匹配；其他三类子模块检出与 parent pin 相符。RecalibrationV0_4.py 组合 Analyzer、encoder、算法，在线采集/生成/写入/读回；debugFromFile.py 重放数据。静态发现当前算法 step4_GenerateV4060.py 导入 sub_common.dpbFlashLayout，但当前 common 检出没有该文件，相关路径未运行验证。不得将调试 ZIP、测量数据或构建文件归档。
 
 #### K-angle-reading-liubobo-6993b3bd: liubobo-angle-hall RS485 0x43 角度读取实现完成
 
@@ -985,6 +1401,27 @@ Boot 16KB 位于 0x08000000；APP 客户区从 0x08004000；OTA 不得越过 0x0
 **关键词**: OTA, RS485, EnterBoot, 10次, mode A, mode B, CRC, descriptor, driver.bin, boot, device_id, baud
 
 OTA 必须先由 APP 连续10次 EnterBoot，再 Ping；mode A 仅写客户区至0x0803D000前，mode B才扩展编码器库/更高 user 区；Boot区不可 OTA；Erase/Write/Crc/J​​ump边界必须拒绝越界；完成后由 CRC 和 APP descriptor 作为提交点。v3.4.5 波特率可配置，工具不得硬编码单一7.5M。
+
+#### K-driverSoftware-commit-squash-preserve-remote: 压缩提交时保留远端历史边界
+
+**类型**: K  **来源**: @CODE_ROOT@/driverSoftware/AGENTS.md
+**关键词**: Git, commit, squash, 提交压缩, 远端历史, 工作区状态
+
+driverSoftware 压缩未推送提交时，先以 origin/<branch> 确定改写边界。只压缩远端之后的本地提交；已推送的提交及基底合并提交要保留。执行后核对 HEAD 为远端基线的后代、变更差异、git diff --check 和工作区状态；不推送，保留无关未跟踪证据。
+
+#### K-encoder-iap-lookup-diagnostic: 跨子模块缺失 DPB Flash 布局导致参数请求失败
+
+**类型**: K  **来源**: @CODE_ROOT@\EncoderPlotter3\controller\python\Encoder.py
+**关键词**: IAP, productInfoList, DPT, 423, configFile, availableVersions, 旧进程
+
+算法子模块 step4_GenerateV4060 顶层导入 sub_common.dpbFlashLayout。若主仓锁定的 sub_common gitlink 未含该模块，读取参数过程会报 No module named sub_common.dpbFlashLayout。同步模块时必须连同 DPB 固件 409 的 productInfoList 配置一起引入；真实日志可能加密，先用 @SIRE_ROOT@/decodeLog.js 或同等算法解码。2026-09-24 修复：sub_common 516031a，主仓 d794d22b；6 项 DPB 测试通过，应用 .venv Python 导入成功。
+
+#### K-encoder-unknown-iap-config-fallback: DPT 103 / 固件 423 配置命中与现场旧进程排查
+
+**类型**: K  **来源**: @CODE_ROOT@\EncoderPlotter3\controller\python\Encoder.py
+**关键词**: IAP, 未知固件版本, supportedVersions, productInfoList, series=103, software=423, Encoder.py
+
+DPT(系列103)的软件版本423配置位于 controller/python/sub_common/config.py 的 productInfoList[PRODUCT_SERIES_DPT][423]，虽然截图未显示外层系列键。当前树 getIAPArguments(103,423) 可命中，返回 algorithmVersion=4060 与 9 个 supportedVersions。日志 KeyError 表示运行进程加载的配置与当前树不同或运行代码/目录不同；检查 Python 进程命令行、模块来源文件、开发/打包启动路径，并重启旧进程。不要把查询失败静默降级为空升级列表。回归测试 qa_api/tests/test_iap_arguments.py 验证准确查找。
 
 #### K-fw-v345-register-compat: driverSoftware v3.4.5 寄存器兼容结论
 
@@ -1622,12 +2059,180 @@ Windows 扩展长度前缀，再交给 os 接口。全部 makedirs / open / exis
 
 **教训**: 同一功能按频率分硬件流 / 软轮询两条路时, 新增字段要两条路都接, 且要同时核对"请求带没带"和"回包进 scope 时有没有被映射丢掉"两层。
 
+#### P-20261034#2: MES manual business and admin separation
+
+**类型**: P  **来源**: D:\sire\AI\AI\sire\knowledge\global\global_problem_solutions.md
+**关键词**: 关键词：MES, 使用手册, 小白版, 业务系统, 后台管理, DOCX, SN, 流程快照
+
+关键词：MES、使用手册、小白版、业务系统、后台管理、DOCX、SN、流程快照
+需求场景：用户要求接续Claude编写的半成品使用说明，保持原来的章节、截图、表格与小白读者口吻，并明确区分业务系统和后台管理系统的操作。
+方案：在原A/B章节生成器中插入补充章节挂钩，分为业务系统操作、后台管理系统操作、公共查阅三部分。逐个模块按schema.referenceOnly标记后台维护或业务使用入口；补充审批、来料冻结复检、首件退回与多次返工、SN硬件编码更正，以及审计筛选、行为分析、配置体检、集成身份创建和密钥轮换。工单新建时先选工序流记录，再选启用版本；两项不选时采用模块本身流程。SN模板长度为17加产品型号长度，DPT15示例22位，不应统一写23位。
+关键文件：D:/code/mes/docs/manual/build-manual-v2.cjs、manual-chapters-a.cjs、manual-chapters-b.cjs、manual-completion.cjs；依据mes-db/zx07/modules.mjs、workflows.mjs以及后台各页面源码。
+验证结果：原生成器成功输出更新DOCX，ZIP完整性和XML解析通过，新增章节全部存在，包含26张图片，无缺图提示或占位。独立代理审核源码及操作准确性。运行bundled render_docx.py因未安装bundled LibreOffice失败，不能宣称分页或配图视觉验收通过；没有改业务代码，没有运行会重置数据库的测试。
+
+#### P-20261034#3: MES通用字段拼接、测试部署与SN原文归档
+
+**类型**: P  **来源**: D:\sire\AI\AI\sire\knowledge\global\global_problem_solutions.md
+**关键词**: MES, lowcode, concat, SN, Feishu, 测试部署
+
+**关键词**: MES, lowcode, concat, SN, Feishu, 测试部署
+
+## 需求场景
+用户明确要求自定义模块通用字段拼接，不应固化SN业务规则；完成后部署测试服、不深度测试。追加将飞书《编码器追溯系统》整理为标题SN的项目Markdown。
+
+## 方案
+text.config.concat配置有序来源字段和分隔符；前后端共用纯函数计算，服务端忽略客户端派生值并重算，部分更新合并原数据后执行必填/长度/唯一检查；拒绝循环、归档来源、默认值和自动编号冲突。设计器与运行表单显示只读预览。原文归档区分正文/画板/评论和未决项，保存四张原图不依赖外部临时链接。
+
+## 关键文件
+D:/code/mes/mes-server/src/lowcode/field-composition.ts
+D:/code/mes/mes-server/src/lowcode/schema.ts
+D:/code/mes/mes-admin/src/lowcode/designer/FieldProperties.tsx
+D:/code/mes/packages/runtime/src/lowcode/schema-utils.ts
+D:/code/mes/docs/SN.md
+D:/code/mes/docs/PROGRESS.md
+
+## 验证
+59项相关服务端单测通过，admin/web类型检查和三端构建通过；独立代码审查完成。授权部署r20261022-concat成功且数据计数未变，保留DB/config备份；后续其他发布已升级到erp3，未覆盖。无深度集成/E2E；UI仅部分冒烟，未声称完整路径通过。SN文档8章节4原图引用全部验证，独立阅读原图复核两流程顺序。记录位于D:/sire/sire_ledger/runs/R20261022-113015-mes/validation.md。
+
+#### P-20261034#4: MES模块空框与订单SN工序静态适配缺口
+
+**类型**: P  **来源**: D:\sire\AI\AI\sire\knowledge\global\global_problem_solutions.md
+**关键词**: MES, 模块空框, 订单导入, workflowBindings, linkRange, SN, 工序流程, 配置漂移
+
+**日期**: 2026-10-22
+**项目**: MES
+**关键词**: MES, 模块空框, 订单导入, workflowBindings, linkRange, SN, 工序流程, 配置漂移
+
+**需求场景**: 用户确认只清空业务模块页面内容，保留菜单、路由、框架，并分析订单、SN、工序、维护、兼容能力。
+
+**方案**: 两个前端 /app/:code 和后台工作流子路由替换空框；原引擎及业务数据保留。工作流标题使用独立 overview 接口，避免误依赖模块 view 权限。独立静态复核发现权限问题并修复。
+
+**关键文件**: D:/code/mes/docs/reviews/2026-10-22-模块清空与业务适配分析.md；D:/code/mes/packages/runtime/src/lowcode/pages/ModuleShellPage.tsx；D:/code/mes/mes-server/src/lowcode/apps.service.ts。
+
+**结论**: importRecords 没有 createRecord 的 workflowBindings 及 linkRange 路径；默认 SN 从批次生成，数量 1 表示单个，数字后缀不跨 999。ZX07 默认工作流尚未采用平台已有的 coverRelated，而进度记录中的服务器配置已启用该规则，存在重应用配置漂移风险。工序流记录与模块级版本归属脱节，报工缺单件工序执行和数量质量闭环。分析基于默认源码，未核对服务器实际配置。
+
+**验证**: 独立 R6 静态复核完成。未测试、未构建、未部署，待用户授权测试。证据 D:/sire/sire_ledger/runs/R20261022-202240-mes/r6a.md。
+
+#### P-20261034#5: MES平台定义执行与依赖治理方案静态审查缺口
+
+**类型**: P  **来源**: D:\sire\AI\AI\sire\knowledge\global\global_problem_solutions.md
+**关键词**: MES, 工作流运行时, 依赖治理, 提供者绑定, 审批状态机, 并发锁, 待办分页
+
+# 平台改造方案静态分析
+范围：只读分析方案与当前源码；不修改项目、不执行测试。
+检索复用：P-20261020（引用保护的共享锁/排他锁与稳定锁序），P-20261024（订单流程版本与审批边界）。
+结论：方向成立，v0.1尚不足直接执行。
+主要缺口：
+1. execProcess多提供者缺启动选择契约；需模块+记录+版本身份。
+2. 待审批状态遗漏submitOperation、改派、重复完成、驳回与取消状态机；须冻结并幂等。
+3. actorRoleCodes为流转级，派工为节点级；明确多出口并集/交集和终点权限。
+4. 依赖现场扫描须覆盖运行快照、历史版本、停用模块及动态默认绑定；定义静态边和运行边生命周期。
+5. impactOf需纳入写事务并与引用创建共享锁、删除停用排他锁成对；稳定锁序并锁后重读。
+6. 待办已有workflowView终判，SQL粗筛后limit501；放宽粗筛会使前500条占满后漏掉合法待办，须游标扫描补足与可解释total/truncated。
+7. 提供者编码快照不足：运行中的org、materialNeeds等全部从run解析，并明确schema版本与业务数据实时/快照边界。
+8. 字段依赖身份应含moduleId+fieldKey；版本应含moduleId+version；生产stepCode还需提供者作用域。
+9. 文本扫描业务字段名误报name/status等通用标识，建议AST上下文约束和业务包改名不变性用例。
+10. 保存/发布一致拒绝与U1.6显示不生效相冲突；草稿诊断/发布阻止边界需明确。
+建议：D0确认基线；先冻结运行时、状态机、依赖锁与身份契约，再按1→2→3推进。D1暂不支持、D2交集、D3新运行生效、D4默认提供者均可采纳，须补兼容与切换规则。
+模型门禁：架构分析高难度由主控；独立R6由review_plan子代理完成，无指定模型覆盖。
+R6独立复核：确认流程库选择、审批状态机、多出口权限、运行快照四项缺口。
+验证：仅文档与源码静态交叉检查，未测试；无Git操作。
+
+**关键词**: MES, 工作流运行时, 依赖治理, 提供者绑定, 审批状态机, 并发锁, 待办分页
+**需求场景**: 分析v0.1平台改造草案是否具备实施条件。
+**关键文件**: D:/code/mes/docs/design/PLATFORM-定义执行与依赖治理改造方案.md；mes-server/src/exec/exec.service.ts；mes-server/src/lowcode/apps.service.ts；mes-server/src/lowcode/modules.service.ts。
+
+#### SIRE-K-CODEX-DEFAULT-MODEL-GPT6-LUNA-28cb18c: Codex executor defaults to gpt-6-luna
+
+**类型**: F  **来源**: @SIRE_ROOT@\AI\AI\feishu-hub\executors\codex\executor.py
+**关键词**: Codex executor, default model, --model, gpt-6-luna, fake CLI, regression
+
+Codex CLI accepts --model <MODEL> (verified with local codex exec --help). DEFAULTS.codex_args now includes --model gpt-6-luna, so both new and resumed exec tasks use the requested model by default. The fake Codex integration asserts the argument for CX-1 and CX-2. Verification: test_codex_executor.py 20 checks passed; test_hub.py 79 checks passed with PYTHONIOENCODING=utf-8; commit 28cb18c; no push.
+
+#### SIRE-K-CODEX-EXECUTOR-9cd2424: Feishu Hub Codex executor protocol v1: exec, desktop queue, Stop Hook
+
+**类型**: F  **来源**: @SIRE_ROOT@\AI\AI\feishu-hub\executors\codex\executor.py
+**关键词**: Feishu Hub; Codex executor; desktop_queue; active writer; Stop Hook; LeaseLost; spool; CX-1-CX-10
+
+Protocol v1 implementation on feature/feishu-hub: exec/new and exec resume receive prompts on stdin; thread.started.thread_id binds the session; last assistant output comes from --output-last-message. Only an active-writer rejection before execution can route once to codex queue. Queue accepts --message and -C but not --skip-git-repo-check; an uncertain acknowledgement uses queue_id null. TaskReporter heartbeats continue through event submission; LeaseLost and timeout terminate the CLI process tree. Stop Hook suppresses FEISHU_HUB_TASK_ID turns, sends independent turns to /v1/sessions/turns, and spools unavailable Hub responses. Uses Win32 OpenProcess/GetProcessTimes for pid_ctime. Verification: CX-1 through CX-10 passed 10/10; existing test_hub passed 79/79. Real desktop Hook trust and live Feishu paths remain unverified because task boundaries forbid touching live configuration or services. Commit 9cd2424; no push.
+
+#### SIRE-K-CODEX-HUB-ACTIVATION-20260924: Codex Feishu Hub code completion does not activate executor or desktop Hook
+
+**类型**: K  **来源**: @SIRE_ROOT@\AI\AI\feishu-hub\executors\codex\README.md
+**关键词**: Feishu Hub; Codex executor; deployment readiness; Stop Hook; desktop queue
+
+Commit 9cd2424 implements and fake-tests Codex Hub protocol v1, but source commit alone does not start executor.py or install/trust the Codex desktop Stop Hook. On 2026-09-24 process inspection found no python.exe/pythonw.exe command line running feishu-hub/executors/codex/executor.py. The prior task explicitly prohibited live Hook configuration, real Feishu access, and live Hub integration. Therefore the new Codex Feishu path is not verified or presently active; activate executor and Hook, then perform a real end-to-end message/reply test.
+
+#### SIRE-K-CODEX-NOTIFY-ARGV-20260924: Codex Stop Hook notify --previous-notify 输入支持与幂等验证
+
+**类型**: F  **来源**: @SIRE_ROOT@\AI\AI\feishu-hub\executors\codex\hook_stop.py
+**关键词**: Codex, Stop Hook, notify, --previous-notify, agent-turn-complete, thread-id, turn-id, duplicate, FEISHU_HUB_TASK_ID
+
+Codex hook_stop.py 兼容 stdin Stop JSON 和 notify 末尾 argv JSON。notify 仅处理 type=agent-turn-complete，映射 thread-id/turn-id/cwd/last-assistant-message 到共用 /v1/sessions/turns 上报，stdout 静默；其他 type 忽略。FEISHU_HUB_TASK_ID 存在时 notify 入口直接退出。Hub 按 session_id+turn_id 幂等，重复上报不重复发卡。验证：Codex 专项 16 项通过；Hub 79 项通过（Windows 建议 PYTHONIOENCODING=utf-8，避免 Claude 假 CLI 默认编码导致 surrogate 相关失败）。真实桌面 notify 与飞书 UI 未执行，因要求不动本机 Codex 配置和线上服务。
+
+#### SIRE-K-CODEX-NOTIFY-GUARD-ea704df: Codex executor safeguards config.toml notify chaining
+
+**类型**: F  **来源**: @SIRE_ROOT@\AI\AI\feishu-hub\executors\codex\executor.py
+**关键词**: Codex executor, config.toml, tomllib, notify, codex-computer-use.exe, --previous-notify, pythonw.exe, hook_stop.py, CC-Switch, atomic replace, backup, idempotency
+
+Codex executor notify guard runs once during serve_forever startup and every 60 seconds. It parses the user's Codex config.toml using tomllib; absent/empty notify gets pythonw.exe plus absolute hook_stop.py; a codex-computer-use.exe turn-ended command keeps its existing argv and gets one JSON-encoded --previous-notify argv; unknown executables are warned and left intact. Invalid TOML is left untouched. Updates preserve other TOML text, copy a .bak first, validate a same-directory temporary file, os.replace atomically, then parse the written file. Tests inject a temporary TOML path and cover startup, existing hook replacement, idempotency, unknown executable, malformed TOML, and backup preservation. Verification: Codex executor tests passed 20 checks; Hub tests passed 79 checks with PYTHONIOENCODING=utf-8. Real desktop/config interaction was not executed to avoid editing the user's real Codex config. Commit ea704df.
+
+#### SIRE-K-CODEX-QUEUE-NATIVE-5d39ed6: Codex queue must use native exe to preserve Windows prompt argv
+
+**类型**: K  **来源**: @SIRE_ROOT@\AI\AI\feishu-hub\executors\codex\executor.py
+**关键词**: Codex queue; codex.exe; cmd.exe; argv; MSIX; executor log; Feishu Hub
+
+Commit 5d39ed6 fixes Codex queue prompt corruption risk on Windows. Default discovery prefers npm vendor codex.exe; configured cmd shims are resolved to the adjacent vendor exe for queue, or fail CLI_NOT_FOUND. This avoids cmd.exe metacharacter parsing and its 8191-character limit. Added Claude-compatible APPDATA to Packages/LocalCache/Roaming cwd mapping and file logging to HUB_HOME/executor_codex.log. Tests passed: Codex 13/13 including &, |, %, ^, quote, angle brackets and multiline argv exactness, MSIX mapping and pythonw-style log file; Hub regression 79/79. Real live Feishu desktop queue was not changed or exercised.
+
+#### SIRE-K-CODEX-SIDEBAR-PROJECT-REMOVAL-20260924: Codex project sidebar APIs do not expose project removal
+
+**类型**: K  **来源**: Codex app project tools
+**关键词**: Codex sidebar, projects, remove project, move project, sidebar section
+
+The available Codex app project APIs list projects and move them among pinned/custom/unpinned sections. Moving to null or threads returns a project to the unpinned Projects area; it does not remove the project from the sidebar. No project-removal API is available in the exposed tools. Do not claim removal by merely unpinning; ask whether the user wants all projects unpinned instead.
+
+#### kb-recalibration-sn-log-20260924: 再标定日志按编码器 SN 归档
+
+**类型**: F  **来源**: @CODE_ROOT@/EncoderPlotter3/components/encoder/device.js
+**关键词**: 再标定, 日志, SN, CalibrationLogs, debug ZIP, write-calibration-log
+
+Fixed i18n gaps: TXT header labels now use translation keys 标定时间/标定结果, and header result uses existing translated 标定成功/标定失败 keys. Added English and Chinese dictionary entries for inner/outer estimated axial-distance messages with distance/gap interpolation; DPB converter parses ring and distance and returns localized output rather than passing dynamic Chinese text to $t. Filename result tokens remain Chinese per existing file naming convention. Static diff check passes; no locale runtime/real device test. Changes are local only; no push/tag.
+
+#### kb-settings-production-mode-internal-only-20260924: 生产模式设置仅内部版本显示
+
+**类型**: P  **来源**: components/analyzer/version.html
+**关键词**: 设置, 生产模式, isInternal, 内外部版本, version.html
+
+Production Mode setting visibility uses the shared isInternal() classifier: internal/development builds are internal; production/unknown are external. In components/analyzer/version.html, the Production Mode setting row is guarded by v-if="isInternal". Static diff check passed; no UI session was run.
+
+#### knowledge-current-branch-2026-09-24: Git current branch lookup
+
+**类型**: K  **来源**: @SIRE_ROOT@\AI\AI
+**关键词**: Git, branch, feature/feishu-hub
+
+When the session root is not a repository, inspect sibling project directories; current repository is @SIRE_ROOT@\AI\AI and branch is feature/feishu-hub.
+
 #### knowledge:why-reg-read-fails: 寄存器读取失败的分层诊断
 
 **类型**: K  **来源**: @CODE_ROOT@\driverSoftware\docs\firmware_dev_versioning_coordination.md
 **关键词**: reg_read, Factory, read_version, fw_profile, dirty, git sha, RS485, HID, reader_mp_worker, timeout
 
 基于固件联调版本文档和当前代码分析寄存器读取故障：server.py 的 reg_read 直接走 Factory REG_READ，不依赖 fw_profile；read_version 才读取 0x0C/0x0D 并决定 dev/正式档案。故所有寄存器 timeout/no response 首先指向 RS485/HID reader、设备 ID、Factory 协议/设备状态或 MP reader 卡死；若 read_version 成功但 MIT/Default/遥测失败，则重点检查 dev-<sha>.json 缺失、dirty/SHA 解码、档案 active 被清空、调用顺序未先 read_version。读到数值但不合理则检查 float-bits 类型寄存器与普通 float 的解码差异。证据：core/commands.py reg_read/read_version，server.py api_read_version/_read_reg_float/_match_fw_profile，docs/firmware_dev_versioning_coordination.md，docs/feedback_ledger.md 中 MP reader 卡死记录。
+
+#### method-git-current-branch: 当前分支必须查询实时 Git
+
+**类型**: F  **来源**: D:\sire\AI\AI\sire\knowledge\global\git-current-branch.md
+**关键词**: Git, 当前分支, 实时状态, 历史记录
+
+# Git 当前分支查询
+
+记录编号：method-git-current-branch
+
+关键词：Git, 当前分支, 实时状态, 历史记录
+
+查询当前分支时必须读取目标仓库的实时 Git 状态。`git branch --show-current` 可读取分支，`git symbolic-ref --short HEAD` 可独立复核；历史任务记录中的分支名称只适用于当时的仓库与时间。若处于 detached HEAD，应说明没有当前分支，另查提交编号。
+
+验证：2026-10-12 在 driverSoftware 实际执行上述两条命令及 `git status --short --branch`，结果一致。具体分支名称仅保存在本次任务证据中。
 
 #### sire-20260922-dpt-dpb-plot: DPT final plot must not inherit stale DPB type
 

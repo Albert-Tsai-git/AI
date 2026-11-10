@@ -1,6 +1,142 @@
 {
   "records": [
     {
+      "id": "P-20261050",
+      "type": "problem",
+      "title": "防止更新日志缺分类导致发布通知丢失条目",
+      "file": "P-20261050-changelog-category-gate.md",
+      "line": 1,
+      "date": "2026-10-26",
+      "project": "driverSoftware",
+      "status": "实现并本地提交f6ae85d9，未推送；未测试，待用户授权。当前工作目录development初始干净，按SIRE当前目录当前分支规则执行。协作未开启。",
+      "keywords": [
+        "CHANGELOG",
+        "新增",
+        "修复",
+        "分类标题",
+        "飞书通知",
+        "release.py",
+        "强制拦截"
+      ]
+    },
+    {
+      "id": "P-20261051",
+      "type": "problem",
+      "title": "更新日志分类完整流程测试与非标准列表拦截",
+      "file": "P-20261051-release-category-flow-verification.md",
+      "line": 1,
+      "date": "2026-10-26",
+      "project": "driverSoftware",
+      "status": "本地发布与卡片生成测试通过；未触发真实远端CI、未构建正式包、未发送群消息，不能据此称飞书实际投递已验证。台账R20261026-083210-driversoftware。",
+      "keywords": [
+        "未发布",
+        "新增",
+        "修复",
+        "发布通知",
+        "分类",
+        "临时Git仓库",
+        "变异验证",
+        "6918168c"
+      ]
+    },
+    {
+      "id": "P-20261052",
+      "type": "problem",
+      "title": "经明确授权补齐历史更新日志分类",
+      "file": "P-20261052-historical-changelog-categories.md",
+      "line": 1,
+      "date": "2026-10-26",
+      "project": "driverSoftware",
+      "status": "已本地提交fb9f1499，未推送；未测试。风险无。",
+      "keywords": [
+        "CHANGELOG",
+        "历史版本",
+        "分类修复",
+        "新增",
+        "修复",
+        "fb9f1499"
+      ]
+    },
+    {
+      "id": "P-20261053",
+      "type": "problem",
+      "title": "更新日志分类修复提交压缩后的追溯关系",
+      "file": "P-20261053-release-gate-squash-history.md",
+      "line": 1,
+      "date": "2026-10-26",
+      "project": "driverSoftware",
+      "status": "压缩完成、内容完全一致，未推送，未重跑测试。极小Git操作主控直接执行，不涉及代码修改；协作未开启。",
+      "keywords": [
+        "压缩提交",
+        "squash",
+        "本地提交",
+        "更新日志分类",
+        "26abd28e",
+        "远端基线"
+      ]
+    },
+    {
+      "id": "P-20261054",
+      "type": "problem",
+      "title": "压缩后的发布流程及实际更新日志卡片复测",
+      "file": "P-20261054-squashed-release-flow-retest.md",
+      "line": 1,
+      "date": "2026-10-26",
+      "project": "driverSoftware",
+      "status": "本地发布与卡片生成复测通过，无业务代码改动。证据actual-content-checks.json、card-0.20.3.json、card-0.20.4.json、card-0.20.5.json、unreleased-card-preview.json。未触发远端CI、未发送真实飞书消息。单一测试任务主控执行，独立代理复核证据。",
+      "keywords": [
+        "26abd28e",
+        "更新日志分类",
+        "复测",
+        "飞书卡片",
+        "Kt",
+        "v0.20.3",
+        "v0.20.4",
+        "v0.20.5"
+      ]
+    },
+    {
+      "id": "P-20261055",
+      "type": "problem",
+      "title": "Agent更新日志分类约束核对及远端落地状态",
+      "file": "P-20261055-agent-changelog-contract-pushed.md",
+      "line": 1,
+      "date": "2026-10-26",
+      "project": "driverSoftware",
+      "status": "Agent约束复核通过，26abd28e已推送origin/development。未推送tag、未发送群消息。独立复核证据r6-review.md，测试证据prior-test-evidence.txt。未改业务代码。",
+      "keywords": [
+        "Agent约束",
+        "AGENTS.md",
+        "CLAUDE.md",
+        "新增",
+        "修复",
+        "更新日志分类",
+        "origin/development",
+        "26abd28e"
+      ]
+    },
+    {
+      "id": "P-20261103",
+      "type": "problem",
+      "title": "Projectless 聊天开启协作时先确定项目，不凭旧 active 标记选通道",
+      "file": "P-20261103-projectless-comms-selection.md",
+      "line": 1,
+      "date": "2026-11-04",
+      "project": "SIRE / 跨项目本机协作通讯",
+      "status": "已完成",
+      "keywords": [
+        "projectless",
+        "Claude",
+        "Codex",
+        "协作通讯",
+        "通道选择",
+        "active",
+        "last_activity",
+        "会话绑定",
+        "空闲超时"
+      ]
+    },
+    {
       "id": "E-008",
       "type": "efficiency",
       "title": "SIRE 单一来源收敛与 RSI 双库写入",
@@ -368,6 +504,170 @@
         "批量台账",
         "并行检索",
         "sire_kb.py"
+      ]
+    },
+    {
+      "id": "E-024",
+      "type": "efficiency",
+      "title": "driverSoftware2 发版治理与编码器仓对照",
+      "file": "global_dev_efficiency.md",
+      "line": 449,
+      "date": "",
+      "project": "",
+      "status": "",
+      "keywords": [
+        "driverSoftware2",
+        "EncoderPlotter_0903_01",
+        "v0.19.0",
+        "release branch",
+        "GitLab CI",
+        "ci-templates"
+      ]
+    },
+    {
+      "id": "E-025",
+      "type": "efficiency",
+      "title": "复用 CI 模板前核实版本源、更新条目和回合路径",
+      "file": "global_dev_efficiency.md",
+      "line": 479,
+      "date": "2026-10-21",
+      "project": "driverSoftware2 / EncoderPlotter CI 模板适配核查",
+      "status": "核查完成，待修复；完整证据在外置台账 R20261021-153304-driversoftware2/audit-report.md。",
+      "keywords": [
+        "ci-templates",
+        "VERSION_CMD",
+        "MODULE_NOT_FOUND",
+        "package.json",
+        "CHANGELOG",
+        "main development",
+        "回合",
+        "发布门禁",
+        "星号条目",
+        "模板兼容"
+      ]
+    },
+    {
+      "id": "E-026",
+      "type": "efficiency",
+      "title": "IAP与修复六项静态审查发现（待修复未测试）",
+      "file": "global_dev_efficiency.md",
+      "line": 498,
+      "date": "2026-10-23",
+      "project": "EncoderPlotter_0903_01，feature/iap-zip-custom",
+      "status": "",
+      "keywords": [
+        "IAP",
+        "IAP修复",
+        "分段加密",
+        "Arguments",
+        "SN",
+        "重试会话",
+        "ZIP候选"
+      ]
+    },
+    {
+      "id": "E-027",
+      "type": "efficiency",
+      "title": "飞书通知解析依赖三级小节导致平铺修改项被静默丢弃",
+      "file": "global_dev_efficiency.md",
+      "line": 522,
+      "date": "2026-10-26",
+      "project": "",
+      "status": "",
+      "keywords": [
+        "driverSoftware",
+        "飞书",
+        "发布通知",
+        "CHANGELOG",
+        "ci_notify_lark",
+        "sections",
+        "平铺条目",
+        "空卡片"
+      ]
+    },
+    {
+      "id": "E-028",
+      "type": "efficiency",
+      "title": "0.20.3日志首次漏分类的提交来源及发布门禁缺口",
+      "file": "global_dev_efficiency.md",
+      "line": 537,
+      "date": "2026-10-26",
+      "project": "driverSoftware",
+      "status": "原因追查完成；未修复、未测试。无外部操作。极小排查主控直接执行，R6无代码变更无需代码审批，R7待用户授权，R10无需系统操作。",
+      "keywords": [
+        "CHANGELOG",
+        "v0.20.3",
+        "59c538c6",
+        "release.py",
+        "分类标题",
+        "新增",
+        "修复",
+        "飞书通知"
+      ]
+    },
+    {
+      "id": "E-029",
+      "type": "efficiency",
+      "title": "短横线 CHANGELOG 与共享通知解析器兼容门禁",
+      "file": "global_dev_efficiency.md",
+      "line": 550,
+      "date": "2026-10-26",
+      "project": "",
+      "status": "",
+      "keywords": [
+        "CHANGELOG",
+        "driverSoftware",
+        "changelog-gate",
+        "分类标题",
+        "短横线条目",
+        "ci-templates",
+        "飞书通知"
+      ]
+    },
+    {
+      "id": "E-030",
+      "type": "efficiency",
+      "title": "EncoderPlotter 各仓 GitLab 统一使用 192.168.1.200:8888",
+      "file": "global_dev_efficiency.md",
+      "line": 567,
+      "date": "2026-10-28",
+      "project": "EncoderPlotter1（主仓 software/EncoderPlotter 及四个子仓）",
+      "status": "已归档",
+      "keywords": [
+        "GitLab 地址",
+        "192.168.1.200:8888",
+        "software/EncoderPlotter",
+        "创建 MR",
+        "合并请求",
+        "glab",
+        "登录",
+        "gitlab.kingkong.tech",
+        "不要重复登录",
+        "release-gate",
+        "sub_embedded",
+        "sub_common"
+      ]
+    },
+    {
+      "id": "E-031",
+      "type": "efficiency",
+      "title": "内置浏览器已登录 GitLab 时，用同源 fetch 调 API 读 CI 与流水线，并避免打错标签页",
+      "file": "global_dev_efficiency.md",
+      "line": 585,
+      "date": "2026-11-05",
+      "project": "SIRE / GitLab 排障（192.168.1.200:8888）",
+      "status": "已归档",
+      "keywords": [
+        "Claude Browser",
+        "javascript_tool",
+        "GitLab API",
+        "同源 fetch",
+        "csrf-token",
+        "tabId",
+        "触发流水线",
+        "job trace",
+        "内置浏览器",
+        "轮询"
       ]
     },
     {
@@ -1655,6 +1955,785 @@
       ]
     },
     {
+      "id": "F-086",
+      "type": "feature",
+      "title": "Claude-Codex 协作通讯机制：会话绑定、实时推送、常驻与会话id可变（v6.28–v6.35）",
+      "file": "global_dev_features.md",
+      "line": 1669,
+      "date": "2026-10-20",
+      "project": "SIRE / D:\\sire\\AI\\AI（共享 skill sire_comms，v6.28–v6.35）",
+      "status": "已完成",
+      "keywords": [
+        "claude-codex协作机制",
+        "协作通讯",
+        "sire_comms",
+        "会话绑定",
+        "session start",
+        "session watch",
+        "session wait",
+        "resume",
+        "codex queue 实时推送",
+        "常驻协作",
+        "结束协作",
+        "会话id可变",
+        "锁STALE",
+        "转述不构成授权",
+        "协作免重复授权",
+        "comms-protocol"
+      ]
+    },
+    {
+      "id": "F-087",
+      "type": "feature",
+      "title": "用户手册外部版隐藏与测试 tag 序号",
+      "file": "global_dev_features.md",
+      "line": 1701,
+      "date": "2026-10-21",
+      "project": "EncoderPlotter_0903_01",
+      "status": "已完成",
+      "keywords": [
+        "EncoderPlotter",
+        "用户手册",
+        "外部版",
+        "isInternal",
+        "内部版",
+        "test tag",
+        "test-v4.10.0"
+      ]
+    },
+    {
+      "id": "F-088",
+      "type": "feature",
+      "title": "driverSoftware 0.8至0.20.2提测范围与客户档边界",
+      "file": "global_dev_features.md",
+      "line": 1729,
+      "date": "2026-10-22",
+      "project": "driverSoftware",
+      "status": "",
+      "keywords": [
+        "driverSoftware",
+        "提测",
+        "L0",
+        "客户包",
+        "0.20.2",
+        "版本变动",
+        "量零点",
+        "档位"
+      ]
+    },
+    {
+      "id": "F-089",
+      "type": "feature",
+      "title": "飞书客户提测文档创建与32项回读核验",
+      "file": "global_dev_features.md",
+      "line": 1740,
+      "date": "2026-10-22",
+      "project": "driverSoftware",
+      "status": "",
+      "keywords": [
+        "飞书",
+        "提测文档",
+        "driverSoftware",
+        "lark-cli",
+        "bot",
+        "32项",
+        "Markdown",
+        "客户版"
+      ]
+    },
+    {
+      "id": "F-091",
+      "type": "feature",
+      "title": "MES交接续做组成能力与SN入口清理",
+      "file": "global_dev_features.md",
+      "line": 1751,
+      "date": "",
+      "project": "",
+      "status": "",
+      "keywords": [
+        "MES",
+        "composition",
+        "分母",
+        "生效时间",
+        "SN",
+        "平台边界"
+      ]
+    },
+    {
+      "id": "F-092",
+      "type": "feature",
+      "title": "GAME对照FC初代重装机兵的差距与制作优先级",
+      "file": "global_dev_features.md",
+      "line": 1769,
+      "date": "2026-10-24",
+      "project": "GAME",
+      "status": "已完成静态分析，未测试",
+      "keywords": [
+        "FC",
+        "重装机兵",
+        "战车RPG",
+        "复刻",
+        "多车",
+        "游戏审计",
+        "音频",
+        "UI",
+        "盐海遗讯"
+      ]
+    },
+    {
+      "id": "F-093",
+      "type": "feature",
+      "title": "GAME 复古俯视 3D UI 主题与视口锚点实现",
+      "file": "global_dev_features.md",
+      "line": 1783,
+      "date": "2026-10-25",
+      "project": "GAME / D:\\code\\GAME",
+      "status": "部分完成（视觉实现与静态复核完成；未授权真实运行验收）。",
+      "keywords": [
+        "Unity UI",
+        "UGUI",
+        "IMGUI",
+        "CanvasScaler",
+        "视口锚点",
+        "暖木",
+        "锈钢",
+        "黄铜",
+        "复古俯视 3D",
+        "重装机兵"
+      ]
+    },
+    {
+      "id": "F-094",
+      "type": "feature",
+      "title": "GAME Unity UGUI 程序化旧钢与暖木平铺材质",
+      "file": "global_dev_features.md",
+      "line": 1816,
+      "date": "2026-10-25",
+      "project": "GAME / D:\\\\code\\\\GAME",
+      "status": "部分完成（材质绘制已静态复核；运行观感未测试）",
+      "keywords": [
+        "Unity UGUI",
+        "Image.Type.Tiled",
+        "TextureWrapMode.Repeat",
+        "程序化木纹",
+        "锈钢 UI",
+        "Sprite.Create",
+        "跨程序集可见性"
+      ]
+    },
+    {
+      "id": "F-095",
+      "type": "feature",
+      "title": "Additive 美术场景中的室内样片与安全传送接入",
+      "file": "global_dev_features.md",
+      "line": 1847,
+      "date": "2026-10-25",
+      "project": "D:/code/GAME（Unity FC 重制）",
+      "status": "部分完成（室内样片静态实现完成；实机验收未完成）。",
+      "keywords": [
+        "Unity additive scene",
+        "SceneManager.sceneLoaded",
+        "RuntimeInitializeOnLoadMethod",
+        "FieldGroundSurface",
+        "Terrain.SampleHeight",
+        "ScenePortal",
+        "SpawnPoint",
+        "TownGate",
+        "room interior",
+        "cutaway room"
+      ]
+    },
+    {
+      "id": "F-096",
+      "type": "feature",
+      "title": "Unity UI跨UGUI/IMGUI共享旧钢与暖木材质",
+      "file": "global_dev_features.md",
+      "line": 1899,
+      "date": "2026-10-25",
+      "project": "GAME Unity FC 重制",
+      "status": "部分完成（样式与静态复核完成；实机验收待授权）。",
+      "keywords": [
+        "Unity UI",
+        "shared Texture2D",
+        "UGUI Tiled",
+        "IMGUI DrawTextureWithTexCoords",
+        "GUIStyle background scaling",
+        "ScrollRect",
+        "GUI scroll view"
+      ]
+    },
+    {
+      "id": "F-097",
+      "type": "feature",
+      "title": "FC 重制室内切面美术基线与车辆版本锚点",
+      "file": "global_dev_features.md",
+      "line": 1923,
+      "date": "2026-10-25",
+      "project": "GAME Unity FC 重制",
+      "status": "部分完成（视觉基准文档和静态复核完成；游戏运行视觉、FC 原版车辆细节和完整重制仍未验收/未完成）。",
+      "keywords": [
+        "Unity art bible",
+        "isometric cutaway room",
+        "pixel sprites",
+        "weathered steel",
+        "warm wood",
+        "FC vehicle slots",
+        "Mount_Sub",
+        "interior art direction",
+        "俯视切面",
+        "室内美术基线"
+      ]
+    },
+    {
+      "id": "F-098",
+      "type": "feature",
+      "title": "FC重制用户参考图风格扩展到整套UI",
+      "file": "global_dev_features.md",
+      "line": 1955,
+      "date": "2026-10-25",
+      "project": "GAME / Unity FC 重制",
+      "status": "",
+      "keywords": [
+        "Unity UI 风格、暖木旧钢、黄铜焦点、像素人物、参考图、标题 HUD 菜单 地图 对话 战斗"
+      ]
+    },
+    {
+      "id": "F-099",
+      "type": "feature",
+      "title": "标题页保留用户显示模式",
+      "file": "global_dev_features.md",
+      "line": 1973,
+      "date": "2026-10-26",
+      "project": "GAME / D:\\code\\GAME",
+      "status": "标题显示模式修正静态复核通过；Unity与显示设备实测待授权",
+      "keywords": [
+        "Unity UI",
+        "标题界面",
+        "分辨率",
+        "Screen.SetResolution",
+        "显示模式",
+        "CanvasScaler",
+        "FC重制"
+      ]
+    },
+    {
+      "id": "F-100",
+      "type": "feature",
+      "title": "FC 45毫米炮独立运行时模型原型与挂装路径",
+      "file": "global_dev_features.md",
+      "line": 1989,
+      "date": "2026-10-26",
+      "project": "GAME / D:\\code\\GAME",
+      "status": "部分完成（运行时原型与挂装接线完成；正式Blender源文件、FBX、预览与授权后的Unity画面验收仍待完成）。",
+      "keywords": [
+        "FC重装机兵",
+        "45毫米炮",
+        "VisualCatalog",
+        "运行时模型工厂",
+        "Unity挂点",
+        "Mesh缓存",
+        "URP fallback"
+      ]
+    },
+    {
+      "id": "F-101",
+      "type": "feature",
+      "title": "FC重制UI风格复确认时复用既有主题实现",
+      "file": "global_dev_features.md",
+      "line": 2013,
+      "date": "2026-10-26",
+      "project": "GAME / D:\\code\\GAME",
+      "status": "部分完成（风格基准与静态覆盖确认；实机显示和可读性待授权验证）。",
+      "keywords": [
+        "Unity UI 风格、风格复确认、旧钢、暖木、像素人物、用户参考图、UGUI、IMGUI"
+      ]
+    },
+    {
+      "id": "F-102",
+      "type": "feature",
+      "title": "Unity同名Cue同步的原创SFX WAV资源生成",
+      "file": "global_dev_features.md",
+      "line": 2042,
+      "date": "2026-10-26",
+      "project": "GAME / D:\\code\\GAME",
+      "status": "部分完成（19种原创素材静态生成与核对完成；Unity导入和试听待用户授权）",
+      "keywords": [
+        "Unity SFX",
+        "SfxCue",
+        "procedural sound effects",
+        "PCM WAV",
+        "AudioImporter meta",
+        "Resources Audio/Sfx",
+        "deterministic generator"
+      ]
+    },
+    {
+      "id": "F-103",
+      "type": "feature",
+      "title": "FC 45毫米炮模型资源Prefab交付",
+      "file": "global_dev_features.md",
+      "line": 2071,
+      "date": "2026-10-26",
+      "project": "GAME / Unity FC 重制",
+      "status": "Unity Resources Prefab 已生成；游戏内装配验收待授权",
+      "keywords": [
+        "WPN_FC_Cannon45",
+        "Unity Prefab",
+        "FBX",
+        "Blender",
+        "45毫米炮",
+        "FC 重制",
+        "资源导入"
+      ]
+    },
+    {
+      "id": "F-104",
+      "type": "feature",
+      "title": "FC重制巨蚁Blender/FBX/Unity资源交付",
+      "file": "global_dev_features.md",
+      "line": 2095,
+      "date": "2026-10-26",
+      "project": "GAME / D:\\code\\GAME",
+      "status": "",
+      "keywords": [
+        "FC重制、巨蚁、Blender源模型、FBX、Unity Prefab、资源ID、低多边形、轴向转换、GUID保留"
+      ]
+    },
+    {
+      "id": "F-105",
+      "type": "feature",
+      "title": "FC重制UI钢板铆钉跨UGUI与IMGUI统一",
+      "file": "global_dev_features.md",
+      "line": 2114,
+      "date": "2026-10-26",
+      "project": "D:\\code\\GAME",
+      "status": "部分完成（视觉细节完成并静态复核；运行时显示与响应式验收待授权）",
+      "keywords": [
+        "FC重制",
+        "Unity UI",
+        "旧钢",
+        "暖木",
+        "铆钉",
+        "UGUI",
+        "IMGUI",
+        "BattleController"
+      ]
+    },
+    {
+      "id": "F-106",
+      "type": "feature",
+      "title": "FC波布机械师绕院事件状态与文档核对边界",
+      "file": "global_dev_features.md",
+      "line": 2142,
+      "date": "2026-10-26",
+      "project": "GAME / D:/code/GAME",
+      "status": "部分完成（开发事件已有代码；原版逐项核对与实机验收未完成）",
+      "keywords": [
+        "FC重装机兵",
+        "波布机械师",
+        "PobMechanicRideEvent",
+        "FC_REFERENCE",
+        "事件状态",
+        "原版核对",
+        "车辆归属"
+      ]
+    },
+    {
+      "id": "F-107",
+      "type": "feature",
+      "title": "FC重制UI语义色板跨UGUI与IMGUI统一",
+      "file": "global_dev_features.md",
+      "line": 2172,
+      "date": "2026-10-26",
+      "project": "GAME / Unity FC 初代《重装机兵》3D 重制",
+      "status": "已实现并静态复核通过；真实 Unity 界面验收待授权。",
+      "keywords": [
+        "FC重制 UI、RetroUiColors、UGUI、IMGUI、旧钢、暖木、语义色板、RichText"
+      ]
+    },
+    {
+      "id": "F-108",
+      "type": "feature",
+      "title": "FC拉多开局补给商店隔离",
+      "file": "global_dev_features.md",
+      "line": 2197,
+      "date": "2026-10-26",
+      "project": "GAME / Unity FC 初代《重装机兵》3D 重制",
+      "status": "代码与文档静态实现并复核完成；运行时商店显示、购买效果与闭环仍待用户授权测试。",
+      "keywords": [
+        "FC重制、拉多补给店、GameDB.RegisterShop、campaign runtime、药品、修理包、弹药补给、商店隔离"
+      ]
+    },
+    {
+      "id": "F-109",
+      "type": "feature",
+      "title": "拉多恢复服务统一",
+      "file": "global_dev_features.md",
+      "line": 2216,
+      "date": "2026-10-26",
+      "project": "FC Remake / `D:\\code\\GAME`",
+      "status": "已完成静态实现，运行时验收待授权。",
+      "keywords": [
+        "FC",
+        "拉多",
+        "Rado",
+        "HP 恢复",
+        "旅店",
+        "inn",
+        "TownService.Rest",
+        "姐姐 NPC",
+        "住宿",
+        "金币不足",
+        "免费治疗"
+      ]
+    },
+    {
+      "id": "F-110",
+      "type": "feature",
+      "title": "标题页区分损坏存档与空槽",
+      "file": "global_dev_features.md",
+      "line": 2246,
+      "date": "2026-10-26",
+      "project": "GAME / `D:\\code\\GAME`",
+      "status": "已完成静态实现与复核；运行时验收待授权。",
+      "keywords": [
+        "Unity",
+        "FC",
+        "标题页",
+        "存档槽位",
+        "损坏存档",
+        "SaveSystem.Peek",
+        "SaveSystem.Exists",
+        "continue menu",
+        "corrupted save",
+        "unreadable slot"
+      ]
+    },
+    {
+      "id": "F-111",
+      "type": "feature",
+      "title": "存档摘要与读取共享最小结构校验",
+      "file": "global_dev_features.md",
+      "line": 2275,
+      "date": "2026-10-26",
+      "project": "GAME / `D:\\code\\GAME`",
+      "status": "根级结构校验已静态实现并复核；深层数据验证和真实存档路径待后续授权。",
+      "keywords": [
+        "Unity",
+        "FC",
+        "存档校验",
+        "SaveSystem.Peek",
+        "DoLoad",
+        "SaveData",
+        "party",
+        "inventory",
+        "JsonUtility",
+        "corrupted save",
+        "malformed save",
+        "读档异常"
+      ]
+    },
+    {
+      "id": "F-112",
+      "type": "feature",
+      "title": "GAME待办状态的证据分层",
+      "file": "global_dev_features.md",
+      "line": 2303,
+      "date": "2026-10-26",
+      "project": "GAME / `D:\\code\\GAME`",
+      "status": "可复用于后续GAME/FC重制待办盘点；每次输出前必须重新读取当前文档与最新台账。",
+      "keywords": [
+        "GAME",
+        "FC重制",
+        "项目状态盘点",
+        "待办",
+        "静态实现",
+        "运行验收",
+        "原版核验",
+        "接口签核",
+        "DEFERRED"
+      ]
+    },
+    {
+      "id": "F-113",
+      "type": "feature",
+      "title": "Unity 乘车事件复用旧前置条件并加强车辆归属守卫",
+      "file": "global_dev_features.md",
+      "line": 2333,
+      "date": "2026-10-27",
+      "project": "GAME / D:/code/GAME",
+      "status": "部分完成；代码与文档已静态复核，真实运行验收待用户授权，原版条件待指定版本资料核对。",
+      "keywords": [
+        "Unity",
+        "vehicle ownership",
+        "VehicleRecord",
+        "assignedCharacterId",
+        "party driver",
+        "event trigger",
+        "CanTrigger",
+        "garage",
+        "game event guard"
+      ]
+    },
+    {
+      "id": "F-114",
+      "type": "feature",
+      "title": "Unity FC系统菜单接入显示控制并复用木钢交互",
+      "file": "global_dev_features.md",
+      "line": 2360,
+      "date": "2026-10-27",
+      "project": "GAME / D:/code/GAME",
+      "status": "已静态实现与复核；显示平台、窗口尺寸和多分辨率实机行为待授权验收。",
+      "keywords": [
+        "Unity 6",
+        "Screen.SetResolution",
+        "Screen.resolutions",
+        "FullScreenWindow",
+        "borderless fullscreen",
+        "windowed mode",
+        "resolution picker",
+        "AudioDirector",
+        "System menu"
+      ]
+    },
+    {
+      "id": "F-115",
+      "type": "feature",
+      "title": "Unity战斗C装置行动次数贯通与提交边界",
+      "file": "global_dev_features.md",
+      "line": 2388,
+      "date": "2026-10-27",
+      "project": "GAME / D:/code/GAME",
+      "status": "开发版功能已静态实现和审查；动态验收未获授权，FC原版行为与数值待核。",
+      "keywords": [
+        "Unity",
+        "C装置",
+        "CUnitData",
+        "actionsPerTurn",
+        "BattleSystem.SubmitCommands",
+        "多次行动",
+        "action queue",
+        "ammo reservation",
+        "item stack reservation"
+      ]
+    },
+    {
+      "id": "F-116",
+      "type": "feature",
+      "title": "FC重制Rocco北路切片的地图注册与边界核算",
+      "file": "global_dev_features.md",
+      "line": 2421,
+      "date": "2026-10-27",
+      "project": "GAME / D:\\code\\GAME",
+      "status": "部分完成（罗克静态地图与服务接入、独立审查通过；R7待授权；FC原版核对与北方主线内容未完成）。",
+      "keywords": [
+        "FC重装机兵",
+        "Rocco",
+        "罗克镇",
+        "Unity FC campaign",
+        "WorldMapData",
+        "TownGate",
+        "EncounterZone",
+        "GameDB",
+        "特殊砲弹商店",
+        "城镇地图扩展"
+      ]
+    },
+    {
+      "id": "F-117",
+      "type": "feature",
+      "title": "EncoderPlotter 内部调试文件解析工具",
+      "file": "global_dev_features.md",
+      "line": 2451,
+      "date": "2026-10-28",
+      "project": "EncoderPlotter_0903_01",
+      "status": "部分完成（CLI解析实样通过，Electron真实UI验收待完成）",
+      "keywords": [
+        "内部调试工具",
+        "debug_tool.py",
+        "IAP ZIP",
+        "kingkong",
+        "ArgumentsHeader",
+        "j72",
+        "ZIP Slip",
+        "调试日志",
+        "data.log"
+      ]
+    },
+    {
+      "id": "F-118",
+      "type": "feature",
+      "title": "EncoderPlotter 五仓 Git Flow 发版与打包规则（2026-09-07 更新版）",
+      "file": "global_dev_features.md",
+      "line": 2484,
+      "date": "2026-10-28",
+      "project": "EncoderPlotter1（主仓 + sub_embedded/sub_common/sub_automation/sub_algorithm）",
+      "status": "已归档（规则类知识，非代码实现）",
+      "keywords": [
+        "打包规则",
+        "发版",
+        "发布流程",
+        "git flow",
+        "feature",
+        "release",
+        "hotfix",
+        "回合",
+        "back-merge",
+        "back-merge-check",
+        "桥接分支",
+        "backmerge",
+        "tag",
+        "encoder-plotter-v",
+        "rc-v",
+        "test-v",
+        "release-line-gate",
+        "changelog-gate",
+        "ALLOW_BACKMERGE_DEBT",
+        "gitlink",
+        "子先父后",
+        "子模块指针",
+        "sub_algorithm",
+        "4.9.2",
+        "正式包",
+        "RC包",
+        "测试包",
+        "打包"
+      ]
+    },
+    {
+      "id": "F-119",
+      "type": "feature",
+      "title": "ai-tool 手机/电脑接入与外网访问方案（Tailscale + serve HTTPS）",
+      "file": "global_dev_features.md",
+      "line": 2517,
+      "date": "2026-11-02",
+      "project": "ai-tool（PC 作服务器的私人多 AI 工作台，Fastify + WebSocket，默认监听 0.0.0.0:8787）",
+      "status": "已归档（部署与操作类知识；对应 PLAN 阶段 G3 的实测依据，docs/INSTALL.md 尚未写）",
+      "keywords": [
+        "外网访问",
+        "内网穿透",
+        "手机访问",
+        "iPhone",
+        "PWA",
+        "HTTPS",
+        "Tailscale",
+        "tailscale serve",
+        "MagicDNS",
+        "证书",
+        "WebSocket",
+        "wss",
+        "局域网",
+        "无鉴权",
+        "加入设备",
+        "多手机",
+        "ai-tool",
+        "远程通讯"
+      ]
+    },
+    {
+      "id": "F-120",
+      "type": "feature",
+      "title": "DYN-200 换普通 USB-RS485 线的兼容适配 (自动查找/记住线/兜底/握手重试)",
+      "file": "global_dev_features.md",
+      "line": 2556,
+      "date": "2026-11-04",
+      "project": "driverSoftware (D:\\code\\driverSoftware), 分支 fix/dyn200-new-rs485-cable, 提交 593aad7b + c0d8f013 + 432e6954(文档)",
+      "status": "已完成(未推送, 待并入 fix/field-feedback-batch)",
+      "keywords": [
+        "DYN-200",
+        "扭矩传感器",
+        "换通讯线",
+        "USB-RS485",
+        "真透传 dongle",
+        "Prolific PL2303GR",
+        "067B:23A3",
+        "6B6B:0001",
+        "自动查找失败",
+        "没找到 DYN-200 分析仪",
+        "读到 0B",
+        "总线无响应/波特率不对",
+        "discover_direct_fallback",
+        "dyn200_last.json",
+        "_OTHER_OWNERS",
+        "register_port_owner",
+        "485 继电器",
+        "兼容"
+      ]
+    },
+    {
+      "id": "F-121",
+      "type": "feature",
+      "title": "dv3-admin 打包→GitLab CI→SSH 上传→浏览器下载 全链路（develop 分支，Windows Runner）",
+      "file": "global_dev_features.md",
+      "line": 2589,
+      "date": "2026-11-05",
+      "project": "quality-testing/dv3-admin（GitLab 192.168.1.200:8888，项目 ID 159）",
+      "status": "打包与上传链路已验证（4 次成功）；浏览器下载入口待服务器侧落地",
+      "keywords": [
+        "GitLab CI",
+        ".gitlab-ci.yml",
+        "deploy-agent-exe",
+        "build-agent-exe",
+        "PyInstaller",
+        "encoder-agent.exe",
+        "SSH_PRIVATE_KEY",
+        "File 变量",
+        "scp",
+        "ssh",
+        "Windows Runner",
+        "powershell executor",
+        "nginx",
+        "autoindex",
+        "artifacts",
+        "10.0.64.2",
+        "autotest",
+        "打包部署下载"
+      ]
+    },
+    {
+      "id": "F-122",
+      "type": "feature",
+      "title": "Encoder-next全功能对照P0及只读功能的副作用边界",
+      "file": "global_dev_features.md",
+      "line": 2616,
+      "date": "",
+      "project": "",
+      "status": "",
+      "keywords": [
+        "EncoderPlotter",
+        "encoder-next",
+        "DD003",
+        "feature-parity",
+        "MES",
+        "IAP",
+        "中值检测",
+        "手动配置",
+        "静态盘点"
+      ]
+    },
+    {
+      "id": "F-123",
+      "type": "feature",
+      "title": "Encoder-next P1查询供电恢复与真机SN未通过边界",
+      "file": "global_dev_features.md",
+      "line": 2629,
+      "date": "",
+      "project": "",
+      "status": "",
+      "keywords": [
+        "EncoderPlotter",
+        "encoder-next",
+        "P1",
+        "BuildInfo",
+        "StartupInfo",
+        "SN",
+        "EncoderPower",
+        "恢复出口",
+        "默认拒绝",
+        "ER启动等待"
+      ]
+    },
+    {
       "id": "H-004",
       "type": "habit",
       "title": "硬件联调排查纪律 (来自 v3.4.6 力矩无响应排查)",
@@ -1708,6 +2787,62 @@
         "附加建议",
         "用户确认",
         "等待下一次任务"
+      ]
+    },
+    {
+      "id": "H-007",
+      "type": "habit",
+      "title": "用户说提供tag时：按仓库规则只给tag，不做提交",
+      "file": "global_dev_habits.md",
+      "line": 68,
+      "date": "2026-10-19",
+      "project": "通用（所有仓库）",
+      "status": "生效",
+      "keywords": [
+        "提供tag",
+        "打tag",
+        "发tag",
+        "仓库tag规则",
+        "不提交",
+        "不推送代码"
+      ]
+    },
+    {
+      "id": "H-008",
+      "type": "habit",
+      "title": "FC 重制 UI 沿用用户确认的室内参考风格",
+      "file": "global_dev_habits.md",
+      "line": 89,
+      "date": "2026-10-26",
+      "project": "GAME / Unity FC 重制",
+      "status": "生效",
+      "keywords": [
+        "FC 重制",
+        "UI 风格",
+        "参考图",
+        "暖木",
+        "旧钢",
+        "暖纸色",
+        "黄铜焦点"
+      ]
+    },
+    {
+      "id": "H-009",
+      "type": "habit",
+      "title": "改 CI 脚本先本地测试好再提交推送，不要把 pipeline 当调试循环",
+      "file": "global_dev_habits.md",
+      "line": 100,
+      "date": "2026-11-05",
+      "project": "quality-testing/dv3-admin",
+      "status": "生效",
+      "keywords": [
+        "CI",
+        "流水线",
+        "本地测试",
+        "推送",
+        "pipeline",
+        "调试循环",
+        "提交信息"
       ]
     },
     {
@@ -2787,64 +3922,1436 @@
       ]
     },
     {
-      "id": "E-025",
-      "type": "efficiency",
-      "title": "复用 CI 模板前核实版本源、更新条目和回合路径",
-      "file": "global_dev_efficiency.md",
-      "line": 449,
+      "id": "P-20261027",
+      "type": "problem",
+      "title": "Electron中用Vue弹窗替换不支持的prompt录入",
+      "file": "global_problem_solutions.md",
+      "line": 1451,
       "date": "2026-10-21",
-      "project": "driverSoftware2 / EncoderPlotter CI 模板适配核查",
-      "status": "核查完成，待修复；完整证据在外置台账 R20261021-153304-driversoftware2/audit-report.md。",
+      "project": "EncoderPlotter_0903_01",
+      "status": "部分完成（代码已实现，真实UI验收待执行）",
       "keywords": [
-        "ci-templates",
-        "VERSION_CMD",
-        "MODULE_NOT_FOUND",
-        "package.json",
-        "CHANGELOG",
-        "main development",
-        "回合",
-        "发布门禁",
-        "星号条目",
-        "模板兼容"
+        "Electron 28",
+        "prompt() not supported",
+        "Vue 2 弹窗",
+        "SN输入",
+        "IAP调试日志"
       ]
     },
     {
-      "id": "F-099",
-      "type": "feature",
-      "title": "标题页保留用户显示模式",
-      "file": "global_dev_features.md",
-      "line": 1735,
+      "id": "P-20261028",
+      "type": "problem",
+      "title": "禁用SN检索按钮的缺BIN提示与结果选中反馈",
+      "file": "global_problem_solutions.md",
+      "line": 1480,
+      "date": "2026-10-21",
+      "project": "EncoderPlotter_0903_01",
+      "status": "已实现；真实 UI 验收受限",
+      "keywords": [
+        "Vue",
+        "Electron",
+        "disabled button",
+        "title tooltip",
+        "SN检索",
+        "BIN文件",
+        "单选"
+      ]
+    },
+    {
+      "id": "P-20261029",
+      "type": "problem",
+      "title": "SN检索需匹配日志相对路径",
+      "file": "global_problem_solutions.md",
+      "line": 1496,
+      "date": "2026-10-21",
+      "project": "EncoderPlotter_0903_01",
+      "status": "已实现；真实离线UI验收受限。",
+      "keywords": [
+        "SN检索",
+        "IAP调试日志",
+        "kingkong.zip",
+        "Electron IPC",
+        "相对路径",
+        "离线IAP文件",
+        "写入连接门禁"
+      ]
+    },
+    {
+      "id": "P-20261030",
+      "type": "problem",
+      "title": "IAP SN检索与断连写入门禁审查风险",
+      "file": "global_problem_solutions.md",
+      "line": 1526,
+      "date": "2026-10-21",
+      "project": "EncoderPlotter_0903_01",
+      "status": "待后续修复与硬件路径验证。",
+      "keywords": [
+        "IAP写入门禁",
+        "设备断连竞态",
+        "doDisconnect",
+        "SN精确匹配",
+        "子串搜索",
+        "调试日志"
+      ]
+    },
+    {
+      "id": "P-20261031",
+      "type": "problem",
+      "title": "IAP免标定已覆盖全部可再标定产品系列",
+      "file": "global_problem_solutions.md",
+      "line": 1557,
+      "date": "2026-10-21",
+      "project": "EncoderPlotter_0903_01",
+      "status": "已完成",
+      "keywords": [
+        "IAP",
+        "免标定",
+        "recalibrationDataConversion",
+        "DPT",
+        "MPT",
+        "MPP",
+        "DPB",
+        "MPT-G",
+        "DPT-G1",
+        "MBS",
+        "MBP",
+        "SUPPORTED_SERIES"
+      ]
+    },
+    {
+      "id": "P-20261032",
+      "type": "problem",
+      "title": "IAP免标定全系列支持与算法版本边界",
+      "file": "global_problem_solutions.md",
+      "line": 1586,
+      "date": "2026-10-21",
+      "project": "EncoderPlotter_0903_01",
+      "status": "已完成",
+      "keywords": [
+        "IAP免标定",
+        "recalibrationDataConversion",
+        "SUPPORTED_SERIES",
+        "SUPPORTED_VERSIONS",
+        "DPT15",
+        "V4065",
+        "版本矩阵",
+        "Flash布局",
+        "storageTarget"
+      ]
+    },
+    {
+      "id": "P-20261033",
+      "type": "problem",
+      "title": "MES 管理员可自批生产订单",
+      "file": "global_problem_solutions.md",
+      "line": 1617,
+      "date": "2026-10-21",
+      "project": "MES / D:\\code\\mes",
+      "status": "部分完成",
+      "keywords": [
+        "MES",
+        "生产订单审批",
+        "系统管理员",
+        "自审批",
+        "角色隔离",
+        "mock验收",
+        "权限回归"
+      ]
+    },
+    {
+      "id": "P-20261034",
+      "type": "problem",
+      "title": "4k算法写入合并必须保留整批校验与目标布局",
+      "file": "global_problem_solutions.md",
+      "line": 1645,
+      "date": "",
+      "project": "",
+      "status": "",
+      "keywords": [
+        "writeDataBlocks",
+        "writeEncoderDataV303",
+        "4000",
+        "5000",
+        "写入日志",
+        "整批预检查",
+        "IAP"
+      ]
+    },
+    {
+      "id": "P-20261037",
+      "type": "problem",
+      "title": "MES manual business and admin separation",
+      "file": "global_problem_solutions.md",
+      "line": 1662,
+      "date": "",
+      "project": "",
+      "status": "",
+      "keywords": []
+    },
+    {
+      "id": "P-20261038",
+      "type": "problem",
+      "title": "MES通用字段拼接、测试部署与SN原文归档",
+      "file": "global_problem_solutions.md",
+      "line": 1671,
+      "date": "",
+      "project": "",
+      "status": "",
+      "keywords": [
+        "MES",
+        "lowcode",
+        "concat",
+        "SN",
+        "Feishu",
+        "测试部署"
+      ]
+    },
+    {
+      "id": "P-20261039",
+      "type": "problem",
+      "title": "MES模块空框与订单SN工序静态适配缺口",
+      "file": "global_problem_solutions.md",
+      "line": 1693,
+      "date": "2026-10-22",
+      "project": "MES",
+      "status": "",
+      "keywords": [
+        "MES",
+        "模块空框",
+        "订单导入",
+        "workflowBindings",
+        "linkRange",
+        "SN",
+        "工序流程",
+        "配置漂移"
+      ]
+    },
+    {
+      "id": "P-20261040",
+      "type": "problem",
+      "title": "MES平台定义执行与依赖治理方案静态审查缺口",
+      "file": "global_problem_solutions.md",
+      "line": 1710,
+      "date": "",
+      "project": "",
+      "status": "",
+      "keywords": [
+        "MES",
+        "工作流运行时",
+        "依赖治理",
+        "提供者绑定",
+        "审批状态机",
+        "并发锁",
+        "待办分页"
+      ]
+    },
+    {
+      "id": "P-20261035",
+      "type": "problem",
+      "title": "MES工序目录记录与工作流版本映射审查",
+      "file": "global_problem_solutions.md",
+      "line": 1737,
+      "date": "2026-10-23",
+      "project": "MES / D:\\code\\mes",
+      "status": "部分完成（静态审查；真实环境版本、流程配置与节点数据仍需实测确认）。",
+      "keywords": [
+        "MES",
+        "工序流程",
+        "工序引用",
+        "catalog workflow",
+        "workflow version binding",
+        "工序执行记录"
+      ]
+    },
+    {
+      "id": "P-20261036",
+      "type": "problem",
+      "title": "PostgreSQL完整同步到测试环境的安全恢复与回退步骤",
+      "file": "global_problem_solutions.md",
+      "line": 1768,
+      "date": "2026-10-23",
+      "project": "MES",
+      "status": "已完成（同步和数据库级核验完成；业务页面未测试）。",
+      "keywords": [
+        "PostgreSQL",
+        "数据库完整同步",
+        "staging restore",
+        "回滚",
+        "密钥重加密"
+      ]
+    },
+    {
+      "id": "P-20261041",
+      "type": "problem",
+      "title": "Unity 6原生像素野外角色图集与3D战斗隔离",
+      "file": "global_problem_solutions.md",
+      "line": 1798,
+      "date": "2026-10-25",
+      "project": "GAME / D:\\code\\GAME",
+      "status": "部分完成（像素野外角色实现和静态审查完成，待Unity测试授权及外观校准）。",
+      "keywords": [
+        "Unity 6",
+        "2.5D像素角色",
+        "Sprite atlas",
+        "SpriteRenderer",
+        "SubsystemRegistration",
+        "contact shadow",
+        "野外角色"
+      ]
+    },
+    {
+      "id": "P-20261042",
+      "type": "problem",
+      "title": "Unity 3D城镇NPC像素色板图集与交互保留",
+      "file": "global_problem_solutions.md",
+      "line": 1825,
       "date": "2026-10-26",
       "project": "GAME / D:\\code\\GAME",
-      "status": "标题显示模式修正静态复核通过；Unity与显示设备实测待授权",
+      "status": "部分完成（FC城镇Person工厂NPC接入像素版；未覆盖所有NPC、队友跟随和完整配件，待实机校准）。",
       "keywords": [
-        "Unity UI",
-        "标题界面",
-        "分辨率",
-        "Screen.SetResolution",
-        "显示模式",
-        "CanvasScaler",
-        "FC重制"
+        "Unity NPC sprites",
+        "pixel palette variants",
+        "Texture2D atlas cache",
+        "billboard direction",
+        "FC town NPC",
+        "C# generated pixel character"
       ]
     },
     {
-      "id": "F-105",
-      "type": "feature",
-      "title": "FC重制UI钢板铆钉跨UGUI与IMGUI统一",
-      "file": "global_dev_features.md",
-      "line": 1829,
+      "id": "P-20261043",
+      "type": "problem",
+      "title": "32x32 NPC像素身份配件与侧向镜像",
+      "file": "global_problem_solutions.md",
+      "line": 1852,
       "date": "2026-10-26",
-      "project": "D:\\code\\GAME",
-      "status": "部分完成（视觉细节完成并静态复核；运行时显示与响应式验收待授权）",
+      "project": "D:/code/GAME",
+      "status": "已完成静态实现；运行时美术校准待授权。",
+      "keywords": [
+        "Unity NPC像素附件",
+        "32x32 sprite atlas",
+        "side view mirror",
+        "medical bag cross",
+        "Rect clamp",
+        "pixel accessory"
+      ]
+    },
+    {
+      "id": "P-20261044",
+      "type": "problem",
+      "title": "FC旅店切面房间：可走净宽与玩法边界",
+      "file": "global_problem_solutions.md",
+      "line": 1880,
+      "date": "2026-10-26",
+      "project": "D:/code/GAME",
+      "status": "已完成静态实现与独立复核；运行时视觉/性能验证待授权。",
+      "keywords": [
+        "Unity切面室内",
+        "FC旅店",
+        "procedural room builder",
+        "collider-free art",
+        "spawn clearance",
+        "端柱净宽",
+        "scene root cleanup"
+      ]
+    },
+    {
+      "id": "P-20261045",
+      "type": "problem",
+      "title": "Unity原创芯片主题曲资源与稳定Meta生成",
+      "file": "global_problem_solutions.md",
+      "line": 1910,
+      "date": "2026-10-26",
+      "project": "D:/code/GAME",
+      "status": "原创音乐首版已生成并静态复核；Unity导入与听感验收待授权。",
+      "keywords": [
+        "Unity原创芯片音乐",
+        "AudioDirector MusicCue",
+        "Resources AudioClip",
+        "PCM WAV",
+        "determinisic music generator",
+        "AudioImporter meta",
+        "8-bit chiptune"
+      ]
+    },
+    {
+      "id": "P-20261046",
+      "type": "problem",
+      "title": "FC游戏UI参考风格确认与标题宽屏版式修正",
+      "file": "global_problem_solutions.md",
+      "line": 1942,
+      "date": "2026-10-26",
+      "project": "D:/code/GAME",
+      "status": "UI主题静态覆盖确认，标题版式静态修正完成；功能与标题排版已完成静态复核，但Unity实机画面与输入验收未测试，等待用户授权。",
+      "keywords": [
+        "重装机兵UI",
+        "旧钢暖木界面",
+        "Unity CanvasScaler",
+        "ultrawide title layout",
+        "UI style confirmation"
+      ]
+    },
+    {
+      "id": "P-20261047",
+      "type": "problem",
+      "title": "GAME FC重制设计文档正典与状态统一",
+      "file": "global_problem_solutions.md",
+      "line": 1977,
+      "date": "2026-10-26",
+      "project": "D:/code/GAME",
+      "status": "总设计文档正典和领域状态口径已对齐；全游戏内容、Unity运行验收和发行授权仍未完成。",
+      "keywords": [
+        "Unity FC重装机兵3D重制",
+        "GDD正典",
+        "设计文档对齐",
+        "盐海旧稿归档",
+        "音频状态",
+        "视觉候选边界"
+      ]
+    },
+    {
+      "id": "P-20261048",
+      "type": "problem",
+      "title": "Unity队伍菜单复用FC像素人物帧作为角色头像",
+      "file": "global_problem_solutions.md",
+      "line": 2003,
+      "date": "2026-10-26",
+      "project": "GAME / D:/code/GAME",
+      "status": "部分完成（代码和规范静态复核通过；Unity视觉和输入实机验收待用户授权）。",
+      "keywords": [
+        "Unity队伍菜单",
+        "Party menu",
+        "像素头像",
+        "FieldPixelCharacterAtlas",
+        "FramesFor",
+        "CHR_Mechanic",
+        "CharacterLook",
+        "UGUI Image"
+      ]
+    },
+    {
+      "id": "P-20261049",
+      "type": "problem",
+      "title": "Unity预备队存档与战车归属重建",
+      "file": "global_problem_solutions.md",
+      "line": 2033,
+      "date": "2026-10-26",
+      "project": "GAME / D:/code/GAME",
+      "status": "部分完成（代码静态复核通过；I-29接口认可和测试授权待处理）。",
+      "keywords": [
+        "Unity",
+        "PlayerState.reserveParty",
+        "vehicleId",
+        "TankLoadout",
+        "VehicleRecord.assignedCharacterId",
+        "SaveData v9",
+        "roster swap"
+      ]
+    },
+    {
+      "id": "P-20261057",
+      "type": "problem",
+      "title": "GAME待办盘点：区分实现、原版依据和验收状态",
+      "file": "global_problem_solutions.md",
+      "line": 2057,
+      "date": "2026-10-26",
+      "project": "GAME / `D:\\code\\GAME`",
+      "status": "已完成一次只读盘点；持续状态应重新查当前文档与台账。",
+      "keywords": [
+        "GAME",
+        "FC remake",
+        "未完成任务盘点",
+        "GDD",
+        "FC_REMAKE",
+        "FC_REFERENCE",
+        "INTERFACE",
+        "原版核验",
+        "静态实现",
+        "实机验收",
+        "DEFERRED"
+      ]
+    },
+    {
+      "id": "P-20261058",
+      "type": "problem",
+      "title": "FC重制待办分类与证据边界",
+      "file": "global_problem_solutions.md",
+      "line": 2090,
+      "date": "2026-10-26",
+      "project": "GAME / `D:\\code\\GAME`",
+      "status": "已完成一次待办盘点；后续需从文档快照与新台账重查。",
       "keywords": [
         "FC重制",
-        "Unity UI",
-        "旧钢",
-        "暖木",
-        "铆钉",
-        "UGUI",
-        "IMGUI",
-        "BattleController"
+        "backlog",
+        "待办分类",
+        "GDD",
+        "FC_REMAKE",
+        "FC_REFERENCE",
+        "静态实现",
+        "原版对照",
+        "实机验收",
+        "DEFERRED"
+      ]
+    },
+    {
+      "id": "P-20261056",
+      "type": "problem",
+      "title": "FC风格野外战车牵引与拖车存档",
+      "file": "global_problem_solutions.md",
+      "line": 2121,
+      "date": "2026-10-27",
+      "project": "GAME / D:\\code\\GAME",
+      "status": "部分完成：代码和静态复核完成；FC指定版本实机校对及运行验收未完成，待用户授权测试。",
+      "keywords": [
+        "FC重装机兵",
+        "野外战车牵引",
+        "拖车",
+        "SaveData v10",
+        "VehicleService.AttachTow",
+        "stale callback",
+        "Game.Runtime与Game.FC解耦"
+      ]
+    },
+    {
+      "id": "P-20261059",
+      "type": "problem",
+      "title": "FC租赁战车状态、收益与受损退租",
+      "file": "global_problem_solutions.md",
+      "line": 2155,
+      "date": "2026-10-27",
+      "project": "GAME / D:/code/GAME",
+      "status": "部分完成（核心纵切片与代码复核完成；FC指定版本车型配置/价格/损伤细节与Unity实机验收待核，测试待用户授权）。",
+      "keywords": [
+        "FC租赁战车",
+        "rental tank",
+        "VehicleRecord.isRental",
+        "battle gold multiplier",
+        "SaveData v11",
+        "自动退租",
+        "DetachTow",
+        "租车装甲补充"
+      ]
+    },
+    {
+      "id": "P-20261060",
+      "type": "problem",
+      "title": "FC租赁战车55毫米炮视觉资源回退",
+      "file": "global_problem_solutions.md",
+      "line": 2188,
+      "date": "2026-10-27",
+      "project": "GAME / D:/code/GAME",
+      "status": "租赁炮视觉ID接线与文档边界已静态实现、三路R6复核通过；租赁蚊式55毫米专属外观和Unity实机验证仍未完成。",
+      "keywords": [
+        "FC重装机兵",
+        "租赁战车",
+        "WPN_FC_Rental55",
+        "VisualCatalog",
+        "视觉别名",
+        "模型工厂回退"
+      ]
+    },
+    {
+      "id": "P-20261061",
+      "type": "problem",
+      "title": "FC租赁蚊式专属55毫米炮源资产与Prefab生成入口",
+      "file": "global_problem_solutions.md",
+      "line": 2208,
+      "date": "2026-10-27",
+      "project": "GAME / D:/code/GAME",
+      "status": "租赁蚊式专属55毫米原创低模源资产、Y-up/+Z米制FBX、预览及Unity Prefab生成入口已完成；Unity Prefab生成和游戏运行时接入仍未完成。",
+      "keywords": [
+        "FC重装机兵",
+        "租赁战车",
+        "WPN_FC_Rental55",
+        "Blender",
+        "FBX",
+        "Unity Prefab"
+      ]
+    },
+    {
+      "id": "P-20261062",
+      "type": "problem",
+      "title": "FC Buggy独立车身源资产与Prefab生成入口",
+      "file": "global_problem_solutions.md",
+      "line": 2230,
+      "date": "2026-10-27",
+      "project": "GAME / D:/code/GAME",
+      "status": "FC Buggy原创可编辑车身Blender源、Y-up/+Z米制FBX、渲染预览和同名Resources Prefab生成器已完成；Unity Prefab生成及运行时替换尚未完成。",
+      "keywords": [
+        "FC重装机兵",
+        "Buggy",
+        "TNK_FC_BuggyChassis",
+        "Blender",
+        "FBX",
+        "Unity Prefab",
+        "车辆模型"
+      ]
+    },
+    {
+      "id": "P-20261063",
+      "type": "problem",
+      "title": "FC荒野地图地点类型标记与滚动图例",
+      "file": "global_problem_solutions.md",
+      "line": 2253,
+      "date": "2026-10-27",
+      "project": "GAME / D:/code/GAME",
+      "status": "荒野地图现按聚落/洞窟迷宫/地标使用不同图符和语义色；已发现地点按类别列出，长图例可用鼠标滚轮滚动。未知地点过滤、地图坐标和存档逻辑未改。Unity真实视口和滚轮体验未验收。",
+      "keywords": [
+        "FC重装机兵",
+        "大地图UI",
+        "MapEntryKind",
+        "KnownLocations",
+        "RetroUiColors",
+        "ScrollRect"
+      ]
+    },
+    {
+      "id": "P-20261064",
+      "type": "problem",
+      "title": "FC Buggy与租赁55mm专属Resources prefab生成接线",
+      "file": "global_problem_solutions.md",
+      "line": 2273,
+      "date": "2026-10-27",
+      "project": "GAME / D:\\code\\GAME",
+      "status": "已把FC Buggy车身与租赁蚊式55毫米炮的既有专属Prefab生成器接入 `FcBuildTasks.PrepareAndBuild`，调用在预览捕获与Player构建前。`docs/FC_REMAKE.md` 记录了两个精确目标路径。工作区当前未执行Unity资源生成，因此两个目标Prefab仍不存在；运行时继续使用Buggy程序化工厂与55毫米炮的45毫米视觉回退。整体FC游戏系统与UI风格目标仍未完成。",
+      "keywords": [
+        "FC重装机兵",
+        "Buggy",
+        "租赁55毫米炮",
+        "Blender",
+        "FBX",
+        "Unity Resources Prefab",
+        "FcBuildTasks",
+        "VisualCatalog",
+        "fallback"
+      ]
+    },
+    {
+      "id": "P-20261065",
+      "type": "problem",
+      "title": "行旅菜单任务与赏金状态语义色",
+      "file": "global_problem_solutions.md",
+      "line": 2295,
+      "date": "2026-10-27",
+      "project": "GAME / D:\\code\\GAME",
+      "status": "部分完成（静态实现和审查完成，运行态视觉验收待做）",
+      "keywords": [
+        "FC重装机兵",
+        "行旅菜单",
+        "任务状态色",
+        "赏金状态色",
+        "QuestState",
+        "BountyState",
+        "SelectedText",
+        "DisabledText",
+        "RetroUiColors"
+      ]
+    },
+    {
+      "id": "P-20261066",
+      "type": "problem",
+      "title": "行旅菜单操作结果语义反馈色",
+      "file": "global_problem_solutions.md",
+      "line": 2325,
+      "date": "2026-10-27",
+      "project": "GAME / D:\\code\\GAME",
+      "status": "部分完成（静态改动和审查完成，运行态视觉/音效验收待做）",
+      "keywords": [
+        "FC重装机兵",
+        "行旅菜单",
+        "操作结果反馈",
+        "RetroUiColors",
+        "OpResult",
+        "Result",
+        "success feedback",
+        "error feedback",
+        "NothingToDo"
+      ]
+    },
+    {
+      "id": "P-20261067",
+      "type": "problem",
+      "title": "战斗HP SP弹药余量语义色提示",
+      "file": "global_problem_solutions.md",
+      "line": 2355,
+      "date": "2026-10-27",
+      "project": "GAME / D:\\code\\GAME",
+      "status": "部分完成（静态实现和审查完成；运行态视觉验收待做）",
+      "keywords": [
+        "FC重装机兵",
+        "战斗界面",
+        "HP",
+        "SP",
+        "弹药",
+        "RichText",
+        "BattleController",
+        "RetroUiColors",
+        "low-resource warning",
+        "enemy health"
+      ]
+    },
+    {
+      "id": "P-20261068",
+      "type": "problem",
+      "title": "FC战斗敌人掉落配置与胜利发放",
+      "file": "global_problem_solutions.md",
+      "line": 2385,
+      "date": "2026-10-27",
+      "project": "GAME / D:\\code\\GAME",
+      "status": "部分完成（可配置掉落系统静态实现完成；FC具体掉落数据和运行态验证待补）",
+      "keywords": [
+        "FC重装机兵",
+        "敌人掉落",
+        "战斗胜利结算",
+        "EnemyData",
+        "EnemyDrop",
+        "ItemService",
+        "EquipmentService",
+        "PartInstance",
+        "loot table",
+        "weighted drop"
+      ]
+    },
+    {
+      "id": "P-20261069",
+      "type": "problem",
+      "title": "校准FC开局常规敌人经验与现金奖励",
+      "file": "global_problem_solutions.md",
+      "line": 2420,
+      "date": "2026-10-27",
+      "project": "GAME / D:\\code\\GAME",
+      "status": "部分完成（可明确映射的常规敌人EXP/Gold已校准；其他敌人、道具掉率和指定FC版本实机结果仍待核/验收）",
+      "keywords": [
+        "FC重装机兵",
+        "NES Metal Max",
+        "Enormous Ant",
+        "Cannon Hopper",
+        "Surveillance Camera",
+        "Bionic Pooch",
+        "expReward",
+        "goldReward",
+        "enemy reward mapping"
+      ]
+    },
+    {
+      "id": "P-20261070",
+      "type": "problem",
+      "title": "Buggy Blender到Unity FBX米制资产管线与挂点合同",
+      "file": "global_problem_solutions.md",
+      "line": 2452,
+      "date": "2026-10-27",
+      "project": "GAME / D:\\code\\GAME",
+      "status": "部分完成（Blender源和FBX已接入，Unity Prefab尚未生成；运行时仍使用程序化外观，待用户授权Unity验收）",
+      "keywords": [
+        "Blender",
+        "FC Buggy",
+        "TNK_FC_Buggy",
+        "FBX导出",
+        "Unity ModelImporter",
+        "weapon mount",
+        "Y-up",
+        "+Z-forward",
+        "globalScale",
+        "stale FBX"
+      ]
+    },
+    {
+      "id": "P-20261071",
+      "type": "problem",
+      "title": "FC开局南洞奖励与非消耗收藏物注册",
+      "file": "global_problem_solutions.md",
+      "line": 2486,
+      "date": "2026-10-27",
+      "project": "D:\\code\\GAME",
+      "status": "已实现，未测试",
+      "keywords": [
+        "FC南洞",
+        "Southern Cave",
+        "B2宝箱",
+        "Camouflage Fatigues",
+        "Fortune Coin",
+        "ItemKind.Collectible",
+        "RegistryAssets",
+        "GameDB.RegisterGear",
+        "战狗旗标"
+      ]
+    },
+    {
+      "id": "P-20261072",
+      "type": "problem",
+      "title": "FC开局45毫米主炮弹量与底盘特殊弹仓区分",
+      "file": "global_problem_solutions.md",
+      "line": 2517,
+      "date": "2026-10-27",
+      "project": "D:\\code\\GAME",
+      "status": "已实现，未测试；底盘特殊砲弾系统仍未实现",
+      "keywords": [
+        "FC初代",
+        "Metal Max NES",
+        "WPN_FC_Cannon45",
+        "主炮弹量",
+        "maxAmmo",
+        "初始弹药",
+        "chassis magazine",
+        "special shells"
+      ]
+    },
+    {
+      "id": "P-20261073",
+      "type": "problem",
+      "title": "FC底盘特殊砲弹弹仓、装卸、存档与战斗命令",
+      "file": "global_problem_solutions.md",
+      "line": 2545,
+      "date": "2026-10-27",
+      "project": "D:\\code\\GAME",
+      "status": "已实现六种特殊弹纵切片；静态复核通过；未测试。",
+      "keywords": [
+        "FC Metal Max",
+        "chassis special shell magazine",
+        "special shells",
+        "main gun ammo separation",
+        "v12 save migration",
+        "action reservation",
+        "tank shell command",
+        "magazine capacity upgrade"
+      ]
+    },
+    {
+      "id": "P-20261074",
+      "type": "problem",
+      "title": "FC Buggy Unity Prefab生成受headless许可阻塞",
+      "file": "global_problem_solutions.md",
+      "line": 2574,
+      "date": "2026-10-27",
+      "project": "GAME / D:\\code\\GAME",
+      "status": "部分完成；Prefab生成受Unity许可初始化阻塞，运行时仍使用程序化回退。",
+      "keywords": [
+        "FC Buggy",
+        "Unity Editor",
+        "Blender FBX",
+        "Resources prefab",
+        "licensing",
+        "headless entitlement",
+        "mount validation"
+      ]
+    },
+    {
+      "id": "P-20261075",
+      "type": "problem",
+      "title": "Unity 存档可选记录的局部恢复与重复状态合并",
+      "file": "global_problem_solutions.md",
+      "line": 2605,
+      "date": "2026-10-27",
+      "project": "GAME / D:\\code\\GAME",
+      "status": "部分完成（静态实现与审查完成；存档读写功能测试待用户授权）",
+      "keywords": [
+        "Unity存档恢复",
+        "SaveSerializer.FromSave",
+        "malformed optional save records",
+        "duplicated bounty",
+        "quest progress",
+        "JSON save migration"
+      ]
+    },
+    {
+      "id": "P-20261076",
+      "type": "problem",
+      "title": "Unity长期仓库应与随身堆叠上限分离",
+      "file": "global_problem_solutions.md",
+      "line": 2642,
+      "date": "2026-10-27",
+      "project": "GAME / D:\\code\\GAME",
+      "status": "部分完成（实现与静态审查完成；运行时存读档及交互验证待授权）",
+      "keywords": [
+        "Unity存档",
+        "长期仓库",
+        "Trunk Room",
+        "stack normalization",
+        "SaveSerializer",
+        "int.MaxValue split stack",
+        "carried inventory cap"
+      ]
+    },
+    {
+      "id": "P-20261077",
+      "type": "problem",
+      "title": "多读取器界面应区分设备选择与设备工作区",
+      "file": "global_problem_solutions.md",
+      "line": 2678,
+      "date": "2026-10-27",
+      "project": "EncoderPlotter_0903_01 / encoder-next",
+      "status": "部分完成（架构与布局调整完成；操作功能由后续验收覆盖）",
+      "keywords": [
+        "多读取器界面",
+        "reader workspace",
+        "设备选择",
+        "工作区导航",
+        "single action entry",
+        "COM port",
+        "serial suffix"
+      ]
+    },
+    {
+      "id": "P-20261078",
+      "type": "problem",
+      "title": "EncoderPlotter simulator reader count fixtures",
+      "file": "global_problem_solutions.md",
+      "line": 2714,
+      "date": "2026-10-27",
+      "project": "EncoderPlotter_0903_01 / encoder-next",
+      "status": "已完成",
+      "keywords": [
+        "encoder-next simulator",
+        "--sim-readers",
+        "SimulatorGateway",
+        "UI布局验证",
+        "多读取器夹具"
+      ]
+    },
+    {
+      "id": "P-20261079",
+      "type": "problem",
+      "title": "encoder-next RT角度采集接口和CRC兼容",
+      "file": "global_problem_solutions.md",
+      "line": 2748,
+      "date": "",
+      "project": "",
+      "status": "",
+      "keywords": [
+        "encoder-next、RT、RS485、CRC、空帧、角度采集"
+      ]
+    },
+    {
+      "id": "P-20261080",
+      "type": "problem",
+      "title": "encoder-next高频采集限制Vue刷新频率",
+      "file": "global_problem_solutions.md",
+      "line": 2770,
+      "date": "2026-10-28",
+      "project": "EncoderPlotter_0903_01 / encoder-next",
+      "status": "已实现，待用户授权验证",
+      "keywords": [
+        "高频采集",
+        "Vue响应式渲染",
+        "readout.ts",
+        "flushUiStats",
+        "帧率卡顿"
+      ]
+    },
+    {
+      "id": "P-20261081",
+      "type": "problem",
+      "title": "encoder-next 当前功能边界、实时采集绘图架构与踩坑",
+      "file": "global_problem_solutions.md",
+      "line": 2792,
+      "date": "2026-10-28",
+      "project": "EncoderPlotter_0903_01 / D:/code/EncoderPlotter_0903_01/encoder-next",
+      "status": "部分完成（读取器管理、编码器探测与参数读取、实时采集和绘图已实现；校准、配置写入、IAP/MES/chamber、数据文件导入导出与进程隔离未完成）。",
+      "keywords": [
+        "encoder-next",
+        "功能清单",
+        "高频采集",
+        "角度采集",
+        "WebSocket",
+        "readout",
+        "uPlot",
+        "TypedArray ring buffer",
+        "Pratt parser",
+        "RT RS485",
+        "DPB ABS",
+        "SIRE"
+      ]
+    },
+    {
+      "id": "P-20261082",
+      "type": "problem",
+      "title": "MES业务模块只读盘点：关系、权限与工作流缺口判读",
+      "file": "global_problem_solutions.md",
+      "line": 2854,
+      "date": "2026-10-28",
+      "project": "MES / D:/code/mes",
+      "status": "已完成（仅静态数据库盘点；未改数据库/代码、未测试运行时行为）",
+      "keywords": [
+        "MES业务模块盘点",
+        "只读数据库盘点",
+        "lc.modules",
+        "published schema",
+        "detailLines",
+        "targetModule引用",
+        "空值率",
+        "workflow states transitions",
+        "approvalRoleCodes",
+        "actorRoleCodes",
+        "模块权限",
+        "软删除模块",
+        "SN绑定"
+      ]
+    },
+    {
+      "id": "P-20261083",
+      "type": "problem",
+      "title": "MES开发库分阶段配置重构：安全备份与认证阻塞停步",
+      "file": "global_problem_solutions.md",
+      "line": 2886,
+      "date": "2026-10-28",
+      "project": "MES / D:/code/mes",
+      "status": "部分完成；E0完成，E1在数据写入前阻塞，E2–E5未执行。",
+      "keywords": [
+        "PostgreSQL开发库备份",
+        "pg_dump custom archive",
+        "低代码模块服务权限",
+        "初始管理员改密",
+        "SN绑定能力",
+        "阶段失败停步"
+      ]
+    },
+    {
+      "id": "P-20261084",
+      "type": "problem",
+      "title": "MES六核心符合性审查：明细创建权限与数量校验旁路",
+      "file": "global_problem_solutions.md",
+      "line": 2920,
+      "date": "2026-10-29",
+      "project": "",
+      "status": "",
+      "keywords": []
+    },
+    {
+      "id": "P-20261085",
+      "type": "problem",
+      "title": "MES手册同步：流程目录、预检与明细保存边界",
+      "file": "global_problem_solutions.md",
+      "line": 3011,
+      "date": "2026-10-29",
+      "project": "",
+      "status": "",
+      "keywords": [
+        "MES",
+        "用户手册",
+        "流程目录",
+        "预检",
+        "明细保存",
+        "配置包"
+      ]
+    },
+    {
+      "id": "P-20261086",
+      "type": "problem",
+      "title": "MES六核心当前能力与执行差距复核",
+      "file": "global_problem_solutions.md",
+      "line": 3022,
+      "date": "2026-10-29",
+      "project": "",
+      "status": "",
+      "keywords": [
+        "MES 六核心 可视化计算 条件分支 扣减 明细保存 资源可见性"
+      ]
+    },
+    {
+      "id": "P-20261087",
+      "type": "problem",
+      "title": "MES七项差距通用实施方案及验收边界",
+      "file": "global_problem_solutions.md",
+      "line": 3033,
+      "date": "2026-10-29",
+      "project": "",
+      "status": "",
+      "keywords": [
+        "MES 通用计算 条件构建器 联动写入 原子主从保存 资源脱敏 批量创建"
+      ]
+    },
+    {
+      "id": "P-20261088",
+      "type": "problem",
+      "title": "MES系统手册补齐功能说明与完整分步案例",
+      "file": "global_problem_solutions.md",
+      "line": 3044,
+      "date": "2026-10-29",
+      "project": "",
+      "status": "",
+      "keywords": [
+        "MES 使用手册 功能描述 完整案例 分步操作 结果核对 双入口"
+      ]
+    },
+    {
+      "id": "P-20261089",
+      "type": "problem",
+      "title": "扭力标定质量判定与保存完成闭环",
+      "file": "global_problem_solutions.md",
+      "line": 3057,
+      "date": "2026-10-29",
+      "project": "driverSoftware",
+      "status": "代码完成，未测试。快速通道：否，完整流程。R0-R5完成，R6独立复核完成；R7跳过待授权，R8静态集成完成，R9归档，R10跳过。",
+      "keywords": [
+        "扭力标定",
+        "Kt",
+        "R²",
+        "自动写入",
+        "手动确认",
+        "质量门禁",
+        "连接代次"
+      ]
+    },
+    {
+      "id": "P-20261090",
+      "type": "problem",
+      "title": "扭力标定未达标人工放行与重标分流",
+      "file": "global_problem_solutions.md",
+      "line": 3072,
+      "date": "2026-10-29",
+      "project": "driverSoftware",
+      "status": "已实现并静态复核，未测试。此条更新P-20261089中“不合格一律重标”的产品决策。",
+      "keywords": [
+        "扭力标定",
+        "人工确认放行",
+        "重新标定",
+        "不合格原因",
+        "confirm_unqualified",
+        "manual_release_allowed"
+      ]
+    },
+    {
+      "id": "P-20261091",
+      "type": "problem",
+      "title": "保留原始提交补建主题分支真合并",
+      "file": "global_problem_solutions.md",
+      "line": 3088,
+      "date": "2026-10-29",
+      "project": "driverSoftware",
+      "status": "已完成。本地主题分支保留，development已正常推送，未强推。",
+      "keywords": [
+        "主题分支",
+        "no-ff",
+        "已推送提交",
+        "保留SHA",
+        "真合并",
+        "git flow"
+      ]
+    },
+    {
+      "id": "P-20261092",
+      "type": "problem",
+      "title": "断连重复中止导致发布门禁失败的最小修复",
+      "file": "global_problem_solutions.md",
+      "line": 3104,
+      "date": "2026-10-29",
+      "project": "driverSoftware",
+      "status": "代码修复与静态复核完成，未测试，等待测试授权；工作区干净，修复分支保留。",
+      "keywords": [
+        "v0.21.2",
+        "CI门禁失败",
+        "disconnect",
+        "request_abort",
+        "abort_calls",
+        "重复中止"
+      ]
+    },
+    {
+      "id": "P-20261093",
+      "type": "problem",
+      "title": "自动流转候选分页和关联传播修复",
+      "file": "global_problem_solutions.md",
+      "line": 3120,
+      "date": "",
+      "project": "",
+      "status": "",
+      "keywords": []
+    },
+    {
+      "id": "P-20261094",
+      "type": "problem",
+      "title": "ERP即时库存导入本机MES口径与完整性核对",
+      "file": "global_problem_solutions.md",
+      "line": 3132,
+      "date": "",
+      "project": "",
+      "status": "",
+      "keywords": []
+    },
+    {
+      "id": "P-20261095",
+      "type": "problem",
+      "title": "流转填写由流程配置，移除默认重复备注",
+      "file": "global_problem_solutions.md",
+      "line": 3142,
+      "date": "",
+      "project": "",
+      "status": "",
+      "keywords": []
+    },
+    {
+      "id": "P-20261096",
+      "type": "problem",
+      "title": "指派执行人选择框回显修复",
+      "file": "global_problem_solutions.md",
+      "line": 3151,
+      "date": "",
+      "project": "",
+      "status": "",
+      "keywords": []
+    },
+    {
+      "id": "P-20261109",
+      "type": "problem",
+      "title": "流程填写与执行人显示修复提交",
+      "file": "global_problem_solutions.md",
+      "line": 3156,
+      "date": "",
+      "project": "",
+      "status": "",
+      "keywords": []
+    },
+    {
+      "id": "P-20261097",
+      "type": "problem",
+      "title": "总线识别报告身份保持与连接隔离",
+      "file": "global_problem_solutions.md",
+      "line": 3161,
+      "date": "2026-11-03",
+      "project": "driverSoftware",
+      "status": "实现完成，未测试",
+      "keywords": [
+        "driverSoftware、总线设备、识别测试报告、ID变更、连接隔离、CSV"
+      ]
+    },
+    {
+      "id": "P-20261098",
+      "type": "problem",
+      "title": "多设备轨迹热更新必须防止过时配置恢复使能",
+      "file": "global_problem_solutions.md",
+      "line": 3181,
+      "date": "2026-11-03",
+      "project": "driverSoftware",
+      "status": "实现完成，未测试",
+      "keywords": [
+        "mscope",
+        "多设备轨迹",
+        "MIT",
+        "热更新",
+        "急停",
+        "轮次锁",
+        "过时配置",
+        "起播预检"
+      ]
+    },
+    {
+      "id": "P-20261099",
+      "type": "problem",
+      "title": "多设备轨迹结束状态不能由陈旧样本推断",
+      "file": "global_problem_solutions.md",
+      "line": 3203,
+      "date": "2026-11-03",
+      "project": "driverSoftware",
+      "status": "实现完成，未测试",
+      "keywords": [
+        "多设备轨迹",
+        "drain",
+        "完成通知",
+        "hold",
+        "stop",
+        "陈旧样本",
+        "急停",
+        "confirmation epoch",
+        "指令位置对比"
+      ]
+    },
+    {
+      "id": "P-20261100",
+      "type": "problem",
+      "title": "序列号标签迁移须区分存储值与当前输入",
+      "file": "global_problem_solutions.md",
+      "line": 3225,
+      "date": "2026-11-03",
+      "project": "driverSoftware",
+      "status": "实现完成，未测试",
+      "keywords": [
+        "localStorage",
+        "序列号",
+        "物理标签",
+        "QuotaExceededError",
+        "内存缓存",
+        "SN键迁移"
+      ]
+    },
+    {
+      "id": "P-20261101",
+      "type": "problem",
+      "title": "多设备持续控制的急停需要请求预约与处理代次共同收口",
+      "file": "global_problem_solutions.md",
+      "line": 3247,
+      "date": "2026-11-03",
+      "project": "driverSoftware",
+      "status": "实现完成，静态复核通过，功能测试未执行",
+      "keywords": [
+        "多设备控制",
+        "急停",
+        "HTTP预约",
+        "ContextVar",
+        "并发",
+        "落停",
+        "过时响应"
+      ]
+    },
+    {
+      "id": "P-20261102",
+      "type": "problem",
+      "title": "停止采样时必须失效末帧运行徽章",
+      "file": "global_problem_solutions.md",
+      "line": 3266,
+      "date": "2026-11-03",
+      "project": "driverSoftware",
+      "status": "静态复核通过，功能测试未执行",
+      "keywords": [
+        "急停",
+        "多设备",
+        "状态徽章",
+        "末帧失效",
+        "loopGen",
+        "未知状态"
+      ]
+    },
+    {
+      "id": "P-20261104",
+      "type": "problem",
+      "title": "Windows Runner 上 CI 的 ssh 私钥报 UNPROTECTED PRIVATE KEY FILE，及其引出的私钥文件残留",
+      "file": "global_problem_solutions.md",
+      "line": 3282,
+      "date": "2026-11-05",
+      "project": "quality-testing/dv3-admin（GitLab CI，Windows shell Runner）",
+      "status": "已修复，4 次流水线验证通过（真实 SYSTEM Runner）；本地在管理员账号下复现了逻辑",
+      "keywords": [
+        "UNPROTECTED PRIVATE KEY FILE",
+        "Bad permissions",
+        "icacls",
+        "USERNAME",
+        "机器账号",
+        "SID",
+        "S-1-15-3",
+        "S-1-5-18",
+        "File 变量",
+        "WriteAllText",
+        "Remove-Item",
+        "takeown",
+        "私钥残留",
+        "ssh Permission denied publickey"
+      ]
+    },
+    {
+      "id": "P-20261105",
+      "type": "problem",
+      "title": "中文提交信息会破坏 Windows Runner 的 PowerShell 变量注入，使脚本里的变量变空",
+      "file": "global_problem_solutions.md",
+      "line": 3299,
+      "date": "2026-11-05",
+      "project": "quality-testing/dv3-admin（GitLab CI，Windows shell Runner）",
+      "status": "已定位并有本地复现；采用英文提交信息规避，线上验证通过",
+      "keywords": [
+        "CI_COMMIT_MESSAGE",
+        "CI_COMMIT_DESCRIPTION",
+        "变量注入",
+        "中文提交信息",
+        "GBK",
+        "CP936",
+        "无 BOM UTF-8",
+        "表达式中包含意外的标记",
+        "变量为空",
+        "$py",
+        "$sid",
+        "$work",
+        "ASCII 提交信息"
+      ]
+    },
+    {
+      "id": "P-20261106",
+      "type": "problem",
+      "title": "DPT V4.2.8真实采集请求CRC与读取器信息线布局",
+      "file": "global_problem_solutions.md",
+      "line": 3317,
+      "date": "",
+      "project": "",
+      "status": "",
+      "keywords": [
+        "encoder-next",
+        "DPT",
+        "AnalyzerInfo",
+        "CRC",
+        "真机",
+        "采样频率"
+      ]
+    },
+    {
+      "id": "P-20261107",
+      "type": "problem",
+      "title": "读取器日期每月31格编码的月末与非法日历边界",
+      "file": "global_problem_solutions.md",
+      "line": 3333,
+      "date": "",
+      "project": "",
+      "status": "",
+      "keywords": [
+        "AnalyzerInfo",
+        "日期",
+        "divmod",
+        "31日",
+        "固件",
+        "月末"
+      ]
+    },
+    {
+      "id": "P-20261108",
+      "type": "problem",
+      "title": "EncoderPlotter 分支管理对照 Gitflow 审计：4.11.1 撤回后收口断裂与分支积压",
+      "file": "global_problem_solutions.md",
+      "line": 3347,
+      "date": "2026-11-09",
+      "project": "EncoderPlotter（主仓 D:/code/EncoderPlotter_0703_03，子仓 sub_embedded/sub_common/sub_automation/sub_algorithm）",
+      "status": "已完成（审计结论已固化；4.11.1 收口与分支清理待用户决定，未执行）",
+      "keywords": [
+        "gitflow",
+        "git flow",
+        "分支管理",
+        "回合",
+        "back-merge",
+        "hotfix",
+        "release",
+        "4.11.1",
+        "encoder-plotter-v4.11.1",
+        "revert",
+        "撤回",
+        "长期分支",
+        "僵尸分支",
+        "archive tag",
+        "release-line-gate",
+        "ALLOW_BACKMERGE_DEBT",
+        "sub_algorithm",
+        "gitlink",
+        ".gitmodules",
+        "protected_branches",
+        "分支审计"
+      ]
+    },
+    {
+      "id": "P-20261110",
+      "type": "problem",
+      "title": "SIRE 归档 worker 排查：编号冲突、队头阻塞与未配置归档库的入队缺陷",
+      "file": "global_problem_solutions.md",
+      "line": 3393,
+      "date": "2026-11-09",
+      "project": "SIRE 共享工作流（sire/workflow/shared/sire/scripts/sire_archive_sync.py，队列 D:/sire/sire_ledger/sync_queue）",
+      "status": "部分完成（编号冲突已修，知识记录已在归档库可查；脚本四项改动未做，待 RSI；本次 run 的任务记录归档仍 pending）",
+      "keywords": [
+        "sire_archive_sync",
+        "worker",
+        "sync_queue",
+        "归档",
+        "队头阻塞",
+        "编号重复",
+        "reindex",
+        "WARN 编号重复",
+        "archive_db",
+        "SIRE_ARCHIVE_ROOT",
+        "PermissionError",
+        "kick",
+        "排查"
       ]
     }
   ],
@@ -2890,7 +5397,8 @@
     ],
     "IAP": [
       "F-026",
-      "F-047"
+      "F-047",
+      "F-122"
     ],
     "MPT-G": [
       "F-026"
@@ -2972,7 +5480,8 @@
     "打包": [
       "F-024",
       "F-046",
-      "F-057"
+      "F-057",
+      "F-118"
     ],
     "Nuitka": [
       "F-024",
@@ -3007,7 +5516,8 @@
     "GitLab CI": [
       "F-024",
       "F-057",
-      "F-066"
+      "F-066",
+      "F-121"
     ],
     "Runner": [
       "F-024"
@@ -3026,7 +5536,8 @@
       "F-024"
     ],
     "WebSocket": [
-      "F-024"
+      "F-024",
+      "F-119"
     ],
     "多进程": [
       "F-024"
@@ -3053,7 +5564,8 @@
       "F-024"
     ],
     "git flow": [
-      "F-024"
+      "F-024",
+      "F-118"
     ],
     "分支命名": [
       "F-024"
@@ -3064,7 +5576,8 @@
     ],
     "飞书": [
       "F-027",
-      "F-074"
+      "F-074",
+      "F-089"
     ],
     "Feishu": [
       "F-027"
@@ -3297,7 +5810,9 @@
     ],
     "driverSoftware": [
       "F-042",
-      "F-043"
+      "F-043",
+      "F-088",
+      "F-089"
     ],
     "协议版本冲突": [
       "F-042"
@@ -3333,7 +5848,8 @@
       "F-043"
     ],
     "Markdown": [
-      "F-043"
+      "F-043",
+      "F-089"
     ],
     "SIRE知识库": [
       "F-043"
@@ -3342,7 +5858,8 @@
       "F-044"
     ],
     "Blender": [
-      "F-044"
+      "F-044",
+      "F-103"
     ],
     "战车": [
       "F-044"
@@ -4006,7 +6523,8 @@
       "F-057"
     ],
     "客户包": [
-      "F-057"
+      "F-057",
+      "F-088"
     ],
     "cut_changelog": [
       "F-057"
@@ -4129,13 +6647,15 @@
       "F-058"
     ],
     "DYN-200": [
-      "F-058"
+      "F-058",
+      "F-120"
     ],
     "JN-DN5": [
       "F-058"
     ],
     "485 继电器": [
-      "F-058"
+      "F-058",
+      "F-120"
     ],
     "duoji 口径": [
       "F-058"
@@ -4256,7 +6776,9 @@
       "F-071",
       "F-072",
       "F-073",
-      "F-074"
+      "F-074",
+      "F-091",
+      "F-122"
     ],
     "需求规格说明书": [
       "F-060"
@@ -4451,7 +6973,8 @@
     ],
     "gitlink": [
       "F-068",
-      "F-069"
+      "F-069",
+      "F-118"
     ],
     "child before parent": [
       "F-069"
@@ -4618,7 +7141,9 @@
       "F-078"
     ],
     "SN": [
-      "F-078"
+      "F-078",
+      "F-091",
+      "F-123"
     ],
     "轴向距离": [
       "F-078"
@@ -4630,7 +7155,8 @@
       "F-079"
     ],
     "外部版": [
-      "F-079"
+      "F-079",
+      "F-087"
     ],
     "series=106": [
       "F-079"
@@ -4642,7 +7168,8 @@
       "F-079"
     ],
     "isInternal": [
-      "F-079"
+      "F-079",
+      "F-087"
     ],
     "getPropFromArguments": [
       "F-079"
@@ -4684,7 +7211,8 @@
       "F-081"
     ],
     "sub_algorithm": [
-      "F-081"
+      "F-081",
+      "F-118"
     ],
     "partial calibration": [
       "F-081"
@@ -4729,10 +7257,12 @@
       "F-084"
     ],
     "sire_comms": [
-      "F-085"
+      "F-085",
+      "F-086"
     ],
     "会话绑定": [
-      "F-085"
+      "F-085",
+      "F-086"
     ],
     "session id": [
       "F-085"
@@ -4761,9 +7291,277 @@
     "原文展示": [
       "F-085"
     ],
+    "claude-codex协作机制": [
+      "F-086"
+    ],
+    "协作通讯": [
+      "F-086"
+    ],
+    "session start": [
+      "F-086"
+    ],
+    "session watch": [
+      "F-086"
+    ],
+    "session wait": [
+      "F-086"
+    ],
+    "resume": [
+      "F-086"
+    ],
+    "codex queue 实时推送": [
+      "F-086"
+    ],
+    "常驻协作": [
+      "F-086"
+    ],
+    "结束协作": [
+      "F-086"
+    ],
+    "会话id可变": [
+      "F-086"
+    ],
+    "锁STALE": [
+      "F-086"
+    ],
+    "转述不构成授权": [
+      "F-086"
+    ],
+    "协作免重复授权": [
+      "F-086"
+    ],
+    "comms-protocol": [
+      "F-086"
+    ],
+    "EncoderPlotter": [
+      "F-087",
+      "F-122",
+      "F-123"
+    ],
+    "用户手册": [
+      "F-087"
+    ],
+    "内部版": [
+      "F-087"
+    ],
+    "test tag": [
+      "F-087"
+    ],
+    "test-v4.10.0": [
+      "F-087"
+    ],
+    "提测": [
+      "F-088"
+    ],
+    "L0": [
+      "F-088"
+    ],
+    "0.20.2": [
+      "F-088"
+    ],
+    "版本变动": [
+      "F-088"
+    ],
+    "量零点": [
+      "F-088"
+    ],
+    "档位": [
+      "F-088"
+    ],
+    "提测文档": [
+      "F-089"
+    ],
+    "lark-cli": [
+      "F-089"
+    ],
+    "bot": [
+      "F-089"
+    ],
+    "32项": [
+      "F-089"
+    ],
+    "客户版": [
+      "F-089"
+    ],
+    "composition": [
+      "F-091"
+    ],
+    "分母": [
+      "F-091"
+    ],
+    "生效时间": [
+      "F-091"
+    ],
+    "平台边界": [
+      "F-091"
+    ],
+    "FC": [
+      "F-092",
+      "F-109",
+      "F-110",
+      "F-111"
+    ],
+    "重装机兵": [
+      "F-092",
+      "F-093"
+    ],
+    "战车RPG": [
+      "F-092"
+    ],
+    "复刻": [
+      "F-092"
+    ],
+    "多车": [
+      "F-092"
+    ],
+    "游戏审计": [
+      "F-092"
+    ],
+    "音频": [
+      "F-092"
+    ],
+    "UI": [
+      "F-092"
+    ],
+    "盐海遗讯": [
+      "F-092"
+    ],
     "Unity UI": [
+      "F-093",
+      "F-096",
       "F-099",
       "F-105"
+    ],
+    "UGUI": [
+      "F-093",
+      "F-105"
+    ],
+    "IMGUI": [
+      "F-093",
+      "F-105"
+    ],
+    "CanvasScaler": [
+      "F-093",
+      "F-099"
+    ],
+    "视口锚点": [
+      "F-093"
+    ],
+    "暖木": [
+      "F-093",
+      "F-105"
+    ],
+    "锈钢": [
+      "F-093"
+    ],
+    "黄铜": [
+      "F-093"
+    ],
+    "复古俯视 3D": [
+      "F-093"
+    ],
+    "Unity UGUI": [
+      "F-094"
+    ],
+    "Image.Type.Tiled": [
+      "F-094"
+    ],
+    "TextureWrapMode.Repeat": [
+      "F-094"
+    ],
+    "程序化木纹": [
+      "F-094"
+    ],
+    "锈钢 UI": [
+      "F-094"
+    ],
+    "Sprite.Create": [
+      "F-094"
+    ],
+    "跨程序集可见性": [
+      "F-094"
+    ],
+    "Unity additive scene": [
+      "F-095"
+    ],
+    "SceneManager.sceneLoaded": [
+      "F-095"
+    ],
+    "RuntimeInitializeOnLoadMethod": [
+      "F-095"
+    ],
+    "FieldGroundSurface": [
+      "F-095"
+    ],
+    "Terrain.SampleHeight": [
+      "F-095"
+    ],
+    "ScenePortal": [
+      "F-095"
+    ],
+    "SpawnPoint": [
+      "F-095"
+    ],
+    "TownGate": [
+      "F-095",
+      "F-116"
+    ],
+    "room interior": [
+      "F-095"
+    ],
+    "cutaway room": [
+      "F-095"
+    ],
+    "shared Texture2D": [
+      "F-096"
+    ],
+    "UGUI Tiled": [
+      "F-096"
+    ],
+    "IMGUI DrawTextureWithTexCoords": [
+      "F-096"
+    ],
+    "GUIStyle background scaling": [
+      "F-096"
+    ],
+    "ScrollRect": [
+      "F-096"
+    ],
+    "GUI scroll view": [
+      "F-096"
+    ],
+    "Unity art bible": [
+      "F-097"
+    ],
+    "isometric cutaway room": [
+      "F-097"
+    ],
+    "pixel sprites": [
+      "F-097"
+    ],
+    "weathered steel": [
+      "F-097"
+    ],
+    "warm wood": [
+      "F-097"
+    ],
+    "FC vehicle slots": [
+      "F-097"
+    ],
+    "Mount_Sub": [
+      "F-097"
+    ],
+    "interior art direction": [
+      "F-097"
+    ],
+    "俯视切面": [
+      "F-097"
+    ],
+    "室内美术基线": [
+      "F-097"
+    ],
+    "Unity UI 风格、暖木旧钢、黄铜焦点、像素人物、参考图、标题 HUD 菜单 地图 对话 战斗": [
+      "F-098"
     ],
     "标题界面": [
       "F-099"
@@ -4772,44 +7570,765 @@
       "F-099"
     ],
     "Screen.SetResolution": [
-      "F-099"
+      "F-099",
+      "F-114"
     ],
     "显示模式": [
       "F-099"
     ],
-    "CanvasScaler": [
-      "F-099"
-    ],
     "FC重制": [
       "F-099",
-      "F-105"
+      "F-105",
+      "F-112"
+    ],
+    "FC重装机兵": [
+      "F-100",
+      "F-106",
+      "F-116"
+    ],
+    "45毫米炮": [
+      "F-100",
+      "F-103"
+    ],
+    "VisualCatalog": [
+      "F-100"
+    ],
+    "运行时模型工厂": [
+      "F-100"
+    ],
+    "Unity挂点": [
+      "F-100"
+    ],
+    "Mesh缓存": [
+      "F-100"
+    ],
+    "URP fallback": [
+      "F-100"
+    ],
+    "Unity UI 风格、风格复确认、旧钢、暖木、像素人物、用户参考图、UGUI、IMGUI": [
+      "F-101"
+    ],
+    "Unity SFX": [
+      "F-102"
+    ],
+    "SfxCue": [
+      "F-102"
+    ],
+    "procedural sound effects": [
+      "F-102"
+    ],
+    "PCM WAV": [
+      "F-102"
+    ],
+    "AudioImporter meta": [
+      "F-102"
+    ],
+    "Resources Audio/Sfx": [
+      "F-102"
+    ],
+    "deterministic generator": [
+      "F-102"
+    ],
+    "WPN_FC_Cannon45": [
+      "F-103"
+    ],
+    "Unity Prefab": [
+      "F-103"
+    ],
+    "FBX": [
+      "F-103"
+    ],
+    "FC 重制": [
+      "F-103"
+    ],
+    "资源导入": [
+      "F-103"
+    ],
+    "FC重制、巨蚁、Blender源模型、FBX、Unity Prefab、资源ID、低多边形、轴向转换、GUID保留": [
+      "F-104"
     ],
     "旧钢": [
-      "F-105"
-    ],
-    "暖木": [
       "F-105"
     ],
     "铆钉": [
       "F-105"
     ],
-    "UGUI": [
-      "F-105"
-    ],
-    "IMGUI": [
-      "F-105"
-    ],
     "BattleController": [
       "F-105"
+    ],
+    "波布机械师": [
+      "F-106"
+    ],
+    "PobMechanicRideEvent": [
+      "F-106"
+    ],
+    "FC_REFERENCE": [
+      "F-106"
+    ],
+    "事件状态": [
+      "F-106"
+    ],
+    "原版核对": [
+      "F-106"
+    ],
+    "车辆归属": [
+      "F-106"
+    ],
+    "FC重制 UI、RetroUiColors、UGUI、IMGUI、旧钢、暖木、语义色板、RichText": [
+      "F-107"
+    ],
+    "FC重制、拉多补给店、GameDB.RegisterShop、campaign runtime、药品、修理包、弹药补给、商店隔离": [
+      "F-108"
+    ],
+    "拉多": [
+      "F-109"
+    ],
+    "Rado": [
+      "F-109"
+    ],
+    "HP 恢复": [
+      "F-109"
+    ],
+    "旅店": [
+      "F-109"
+    ],
+    "inn": [
+      "F-109"
+    ],
+    "TownService.Rest": [
+      "F-109"
+    ],
+    "姐姐 NPC": [
+      "F-109"
+    ],
+    "住宿": [
+      "F-109"
+    ],
+    "金币不足": [
+      "F-109"
+    ],
+    "免费治疗": [
+      "F-109"
+    ],
+    "Unity": [
+      "F-110",
+      "F-111",
+      "F-113",
+      "F-115"
+    ],
+    "标题页": [
+      "F-110"
+    ],
+    "存档槽位": [
+      "F-110"
+    ],
+    "损坏存档": [
+      "F-110"
+    ],
+    "SaveSystem.Peek": [
+      "F-110",
+      "F-111"
+    ],
+    "SaveSystem.Exists": [
+      "F-110"
+    ],
+    "continue menu": [
+      "F-110"
+    ],
+    "corrupted save": [
+      "F-110",
+      "F-111"
+    ],
+    "unreadable slot": [
+      "F-110"
+    ],
+    "存档校验": [
+      "F-111"
+    ],
+    "DoLoad": [
+      "F-111"
+    ],
+    "SaveData": [
+      "F-111"
+    ],
+    "party": [
+      "F-111"
+    ],
+    "inventory": [
+      "F-111"
+    ],
+    "JsonUtility": [
+      "F-111"
+    ],
+    "malformed save": [
+      "F-111"
+    ],
+    "读档异常": [
+      "F-111"
+    ],
+    "GAME": [
+      "F-112"
+    ],
+    "项目状态盘点": [
+      "F-112"
+    ],
+    "待办": [
+      "F-112"
+    ],
+    "静态实现": [
+      "F-112"
+    ],
+    "运行验收": [
+      "F-112"
+    ],
+    "原版核验": [
+      "F-112"
+    ],
+    "接口签核": [
+      "F-112"
+    ],
+    "DEFERRED": [
+      "F-112"
+    ],
+    "vehicle ownership": [
+      "F-113"
+    ],
+    "VehicleRecord": [
+      "F-113"
+    ],
+    "assignedCharacterId": [
+      "F-113"
+    ],
+    "party driver": [
+      "F-113"
+    ],
+    "event trigger": [
+      "F-113"
+    ],
+    "CanTrigger": [
+      "F-113"
+    ],
+    "garage": [
+      "F-113"
+    ],
+    "game event guard": [
+      "F-113"
+    ],
+    "Unity 6": [
+      "F-114"
+    ],
+    "Screen.resolutions": [
+      "F-114"
+    ],
+    "FullScreenWindow": [
+      "F-114"
+    ],
+    "borderless fullscreen": [
+      "F-114"
+    ],
+    "windowed mode": [
+      "F-114"
+    ],
+    "resolution picker": [
+      "F-114"
+    ],
+    "AudioDirector": [
+      "F-114"
+    ],
+    "System menu": [
+      "F-114"
+    ],
+    "C装置": [
+      "F-115"
+    ],
+    "CUnitData": [
+      "F-115"
+    ],
+    "actionsPerTurn": [
+      "F-115"
+    ],
+    "BattleSystem.SubmitCommands": [
+      "F-115"
+    ],
+    "多次行动": [
+      "F-115"
+    ],
+    "action queue": [
+      "F-115"
+    ],
+    "ammo reservation": [
+      "F-115"
+    ],
+    "item stack reservation": [
+      "F-115"
+    ],
+    "Rocco": [
+      "F-116"
+    ],
+    "罗克镇": [
+      "F-116"
+    ],
+    "Unity FC campaign": [
+      "F-116"
+    ],
+    "WorldMapData": [
+      "F-116"
+    ],
+    "EncounterZone": [
+      "F-116"
+    ],
+    "GameDB": [
+      "F-116"
+    ],
+    "特殊砲弹商店": [
+      "F-116"
+    ],
+    "城镇地图扩展": [
+      "F-116"
+    ],
+    "内部调试工具": [
+      "F-117"
+    ],
+    "debug_tool.py": [
+      "F-117"
+    ],
+    "IAP ZIP": [
+      "F-117"
+    ],
+    "kingkong": [
+      "F-117"
+    ],
+    "ArgumentsHeader": [
+      "F-117"
+    ],
+    "j72": [
+      "F-117"
+    ],
+    "ZIP Slip": [
+      "F-117"
+    ],
+    "调试日志": [
+      "F-117"
+    ],
+    "data.log": [
+      "F-117"
+    ],
+    "打包规则": [
+      "F-118"
+    ],
+    "发版": [
+      "F-118"
+    ],
+    "发布流程": [
+      "F-118"
+    ],
+    "feature": [
+      "F-118"
+    ],
+    "release": [
+      "F-118"
+    ],
+    "hotfix": [
+      "F-118"
+    ],
+    "回合": [
+      "F-118"
+    ],
+    "back-merge": [
+      "F-118"
+    ],
+    "back-merge-check": [
+      "F-118"
+    ],
+    "桥接分支": [
+      "F-118"
+    ],
+    "backmerge": [
+      "F-118"
+    ],
+    "tag": [
+      "F-118"
+    ],
+    "encoder-plotter-v": [
+      "F-118"
+    ],
+    "rc-v": [
+      "F-118"
+    ],
+    "test-v": [
+      "F-118"
+    ],
+    "release-line-gate": [
+      "F-118"
+    ],
+    "changelog-gate": [
+      "F-118"
+    ],
+    "ALLOW_BACKMERGE_DEBT": [
+      "F-118"
+    ],
+    "子先父后": [
+      "F-118"
+    ],
+    "子模块指针": [
+      "F-118"
+    ],
+    "4.9.2": [
+      "F-118"
+    ],
+    "正式包": [
+      "F-118"
+    ],
+    "RC包": [
+      "F-118"
+    ],
+    "测试包": [
+      "F-118"
+    ],
+    "外网访问": [
+      "F-119"
+    ],
+    "内网穿透": [
+      "F-119"
+    ],
+    "手机访问": [
+      "F-119"
+    ],
+    "iPhone": [
+      "F-119"
+    ],
+    "PWA": [
+      "F-119"
+    ],
+    "HTTPS": [
+      "F-119"
+    ],
+    "Tailscale": [
+      "F-119"
+    ],
+    "tailscale serve": [
+      "F-119"
+    ],
+    "MagicDNS": [
+      "F-119"
+    ],
+    "证书": [
+      "F-119"
+    ],
+    "wss": [
+      "F-119"
+    ],
+    "局域网": [
+      "F-119"
+    ],
+    "无鉴权": [
+      "F-119"
+    ],
+    "加入设备": [
+      "F-119"
+    ],
+    "多手机": [
+      "F-119"
+    ],
+    "ai-tool": [
+      "F-119"
+    ],
+    "远程通讯": [
+      "F-119"
+    ],
+    "扭矩传感器": [
+      "F-120"
+    ],
+    "换通讯线": [
+      "F-120"
+    ],
+    "USB-RS485": [
+      "F-120"
+    ],
+    "真透传 dongle": [
+      "F-120"
+    ],
+    "Prolific PL2303GR": [
+      "F-120"
+    ],
+    "067B:23A3": [
+      "F-120"
+    ],
+    "6B6B:0001": [
+      "F-120"
+    ],
+    "自动查找失败": [
+      "F-120"
+    ],
+    "没找到 DYN-200 分析仪": [
+      "F-120"
+    ],
+    "读到 0B": [
+      "F-120"
+    ],
+    "总线无响应/波特率不对": [
+      "F-120"
+    ],
+    "discover_direct_fallback": [
+      "F-120"
+    ],
+    "dyn200_last.json": [
+      "F-120"
+    ],
+    "_OTHER_OWNERS": [
+      "F-120"
+    ],
+    "register_port_owner": [
+      "F-120"
+    ],
+    "兼容": [
+      "F-120"
+    ],
+    ".gitlab-ci.yml": [
+      "F-121"
+    ],
+    "deploy-agent-exe": [
+      "F-121"
+    ],
+    "build-agent-exe": [
+      "F-121"
+    ],
+    "PyInstaller": [
+      "F-121"
+    ],
+    "encoder-agent.exe": [
+      "F-121"
+    ],
+    "SSH_PRIVATE_KEY": [
+      "F-121"
+    ],
+    "File 变量": [
+      "F-121"
+    ],
+    "scp": [
+      "F-121"
+    ],
+    "ssh": [
+      "F-121"
+    ],
+    "Windows Runner": [
+      "F-121"
+    ],
+    "powershell executor": [
+      "F-121"
+    ],
+    "nginx": [
+      "F-121"
+    ],
+    "autoindex": [
+      "F-121"
+    ],
+    "artifacts": [
+      "F-121"
+    ],
+    "10.0.64.2": [
+      "F-121"
+    ],
+    "autotest": [
+      "F-121"
+    ],
+    "打包部署下载": [
+      "F-121"
+    ],
+    "encoder-next": [
+      "F-122",
+      "F-123"
+    ],
+    "DD003": [
+      "F-122"
+    ],
+    "feature-parity": [
+      "F-122"
+    ],
+    "中值检测": [
+      "F-122"
+    ],
+    "手动配置": [
+      "F-122"
+    ],
+    "静态盘点": [
+      "F-122"
+    ],
+    "P1": [
+      "F-123"
+    ],
+    "BuildInfo": [
+      "F-123"
+    ],
+    "StartupInfo": [
+      "F-123"
+    ],
+    "EncoderPower": [
+      "F-123"
+    ],
+    "恢复出口": [
+      "F-123"
+    ],
+    "默认拒绝": [
+      "F-123"
+    ],
+    "ER启动等待": [
+      "F-123"
     ]
   },
   "problems": {
+    "CHANGELOG": [
+      "P-20261050",
+      "P-20261052",
+      "P-20260940",
+      "P-20260944"
+    ],
+    "新增": [
+      "P-20261050",
+      "P-20261051",
+      "P-20261052",
+      "P-20261055"
+    ],
+    "修复": [
+      "P-20261050",
+      "P-20261051",
+      "P-20261052",
+      "P-20261055"
+    ],
+    "分类标题": [
+      "P-20261050"
+    ],
+    "飞书通知": [
+      "P-20261050"
+    ],
+    "release.py": [
+      "P-20261050"
+    ],
+    "强制拦截": [
+      "P-20261050"
+    ],
+    "未发布": [
+      "P-20261051"
+    ],
+    "发布通知": [
+      "P-20261051"
+    ],
+    "分类": [
+      "P-20261051"
+    ],
+    "临时Git仓库": [
+      "P-20261051"
+    ],
+    "变异验证": [
+      "P-20261051"
+    ],
+    "6918168c": [
+      "P-20261051"
+    ],
+    "历史版本": [
+      "P-20261052"
+    ],
+    "分类修复": [
+      "P-20261052"
+    ],
+    "fb9f1499": [
+      "P-20261052"
+    ],
+    "压缩提交": [
+      "P-20261053"
+    ],
+    "squash": [
+      "P-20261053"
+    ],
+    "本地提交": [
+      "P-20261053"
+    ],
+    "更新日志分类": [
+      "P-20261053",
+      "P-20261054",
+      "P-20261055"
+    ],
+    "26abd28e": [
+      "P-20261053",
+      "P-20261054",
+      "P-20261055"
+    ],
+    "远端基线": [
+      "P-20261053"
+    ],
+    "复测": [
+      "P-20261054"
+    ],
+    "飞书卡片": [
+      "P-20261054",
+      "P-20260938"
+    ],
+    "Kt": [
+      "P-20261054",
+      "P-20261089"
+    ],
+    "v0.20.3": [
+      "P-20261054"
+    ],
+    "v0.20.4": [
+      "P-20261054"
+    ],
+    "v0.20.5": [
+      "P-20261054"
+    ],
+    "Agent约束": [
+      "P-20261055"
+    ],
+    "AGENTS.md": [
+      "P-20261055",
+      "P-20260935"
+    ],
+    "CLAUDE.md": [
+      "P-20261055"
+    ],
+    "origin/development": [
+      "P-20261055"
+    ],
+    "projectless": [
+      "P-20261103"
+    ],
+    "Claude": [
+      "P-20261103",
+      "P-20260923",
+      "P-20260924",
+      "P-20260935"
+    ],
+    "Codex": [
+      "P-20261103",
+      "P-20260923",
+      "P-20260924",
+      "P-20260935"
+    ],
+    "协作通讯": [
+      "P-20261103"
+    ],
+    "通道选择": [
+      "P-20261103"
+    ],
+    "active": [
+      "P-20261103"
+    ],
+    "last_activity": [
+      "P-20261103"
+    ],
+    "会话绑定": [
+      "P-20261103"
+    ],
+    "空闲超时": [
+      "P-20261103"
+    ],
     "v3.4.6": [
       "P-018",
       "P-20260926"
     ],
     "MIT": [
-      "P-018"
+      "P-018",
+      "P-20261098"
     ],
     "mit_scales": [
       "P-018"
@@ -5057,7 +8576,8 @@
       "P-20260925",
       "P-20260931",
       "P-20260932",
-      "P-20260935"
+      "P-20260935",
+      "P-20261081"
     ],
     "Git 归档": [
       "P-024"
@@ -5076,16 +8596,6 @@
     ],
     "embedding": [
       "P-024"
-    ],
-    "Claude": [
-      "P-20260923",
-      "P-20260924",
-      "P-20260935"
-    ],
-    "Codex": [
-      "P-20260923",
-      "P-20260924",
-      "P-20260935"
     ],
     "SQLite": [
       "P-20260923",
@@ -5152,7 +8662,8 @@
       "P-20260925"
     ],
     "回滚": [
-      "P-20260925"
+      "P-20260925",
+      "P-20261036"
     ],
     "R9": [
       "P-20260925"
@@ -5324,7 +8835,8 @@
       "P-20260929"
     ],
     "MPP": [
-      "P-20260930"
+      "P-20260930",
+      "P-20261031"
     ],
     "105": [
       "P-20260930"
@@ -5481,9 +8993,6 @@
     "入口副本漂移": [
       "P-20260935"
     ],
-    "AGENTS.md": [
-      "P-20260935"
-    ],
     "sire-reminder.txt": [
       "P-20260935"
     ],
@@ -5507,9 +9016,6 @@
     ],
     "feishu-hub": [
       "P-20260935"
-    ],
-    "飞书卡片": [
-      "P-20260938"
     ],
     "outbox 头阻塞": [
       "P-20260938"
@@ -5610,10 +9116,6 @@
     ],
     "device.js": [
       "P-20260940"
-    ],
-    "CHANGELOG": [
-      "P-20260940",
-      "P-20260944"
     ],
     "静默损坏": [
       "P-20260940"
@@ -5718,7 +9220,8 @@
       "P-20260944"
     ],
     "DPB": [
-      "P-20260944"
+      "P-20260944",
+      "P-20261031"
     ],
     "标定失败弹窗": [
       "P-20260945"
@@ -5779,7 +9282,9 @@
     ],
     "IAP": [
       "P-20260948",
-      "P-20260949"
+      "P-20260949",
+      "P-20261031",
+      "P-20261034"
     ],
     "程序加密": [
       "P-20260948"
@@ -5845,7 +9350,9 @@
     ],
     "AnalyzerInfo": [
       "P-20260951",
-      "P-20260952"
+      "P-20260952",
+      "P-20261106",
+      "P-20261107"
     ],
     "MES基础架构": [
       "P-20261016"
@@ -5935,7 +9442,8 @@
       "P-20261017"
     ],
     "lowcode": [
-      "P-20261018"
+      "P-20261018",
+      "P-20261038"
     ],
     "模块软删除": [
       "P-20261018"
@@ -6004,7 +9512,8 @@
     ],
     "PostgreSQL": [
       "P-20261020",
-      "P-20261022"
+      "P-20261022",
+      "P-20261036"
     ],
     "Kysely": [
       "P-20261020"
@@ -6095,7 +9604,13 @@
       "P-20261023"
     ],
     "MES": [
-      "P-20261024"
+      "P-20261024",
+      "P-20261033",
+      "P-20261038",
+      "P-20261039",
+      "P-20261040",
+      "P-20261035",
+      "P-20261085"
     ],
     "生产订单": [
       "P-20261024"
@@ -6159,6 +9674,1406 @@
     ],
     "权限复核": [
       "P-20261026"
+    ],
+    "Electron 28": [
+      "P-20261027"
+    ],
+    "prompt() not supported": [
+      "P-20261027"
+    ],
+    "Vue 2 弹窗": [
+      "P-20261027"
+    ],
+    "SN输入": [
+      "P-20261027"
+    ],
+    "IAP调试日志": [
+      "P-20261027",
+      "P-20261029"
+    ],
+    "Vue": [
+      "P-20261028"
+    ],
+    "Electron": [
+      "P-20261028"
+    ],
+    "disabled button": [
+      "P-20261028"
+    ],
+    "title tooltip": [
+      "P-20261028"
+    ],
+    "SN检索": [
+      "P-20261028",
+      "P-20261029"
+    ],
+    "BIN文件": [
+      "P-20261028"
+    ],
+    "单选": [
+      "P-20261028"
+    ],
+    "kingkong.zip": [
+      "P-20261029"
+    ],
+    "Electron IPC": [
+      "P-20261029"
+    ],
+    "相对路径": [
+      "P-20261029"
+    ],
+    "离线IAP文件": [
+      "P-20261029"
+    ],
+    "写入连接门禁": [
+      "P-20261029"
+    ],
+    "IAP写入门禁": [
+      "P-20261030"
+    ],
+    "设备断连竞态": [
+      "P-20261030"
+    ],
+    "doDisconnect": [
+      "P-20261030"
+    ],
+    "SN精确匹配": [
+      "P-20261030"
+    ],
+    "子串搜索": [
+      "P-20261030"
+    ],
+    "调试日志": [
+      "P-20261030"
+    ],
+    "免标定": [
+      "P-20261031"
+    ],
+    "recalibrationDataConversion": [
+      "P-20261031",
+      "P-20261032"
+    ],
+    "DPT": [
+      "P-20261031",
+      "P-20261106"
+    ],
+    "MPT": [
+      "P-20261031"
+    ],
+    "MPT-G": [
+      "P-20261031"
+    ],
+    "DPT-G1": [
+      "P-20261031"
+    ],
+    "MBS": [
+      "P-20261031"
+    ],
+    "MBP": [
+      "P-20261031"
+    ],
+    "SUPPORTED_SERIES": [
+      "P-20261031",
+      "P-20261032"
+    ],
+    "IAP免标定": [
+      "P-20261032"
+    ],
+    "SUPPORTED_VERSIONS": [
+      "P-20261032"
+    ],
+    "DPT15": [
+      "P-20261032"
+    ],
+    "V4065": [
+      "P-20261032"
+    ],
+    "版本矩阵": [
+      "P-20261032"
+    ],
+    "Flash布局": [
+      "P-20261032"
+    ],
+    "storageTarget": [
+      "P-20261032"
+    ],
+    "生产订单审批": [
+      "P-20261033"
+    ],
+    "系统管理员": [
+      "P-20261033"
+    ],
+    "自审批": [
+      "P-20261033"
+    ],
+    "角色隔离": [
+      "P-20261033"
+    ],
+    "mock验收": [
+      "P-20261033"
+    ],
+    "权限回归": [
+      "P-20261033"
+    ],
+    "writeDataBlocks": [
+      "P-20261034"
+    ],
+    "writeEncoderDataV303": [
+      "P-20261034"
+    ],
+    "4000": [
+      "P-20261034"
+    ],
+    "5000": [
+      "P-20261034"
+    ],
+    "写入日志": [
+      "P-20261034"
+    ],
+    "整批预检查": [
+      "P-20261034"
+    ],
+    "concat": [
+      "P-20261038"
+    ],
+    "SN": [
+      "P-20261038",
+      "P-20261039"
+    ],
+    "Feishu": [
+      "P-20261038"
+    ],
+    "测试部署": [
+      "P-20261038"
+    ],
+    "模块空框": [
+      "P-20261039"
+    ],
+    "订单导入": [
+      "P-20261039"
+    ],
+    "workflowBindings": [
+      "P-20261039"
+    ],
+    "linkRange": [
+      "P-20261039"
+    ],
+    "工序流程": [
+      "P-20261039",
+      "P-20261035"
+    ],
+    "配置漂移": [
+      "P-20261039"
+    ],
+    "工作流运行时": [
+      "P-20261040"
+    ],
+    "依赖治理": [
+      "P-20261040"
+    ],
+    "提供者绑定": [
+      "P-20261040"
+    ],
+    "审批状态机": [
+      "P-20261040"
+    ],
+    "并发锁": [
+      "P-20261040"
+    ],
+    "待办分页": [
+      "P-20261040"
+    ],
+    "工序引用": [
+      "P-20261035"
+    ],
+    "catalog workflow": [
+      "P-20261035"
+    ],
+    "workflow version binding": [
+      "P-20261035"
+    ],
+    "工序执行记录": [
+      "P-20261035"
+    ],
+    "数据库完整同步": [
+      "P-20261036"
+    ],
+    "staging restore": [
+      "P-20261036"
+    ],
+    "密钥重加密": [
+      "P-20261036"
+    ],
+    "Unity 6": [
+      "P-20261041"
+    ],
+    "2.5D像素角色": [
+      "P-20261041"
+    ],
+    "Sprite atlas": [
+      "P-20261041"
+    ],
+    "SpriteRenderer": [
+      "P-20261041"
+    ],
+    "SubsystemRegistration": [
+      "P-20261041"
+    ],
+    "contact shadow": [
+      "P-20261041"
+    ],
+    "野外角色": [
+      "P-20261041"
+    ],
+    "Unity NPC sprites": [
+      "P-20261042"
+    ],
+    "pixel palette variants": [
+      "P-20261042"
+    ],
+    "Texture2D atlas cache": [
+      "P-20261042"
+    ],
+    "billboard direction": [
+      "P-20261042"
+    ],
+    "FC town NPC": [
+      "P-20261042"
+    ],
+    "C# generated pixel character": [
+      "P-20261042"
+    ],
+    "Unity NPC像素附件": [
+      "P-20261043"
+    ],
+    "32x32 sprite atlas": [
+      "P-20261043"
+    ],
+    "side view mirror": [
+      "P-20261043"
+    ],
+    "medical bag cross": [
+      "P-20261043"
+    ],
+    "Rect clamp": [
+      "P-20261043"
+    ],
+    "pixel accessory": [
+      "P-20261043"
+    ],
+    "Unity切面室内": [
+      "P-20261044"
+    ],
+    "FC旅店": [
+      "P-20261044"
+    ],
+    "procedural room builder": [
+      "P-20261044"
+    ],
+    "collider-free art": [
+      "P-20261044"
+    ],
+    "spawn clearance": [
+      "P-20261044"
+    ],
+    "端柱净宽": [
+      "P-20261044"
+    ],
+    "scene root cleanup": [
+      "P-20261044"
+    ],
+    "Unity原创芯片音乐": [
+      "P-20261045"
+    ],
+    "AudioDirector MusicCue": [
+      "P-20261045"
+    ],
+    "Resources AudioClip": [
+      "P-20261045"
+    ],
+    "PCM WAV": [
+      "P-20261045"
+    ],
+    "determinisic music generator": [
+      "P-20261045"
+    ],
+    "AudioImporter meta": [
+      "P-20261045"
+    ],
+    "8-bit chiptune": [
+      "P-20261045"
+    ],
+    "重装机兵UI": [
+      "P-20261046"
+    ],
+    "旧钢暖木界面": [
+      "P-20261046"
+    ],
+    "Unity CanvasScaler": [
+      "P-20261046"
+    ],
+    "ultrawide title layout": [
+      "P-20261046"
+    ],
+    "UI style confirmation": [
+      "P-20261046"
+    ],
+    "Unity FC重装机兵3D重制": [
+      "P-20261047"
+    ],
+    "GDD正典": [
+      "P-20261047"
+    ],
+    "设计文档对齐": [
+      "P-20261047"
+    ],
+    "盐海旧稿归档": [
+      "P-20261047"
+    ],
+    "音频状态": [
+      "P-20261047"
+    ],
+    "视觉候选边界": [
+      "P-20261047"
+    ],
+    "Unity队伍菜单": [
+      "P-20261048"
+    ],
+    "Party menu": [
+      "P-20261048"
+    ],
+    "像素头像": [
+      "P-20261048"
+    ],
+    "FieldPixelCharacterAtlas": [
+      "P-20261048"
+    ],
+    "FramesFor": [
+      "P-20261048"
+    ],
+    "CHR_Mechanic": [
+      "P-20261048"
+    ],
+    "CharacterLook": [
+      "P-20261048"
+    ],
+    "UGUI Image": [
+      "P-20261048"
+    ],
+    "Unity": [
+      "P-20261049"
+    ],
+    "PlayerState.reserveParty": [
+      "P-20261049"
+    ],
+    "vehicleId": [
+      "P-20261049"
+    ],
+    "TankLoadout": [
+      "P-20261049"
+    ],
+    "VehicleRecord.assignedCharacterId": [
+      "P-20261049"
+    ],
+    "SaveData v9": [
+      "P-20261049"
+    ],
+    "roster swap": [
+      "P-20261049"
+    ],
+    "GAME": [
+      "P-20261057"
+    ],
+    "FC remake": [
+      "P-20261057"
+    ],
+    "未完成任务盘点": [
+      "P-20261057"
+    ],
+    "GDD": [
+      "P-20261057",
+      "P-20261058"
+    ],
+    "FC_REMAKE": [
+      "P-20261057",
+      "P-20261058"
+    ],
+    "FC_REFERENCE": [
+      "P-20261057",
+      "P-20261058"
+    ],
+    "INTERFACE": [
+      "P-20261057"
+    ],
+    "原版核验": [
+      "P-20261057"
+    ],
+    "静态实现": [
+      "P-20261057",
+      "P-20261058"
+    ],
+    "实机验收": [
+      "P-20261057",
+      "P-20261058"
+    ],
+    "DEFERRED": [
+      "P-20261057",
+      "P-20261058"
+    ],
+    "FC重制": [
+      "P-20261058"
+    ],
+    "backlog": [
+      "P-20261058"
+    ],
+    "待办分类": [
+      "P-20261058"
+    ],
+    "原版对照": [
+      "P-20261058"
+    ],
+    "FC重装机兵": [
+      "P-20261056",
+      "P-20261060",
+      "P-20261061",
+      "P-20261062",
+      "P-20261063",
+      "P-20261064",
+      "P-20261065",
+      "P-20261066",
+      "P-20261067",
+      "P-20261068",
+      "P-20261069"
+    ],
+    "野外战车牵引": [
+      "P-20261056"
+    ],
+    "拖车": [
+      "P-20261056"
+    ],
+    "SaveData v10": [
+      "P-20261056"
+    ],
+    "VehicleService.AttachTow": [
+      "P-20261056"
+    ],
+    "stale callback": [
+      "P-20261056"
+    ],
+    "Game.Runtime与Game.FC解耦": [
+      "P-20261056"
+    ],
+    "FC租赁战车": [
+      "P-20261059"
+    ],
+    "rental tank": [
+      "P-20261059"
+    ],
+    "VehicleRecord.isRental": [
+      "P-20261059"
+    ],
+    "battle gold multiplier": [
+      "P-20261059"
+    ],
+    "SaveData v11": [
+      "P-20261059"
+    ],
+    "自动退租": [
+      "P-20261059"
+    ],
+    "DetachTow": [
+      "P-20261059"
+    ],
+    "租车装甲补充": [
+      "P-20261059"
+    ],
+    "租赁战车": [
+      "P-20261060",
+      "P-20261061"
+    ],
+    "WPN_FC_Rental55": [
+      "P-20261060",
+      "P-20261061"
+    ],
+    "VisualCatalog": [
+      "P-20261060",
+      "P-20261064"
+    ],
+    "视觉别名": [
+      "P-20261060"
+    ],
+    "模型工厂回退": [
+      "P-20261060"
+    ],
+    "Blender": [
+      "P-20261061",
+      "P-20261062",
+      "P-20261064",
+      "P-20261070"
+    ],
+    "FBX": [
+      "P-20261061",
+      "P-20261062",
+      "P-20261064"
+    ],
+    "Unity Prefab": [
+      "P-20261061",
+      "P-20261062"
+    ],
+    "Buggy": [
+      "P-20261062",
+      "P-20261064"
+    ],
+    "TNK_FC_BuggyChassis": [
+      "P-20261062"
+    ],
+    "车辆模型": [
+      "P-20261062"
+    ],
+    "大地图UI": [
+      "P-20261063"
+    ],
+    "MapEntryKind": [
+      "P-20261063"
+    ],
+    "KnownLocations": [
+      "P-20261063"
+    ],
+    "RetroUiColors": [
+      "P-20261063",
+      "P-20261065",
+      "P-20261066",
+      "P-20261067"
+    ],
+    "ScrollRect": [
+      "P-20261063"
+    ],
+    "租赁55毫米炮": [
+      "P-20261064"
+    ],
+    "Unity Resources Prefab": [
+      "P-20261064"
+    ],
+    "FcBuildTasks": [
+      "P-20261064"
+    ],
+    "fallback": [
+      "P-20261064"
+    ],
+    "行旅菜单": [
+      "P-20261065",
+      "P-20261066"
+    ],
+    "任务状态色": [
+      "P-20261065"
+    ],
+    "赏金状态色": [
+      "P-20261065"
+    ],
+    "QuestState": [
+      "P-20261065"
+    ],
+    "BountyState": [
+      "P-20261065"
+    ],
+    "SelectedText": [
+      "P-20261065"
+    ],
+    "DisabledText": [
+      "P-20261065"
+    ],
+    "操作结果反馈": [
+      "P-20261066"
+    ],
+    "OpResult": [
+      "P-20261066"
+    ],
+    "Result": [
+      "P-20261066"
+    ],
+    "success feedback": [
+      "P-20261066"
+    ],
+    "error feedback": [
+      "P-20261066"
+    ],
+    "NothingToDo": [
+      "P-20261066"
+    ],
+    "战斗界面": [
+      "P-20261067"
+    ],
+    "HP": [
+      "P-20261067"
+    ],
+    "SP": [
+      "P-20261067"
+    ],
+    "弹药": [
+      "P-20261067"
+    ],
+    "RichText": [
+      "P-20261067"
+    ],
+    "BattleController": [
+      "P-20261067"
+    ],
+    "low-resource warning": [
+      "P-20261067"
+    ],
+    "enemy health": [
+      "P-20261067"
+    ],
+    "敌人掉落": [
+      "P-20261068"
+    ],
+    "战斗胜利结算": [
+      "P-20261068"
+    ],
+    "EnemyData": [
+      "P-20261068"
+    ],
+    "EnemyDrop": [
+      "P-20261068"
+    ],
+    "ItemService": [
+      "P-20261068"
+    ],
+    "EquipmentService": [
+      "P-20261068"
+    ],
+    "PartInstance": [
+      "P-20261068"
+    ],
+    "loot table": [
+      "P-20261068"
+    ],
+    "weighted drop": [
+      "P-20261068"
+    ],
+    "NES Metal Max": [
+      "P-20261069"
+    ],
+    "Enormous Ant": [
+      "P-20261069"
+    ],
+    "Cannon Hopper": [
+      "P-20261069"
+    ],
+    "Surveillance Camera": [
+      "P-20261069"
+    ],
+    "Bionic Pooch": [
+      "P-20261069"
+    ],
+    "expReward": [
+      "P-20261069"
+    ],
+    "goldReward": [
+      "P-20261069"
+    ],
+    "enemy reward mapping": [
+      "P-20261069"
+    ],
+    "FC Buggy": [
+      "P-20261070",
+      "P-20261074"
+    ],
+    "TNK_FC_Buggy": [
+      "P-20261070"
+    ],
+    "FBX导出": [
+      "P-20261070"
+    ],
+    "Unity ModelImporter": [
+      "P-20261070"
+    ],
+    "weapon mount": [
+      "P-20261070"
+    ],
+    "Y-up": [
+      "P-20261070"
+    ],
+    "+Z-forward": [
+      "P-20261070"
+    ],
+    "globalScale": [
+      "P-20261070"
+    ],
+    "stale FBX": [
+      "P-20261070"
+    ],
+    "FC南洞": [
+      "P-20261071"
+    ],
+    "Southern Cave": [
+      "P-20261071"
+    ],
+    "B2宝箱": [
+      "P-20261071"
+    ],
+    "Camouflage Fatigues": [
+      "P-20261071"
+    ],
+    "Fortune Coin": [
+      "P-20261071"
+    ],
+    "ItemKind.Collectible": [
+      "P-20261071"
+    ],
+    "RegistryAssets": [
+      "P-20261071"
+    ],
+    "GameDB.RegisterGear": [
+      "P-20261071"
+    ],
+    "战狗旗标": [
+      "P-20261071"
+    ],
+    "FC初代": [
+      "P-20261072"
+    ],
+    "Metal Max NES": [
+      "P-20261072"
+    ],
+    "WPN_FC_Cannon45": [
+      "P-20261072"
+    ],
+    "主炮弹量": [
+      "P-20261072"
+    ],
+    "maxAmmo": [
+      "P-20261072"
+    ],
+    "初始弹药": [
+      "P-20261072"
+    ],
+    "chassis magazine": [
+      "P-20261072"
+    ],
+    "special shells": [
+      "P-20261072",
+      "P-20261073"
+    ],
+    "FC Metal Max": [
+      "P-20261073"
+    ],
+    "chassis special shell magazine": [
+      "P-20261073"
+    ],
+    "main gun ammo separation": [
+      "P-20261073"
+    ],
+    "v12 save migration": [
+      "P-20261073"
+    ],
+    "action reservation": [
+      "P-20261073"
+    ],
+    "tank shell command": [
+      "P-20261073"
+    ],
+    "magazine capacity upgrade": [
+      "P-20261073"
+    ],
+    "Unity Editor": [
+      "P-20261074"
+    ],
+    "Blender FBX": [
+      "P-20261074"
+    ],
+    "Resources prefab": [
+      "P-20261074"
+    ],
+    "licensing": [
+      "P-20261074"
+    ],
+    "headless entitlement": [
+      "P-20261074"
+    ],
+    "mount validation": [
+      "P-20261074"
+    ],
+    "Unity存档恢复": [
+      "P-20261075"
+    ],
+    "SaveSerializer.FromSave": [
+      "P-20261075"
+    ],
+    "malformed optional save records": [
+      "P-20261075"
+    ],
+    "duplicated bounty": [
+      "P-20261075"
+    ],
+    "quest progress": [
+      "P-20261075"
+    ],
+    "JSON save migration": [
+      "P-20261075"
+    ],
+    "Unity存档": [
+      "P-20261076"
+    ],
+    "长期仓库": [
+      "P-20261076"
+    ],
+    "Trunk Room": [
+      "P-20261076"
+    ],
+    "stack normalization": [
+      "P-20261076"
+    ],
+    "SaveSerializer": [
+      "P-20261076"
+    ],
+    "int.MaxValue split stack": [
+      "P-20261076"
+    ],
+    "carried inventory cap": [
+      "P-20261076"
+    ],
+    "多读取器界面": [
+      "P-20261077"
+    ],
+    "reader workspace": [
+      "P-20261077"
+    ],
+    "设备选择": [
+      "P-20261077"
+    ],
+    "工作区导航": [
+      "P-20261077"
+    ],
+    "single action entry": [
+      "P-20261077"
+    ],
+    "COM port": [
+      "P-20261077"
+    ],
+    "serial suffix": [
+      "P-20261077"
+    ],
+    "encoder-next simulator": [
+      "P-20261078"
+    ],
+    "--sim-readers": [
+      "P-20261078"
+    ],
+    "SimulatorGateway": [
+      "P-20261078"
+    ],
+    "UI布局验证": [
+      "P-20261078"
+    ],
+    "多读取器夹具": [
+      "P-20261078"
+    ],
+    "encoder-next、RT、RS485、CRC、空帧、角度采集": [
+      "P-20261079"
+    ],
+    "高频采集": [
+      "P-20261080",
+      "P-20261081"
+    ],
+    "Vue响应式渲染": [
+      "P-20261080"
+    ],
+    "readout.ts": [
+      "P-20261080"
+    ],
+    "flushUiStats": [
+      "P-20261080"
+    ],
+    "帧率卡顿": [
+      "P-20261080"
+    ],
+    "encoder-next": [
+      "P-20261081",
+      "P-20261106"
+    ],
+    "功能清单": [
+      "P-20261081"
+    ],
+    "角度采集": [
+      "P-20261081"
+    ],
+    "WebSocket": [
+      "P-20261081"
+    ],
+    "readout": [
+      "P-20261081"
+    ],
+    "uPlot": [
+      "P-20261081"
+    ],
+    "TypedArray ring buffer": [
+      "P-20261081"
+    ],
+    "Pratt parser": [
+      "P-20261081"
+    ],
+    "RT RS485": [
+      "P-20261081"
+    ],
+    "DPB ABS": [
+      "P-20261081"
+    ],
+    "MES业务模块盘点": [
+      "P-20261082"
+    ],
+    "只读数据库盘点": [
+      "P-20261082"
+    ],
+    "lc.modules": [
+      "P-20261082"
+    ],
+    "published schema": [
+      "P-20261082"
+    ],
+    "detailLines": [
+      "P-20261082"
+    ],
+    "targetModule引用": [
+      "P-20261082"
+    ],
+    "空值率": [
+      "P-20261082"
+    ],
+    "workflow states transitions": [
+      "P-20261082"
+    ],
+    "approvalRoleCodes": [
+      "P-20261082"
+    ],
+    "actorRoleCodes": [
+      "P-20261082"
+    ],
+    "模块权限": [
+      "P-20261082"
+    ],
+    "软删除模块": [
+      "P-20261082"
+    ],
+    "SN绑定": [
+      "P-20261082"
+    ],
+    "PostgreSQL开发库备份": [
+      "P-20261083"
+    ],
+    "pg_dump custom archive": [
+      "P-20261083"
+    ],
+    "低代码模块服务权限": [
+      "P-20261083"
+    ],
+    "初始管理员改密": [
+      "P-20261083"
+    ],
+    "SN绑定能力": [
+      "P-20261083"
+    ],
+    "阶段失败停步": [
+      "P-20261083"
+    ],
+    "用户手册": [
+      "P-20261085"
+    ],
+    "流程目录": [
+      "P-20261085"
+    ],
+    "预检": [
+      "P-20261085"
+    ],
+    "明细保存": [
+      "P-20261085"
+    ],
+    "配置包": [
+      "P-20261085"
+    ],
+    "MES 六核心 可视化计算 条件分支 扣减 明细保存 资源可见性": [
+      "P-20261086"
+    ],
+    "MES 通用计算 条件构建器 联动写入 原子主从保存 资源脱敏 批量创建": [
+      "P-20261087"
+    ],
+    "MES 使用手册 功能描述 完整案例 分步操作 结果核对 双入口": [
+      "P-20261088"
+    ],
+    "扭力标定": [
+      "P-20261089",
+      "P-20261090"
+    ],
+    "R²": [
+      "P-20261089"
+    ],
+    "自动写入": [
+      "P-20261089"
+    ],
+    "手动确认": [
+      "P-20261089"
+    ],
+    "质量门禁": [
+      "P-20261089"
+    ],
+    "连接代次": [
+      "P-20261089"
+    ],
+    "人工确认放行": [
+      "P-20261090"
+    ],
+    "重新标定": [
+      "P-20261090"
+    ],
+    "不合格原因": [
+      "P-20261090"
+    ],
+    "confirm_unqualified": [
+      "P-20261090"
+    ],
+    "manual_release_allowed": [
+      "P-20261090"
+    ],
+    "主题分支": [
+      "P-20261091"
+    ],
+    "no-ff": [
+      "P-20261091"
+    ],
+    "已推送提交": [
+      "P-20261091"
+    ],
+    "保留SHA": [
+      "P-20261091"
+    ],
+    "真合并": [
+      "P-20261091"
+    ],
+    "git flow": [
+      "P-20261091",
+      "P-20261108"
+    ],
+    "v0.21.2": [
+      "P-20261092"
+    ],
+    "CI门禁失败": [
+      "P-20261092"
+    ],
+    "disconnect": [
+      "P-20261092"
+    ],
+    "request_abort": [
+      "P-20261092"
+    ],
+    "abort_calls": [
+      "P-20261092"
+    ],
+    "重复中止": [
+      "P-20261092"
+    ],
+    "driverSoftware、总线设备、识别测试报告、ID变更、连接隔离、CSV": [
+      "P-20261097"
+    ],
+    "mscope": [
+      "P-20261098"
+    ],
+    "多设备轨迹": [
+      "P-20261098",
+      "P-20261099"
+    ],
+    "热更新": [
+      "P-20261098"
+    ],
+    "急停": [
+      "P-20261098",
+      "P-20261099",
+      "P-20261101",
+      "P-20261102"
+    ],
+    "轮次锁": [
+      "P-20261098"
+    ],
+    "过时配置": [
+      "P-20261098"
+    ],
+    "起播预检": [
+      "P-20261098"
+    ],
+    "drain": [
+      "P-20261099"
+    ],
+    "完成通知": [
+      "P-20261099"
+    ],
+    "hold": [
+      "P-20261099"
+    ],
+    "stop": [
+      "P-20261099"
+    ],
+    "陈旧样本": [
+      "P-20261099"
+    ],
+    "confirmation epoch": [
+      "P-20261099"
+    ],
+    "指令位置对比": [
+      "P-20261099"
+    ],
+    "localStorage": [
+      "P-20261100"
+    ],
+    "序列号": [
+      "P-20261100"
+    ],
+    "物理标签": [
+      "P-20261100"
+    ],
+    "QuotaExceededError": [
+      "P-20261100"
+    ],
+    "内存缓存": [
+      "P-20261100"
+    ],
+    "SN键迁移": [
+      "P-20261100"
+    ],
+    "多设备控制": [
+      "P-20261101"
+    ],
+    "HTTP预约": [
+      "P-20261101"
+    ],
+    "ContextVar": [
+      "P-20261101"
+    ],
+    "并发": [
+      "P-20261101"
+    ],
+    "落停": [
+      "P-20261101"
+    ],
+    "过时响应": [
+      "P-20261101"
+    ],
+    "多设备": [
+      "P-20261102"
+    ],
+    "状态徽章": [
+      "P-20261102"
+    ],
+    "末帧失效": [
+      "P-20261102"
+    ],
+    "loopGen": [
+      "P-20261102"
+    ],
+    "未知状态": [
+      "P-20261102"
+    ],
+    "UNPROTECTED PRIVATE KEY FILE": [
+      "P-20261104"
+    ],
+    "Bad permissions": [
+      "P-20261104"
+    ],
+    "icacls": [
+      "P-20261104"
+    ],
+    "USERNAME": [
+      "P-20261104"
+    ],
+    "机器账号": [
+      "P-20261104"
+    ],
+    "SID": [
+      "P-20261104"
+    ],
+    "S-1-15-3": [
+      "P-20261104"
+    ],
+    "S-1-5-18": [
+      "P-20261104"
+    ],
+    "File 变量": [
+      "P-20261104"
+    ],
+    "WriteAllText": [
+      "P-20261104"
+    ],
+    "Remove-Item": [
+      "P-20261104"
+    ],
+    "takeown": [
+      "P-20261104"
+    ],
+    "私钥残留": [
+      "P-20261104"
+    ],
+    "ssh Permission denied publickey": [
+      "P-20261104"
+    ],
+    "CI_COMMIT_MESSAGE": [
+      "P-20261105"
+    ],
+    "CI_COMMIT_DESCRIPTION": [
+      "P-20261105"
+    ],
+    "变量注入": [
+      "P-20261105"
+    ],
+    "中文提交信息": [
+      "P-20261105"
+    ],
+    "GBK": [
+      "P-20261105"
+    ],
+    "CP936": [
+      "P-20261105"
+    ],
+    "无 BOM UTF-8": [
+      "P-20261105"
+    ],
+    "表达式中包含意外的标记": [
+      "P-20261105"
+    ],
+    "变量为空": [
+      "P-20261105"
+    ],
+    "$py": [
+      "P-20261105"
+    ],
+    "$sid": [
+      "P-20261105"
+    ],
+    "$work": [
+      "P-20261105"
+    ],
+    "ASCII 提交信息": [
+      "P-20261105"
+    ],
+    "CRC": [
+      "P-20261106"
+    ],
+    "真机": [
+      "P-20261106"
+    ],
+    "采样频率": [
+      "P-20261106"
+    ],
+    "日期": [
+      "P-20261107"
+    ],
+    "divmod": [
+      "P-20261107"
+    ],
+    "31日": [
+      "P-20261107"
+    ],
+    "固件": [
+      "P-20261107"
+    ],
+    "月末": [
+      "P-20261107"
+    ],
+    "gitflow": [
+      "P-20261108"
+    ],
+    "分支管理": [
+      "P-20261108"
+    ],
+    "回合": [
+      "P-20261108"
+    ],
+    "back-merge": [
+      "P-20261108"
+    ],
+    "hotfix": [
+      "P-20261108"
+    ],
+    "release": [
+      "P-20261108"
+    ],
+    "4.11.1": [
+      "P-20261108"
+    ],
+    "encoder-plotter-v4.11.1": [
+      "P-20261108"
+    ],
+    "revert": [
+      "P-20261108"
+    ],
+    "撤回": [
+      "P-20261108"
+    ],
+    "长期分支": [
+      "P-20261108"
+    ],
+    "僵尸分支": [
+      "P-20261108"
+    ],
+    "archive tag": [
+      "P-20261108"
+    ],
+    "release-line-gate": [
+      "P-20261108"
+    ],
+    "ALLOW_BACKMERGE_DEBT": [
+      "P-20261108"
+    ],
+    "sub_algorithm": [
+      "P-20261108"
+    ],
+    "gitlink": [
+      "P-20261108"
+    ],
+    ".gitmodules": [
+      "P-20261108"
+    ],
+    "protected_branches": [
+      "P-20261108"
+    ],
+    "分支审计": [
+      "P-20261108"
+    ],
+    "sire_archive_sync": [
+      "P-20261110"
+    ],
+    "worker": [
+      "P-20261110"
+    ],
+    "sync_queue": [
+      "P-20261110"
+    ],
+    "归档": [
+      "P-20261110"
+    ],
+    "队头阻塞": [
+      "P-20261110"
+    ],
+    "编号重复": [
+      "P-20261110"
+    ],
+    "reindex": [
+      "P-20261110"
+    ],
+    "WARN 编号重复": [
+      "P-20261110"
+    ],
+    "archive_db": [
+      "P-20261110"
+    ],
+    "SIRE_ARCHIVE_ROOT": [
+      "P-20261110"
+    ],
+    "PermissionError": [
+      "P-20261110"
+    ],
+    "kick": [
+      "P-20261110"
+    ],
+    "排查": [
+      "P-20261110"
     ]
   },
   "efficiency": {
@@ -6645,6 +11560,194 @@
     ],
     "sire_kb.py": [
       "E-023"
+    ],
+    "driverSoftware2": [
+      "E-024"
+    ],
+    "EncoderPlotter_0903_01": [
+      "E-024"
+    ],
+    "v0.19.0": [
+      "E-024"
+    ],
+    "release branch": [
+      "E-024"
+    ],
+    "GitLab CI": [
+      "E-024"
+    ],
+    "ci-templates": [
+      "E-024",
+      "E-025",
+      "E-029"
+    ],
+    "VERSION_CMD": [
+      "E-025"
+    ],
+    "MODULE_NOT_FOUND": [
+      "E-025"
+    ],
+    "package.json": [
+      "E-025"
+    ],
+    "CHANGELOG": [
+      "E-025",
+      "E-027",
+      "E-028",
+      "E-029"
+    ],
+    "main development": [
+      "E-025"
+    ],
+    "回合": [
+      "E-025"
+    ],
+    "发布门禁": [
+      "E-025"
+    ],
+    "星号条目": [
+      "E-025"
+    ],
+    "模板兼容": [
+      "E-025"
+    ],
+    "IAP": [
+      "E-026"
+    ],
+    "IAP修复": [
+      "E-026"
+    ],
+    "分段加密": [
+      "E-026"
+    ],
+    "Arguments": [
+      "E-026"
+    ],
+    "SN": [
+      "E-026"
+    ],
+    "重试会话": [
+      "E-026"
+    ],
+    "ZIP候选": [
+      "E-026"
+    ],
+    "driverSoftware": [
+      "E-027",
+      "E-029"
+    ],
+    "飞书": [
+      "E-027"
+    ],
+    "发布通知": [
+      "E-027"
+    ],
+    "ci_notify_lark": [
+      "E-027"
+    ],
+    "sections": [
+      "E-027"
+    ],
+    "平铺条目": [
+      "E-027"
+    ],
+    "空卡片": [
+      "E-027"
+    ],
+    "v0.20.3": [
+      "E-028"
+    ],
+    "59c538c6": [
+      "E-028"
+    ],
+    "release.py": [
+      "E-028"
+    ],
+    "分类标题": [
+      "E-028",
+      "E-029"
+    ],
+    "新增": [
+      "E-028"
+    ],
+    "修复": [
+      "E-028"
+    ],
+    "飞书通知": [
+      "E-028",
+      "E-029"
+    ],
+    "changelog-gate": [
+      "E-029"
+    ],
+    "短横线条目": [
+      "E-029"
+    ],
+    "GitLab 地址": [
+      "E-030"
+    ],
+    "192.168.1.200:8888": [
+      "E-030"
+    ],
+    "software/EncoderPlotter": [
+      "E-030"
+    ],
+    "创建 MR": [
+      "E-030"
+    ],
+    "合并请求": [
+      "E-030"
+    ],
+    "glab": [
+      "E-030"
+    ],
+    "登录": [
+      "E-030"
+    ],
+    "gitlab.kingkong.tech": [
+      "E-030"
+    ],
+    "不要重复登录": [
+      "E-030"
+    ],
+    "release-gate": [
+      "E-030"
+    ],
+    "sub_embedded": [
+      "E-030"
+    ],
+    "sub_common": [
+      "E-030"
+    ],
+    "Claude Browser": [
+      "E-031"
+    ],
+    "javascript_tool": [
+      "E-031"
+    ],
+    "GitLab API": [
+      "E-031"
+    ],
+    "同源 fetch": [
+      "E-031"
+    ],
+    "csrf-token": [
+      "E-031"
+    ],
+    "tabId": [
+      "E-031"
+    ],
+    "触发流水线": [
+      "E-031"
+    ],
+    "job trace": [
+      "E-031"
+    ],
+    "内置浏览器": [
+      "E-031"
+    ],
+    "轮询": [
+      "E-031"
     ]
   },
   "habits": {
@@ -6707,8 +11810,68 @@
     ],
     "等待下一次任务": [
       "H-006"
+    ],
+    "提供tag": [
+      "H-007"
+    ],
+    "打tag": [
+      "H-007"
+    ],
+    "发tag": [
+      "H-007"
+    ],
+    "仓库tag规则": [
+      "H-007"
+    ],
+    "不提交": [
+      "H-007"
+    ],
+    "不推送代码": [
+      "H-007"
+    ],
+    "FC 重制": [
+      "H-008"
+    ],
+    "UI 风格": [
+      "H-008"
+    ],
+    "参考图": [
+      "H-008"
+    ],
+    "暖木": [
+      "H-008"
+    ],
+    "旧钢": [
+      "H-008"
+    ],
+    "暖纸色": [
+      "H-008"
+    ],
+    "黄铜焦点": [
+      "H-008"
+    ],
+    "CI": [
+      "H-009"
+    ],
+    "流水线": [
+      "H-009"
+    ],
+    "本地测试": [
+      "H-009"
+    ],
+    "推送": [
+      "H-009"
+    ],
+    "pipeline": [
+      "H-009"
+    ],
+    "调试循环": [
+      "H-009"
+    ],
+    "提交信息": [
+      "H-009"
     ]
   },
-  "last_updated": "2026-10-25T21:07:15Z",
-  "total_records": 121
+  "last_updated": "2026-11-09T08:56:41Z",
+  "total_records": 250
 }

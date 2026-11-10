@@ -446,6 +446,36 @@ flowchart TD
 **状态**: 已完成；RSI-20261016-SILENTFLOW 激活 v6.24；close 迁移文档回退修复 RSI-20261016-CLOSEPATH 激活 v6.25。
 
 
+### E-024: driverSoftware2 发版治理与编码器仓对照
+
+# driverSoftware2 发版治理与编码器仓对照（2026-10-21）
+
+**关键词**: driverSoftware2, EncoderPlotter_0903_01, v0.19.0, release branch, GitLab CI, ci-templates
+
+## 需求场景
+核对 driverSoftware2 是否按编码器仓的发版流程执行，重点看分支规范约束、共享 CI 模板和当前 v0.19.0 tag。
+
+## 方案
+对照两仓 AGENTS.md、.gitlab-ci.yml、release.py、发布操作手册与发布线门禁脚本，并核实远端 tag peeled SHA。
+
+## 结论
+截至 2026-10-21，driverSoftware2 有自己的版本 bump、CHANGELOG、tag 触发 GitLab Runner 构建流程及主题分支命名规则，但未按编码器仓的 main/develop/release/hotfix 发布线模型约束发版。driverSoftware 的 AGENTS.md 明确 release/hotfix 分支未启用、直接在 development 打版本 tag；release.py 不验证当前分支；CI YAML 没有 encoder 仓式 release-line-gate，也没有 include `software/ci-templates`。本仓 CI 通知脚本明确写明不套 ci-templates。
+
+编码器仓 `.gitlab-ci.yml` include `software/ci-templates` 的 version-gate/notify 模板，并 clone 模板仓复用 CHANGELOG parser；发布线门禁检查正式 tag 是否在 main、RC 是否在 release/hotfix、子模块指针可达及上版回合。`docs/branching.md` 与 `docs/build-and-release.md` 定义 main/develop 和发版分支规则。
+
+driverSoftware `v0.19.0` 远端 annotated tag 已存在，peeled SHA 为 `0bbe3fe1682d5f10306374e33624ceb193f2e129`，与当前 development HEAD 相同；本地 tag 未取到。不要重复创建 tag。CI pipeline 状态因 GitLab TLS 证书过期尚未核验。
+
+## 关键文件
+- `D:\code\driverSoftware2\AGENTS.md`
+- `D:\code\driverSoftware2\scripts\release.py`
+- `D:\code\driverSoftware2\.gitlab-ci.yml`
+- `D:\code\driverSoftware2\scripts\ci_notify_lark.py`
+- `D:\code\EncoderPlotter_0903_01\docs\branching.md`
+- `D:\code\EncoderPlotter_0903_01\docs\build-and-release.md`
+- `D:\code\EncoderPlotter_0903_01\.gitlab-ci.yml`
+- `D:\code\EncoderPlotter_0903_01\scripts\release-gate.sh`
+
+
 ### E-025: 复用 CI 模板前核实版本源、更新条目和回合路径
 
 **日期**: 2026-10-21
@@ -463,6 +493,31 @@ flowchart TD
 **验证方法**: 在driverSoftware2根执行模板相同的 node -p require表达式，实际MODULE_NOT_FOUND；直接调用 check_merge_request('main','development')，实际REJECT：分支名不符合规范：main；调用共享changelogItemsFrom读取实际CHANGELOG和VERSION，0.19.0实际notificationItems=[]。另已读取远端development真实YAML，无include与staging人工放行。没有运行构建、发版或真实流水线；GitLab未登录，项目保护规则及CI变量未确认。
 
 **状态**: 核查完成，待修复；完整证据在外置台账 R20261021-153304-driversoftware2/audit-report.md。
+
+
+### E-026: IAP与修复六项静态审查发现（待修复未测试）
+
+# IAP与IAP修复静态审查
+**日期**: 2026-10-23
+**项目**: EncoderPlotter_0903_01，feature/iap-zip-custom
+**关键词**: IAP, IAP修复, 分段加密, Arguments, SN, 重试会话, ZIP候选
+
+**需求场景**: 用户要求review现有IAP和IAP修复逻辑。仅静态审查，不改代码、不测试。读取前端入口、后端三阶段、ZIP筛选、SN恢复及embedded上传；两名独立代理交叉复核。
+
+**现象与根因**:
+1. P1 分段BIN传输模式取决于前端异步预览，组件重建只还原路径而isEncryptionSend默认false。后端识别segmented_format但没有纠正模式，可能关闭BOOT解密并把密文当明文上传；首包前擦除App，存在无法启动风险。Encoder.py:1553-1557、1612-1613；iap.js:22、95-105；IAP.py:309-313、450-462。
+2. P1 修复/重试stepThree读取ZIP旧j72后直接用于SN写回，getUpdateArguments克隆整块旧结构；应在序列化前强制读取目标设备。Encoder.py:2062-2067；iap_sn_restore.py:35-48；EncoderBase.py:4534-4536、5234-5235。
+3. P1 iapArgumentsNeedRestore/RestoreProtocol仅stepOne赋值，step2/3及repair仍False，2291跳过硬件/接口参数恢复。Encoder.py:1316、1320、1726-1737、2291。
+4. P1 参数写回/回读失败捕获后仅argumentsWritten=False，2454仍StatusSuccess，前端忽略该字段并显示成功。Encoder.py:2425-2454；iap.js:203-220。
+5. P2 修复step2成功后step3失败的flow-control丢repair，下一次被普通重试会话校验拒绝。Encoder.py:2208、1385-1388。
+6. P2 ZIP初始候选变更后只更新会话digest/设备参数，未更新storageTarget、flashLayoutSizes、targetSoftware；step3重试可能与实际导出jst不一致，失败。Encoder.py:2165-2174、2221-2225、1399-1400。
+
+**建议方案**: 后端以本次文件解析决定传输方式；SN写回前从目标Flash读取结构；将恢复计划及最终BIN目标元数据完整持久化；收尾失败返回失败并提供重试；重试保留原始repair标志。
+
+**关键文件**: controller/python/Encoder.py、iap_sn_restore.py、iap_data.py、sub_embedded/EncoderBase.py、sub_embedded/IAP.py、components/share/iap.js。
+
+**验证结果与限制**: 静态分支追踪及独立交叉审查，未测试；没有运行单元测试、构建、应用、服务或硬件。已登记为待修复问题，未声称修复完成。建议后续经授权覆盖缓存分段BIN、参数写失败、SN跨版本恢复、修复第三阶段重试、多候选ZIP断点恢复。
+
 
 ### E-027: 飞书通知解析依赖三级小节导致平铺修改项被静默丢弃
 
@@ -490,3 +545,57 @@ flowchart TD
 **关键文件与接口**: scripts/release.py:47 cut_changelog；scripts/ci_notify_lark.py:102 sections。
 **验证方法**: 静态读取v0.20.2到v0.20.5的CHANGELOG完整补丁、v0.20.2原文、v0.20.3对应release.py和当前release.py。已定位首次漏写与后续保留路径。未执行测试、构建或发送消息。
 **状态**: 原因追查完成；未修复、未测试。无外部操作。极小排查主控直接执行，R6无代码变更无需代码审批，R7待用户授权，R10无需系统操作。
+
+
+### E-029: 短横线 CHANGELOG 与共享通知解析器兼容门禁
+
+**日期**: 2026-10-26
+**关键词**: CHANGELOG, driverSoftware, changelog-gate, 分类标题, 短横线条目, ci-templates, 飞书通知
+
+## 需求场景
+将 driverSoftware 的 CHANGELOG 约束移植到 EncoderPlotter：必须有新增/修复分类，条目统一使用行首短横线，门禁要阻止格式不合规的发布。当前项目复用的共享通知解析器历史上仅提取星号条目，直接迁移格式可能造成通知清单为空。
+
+## 方案
+在 scripts/changelog-gate.mjs 校验 `## [Unreleased]` 和 package.json 当前版本段：两个分类标题都必须存在，条目只能位于分类下并使用 `- `，续行缩进，版本段至少一条，未发布段可为空但保留标题。继续使用平台解析器判断版本段回退语义，并比较解析器提取数与实际条目数；不一致时 fail-closed。只迁移当前未发布段及当前版本段，历史版本保留原格式。
+
+## 关键文件
+`scripts/changelog-gate.mjs`、`AGENTS.md`、`CHANGELOG.md`、`.gitlab-ci.yml`。CI 的正式/RC tag 门禁负责调用结构校验；共享 `.lark-notify` 解析器需要同步支持 `- ` 后才能完成发布。门禁静态阻断可防止新格式被静默漏通知。
+
+## 验证
+已运行 `node --check scripts/changelog-gate.mjs` 与 `git diff --check`，均无错误。未运行 changelog-gate selftest、构建或 CI，因用户尚未授权测试。三路静态复核通过；通知解析器兼容性仍是明确发布前置条件。
+
+### E-030: EncoderPlotter 各仓 GitLab 统一使用 192.168.1.200:8888
+
+**日期**: 2026-10-28
+**项目**: EncoderPlotter1（主仓 software/EncoderPlotter 及四个子仓）
+**关键词**: GitLab 地址, 192.168.1.200:8888, software/EncoderPlotter, 创建 MR, 合并请求, glab, 登录, gitlab.kingkong.tech, 不要重复登录, release-gate, sub_embedded, sub_common
+
+**用户定（2026-10-28）**: 本项目的 GitLab 网页/API 地址是 `http://192.168.1.200:8888`，主仓 `http://192.168.1.200:8888/software/EncoderPlotter`（MR 例：`/-/merge_requests/130`）；子仓同在 `software/` 组下（`software/sub_embedded`、`software/sub_common`、`software/sub_automation`；`sub_algorithm` 在 `calibration/` 组，我们只消费）。需要建 MR、看 MR、查流水线、打开页面时一律用这个地址。
+
+**行为规则**:
+1. 不要再让用户登录 `gitlab.com` 或 `gitlab.kingkong.tech` 等其他地址。仓库 `git remote` 的 SSH 地址（`git@gitlab.kingkong.tech:software/...`）只用于 git push/pull，不代表网页/API 地址。
+2. 需要登录 GitLab 时（用户定 2026-10-28）：打开内置浏览器（mcp__Claude_Browser__*）访问 192.168.1.200:8888，由用户在浏览器里自己登录，登录后 AI 在浏览器里完成建 MR 等操作；不再引导用户在终端跑 `glab auth login`。AI 不代输账号密码/token。glab 命令行未认证，不依赖它。
+3. 无法命令行建 MR 时，给出这个地址下的新建 MR 链接：`http://192.168.1.200:8888/software/<仓库>/-/merge_requests/new?merge_request[source_branch]=<源>&merge_request[target_branch]=<目标>`。
+4. 不在知识库、台账、提交里记录任何 token/密码。
+
+**限制**: 地址由用户口述，未用 glab 验证连通与认证状态（记录时 glab 对 192.168.1.200:8888 尚未认证）。
+
+**状态**: 已归档
+
+### E-031: 内置浏览器已登录 GitLab 时，用同源 fetch 调 API 读 CI 与流水线，并避免打错标签页
+
+**日期**: 2026-11-05
+**项目**: SIRE / GitLab 排障（192.168.1.200:8888）
+**关键词**: Claude Browser, javascript_tool, GitLab API, 同源 fetch, csrf-token, tabId, 触发流水线, job trace, 内置浏览器, 轮询
+**状态**: 已归档
+
+**场景**: 私有 GitLab 项目，glab 对该主机无有效 token（见 E-030 一类的登录约定）。用户在内置浏览器里登录后，可直接用页面会话调 `/api/v4/`。
+
+**做法**:
+1. 读：`fetch('/api/v4/projects/<id>/repository/files/.gitlab-ci.yml/raw?ref=<分支>')`、`/pipelines`、`/pipelines/<id>/jobs`、`/jobs/<id>/trace`（去掉 ANSI 色码再过滤），`/variables` 只看 key、类型、保护标志，不读值。
+2. 写：触发流水线用 `POST /api/v4/projects/<id>/pipeline?ref=<分支>`，请求头带 `X-CSRF-Token`，值取页面 `meta[name="csrf-token"]`。
+3. 每个脚本都显式传 `tabId`：不传会作用于用户当前正在看的标签。曾因此向用户另开的 10.0.64.2:8080（MaxKB）误发了一个 POST，返回的是前端页面，无副作用，但属于不该发的请求。
+4. 用户同时在该页面操作会使脚本被“页面发生跳转”打断：自己 `tabs_create` 开专用标签，并把轮询拆成小于 45 秒的几次调用，不要单次轮询过久。
+5. 只读查询可以重跑；触发类脚本被打断后先查流水线列表再决定，不要盲目重跑。
+
+**限制**: 依赖用户已在内置浏览器里登录；不处理凭据，也不读取 CI 变量的值。
