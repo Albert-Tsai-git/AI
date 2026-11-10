@@ -79,6 +79,16 @@
 
 内网 GitLab（`http://192.168.1.200:8888/`，SSH 主机 `gitlab.kingkong.tech`）需要认证时，任何角色（含子代理、含快速通道）按 `references/git-access.md` 自行完成：SSH 已通，glab 已用令牌文件 `D:\sire\git-token.txt` 登录，失效时用该文件重新登录。**不得让用户登录、不得让用户在对话里粘贴令牌**；仅当令牌文件本身失效或到期（2027-11-06）才请用户更新该文件。令牌值不得出现在对话、仓库、日志、台账、知识库、数据库和通讯消息里。令牌只解决认证，不扩大授权：合并 MR、删除、改设置、创建 tag/release 等写操作仍按各自规则和用户授权。
 
+## 强制规则：SIRE 门禁钩子（2026-11-10，用户定，硬性、没有例外）
+
+Claude 执行任何任务都必须先加载 SIRE 工作流。由 `scripts/sire_gate.py` 在客户端钩子层强制：`PostToolUse`（匹配 Skill）调用 `record`，成功加载 `sire-global-workflow` 后在 `D:\sire\sire_ledger\gate\<会话ID>.loaded` 记下；`PreToolUse`（匹配所有工具）调用 `check`，**未加载时除 Skill 调用本身和 ToolSearch（只取工具定义、无副作用，防止 Skill 被延迟加载时死锁）外，所有工具一律拦截**（含读类、Bash、PowerShell、MCP），拦截信息要求先加载。
+
+- 钩子命令末尾带 `|| exit 0`，脚本缺失或语法错误不会被当成阻塞；脚本内任何异常也放行并把异常类型记入 `gate\error.log`——这是防止钩子故障锁死会话，不是规则例外。`SIRE_GATE_OFF=1` 仅供维修门禁自身时使用。
+- 子代理载荷带 `agent_id`/`agent_type` 时放行（主会话已受约束）。`record` 写主目录失败会退回临时目录；30 天前的标记在 `record` 时清理。
+- 快速通道属于 SIRE 工作流本身：先加载技能，再按白名单走三行模板；门禁不改变这一点。
+- Codex 暂未启用门禁，只在 `~/.codex/hooks.json` 的 `UserPromptSubmit` 注入 `sire_remind.py`；待核实其 `PreToolUse` 载荷与拒绝格式后再加。
+- 改动门禁、`settings.json` 里的对应钩子均属工作流机制变更，走 RSI。
+
 ## 简单任务快速通道（每次执行强制确认一次）
 
 每次执行 SIRE，在做任何检索、分析或拆解之前，必须先确认一次“是否简单任务”。Claude、Codex 与 Qoder 同样执行，不得省略这一步。

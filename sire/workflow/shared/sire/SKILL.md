@@ -15,6 +15,8 @@ Before doing any task, read [`references/global-contract.md`](references/global-
 
 **硬规则：告知额度消耗。** 完整流程任务的汇总消息由 `scripts/sire_usage.py --final` 输出真实“耗时”（精确到秒）和“额度消耗”；任务开始（R0）先读 `get_usage` 并运行 `sire_usage.py --plan-mark <5小时%> --weekly <周%>`，收尾再读一次并运行 `sire_usage.py --final --plan-end <5小时%> --weekly <周%>`，得到 `5小时额度:本任务约 X 个百分点`。该百分点是账号全局的整数差值，并行会话的消耗会混入，必须如实标注；折算量是估算值；读数缺失就写“未记录/未读到”，不得估算或手写。详见 `references/global-contract.md` § 强制规则：回复要告知额度消耗。
 
+**Hard rule: Claude must load this skill before any other tool call, no exceptions (2026-11-10).** `scripts/sire_gate.py` enforces it through PreToolUse/PostToolUse hooks: until the skill is loaded in the session, every tool except the Skill call itself is denied. Details and fail-open rules: `references/global-contract.md` § 强制规则：SIRE 门禁钩子.
+
 **Hard rule: never create a git worktree** (no `git worktree add`, `EnterWorktree`, `isolation: "worktree"`, `--worktree`); work in the current directory and branch. Applies to every task, subagent and fast path. Details: `references/global-contract.md` § 强制规则：禁止创建 git worktree.
 
 **Hard rule: no tests without the user's authorization.** Finish implementing the whole requirement (plus R6 code review), then tell the user it is done and awaiting test authorization; never run tests, builds-as-verification, servers, or browsers for verification until the user explicitly says to. Unauthorized R7 is recorded as `跳过：待用户授权测试`; units close with `sire_run.py test <unit> DEFERRED`. Final reply must say "未测试". Details: `references/global-contract.md` § 强制规则：测试须用户授权.

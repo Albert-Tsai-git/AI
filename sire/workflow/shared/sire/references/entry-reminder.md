@@ -19,6 +19,8 @@ SIRE {VERSION} 共享源适配（本提醒由 sire_remind.py 从正本实时生�
 【Codex 用量来源】
 - 同一 `sire_usage.py` 自动用 `CODEX_THREAD_ID`/`CODEX_SESSION_ID` 绑定当前 rollout，阶段与回合隔离，不回退 Claude；token 实数不套 Claude 权重。Codex 的 5 小时额度从 rollout 的 300 分钟窗口快照读取，替代 `get_usage` 和手填 `--plan-mark/--plan-end`；缺数据写“没有真实记录”或“没有读数来源”，全局快照不归因单任务。详见正本 `references/codex-usage.md`。
 
+【门禁】Claude 未先加载 SIRE 技能时，sire_gate.py 钩子会拦截除 Skill 外的所有工具，没有例外；先调用 Skill 加载 sire-global-workflow。
+
 【强制规则（所有任务含快速通道）】
 - 禁止创建 git worktree（不执行 git worktree add，不用 EnterWorktree、isolation:"worktree"、--worktree），一律在当前目录和分支工作；用户明确要求才可例外。
 - 没有用户在对话中的明确授权，不得执行任何测试/验证运行（测试、构建验证、起服务、开浏览器验证）。先把需求完整实现，再告知“已完成、待授权测试”；最终回复写“未测试”。授权只对当前任务有效。
