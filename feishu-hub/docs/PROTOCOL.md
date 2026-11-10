@@ -15,7 +15,7 @@
 
 | 项 | 值 |
 |---|---|
-| 地址 | `HUB_URL`，默认 `http://127.0.0.1:8765` |
+| 地址 | `HUB_URL`，默认 `http://127.0.0.1:8889` |
 | 鉴权 | 请求头 `Authorization: Bearer <token>`；令牌存放在 `~/.feishu_hub/token`（或环境变量 `FEISHU_HUB_TOKEN`），首次启动 Hub 时生成 |
 | 格式 | 请求和响应都是 `application/json; charset=utf-8` |
 | 版本 | 所有请求体带 `"protocol": 1`；双方忽略不认识的字段 |

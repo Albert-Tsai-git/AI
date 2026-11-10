@@ -10,7 +10,7 @@ import urllib.request
 import uuid
 
 HUB_HOME = os.environ.get("FEISHU_HUB_HOME") or os.path.join(os.path.expanduser("~"), ".feishu_hub")
-DEFAULT_URL = os.environ.get("FEISHU_HUB_URL") or "http://127.0.0.1:8765"
+DEFAULT_URL = os.environ.get("FEISHU_HUB_URL") or "http://127.0.0.1:8889"
 SPOOL_DIR = os.path.join(HUB_HOME, "spool")
 
 

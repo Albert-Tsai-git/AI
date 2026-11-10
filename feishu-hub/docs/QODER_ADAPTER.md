@@ -7,7 +7,7 @@
 
 ```
 飞书 ⇄ Hub（唯一连飞书、唯一发飞书、状态唯一来源）
-        ⇅ HTTP v1 (127.0.0.1:8765 + ~/.feishu_hub/token)
+        ⇅ HTTP v1 (127.0.0.1:8889 + ~/.feishu_hub/token)
    Claude 执行器 · Codex 执行器 · Qoder 执行器(本文件) · mock
 ```
 

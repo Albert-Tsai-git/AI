@@ -10,7 +10,7 @@ Codex 执行器从中间服务长轮询领取任务，以本机 Codex CLI 执行
 python .\feishu-hub\executors\codex\executor.py
 ```
 
-执行器启动时发送 `hello`，随后长轮询 `claim`。默认连接 `http://127.0.0.1:8765`，令牌从 `FEISHU_HUB_TOKEN` 或 `~/.feishu_hub/token` 读取。也可设置 `HUB_URL`/`FEISHU_HUB_URL` 指向其他服务地址；服务端仍需使用协议 v1。
+执行器启动时发送 `hello`，随后长轮询 `claim`。默认连接 `http://127.0.0.1:8889`，令牌从 `FEISHU_HUB_TOKEN` 或 `~/.feishu_hub/token` 读取。也可设置 `HUB_URL`/`FEISHU_HUB_URL` 指向其他服务地址；服务端仍需使用协议 v1。
 
 ## 配置
 

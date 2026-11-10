@@ -5,7 +5,7 @@
 
 ## 1. 边界
 
-- 只和中间服务通信（`HUB_URL`，默认 `http://127.0.0.1:8765`），**不得**直接调用飞书接口，不得读写中间服务数据库。
+- 只和中间服务通信（`HUB_URL`，默认 `http://127.0.0.1:8889`），**不得**直接调用飞书接口，不得读写中间服务数据库。
 - 不和 Claude 执行器通信，也不读写它的文件。
 - 旧飞书桥 `~/.feishu_bridge` 中的 `hook_codex_notify.py`、`codex queue` 逻辑可作为参考，但切换后不再使用；`~/.codex/config.toml` 的 `notify` 与 `~/.codex/hooks.json` 的 Stop Hook 在切换时改为指向本目录的新 Hook（见 §5）。
 

@@ -21,7 +21,7 @@ DEFAULTS = {
     # 通知发送对象，未设置时取白名单第一个
     "notify_open_id": "",
     "listen_host": "127.0.0.1",
-    "listen_port": 8765,
+    "listen_port": 8889,
     "lease_ttl_sec": 90,
     "heartbeat_sec": 30,
     "poll_wait_sec": 25,
