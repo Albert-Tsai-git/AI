@@ -15,3 +15,7 @@ sire/data/telemetry_digest.*
 node_modules/
 __pycache__/
 *.log
+
+# SIRE 额度/阶段计时的本机读数日志（运行数据，不进 Git）
+sire/data/plan_usage.jsonl
+sire/data/stage_usage.jsonl
