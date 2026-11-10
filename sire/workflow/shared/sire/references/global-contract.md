@@ -20,6 +20,8 @@
 
 ## 强制规则：回复要告知额度消耗（2026-11-10，用户定）
 
+**Codex 来源适配**：同一 `sire_usage.py` 自动绑定当前 Codex 会话，真实 token 与账号额度快照分开报告，不使用下述 Claude 权重。Codex 用 rollout 的 300 分钟窗口快照替代 `get_usage` 和手填 `--plan-mark/--plan-end`，缺数据如实写“没有真实记录”或“没有读数来源”。阶段按会话、回合、run 隔离；细则见 [codex-usage.md](codex-usage.md)。下方 Claude 读数流程及权重继续适用于 Claude。
+
 **5 小时额度百分点（2026-11-10，用户定，差值法）**：token 不能直接换算成额度百分比（平台未公布额度大小），百分比只能由应用的 `get_usage` 工具读到。完整流程任务 R0 先调用 `get_usage`，立刻执行 `python <SHARED_SKILL_DIR>\scripts\sire_usage.py --plan-mark <五小时%> --weekly <周%>` 记下开始读数；收尾再调用一次 `get_usage`，用 `sire_usage.py --final --plan-end <五小时%> --weekly <周%>` 得到 `5小时额度:本任务约 X 个百分点(读数 a% → b%)` 一行，放入回复。百分比是整数且为账号全局，并行会话的消耗会混入，脚本会如实标注；漏记开始读数就写“未记录本任务开始读数”，不得补估；`get_usage` 读不到（非 Pro/Max 计划、API key）就写“5小时额度:未读到”。
 
 完整流程任务的最终回复加一行 `额度消耗：…`，数据来自 `python <SHARED_SKILL_DIR>\scripts\sire_usage.py --final`（同时输出“耗时”行，见 § SIRE 输出契约）（读 Claude 转录里每条助手消息的 usage，按模型、主控/子代理汇总）。该行写明各模型/角色的折算量和输出 token；折算按公开定价比例估算，不等于账号实际额度扣减，必须标注“估算”。累计和多日统计用 `--session`、`--days N [--by-day]`。快速通道任务不加；脚本读不到数据时写“额度消耗：未读到 usage 记录”，不得编造数字。额度偏高时，在“建议”里指出最大消耗项（常见原因是上下文过长导致缓存读取量大、高档模型承担了可降级的工作），并按子代理降级机制处理。

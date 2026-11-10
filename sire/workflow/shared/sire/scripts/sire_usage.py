@@ -1,4 +1,4 @@
-"""SIRE 额度消耗统计：读取 Claude 转录里每条助手消息的 usage，按模型、主控/子代理汇总 token。
+"""SIRE 用量统计：自动识别 Codex 会话，或读取 Claude 转录 usage。
 
 用法：
   python sire_usage.py --final           分阶段计时：--stage-start R1 / --stage-end R1（每个阶段进入和完成时各调一次）
@@ -8,13 +8,16 @@
   python sire_usage.py --days 7          近 N 天全部会话累计（--by-day 按天拆分）
   python sire_usage.py --file X.jsonl    指定转录文件
 
-当前会话 = 当前目录对应项目目录下最近修改的转录；子代理转录（目录里的 subagents/ 子文件）并入同一会话并单独标注。
+Codex 从 CODEX_THREAD_ID/CODEX_SESSION_ID 或 --session-id 绑定 rollout，不猜测最近会话。
+Claude 只在当前项目查找转录；可用 --file 显式绑定，子代理转录并入同一会话。
+Codex 用法及计数边界见 references/codex-usage.md；不使用下述 Claude 折算权重。
 只读转录，不写任何库，不联网。输出 token 为转录里的真实数值；“折算”按公开定价比例估算（输入 1、输出 5、
 缓存写 1.25、缓存读 0.1，单位=输入 token），只用于同一模型内比较，不同模型之间不可直接相加，也不等于你账号的实际额度扣减。
 """
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -23,7 +26,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-from sire_paths import DATA_DIR
+from sire_paths import DATA_DIR, ledger_runs_dir
 
 HOME = Path(os.environ.get("CLAUDE_HOME") or Path.home() / ".claude")
 STAGE_LOG = Path(os.environ.get("SIRE_STAGE_LOG") or DATA_DIR / "stage_usage.jsonl")
@@ -43,10 +46,6 @@ def project_dir(cwd: str) -> Path | None:
 def latest_transcript(cwd: str) -> Path | None:
     d = project_dir(cwd)
     files = [f for f in d.glob("*.jsonl") if f.is_file()] if d is not None else []
-    if not files:
-        # 当前目录对应不到转录（例如在共享技能目录里运行脚本、统计的却是别的项目）：
-        # 退而取全机最近修改的主转录；子代理转录在 subagents 子目录里，不参与选择
-        files = [f for f in PROJECTS.glob("*/*.jsonl") if f.is_file()]
     return max(files, key=lambda f: f.stat().st_mtime) if files else None
 
 
@@ -170,7 +169,7 @@ def plan_mark(five: float, weekly: float | None) -> None:
         f.write(json.dumps({"ts": time.time(), "five_hour": five, "weekly": weekly}) + "\n")
 
 
-def stage_mark(kind: str, stage: str, cwd: str) -> str:
+def stage_mark(kind: str, stage: str, cwd: str, main: Path | None = None) -> str:
     """分阶段计时：start 记开始时刻；end 用开始时刻到现在的转录消息算该阶段真实耗时和额度折算。"""
     STAGE_LOG.parent.mkdir(parents=True, exist_ok=True)
     now = time.time()
@@ -179,6 +178,7 @@ def stage_mark(kind: str, stage: str, cwd: str) -> str:
             f.write(json.dumps({"ts": now, "kind": "start", "stage": stage}) + "\n")
         return f"{stage} 开始 {hms(now)}"
     start = None
+    ended = {}
     try:
         for line in STAGE_LOG.read_text(encoding="utf-8").splitlines():
             try:
@@ -187,21 +187,27 @@ def stage_mark(kind: str, stage: str, cwd: str) -> str:
                 continue
             if row.get("stage") == stage and row.get("kind") == "start":
                 start = row["ts"]
+            elif row.get("stage") == stage and row.get("kind") == "end":
+                ended[row.get("start")] = row
     except OSError:
         pass
     if start is None:
         return f"{stage} 耗时:未记录开始时刻,不估算"
-    main = latest_transcript(cwd)
+    if start in ended:
+        return ended[start].get("message", f"{stage} 已记录结束") + "（重复结束，未重复记录）"
+    main = main or latest_transcript(cwd)
     weighted = None
     if main is not None:
         msgs, _ = collect(session_files(main))
         agg = aggregate(msgs, start, now)
-        weighted = int(sum(sum(a[k] * WEIGHT[k] for k in KEYS) for a in agg.values()))
+        if agg:
+            weighted = int(sum(sum(a[k] * WEIGHT[k] for k in KEYS) for a in agg.values()))
     cost = f";额度折算约 {weighted:,}(估算)" if weighted is not None else ";额度:未读到 usage"
+    message = f"{stage} 耗时:{dur(now - start)}({hms(start)} → {hms(now)}){cost}"
     with STAGE_LOG.open("a", encoding="utf-8") as f:
         f.write(json.dumps({"ts": now, "kind": "end", "stage": stage, "start": start, "sec": now - start,
-                            "weighted": weighted or 0}) + "\n")
-    return f"{stage} 耗时:{dur(now - start)}({hms(start)} → {hms(now)}){cost}"
+                            "weighted": weighted, "message": message}) + "\n")
+    return message
 
 
 def stage_rank(turn_start: float) -> str:
@@ -214,19 +220,22 @@ def stage_rank(turn_start: float) -> str:
             except ValueError:
                 continue
             if r.get("kind") == "end" and r.get("start", 0) >= turn_start - 5:
-                a = rows.setdefault(r["stage"], {"sec": 0.0, "weighted": 0})
+                a = rows.setdefault(r["stage"], {"sec": 0.0, "weighted": 0, "known": True})
                 a["sec"] += r["sec"]          # 同一阶段多次进入则累加
-                a["weighted"] += r["weighted"]
+                a["known"] &= r.get("weighted") is not None
+                a["weighted"] += r.get("weighted") or 0
     except OSError:
         pass
     if not rows:
         return "阶段排名:本轮没有阶段计时记录(阶段没有用 --stage-start/--stage-end 计时),不估算"
     longest = max(rows.items(), key=lambda kv: kv[1]["sec"])
-    costly = max(rows.items(), key=lambda kv: kv[1]["weighted"])
-    order = "；".join(f"{k} {dur(v['sec'])}/折算 {v['weighted']:,}"
+    known = {k: v for k, v in rows.items() if v["known"]}
+    costly = max(known.items(), key=lambda kv: kv[1]["weighted"]) if known else None
+    cost_text = f"{costly[0]}(折算约 {costly[1]['weighted']:,},估算)" if costly else "没有真实记录"
+    order = "；".join(f"{k} {dur(v['sec'])}/" + (f"折算 {v['weighted']:,}" if v['known'] else "额度没有真实记录")
                       for k, v in sorted(rows.items(), key=lambda kv: -kv[1]["sec"]))
-    return (f"执行最长的阶段:{longest[0]}({dur(longest[1]['sec'])});消耗额度最多的阶段:{costly[0]}"
-            f"(折算约 {costly[1]['weighted']:,},估算)。各阶段:{order}。"
+    return (f"执行最长的阶段:{longest[0]}({dur(longest[1]['sec'])});消耗额度最多的阶段:{cost_text}"
+            f"。各阶段:{order}。"
             "未计时的阶段不在排名内")
 
 
@@ -348,13 +357,21 @@ def timing_line(t: dict | None) -> str:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="SIRE 额度消耗统计（读 Claude 转录 usage）")
+    global STAGE_LOG, PLAN_LOG
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+    ap = argparse.ArgumentParser(description="SIRE 用量统计（Codex / Claude，来源隔离）")
     g = ap.add_mutually_exclusive_group()
     g.add_argument("--turn", action="store_true", help="本轮（自上一条用户提示）")
     g.add_argument("--final", action="store_true", help="最终回复用：先输出“耗时”行，再输出“额度消耗”行")
     g.add_argument("--session", action="store_true", help="当前会话累计")
     g.add_argument("--days", type=float, help="近 N 天全部会话")
-    g.add_argument("--file", help="指定转录文件")
+    ap.add_argument("--file", help="显式指定转录文件，可与 --final/--turn 配合")
+    ap.add_argument("--client", choices=("auto", "claude", "codex"), default="auto")
+    ap.add_argument("--session-id", help="显式绑定会话，优先于客户端环境变量")
+    ap.add_argument("--turn-id", help="Codex 回合 ID；默认最近的 task_started")
+    ap.add_argument("--run-id", help="额外隔离运行记录；默认使用当前回合")
     ap.add_argument("--by-day", action="store_true")
     ap.add_argument("--plan-mark", type=float, metavar="五小时%", help="记录一次 5 小时额度读数（任务开始时调用）")
     ap.add_argument("--plan-end", type=float, metavar="五小时%", help="配合 --final：结束时的 5 小时额度读数")
@@ -364,9 +381,50 @@ def main() -> int:
     ap.add_argument("--line", action="store_true", help="只输出一行摘要")
     ap.add_argument("--cwd", default=os.getcwd())
     args = ap.parse_args()
-    sys.stdout.reconfigure(encoding="utf-8")
+    client = args.client
+    if client == "auto":
+        client = "codex" if os.environ.get("CODEX_THREAD_ID") or os.environ.get("CODEX_SESSION_ID") else "claude"
+        if args.file:
+            try:
+                with Path(args.file).open(encoding="utf-8") as stream:
+                    first = next((json.loads(line) for line in stream if line.strip()), {})
+                client = "codex" if first.get("type") == "session_meta" else "claude"
+            except (OSError, ValueError, AttributeError):
+                print("没有真实记录：无法识别指定转录", file=sys.stderr)
+                return 2
+    if client == "codex":
+        from sire_codex_usage import run
+        try:
+            return run(args)
+        except (OSError, ValueError) as error:
+            print(f"没有真实记录：{error}", file=sys.stderr)
+            return 2
+    # Claude 旧统计及渲染保留；日志按会话、回合起点、run 隔离，不再读全局旧日志。
+    main_file = Path(args.file) if args.file else latest_transcript(args.cwd)
+    requested_session = args.session_id or os.environ.get("CLAUDE_SESSION_ID")
+    if requested_session and not args.file:
+        project = project_dir(args.cwd)
+        main_file = next((f for f in project.glob("*.jsonl") if f.stem == requested_session), None) if project else None
+    if not args.days:
+        if main_file is None or not main_file.is_file():
+            print("没有真实记录：没有找到当前项目的 Claude 转录", file=sys.stderr)
+            return 2
+        if requested_session and main_file.stem != requested_session:
+            print("没有真实记录：Claude 转录 session_id 不匹配", file=sys.stderr)
+            return 2
+        entries = turn_entries(main_file)
+        index = turn_start_index(entries)
+        turn_key = entries[index][0] if index is not None else "没有回合记录"
+        scope = json.dumps(["claude", str(main_file.resolve()), turn_key, args.run_id], ensure_ascii=False)
+        key = hashlib.sha256(scope.encode()).hexdigest()[:24]
+        base = ledger_runs_dir() / ("usage-" + key)
+        # 覆盖路径仍隔离到相邻的带 scope 文件，不能复用其他会话的内容。
+        stage_base = Path(os.environ.get("SIRE_STAGE_LOG") or base / "stages.jsonl")
+        plan_base = Path(os.environ.get("SIRE_PLAN_LOG") or base / "plan.jsonl")
+        STAGE_LOG = stage_base.with_name(stage_base.stem + "-" + key + stage_base.suffix)
+        PLAN_LOG = plan_base.with_name(plan_base.stem + "-" + key + plan_base.suffix)
     if args.stage_start or args.stage_end:
-        print(stage_mark("start" if args.stage_start else "end", args.stage_start or args.stage_end, args.cwd))
+        print(stage_mark("start" if args.stage_start else "end", args.stage_start or args.stage_end, args.cwd, main_file))
         return 0
     if args.plan_mark is not None:
         plan_mark(args.plan_mark, args.weekly)
@@ -378,7 +436,6 @@ def main() -> int:
         msgs, _ = collect(files)
         print(render(aggregate(msgs, since, by_day=args.by_day), f"近 {args.days:g} 天全部会话"))
         return 0
-    main_file = Path(args.file) if args.file else latest_transcript(args.cwd)
     if main_file is None:
         print("没有找到当前目录对应的 Claude 转录", file=sys.stderr)
         return 2

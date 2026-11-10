@@ -14,6 +14,9 @@ SIRE {VERSION} 共享源适配（本提醒由 sire_remind.py 从正本实时生�
 - **子代理降级是省额度的首选机制**：可剥离的检索、读文件、机械改写、复核交给低一档子代理（Opus medium / Sonnet medium / Haiku high 三档），并说明为什么用、做什么；没降级也要写“无，因…”。R6 复核必须由独立角色做，不得作者自评。
 - **能使用中文的一律使用中文**（对话、思考、阶段消息、台账、提交说明、子代理派工）；token、RSI、模型名、代码、命令、路径等专用词保留。
 
+【Codex 用量来源】
+- 同一 `sire_usage.py` 自动用 `CODEX_THREAD_ID`/`CODEX_SESSION_ID` 绑定当前 rollout，阶段与回合隔离，不回退 Claude；token 实数不套 Claude 权重。Codex 的 5 小时额度从 rollout 的 300 分钟窗口快照读取，替代 `get_usage` 和手填 `--plan-mark/--plan-end`；缺数据写“没有真实记录”或“没有读数来源”，全局快照不归因单任务。详见正本 `references/codex-usage.md`。
+
 【强制规则（所有任务含快速通道）】
 - 禁止创建 git worktree（不执行 git worktree add，不用 EnterWorktree、isolation:"worktree"、--worktree），一律在当前目录和分支工作；用户明确要求才可例外。
 - 没有用户在对话中的明确授权，不得执行任何测试/验证运行（测试、构建验证、起服务、开浏览器验证）。先把需求完整实现，再告知“已完成、待授权测试”；最终回复写“未测试”。授权只对当前任务有效。

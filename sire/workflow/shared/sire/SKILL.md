@@ -31,6 +31,8 @@ On every SIRE run, before any retrieval or analysis, Claude, Codex and Qoder mus
 
 ## Shared locations
 
+Codex 的真实 token、阶段隔离、任务计时和 5 小时额度快照由同一 `scripts/sire_usage.py` 自动适配；来源绑定及缺失语义见 [`references/codex-usage.md`](references/codex-usage.md)。Codex 不套用 Claude 折算权重或无来源手填额度读数。
+
 `scripts/sire_paths.py` is the only path authority. By default it resolves:
 
 - Skill: `sire/workflow/shared/sire/`

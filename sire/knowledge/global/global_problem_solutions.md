@@ -3431,3 +3431,33 @@ controller/python/sub_common/DataFormatter.py；controller/python/qa_api/tests/t
 - 归档库只靠 index 步骤顺带写入知识记录，不等于 run 归档完成；判断归档是否完成要看 task_records 中 run.json 是否一致（`verify_database`）。
 
 **状态**: 部分完成（编号冲突已修，知识记录已在归档库可查；脚本四项改动未做，待 RSI；本次 run 的任务记录归档仍 pending）
+
+
+### P-20261111: Codex用量必须绑定会话并去重累计事件
+
+**日期**: 2026-11-10
+**项目**: SIRE Codex 用量适配
+**关键词**: Codex, rollout, token_usage_record, token_count, thread_token_usage, task_started, stage_usage, 额度快照, UTF-8
+
+**需求场景 / 现象**: 在 Codex 会话调用 sire_usage.py --final，旧脚本会读取其他 Claude 会话用量，阶段日志会混入其他任务。
+
+**根因**: 旧实现只识别 Claude message.usage，缺少 Codex 事件解析；阶段开始仅按名称找记录，转录选择存在跨项目兜底。
+
+**方案 / 架构**: 同一入口按客户端身份选择适配器。Codex 绑定 session_meta.id/cwd、task_started 的 turn_id；两类累计事件共用高水位，不重复叠加；只有明细时按 response_id 去重。阶段日志绑定 client/session/turn/run/cwd，重复结束不重复记账。token 与账号全局额度快照分开报告，缺少来源不伪造零。
+
+**关键文件与接口**:
+- sire/workflow/shared/sire/scripts/sire_usage.py：CLI、Claude 兼容入口。
+- sire/workflow/shared/sire/scripts/sire_codex_usage.py：load、usage、quota、run。
+- sire/workflow/shared/sire/references/codex-usage.md：计数及隔离边界。
+
+**实施步骤**:
+1. 运行 sire_remind.py 读取实时版本；流程变更先提出 RSI 议案并等待用户批准。
+2. 用 CODEX_THREAD_ID 或 --session-id 定位唯一 rollout，检查元数据与 cwd；不猜最新会话。
+3. 以累计差值去重，保留明确的零值，缺基线和回退报告限制。
+4. quota 截止选定回合结束，只有同一 reset 窗口的真实前后快照才比较。
+
+**验证方法**: 用户批准议案评估后，运行 python -m unittest test_sire_codex_usage -v，14 项通过；实际当前 rollout 的 --final 输出真实耗时、token、300 分钟窗口快照，未再显示 Claude 用量。
+
+**踩坑**: 零差值不保留会把真实零误报缺失；历史回合不限制额度快照截止点会混入后续读数；Windows stderr 必须与 stdout 一起设 UTF-8，避免子进程读取拒绝信息时解码失败。阶段 token 按事件落盘时间归属，不代表精确跨阶段请求拆分；主控 rollout 不含整个代理树，压缩转录暂不支持。
+
+**状态**: 已完成实现与评估，版本激活以 RSI 记录为准。
