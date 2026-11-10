@@ -5353,6 +5353,27 @@
         "kick",
         "排查"
       ]
+    },
+    {
+      "id": "P-20261111",
+      "type": "problem",
+      "title": "Codex用量必须绑定会话并去重累计事件",
+      "file": "global_problem_solutions.md",
+      "line": 3436,
+      "date": "2026-11-10",
+      "project": "SIRE Codex 用量适配",
+      "status": "已完成实现与评估，版本激活以 RSI 记录为准。",
+      "keywords": [
+        "Codex",
+        "rollout",
+        "token_usage_record",
+        "token_count",
+        "thread_token_usage",
+        "task_started",
+        "stage_usage",
+        "额度快照",
+        "UTF-8"
+      ]
     }
   ],
   "features": {
@@ -8302,7 +8323,8 @@
       "P-20261103",
       "P-20260923",
       "P-20260924",
-      "P-20260935"
+      "P-20260935",
+      "P-20261111"
     ],
     "协作通讯": [
       "P-20261103"
@@ -11074,6 +11096,30 @@
     ],
     "排查": [
       "P-20261110"
+    ],
+    "rollout": [
+      "P-20261111"
+    ],
+    "token_usage_record": [
+      "P-20261111"
+    ],
+    "token_count": [
+      "P-20261111"
+    ],
+    "thread_token_usage": [
+      "P-20261111"
+    ],
+    "task_started": [
+      "P-20261111"
+    ],
+    "stage_usage": [
+      "P-20261111"
+    ],
+    "额度快照": [
+      "P-20261111"
+    ],
+    "UTF-8": [
+      "P-20261111"
     ]
   },
   "efficiency": {
@@ -11872,6 +11918,6 @@
       "H-009"
     ]
   },
-  "last_updated": "2026-11-09T08:56:41Z",
-  "total_records": 250
+  "last_updated": "2026-11-10T07:53:43Z",
+  "total_records": 251
 }
