@@ -8,7 +8,8 @@
   resolve FINDING (--proposal ID | --ignore 原因 | --reopen)   标记发现的处理结果
 
 遥测库 DATA_DIR/sire_telemetry.sqlite3 独立于知识库：不进 Git，写入不触发知识库的整库备份。
-阶段耗时按“相邻两个事件的时间差”记到后一个事件所属阶段，因此包含模型思考时间和工具执行时间。
+阶段耗时按“相邻两个事件的时间差”记到后一个事件所属阶段；有 PreToolUse 事件时（Claude）再把每段时间拆成
+思考（模型生成）/执行（工具运行）/暂停（权限确认、等用户回答）三类，并按子代理角色汇总；没有 Pre 事件的客户端记为“未拆分”。
 """
 from __future__ import annotations
 
@@ -67,6 +68,10 @@ RULES = {
     "COMMS_FAIL": (2, "sire_comms.py 在一个任务里多次失败：核对配对/会话参数，补充报错提示或协议说明"),
     "OVERHEAD_HIGH": (1, "SIRE 流程开销（检索/读规则/台账/归档/RSI/提交/子代理）占完整任务时间过半：按诊断报告里的成因合并步骤、降级模型或脚本化"),
     "PHASE_SHARE": (1, "某 SIRE 阶段占完整任务时间比例偏高：按诊断成因处理（调用碎片化→合并成脚本；长尾单步→查该命令；失败重试→补正确用法）"),
+    "PAUSE_HIGH": (1, "暂停（权限确认/等用户回答）占已拆分时间比例偏高：把常用只读命令加入权限 allowlist，合并确认点，需要用户决定的事一次问完"),
+    "THINK_HIGH": (1, "模型思考占已拆分时间比例偏高：把可剥离的检索/读文件/机械改写交给低档子代理降级，精简规则，减少高档模型的无工具长推理"),
+    "ROLE_HEAVY": (1, "某个子代理角色耗时占完整任务过半：核对该角色是否过重、粒度是否过大，能降级的改用低一档模型"),
+    "HOOK_MISSING": (1, "遥测库里出现过的客户端，配置里已没有 sire_telemetry.py 钩子：重新注册钩子（可能被其他安装脚本覆盖），否则该端耗时数据会断流"),
     "COLLECTION_DEAD": (1, "客户端配了钩子却长时间无事件：核对该客户端配置是否仍指向 sire_telemetry.py hook，修好后 resolve；这属于采集面故障，不要靠删规则消音"),
 }
 DECAY_SECONDS = 30 * 86400  # 30 天没再出现才清零计数（原 7 天过短，低频问题永远攒不够）
@@ -97,6 +102,18 @@ OVERHEAD_LIMIT = 0.5      # 开销合计占完整任务时间比例达到该值 
 PHASE_SHARE_LIMIT = 0.2   # 单个开销阶段占比达到该值 → PHASE_SHARE:<阶段>
 DIAG_MIN_TASKS = 5
 DIGEST_INTERVAL = 86400   # analyze 里每 24 小时自动诊断一次
+# 思考/执行/暂停拆分：等用户回答的工具整段记为暂停；权限确认通知到工具返回之间记为暂停
+PAUSE_TOOLS = {"askuserquestion", "exitplanmode"}
+SPLIT_COVERAGE_MIN = 0.3  # 已拆分时间占比低于此值不据此生成发现（多数客户端没有 Pre 事件）
+PAUSE_LIMIT = 0.25        # 暂停占已拆分时间 → PAUSE_HIGH
+THINK_LIMIT = 0.7         # 思考占已拆分时间 → THINK_HIGH
+ROLE_LIMIT = 0.5          # 单个子代理角色占任务总时间 → ROLE_HEAVY
+ROLE_MAP = {
+    "sire-librarian": "R1", "sire-analyst": "R2", "sire-decomposer": "R3", "sire-spec-reviewer": "R4",
+    "sire-implementer": "R5", "sire-code-reviewer": "R6", "sire-code-reviewer-a": "R6", "sire-code-reviewer-b": "R6",
+    "sire-code-reviewer-c": "R6", "sire-qa-tester": "R7", "sire-integrator": "R8", "sire-supervisor": "R9",
+    "sire-system-operator": "R10", "sire-low": "tier-low", "sire-mid": "tier-mid", "sire-high": "tier-high",
+}
 
 
 def expected_clients() -> set[str]:
@@ -108,6 +125,23 @@ def expected_clients() -> set[str]:
             continue
         out.update(m.group(1).lower() for m in CLIENT_RE.finditer(text))
     return out
+
+
+def check_missing_hooks(c: sqlite3.Connection, now: float) -> None:
+    """库里采过事件的客户端，配置里却已没有遥测钩子（被其他安装脚本覆盖）：COLLECTION_DEAD 只看配置里还在的客户端，
+    漏掉了这种情况，所以单独核对一次。"""
+    configured = expected_clients()
+    for (client,) in c.execute("SELECT DISTINCT client FROM events WHERE client IS NOT NULL").fetchall():
+        if client in configured:
+            continue
+        fid = f"HOOK_MISSING:{client}"
+        if c.execute("SELECT 1 FROM findings WHERE finding_id=?", (fid,)).fetchone():
+            continue
+        item = {"client": client, "at": round(now), "evidence": "配置文件中找不到 sire_telemetry.py hook 钩子"}
+        c.execute("INSERT INTO findings(finding_id,rule,status,hits,first_seen,last_seen,evidence,suggestion) "
+                  "VALUES(?,?,?,?,?,?,?,?)",
+                  (fid, "HOOK_MISSING", "PROPOSED", 1, now, now,
+                   json.dumps([item], ensure_ascii=False), RULES["HOOK_MISSING"][1]))
 
 
 def check_clients(c: sqlite3.Connection, now: float, stale_seconds: float) -> None:
@@ -170,6 +204,10 @@ def connect() -> sqlite3.Connection:
     for name in ("ignore_kind TEXT", "hits_at_ignore INTEGER"):
         if name.split()[0] not in cols:
             c.execute(f"ALTER TABLE findings ADD COLUMN {name}")
+    ecols = {r[1] for r in c.execute("PRAGMA table_info(events)")}
+    for name in ("tuid TEXT", "role TEXT"):
+        if name.split()[0] not in ecols:
+            c.execute(f"ALTER TABLE events ADD COLUMN {name}")
     c.execute("UPDATE findings SET hits_at_ignore=hits WHERE status='IGNORED' AND hits_at_ignore IS NULL")
     return c
 
@@ -271,6 +309,62 @@ def infer_mode(counts: dict, total: float, tool_calls: int) -> str:
     return "unknown"
 
 
+def role_of(agent_type: str) -> str:
+    """子代理类型 → 角色标签；空表示主控。"""
+    if not agent_type:
+        return "main"
+    base = ROLE_MAP.get(agent_type)
+    return f"{base}:{agent_type}" if base else agent_type
+
+
+def timeline(rows, start: float) -> list[dict]:
+    """把事件还原成逐步耗时：每步的间隔拆成思考/执行/暂停/未拆分，四者之和等于相邻事件的时间差。
+    pre 事件（PreToolUse）给出工具开始时刻；notify 事件里的权限确认记为暂停起点；二者都不进入步骤本身。"""
+    last, steps, pres, notes = start, [], [], []
+    for r in rows:
+        ts, ev = r["ts"], r["event"]
+        if ts < start or ev == "prompt":
+            continue
+        if ev == "pre":
+            pres.append((ts, r["tool"] or "", r["tuid"] or ""))
+            continue
+        if ev == "notify":
+            if "permission" in (r["detail"] or "").lower():
+                notes.append(ts)
+            continue
+        if ev not in ("tool", "stop"):
+            continue
+        gap = max(0.0, ts - last)
+        think = run = pause = unsplit = 0.0
+        tool = r["tool"] or ""
+        if ev == "stop":
+            think = gap  # 最后一次工具之后到停止：模型生成最终回复
+        else:
+            hit = None
+            for i in range(len(pres) - 1, -1, -1):
+                if (r["tuid"] and pres[i][2] == r["tuid"]) or (not r["tuid"] and pres[i][1] == tool):
+                    hit = pres.pop(i)
+                    break
+            if hit is None:
+                unsplit = gap
+            else:
+                think = max(0.0, min(hit[0], ts) - last)
+                rest = gap - think
+                if tool.lower() in PAUSE_TOOLS:
+                    pause = rest
+                else:
+                    begin = max(hit[0], last)
+                    marks = [n for n in notes if begin <= n <= ts]
+                    pause = min(rest, ts - max(marks)) if marks else 0.0
+                    run = rest - pause
+        phase = "reply" if ev == "stop" else r["phase"]
+        steps.append({"phase": phase, "role": r["role"] or "main", "think": think, "exec": run, "pause": pause,
+                      "unsplit": unsplit, "gap": gap, "event": ev, "tool": tool, "detail": r["detail"] or "",
+                      "ok": r["ok"]})
+        last = ts
+    return steps
+
+
 def summarize_task(c: sqlite3.Connection, client: str, session: str, stop_ts: float, mode: str, cwd: str):
     """把上一个 stop 之后到本次 stop 之间的事件汇总成一个任务。
 
@@ -289,24 +383,28 @@ def summarize_task(c: sqlite3.Connection, client: str, session: str, stop_ts: fl
     start = prompts[0]["ts"] if prompts else others[0]["ts"]
     phases: dict[str, float] = {}
     counts: dict[str, int] = {}
-    last = start
+    split = {"think": 0.0, "exec": 0.0, "pause": 0.0, "unsplit": 0.0}
+    roles: dict[str, dict] = {}
     tool_calls = failures = 0
-    for r in rows:
-        if r["ts"] < start or r["event"] == "prompt":
-            continue
-        phase = "reply" if r["event"] == "stop" else r["phase"]
-        phases[phase] = phases.get(phase, 0.0) + max(0.0, r["ts"] - last)
-        last = r["ts"]
-        if r["event"] == "tool":
+    for st in timeline(rows, start):
+        phases[st["phase"]] = phases.get(st["phase"], 0.0) + st["gap"]
+        ro = roles.setdefault(st["role"], {"think": 0.0, "exec": 0.0, "pause": 0.0, "unsplit": 0.0, "calls": 0})
+        for k in split:
+            split[k] += st[k]
+            ro[k] += st[k]
+        if st["event"] == "tool":
             tool_calls += 1
-            counts[phase] = counts.get(phase, 0) + 1
-            failures += 0 if r["ok"] else 1
+            counts[st["phase"]] = counts.get(st["phase"], 0) + 1
+            ro["calls"] += 1
+            failures += 0 if st["ok"] else 1
     task_id = f"{session}:{start:.3f}"
     inferred = False
     if mode == "unknown":
         mode = infer_mode(counts, stop_ts - start, tool_calls)
         inferred = mode != "unknown"
-    summary = {"seconds": {k: round(v, 1) for k, v in phases.items()}, "calls": counts, "inferred": inferred}
+    summary = {"seconds": {k: round(v, 1) for k, v in phases.items()}, "calls": counts, "inferred": inferred,
+               "split": {k: round(v, 1) for k, v in split.items()},
+               "roles": {k: {a: (round(b, 1) if a != "calls" else b) for a, b in v.items()} for k, v in roles.items()}}
     c.execute("INSERT OR REPLACE INTO tasks(task_id,client,session,start_ts,end_ts,total_s,mode,phases,tool_calls,"
               "failures,cwd,prompt,analyzed) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,0)",
               (task_id, client, session, start, stop_ts, round(stop_ts - start, 1), mode,
@@ -330,12 +428,23 @@ def cmd_hook(args) -> int:
         event = payload.get("hook_event_name") or payload.get("event") or ""
         session = str(payload.get("session_id") or payload.get("thread_id") or "unknown")
         agent = payload.get("agent_id") or payload.get("agent_type") or ""
+        role = role_of(str(payload.get("agent_type") or ""))
+        tuid = str(payload.get("tool_use_id") or "")
         ts = time.time()
         c = connect()
         with c:
             if event == "UserPromptSubmit":
                 c.execute("INSERT INTO events(ts,client,session,event,detail,ok) VALUES(?,?,?,?,?,1)",
                           (ts, args.client, session, "prompt", redact(str(payload.get("prompt") or ""), 60)))
+            elif event == "PreToolUse":
+                tool = str(payload.get("tool_name") or "")
+                c.execute("INSERT INTO events(ts,client,session,event,tool,phase,ok,agent,tuid,role) "
+                          "VALUES(?,?,?,?,?,?,1,?,?,?)",
+                          (ts, args.client, session, "pre", tool, "", agent, tuid, role))
+            elif event == "Notification":
+                note = str(payload.get("notification_type") or payload.get("message") or "")
+                c.execute("INSERT INTO events(ts,client,session,event,detail,ok) VALUES(?,?,?,?,?,1)",
+                          (ts, args.client, session, "notify", redact(note, 60)))
             elif event in ("PostToolUse", "PostToolUseFailure"):
                 tool = str(payload.get("tool_name") or "")
                 tool_input = payload.get("tool_input")
@@ -344,8 +453,9 @@ def cmd_hook(args) -> int:
                 detail = redact(json.dumps(tool_input, ensure_ascii=False), 320)
                 # Qoder 单独发 PostToolUseFailure，比猜 tool_response 字段可靠
                 ok = 0 if event == "PostToolUseFailure" or tool_failed(payload.get("tool_response")) else 1
-                c.execute("INSERT INTO events(ts,client,session,event,tool,phase,detail,ok,agent) "
-                          "VALUES(?,?,?,?,?,?,?,?,?)", (ts, args.client, session, "tool", tool, phase, detail, ok, agent))
+                c.execute("INSERT INTO events(ts,client,session,event,tool,phase,detail,ok,agent,tuid,role) "
+                          "VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+                          (ts, args.client, session, "tool", tool, phase, detail, ok, agent, tuid, role))
             elif event == "Stop":
                 mode = detect_mode(last_assistant_text(payload))
                 c.execute("INSERT INTO events(ts,client,session,event,detail,ok) VALUES(?,?,?,?,?,1)",
@@ -465,19 +575,11 @@ DIGEST_STATE = DB_PATH.parent / "telemetry_digest.json"
 DIGEST_MD = DB_PATH.parent / "telemetry_digest.md"
 
 
-def task_steps(c: sqlite3.Connection, task) -> list[tuple]:
-    """还原任务的逐步耗时，口径与 summarize_task 相同：每个事件之前的间隔记给该事件的阶段。
-    返回 (阶段, 耗时, 事件类型, 工具, 详情, 是否成功)。"""
+def task_timeline(c: sqlite3.Connection, task) -> list[dict]:
+    """还原任务的逐步耗时（含思考/执行/暂停拆分），口径与 summarize_task 相同。"""
     rows = c.execute("SELECT * FROM events WHERE session=? AND ts>? AND ts<=? ORDER BY ts, id",
                      (task["session"], task["start_ts"] - 0.001, task["end_ts"])).fetchall()
-    last, steps = task["start_ts"], []
-    for r in rows:
-        if r["event"] == "prompt":
-            continue
-        phase = "reply" if r["event"] == "stop" else r["phase"]
-        steps.append((phase, max(0.0, r["ts"] - last), r["event"], r["tool"] or "", r["detail"] or "", r["ok"]))
-        last = r["ts"]
-    return steps
+    return timeline(rows, task["start_ts"])
 
 
 def explain(a: dict) -> str:
@@ -508,22 +610,37 @@ def build_diagnosis(c: sqlite3.Connection, days: float = DIAG_DAYS, client: str 
     sql += " ORDER BY end_ts DESC" + (f" LIMIT {int(last)}" if last else "")
     tasks = c.execute(sql, args).fetchall()
     agg: dict[str, dict] = {}
+    split = {"think": 0.0, "exec": 0.0, "pause": 0.0, "unsplit": 0.0}
+    roles: dict[str, dict] = {}
     total = 0.0
     for t in tasks:
         total += t["total_s"] or 0
-        for phase, gap, ev, tool, detail, ok in task_steps(c, t):
-            a = agg.setdefault(phase, {"sec": 0.0, "calls": 0, "fail": 0, "slow": []})
-            a["sec"] += gap
-            if ev == "tool":
+        for st in task_timeline(c, t):
+            a = agg.setdefault(st["phase"], {"sec": 0.0, "calls": 0, "fail": 0, "slow": []})
+            a["sec"] += st["gap"]
+            ro = roles.setdefault(st["role"], {"sec": 0.0, "calls": 0, "think": 0.0, "exec": 0.0, "pause": 0.0,
+                                               "unsplit": 0.0})
+            ro["sec"] += st["gap"]
+            for k in split:
+                split[k] += st[k]
+                ro[k] += st[k]
+            if st["event"] == "tool":
                 a["calls"] += 1
-                a["fail"] += 0 if ok else 1
-                a["slow"].append((gap, tool, detail[:60]))
+                ro["calls"] += 1
+                a["fail"] += 0 if st["ok"] else 1
+                a["slow"].append((st["gap"], st["tool"], st["detail"][:60]))
     rows = []
     for phase, a in sorted(agg.items(), key=lambda kv: -kv[1]["sec"]):
         rows.append({"phase": phase, "sec": round(a["sec"], 1), "share": a["sec"] / total if total else 0,
                      "calls": a["calls"], "fail": a["fail"], "cause": explain(a)})
+    role_rows = [{"role": k, "sec": round(v["sec"], 1), "share": v["sec"] / total if total else 0, "calls": v["calls"],
+                  "think": round(v["think"], 1), "exec": round(v["exec"], 1), "pause": round(v["pause"], 1),
+                  "unsplit": round(v["unsplit"], 1)} for k, v in sorted(roles.items(), key=lambda kv: -kv[1]["sec"])]
+    tracked = split["think"] + split["exec"] + split["pause"]
     overhead = sum(r["share"] for r in rows if r["phase"] in OVERHEAD_PHASES)
-    return {"days": days, "tasks": len(tasks), "total_s": round(total, 1), "overhead_share": overhead, "phases": rows}
+    return {"days": days, "tasks": len(tasks), "total_s": round(total, 1), "overhead_share": overhead, "phases": rows,
+            "split": {k: round(v, 1) for k, v in split.items()}, "split_coverage": tracked / total if total else 0,
+            "roles": role_rows}
 
 
 def render_diagnosis(d: dict) -> str:
@@ -534,6 +651,18 @@ def render_diagnosis(d: dict) -> str:
     for r in d["phases"]:
         mark = "" if r["phase"] in OVERHEAD_PHASES else "（兜底）" if r["phase"] in CATCH_ALL_PHASES else ""
         lines.append(f"| {r['phase']}{mark} | {r['sec']:.0f} | {r['share']:.0%} | {r['calls']} | {r['fail']} | {r['cause']} |")
+    sp = d.get("split") or {}
+    tracked = sp.get("think", 0) + sp.get("exec", 0) + sp.get("pause", 0)
+    lines += ["", f"## 时间拆分（已拆分覆盖 {d.get('split_coverage', 0):.0%}；其余客户端没有 Pre 事件，记为未拆分）", "",
+              "| 思考 | 执行 | 暂停 | 未拆分 |", "|---|---|---|---|",
+              f"| {sp.get('think', 0):.0f}s ({sp.get('think', 0) / tracked:.0%}) | {sp.get('exec', 0):.0f}s "
+              f"({sp.get('exec', 0) / tracked:.0%}) | {sp.get('pause', 0):.0f}s ({sp.get('pause', 0) / tracked:.0%}) "
+              f"| {sp.get('unsplit', 0):.0f}s |" if tracked else "| - | - | - | - |"]
+    lines += ["", "## 角色耗时（main=主控；R1–R10/tier-* 为子代理）", "",
+              "| 角色 | 耗时(s) | 占比 | 调用 | 思考 | 执行 | 暂停 | 未拆分 |", "|---|---|---|---|---|---|---|---|"]
+    for r in d.get("roles", []):
+        lines.append(f"| {r['role']} | {r['sec']:.0f} | {r['share']:.0%} | {r['calls']} | {r['think']:.0f} | "
+                     f"{r['exec']:.0f} | {r['pause']:.0f} | {r['unsplit']:.0f} |")
     return "\n".join(lines) + "\n"
 
 
@@ -550,6 +679,18 @@ def record_diagnosis_findings(c: sqlite3.Connection, d: dict, now: float) -> Non
     for r in d["phases"]:
         if r["phase"] in OVERHEAD_PHASES and r["share"] >= PHASE_SHARE_LIMIT:
             cands.append((f"PHASE_SHARE:{r['phase']}", "PHASE_SHARE", f"{r['phase']} 占 {r['share']:.0%}：{r['cause']}"))
+    sp = d.get("split") or {}
+    tracked = sp.get("think", 0) + sp.get("exec", 0) + sp.get("pause", 0)
+    if tracked and d.get("split_coverage", 0) >= SPLIT_COVERAGE_MIN:
+        if sp["pause"] / tracked >= PAUSE_LIMIT:
+            cands.append(("PAUSE_HIGH", "PAUSE_HIGH",
+                          f"暂停占已拆分时间 {sp['pause'] / tracked:.0%}（{sp['pause']:.0f}s / {tracked:.0f}s）"))
+        if sp["think"] / tracked >= THINK_LIMIT:
+            cands.append(("THINK_HIGH", "THINK_HIGH",
+                          f"模型思考占已拆分时间 {sp['think'] / tracked:.0%}（{sp['think']:.0f}s / {tracked:.0f}s）"))
+    for r in d.get("roles", []):
+        if r["role"] != "main" and r["share"] >= ROLE_LIMIT:
+            cands.append((f"ROLE_HEAVY:{r['role']}", "ROLE_HEAVY", f"{r['role']} 占完整任务时间 {r['share']:.0%}"))
     for fid, rule, evidence in cands:
         row = c.execute("SELECT status,resolved_at FROM findings WHERE finding_id=?", (fid,)).fetchone()
         if row and row["status"] == "FIXED" and now - (row["resolved_at"] or 0) < 7 * 86400:
@@ -599,6 +740,7 @@ def cmd_analyze(args) -> int:
                 record_finding(c, fid, rule, evidence, task, now)
             c.execute("UPDATE tasks SET analyzed=1 WHERE task_id=?", (task["task_id"],))
         check_clients(c, now, args.stale_hours * 3600)
+        check_missing_hooks(c, now)
         maybe_digest(c, now)
         cutoff = now - RETENTION_DAYS * 86400
         c.execute("DELETE FROM events WHERE ts<?", (cutoff,))
@@ -621,7 +763,10 @@ def cmd_report(args) -> int:
         return 0
     for it in items:
         parts = " ".join(f"{k}={v:.0f}s" for k, v in sorted(it["seconds"].items(), key=lambda kv: -kv[1]))
-        print(f"{it['start']} {it['client']:<6} {it['mode']:<7} 总计 {it['total_s']:.0f}s | {parts} | {it['prompt']}")
+        sp = it.get("split") or {}
+        cut = (f" | 思考{sp['think']:.0f}s 执行{sp['exec']:.0f}s 暂停{sp['pause']:.0f}s 未拆分{sp['unsplit']:.0f}s"
+               if sp else "")
+        print(f"{it['start']} {it['client']:<6} {it['mode']:<7} 总计 {it['total_s']:.0f}s | {parts}{cut} | {it['prompt']}")
     return 0
 
 

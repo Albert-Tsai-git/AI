@@ -110,9 +110,9 @@ SIRE 是所有任务的强制自动化处理机制，必须完整执行：
 
 | 难度 | 典型工作 | 模型 |
 |---|---|---|
-| 低 | 检索知识库、批量读文件/搜代码、机械改写、格式化、跑脚本与测试、写台账/归档记录 | `haiku`（子代理 `sire-low`） |
-| 中 | 常规编码实现、单元复核、功能测试、文档整理 | Opus 5.5 + low 思考（子代理 `sire-mid`） |
-| 高 | 需求澄清、架构/方案设计、复杂排错、整体 Review 与最终裁决 | Opus 5.5 + high 思考（主控或子代理 `sire-high`） |
+| 低 | 检索知识库、批量读文件/搜代码、机械改写、格式化、跑脚本与测试、写台账/归档记录 | Haiku + high 思考（子代理 `sire-low`，`model: haiku`、`effort: high`） |
+| 中 | 常规编码实现、单元复核、功能测试、文档整理 | Sonnet + medium 思考（子代理 `sire-mid`，`model: sonnet`、`effort: medium`） |
+| 高 | 需求澄清、架构/方案设计、复杂排错、整体 Review 与最终裁决 | Opus + medium 思考（主控或子代理 `sire-high`，`model: opus`、`effort: medium`） |
 
 ### 模型选择门禁（R4 放行后、R5 执行前）
 
@@ -121,16 +121,31 @@ SIRE 是所有任务的强制自动化处理机制，必须完整执行：
 1. 逐个单元按以下依据判定难度：是否需要设计决策或取舍；是否跨多个文件或模块；出错后的影响和回滚难度；验收标准是否可以机械核对；是否有现成知识或模板可以直接复用。
 2. 简单单元（可机械核对、无设计决策、影响面小）派给低成本模型执行；复杂单元（需要设计决策、跨模块、高风险或排错）保留当前模型执行。中间情况按上表派给中难度。
 3. 无法确定难度时先用低一档模型；验收不达标再按规则 3 升级，不得为了保险一开始就全部用当前模型。
-4. 整个任务只有一个极小单元时，直接在主控完成，并在门禁结论中写明“极小任务，主控直接执行”。
+4. 整个任务只有一个极小单元时，可直接在主控完成并写明“极小任务，主控直接执行”；也可按下方“子代理降级”派给低档子代理。
 5. 门禁产物是每个单元的“单元编号 / 难度 / 模型 / 判定理由”清单，写入台账并在阶段报告中列出。
 6. R6 复核、R8 集成和 R9 收尾的最终裁决不得降到低成本模型。
+
+### 子代理降级（2026-11-10，用户定）
+
+子代理降级是**省额度的首选机制，必须用起来**：凡完整流程任务，主控（及任何高档模型）对每个单元和每段可剥离的工作，先问“能否降级”，满足条件就**默认降级**，不得因图省事或求稳而自己硬扛；不必再问用户。
+
+- **判定条件**（需全部满足）：无设计决策或取舍；影响面小、可回滚；验收可机械核对；所需上下文可用一两句精简指令说清。
+- **降到哪一档**：纯检索、批量读、机械改写、跑脚本、写台账用低档（Haiku high）；常规编码、单元复核、文档整理用中档（Sonnet medium）；判断拿不准就先选低一档。
+- **不适用**：R6 复核、R8 集成、R9 收尾的最终裁决；涉及凭据、权限、不可逆操作、系统设置、worktree、tag 的单元；任务本身小到派工冷启动成本高于直接做时，仍由当前模型直接做。
+- **优先剥离的工作**：凡不需要高档判断的部分都先剥给低档——检索知识库、批量读文件/搜代码、整理日志与输出、机械改写与格式化、跑已授权的脚本、写台账与归档记录；主控只保留需求澄清、方案设计、取舍、复杂排错和最终裁决。
+- **必须说明（用户定）**：每次起子代理降级，要说清**为什么用子代理、让它做什么任务**。
+  - 台账：记录“单元 / 降级到哪档 / 模型 / 做什么 / 为什么降级（对应哪条判定条件）”，与门禁产物同表。
+  - 对话：最终回复加一行 `子代理降级：<任务> → <档位/模型>，因<理由>`，有多个就每个一行；未降级的完整流程任务也要写一行 `子代理降级：无，因<理由>`（如极小任务、冷启动成本更高、命中不适用项）。
+  - 派工指令里写明任务目标与产出，让子代理的工作可对照检查。
+- **回升**：降级单元验收不达标，按“子代理结果不达标可升一级模型重做”回升并计返工次数；同一单元降级后回升达到 2 次，之后不再降级，由当前模型接手。
+- 降级只改变谁来执行，不改变授权、测试授权、worktree、依据核对等任何硬规则，子代理同样受其约束。
 
 Qoder 端没有 `model` 参数（Agent 工具与 `create_chat_session` 都不接受模型），三档改为**角色档 + 隔离会话**：`python <SHARED_SKILL_DIR>\scripts\sire_qoder.py role low|mid|high --task-file <f>` 生成委派文，`subagent_type` 分别取 Explore / general-purpose / Plan；档位与理由照常记台账，模型一栏写 `qoder-role:<tier>`，不得为省事把高难度也丢给低档角色。
 
 规则：
 1. 派工时在台账记录每个单元所用模型；未注明默认按上表。
 2. 低中难度单元主控只写精简指令、只读结论，不重复读取子代理已读内容。
-3. 子代理结果不达标可升一级模型重做（haiku→Opus low→Opus high），计入返工次数；不得一开始就全部用高级模型。
+3. 子代理结果不达标可升一级模型重做（Haiku high→Sonnet medium→Opus medium），计入返工次数；不得一开始就全部用高级模型。
 4. 纯问答、单点小改等极小任务直接在主控完成，不为派工而派工（派工本身有冷启动成本）。
 5. 输出保持简约：阶段日志写台账，对话只给结果、风险、建议，不复述文件内容。
 6. 先完成任务，再汇报异议：执行过程中发现的隐患、建议、机制缺口、需授权的动作，一律记录后继续推进可推进部分，任务完成后在末尾一小段列出；不得中途停下提问，不得为其单独占一轮。仅当出现真实阻塞（缺授权、会丢数据、不可逆）才中断，且只说清需要用户决定的一件事。
@@ -139,7 +154,7 @@ Qoder 端没有 `model` 参数（Agent 工具与 `create_chat_session` 都不接
 
 工作流在执行任务的过程中自己发现问题、自己优化，不需要用户安排。
 
-1. **自动记录**：Claude、Codex 与 Qoder 的钩子（UserPromptSubmit、PostToolUse、Stop；Qoder 另接 PostToolUseFailure）调用 `scripts/sire_telemetry.py hook --client claude|codex|qoder`，记录每个任务的开始、每次工具调用和结束时间，按阶段（读规则、检索、执行、子代理、台账、归档、RSI、提交、回复）累计耗时，写入本机遥测库 `sire_telemetry.sqlite3`（不进 Git）。Qoder 端由 `scripts/sire_qoder.py install` 一次性注册钩子与 `skills/sire-global-workflow` 别名（junction 指向唯一源），配置写入后**最迟在下一个用户提示词就开始采集，无需重启**；用 `sire_qoder.py verify` 复核，判据是遥测库里 `client='qoder'` 的事件与任务心跳，而不是日志文本；入口注入 `remind` 只是可选项（`--with-remind`）：Qoder 的规则注入实际由用户级记忆 `~/.qoder-cn/memory/` 承担（每轮必进上下文），客户端 SDK 里没有 Claude 的 `additionalContext`/`hookSpecificOutput` 字段，钩子 stdout 不进上下文；`parity` 子命令一条命令自检八项兼容度；Stop 载荷不带 `transcript_path`，模式判定靠 `qoder_transcript()` 回退读 `~/.qoder-cn/projects/*/<session>.jsonl`；卸载用 `sire_qoder.py uninstall`，只移除自己写入的键。模型不需要、也不要手动记录耗时。
+1. **自动记录**：Claude、Codex 与 Qoder 的钩子（UserPromptSubmit、PostToolUse、Stop；Qoder 另接 PostToolUseFailure）调用 `scripts/sire_telemetry.py hook --client claude|codex|qoder`，记录每个任务的开始、每次工具调用和结束时间（Claude 另接 PreToolUse、Notification），按阶段（读规则、检索、执行、子代理、台账、归档、RSI、提交、回复）累计耗时，并拆成**思考（模型生成）/执行（工具运行）/暂停（权限确认、等用户回答）**三类、按子代理角色（R1–R10、低/中/高档、主控）汇总，无 Pre 事件的客户端记为“未拆分”；`diagnose` 输出时间拆分表与角色表，`PAUSE_HIGH`/`THINK_HIGH`/`ROLE_HEAVY` 转为待处理发现；配置里缺钩子但库里采过数据的客户端报 `HOOK_MISSING`。写入本机遥测库 `sire_telemetry.sqlite3`（不进 Git）。Qoder 端由 `scripts/sire_qoder.py install` 一次性注册钩子与 `skills/sire-global-workflow` 别名（junction 指向唯一源），配置写入后**最迟在下一个用户提示词就开始采集，无需重启**；用 `sire_qoder.py verify` 复核，判据是遥测库里 `client='qoder'` 的事件与任务心跳，而不是日志文本；入口注入 `remind` 只是可选项（`--with-remind`）：Qoder 的规则注入实际由用户级记忆 `~/.qoder-cn/memory/` 承担（每轮必进上下文），客户端 SDK 里没有 Claude 的 `additionalContext`/`hookSpecificOutput` 字段，钩子 stdout 不进上下文；`parity` 子命令一条命令自检八项兼容度；Stop 载荷不带 `transcript_path`，模式判定靠 `qoder_transcript()` 回退读 `~/.qoder-cn/projects/*/<session>.jsonl`；卸载用 `sire_qoder.py uninstall`，只移除自己写入的键。模型不需要、也不要手动记录耗时。
 2. **静默分析**：每个任务结束时，Stop 钩子在后台运行 `sire_telemetry.py analyze`。回合边界以 Stop 为准，UserPromptSubmit 只是可选起点（自动化/续跑型提示不触发它，缺 prompt 事件也必须照样汇总），按检测规则累计命中：简单任务超时或越界、收尾占比过高、子代理过重、同一命令反复失败、规则文件读取过多、某阶段明显变慢。达到阈值的转为待处理发现。分析过程不在对话里输出。
 3. **自动优化**：R9 收尾的重复动作已合并成一条命令 `python <SHARED_SKILL_DIR>\scripts\sire_close.py close --root <项目根> --stages stages.json [--records …|--no-archive 原因] [--kb-add 类型|标题|正文] [--migration 行文本]`（内部仍走 `finish` 的 pending 门禁，不绕过任何检查）。完整流程任务在 R9 收尾时运行 `python <SHARED_SKILL_DIR>\scripts\sire_telemetry.py pending`。这一步由 `sire_run.py finish` 强制检查（`pending-check.json` 留痕）：有待处理发现又没处理完，收尾直接 BLOCKED；确实需要用户决定时用 `sire_telemetry.py resolve <发现> --ignore "原因"`，或 `finish --pending-note "原因"` 显式移交。没有输出就结束这一步；有输出时处理排在第一的一条：
    - 读证据（需要时用 `sire_telemetry.py report`），在共享 skill 目录内做最小修复，例如改规则措辞、把多步手工操作合并成脚本命令、同步入口副本。
@@ -151,6 +166,7 @@ Qoder 端没有 `model` 参数（Agent 工具与 `create_chat_session` 都不接
 5. **采集存活自检**：`analyze` 会从三端客户端配置里解析出"应当在哪台机器上采集"的 client 名单（可用 `SIRE_CLIENT_CONFIGS` 覆盖），某个已配置客户端超过 `--stale-hours`（默认 12 小时）没有事件就产出 `COLLECTION_DEAD:<client>` 发现并直接进入待处理队列，30 分钟内不重复计数。这类问题不得靠删规则消音。
 6. **时间自我分析（2026-11-10，用户定）**：工作流自己分析任务时间并优化机制。`python <SHARED_SKILL_DIR>\scripts\sire_telemetry.py diagnose [--days N] [--client X] [--last N] [--record]` 输出完整流程任务的各阶段耗时占比、调用数、失败数和**成因**（失败重试 / 被单个长步骤主导 / 调用碎片化 / 单次平均偏高 / 无工具调用的模型思考），并给出对应优化方向；`analyze` 每 24 小时自动诊断一次，写 `telemetry_digest.md`，并把“SIRE 开销合计占比≥50%”（`OVERHEAD_HIGH`）和“单个开销阶段占比≥20%”（`PHASE_SHARE:<阶段>`）转成待处理发现，R9 `pending` 照常处理，修复走 RSI。回复里没有“快速通道”标记的任务按行为推断模式（用过检索/台账/归档/RSI/子代理/提交/读规则即 full；工具≤3 次且≤60 秒为 fast），不再整体漏检。
 7. **质量类规则与忽略复活**：除耗时外还检测 `USER_CORRECTION`（用户纠正）、`RULE_VIOLATION`（建 worktree/自行建推 tag）、`GATE_BLOCK`、`REVIEW_FAIL`、`COMMS_FAIL`。`resolve --ignore` 默认按“与本任务无关”处理，忽略后同类命中累计到 max(阈值×2,4) 次或超过 14 天再次命中，发现自动复活为待处理；确属已知并接受的才加 `--accepted`（永不复活）。计数衰减窗口为 30 天。
+8. **优化议案流程（2026-11-10，用户定）**：每条优化议案由我自己提出（`sire_rsi.py propose`），可向用户确认；**用户确认后立即执行**：改动、`evaluate`、`activate`、提交，并同步更新当前工作流与版本号（`config-hash` 取提交后的 `git rev-parse HEAD:sire/workflow/shared/sire`），不再二次确认。议案写清：要解决的缺陷、证据、改动范围、是否涉及客户端配置。用户已授权的“自行修复自己的缺陷”范围内的小缺陷可直接修；涉及客户端配置、删除规则、放宽安全/授权/验收的议案必须先确认。
 
 ## SIRE 输出契约
 
