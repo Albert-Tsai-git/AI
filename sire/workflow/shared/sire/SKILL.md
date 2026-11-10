@@ -11,9 +11,9 @@ Every response must include this exact line: `[SIRE v6] 已使用 SIRE 工作流
 
 Before doing any task, read [`references/global-contract.md`](references/global-contract.md). It contains the user's complete mandatory SIRE process, output contract, R7/R10 real-scenario rules, and task-end archive requirement. This shared skill is the only workflow source; app-level instructions must point here rather than restate the rules.
 
-**Hard rule: all replies in Chinese (2026-11-10).** Conversation, stage reports, ledger text, commit messages and subagent replies/briefs are written in Chinese; only proper terms (token, RSI, commit, model names), code, commands, paths, identifiers and quoted errors stay as-is. Briefs to subagents say "用中文回复". Details: `references/global-contract.md` § 强制规则：所有回复使用中文.
+**硬规则：能使用中文的一律使用中文（2026-11-10）。** 对话、阶段消息、思考过程、台账文字、提交说明、子代理回复与派工指令都用中文；只有专用词（token、RSI、commit、模型名等）、代码、命令、路径、标识符、报错原文保留原文。派工指令里写明“用中文回复”。详见 `references/global-contract.md` § 强制规则：能使用中文的一律使用中文。
 
-**Hard rule: report quota use.** Every full-workflow final reply carries one line `额度消耗：…` produced by `scripts/sire_usage.py --final` (which also prints the real `耗时:` line: start/end clock time to the second plus think/exec/pause split, taken from transcript timestamps; never estimate or hand-write it). It also carries the plan-quota delta: at R0 call `get_usage` and run `sire_usage.py --plan-mark <5h%> --weekly <w%>`; at closure call `get_usage` again and run `sire_usage.py --final --plan-end <5h%> --weekly <w%>`; the reply line `5小时额度:本任务约 X 个百分点` is a global-account integer delta (parallel sessions leak in) and must say so; never estimate a missing reading (token usage read from the Claude transcript, per model and main/subagent; the weighted figure is an estimate and must be labelled so; never invent numbers). Details: `references/global-contract.md` § 强制规则：回复要告知额度消耗.
+**硬规则：告知额度消耗。** 完整流程任务的汇总消息由 `scripts/sire_usage.py --final` 输出真实“耗时”（精确到秒）和“额度消耗”；任务开始（R0）先读 `get_usage` 并运行 `sire_usage.py --plan-mark <5小时%> --weekly <周%>`，收尾再读一次并运行 `sire_usage.py --final --plan-end <5小时%> --weekly <周%>`，得到 `5小时额度:本任务约 X 个百分点`。该百分点是账号全局的整数差值，并行会话的消耗会混入，必须如实标注；折算量是估算值；读数缺失就写“未记录/未读到”，不得估算或手写。详见 `references/global-contract.md` § 强制规则：回复要告知额度消耗。
 
 **Hard rule: never create a git worktree** (no `git worktree add`, `EnterWorktree`, `isolation: "worktree"`, `--worktree`); work in the current directory and branch. Applies to every task, subagent and fast path. Details: `references/global-contract.md` § 强制规则：禁止创建 git worktree.
 
@@ -84,7 +84,7 @@ Before R7 starts, list each test ID, real user operation steps, expected behavio
 
 ## Output and evidence contract
 
-Each stage and role records “执行中”, “执行完毕”, or “跳过” with a reason, plus artifacts, verification results, and blockers, in the run ledger/evidence under the current run directory, not in the chat. In the chat, speak only when there is a result, a blocker, or a decision the user must make; work is reported live, stage by stage (v6.48): for EVERY stage R0–R10 and the model-selection gate send a bold line `**R1 - 检索 - 执行中,请等待…**` on entry (after `sire_usage.py --stage-start R1`), then `**R1 - 检索 - 已完成**` with 结果 / 详情 / 建议风险 / 耗时 / 额度 on separate lines (耗时 and 额度 copied from `--stage-end R1`), or `**R3 - 拆解 - 已跳过**` with 原因; after the last stage send `**全部完成**` with 总耗时, 总额度消耗, 风险, 建议, 未测试. Details: `references/global-contract.md` § SIRE 输出契约. No step narration, file recaps, or repeated logs.
+每个阶段和角色的“执行中”“执行完毕”“跳过”（含原因）、产物、验证结果和阻塞项，写入本次运行目录的台账和证据文件。对话里采用“边执行边汇报”（v6.48）：R0–R10 与模型选择门禁**每个阶段都单独发消息**——进入阶段先运行 `sire_usage.py --stage-start R1`，发加粗标题 `**R1 - 检索 - 执行中,请等待…**`；完成后发 `**R1 - 检索 - 已完成**`，下面分行写结果、详情、建议/风险、耗时、额度（耗时和额度取自 `sire_usage.py --stage-end R1` 的输出，不手写）；不执行的阶段发 `**R3 - 拆解 - 已跳过**` 并写原因；全部结束发 `**全部完成**`，写总耗时、总额度消耗、风险、建议、未测试。单阶段很短可只发“已完成”。台账路径只在出错时给。详见 `references/global-contract.md` § SIRE 输出契约。
 
 Use the local run ledger and scripts when available. Record failed reviews/tests, repair actions, retry counts, and final evidence. Do not call a stage complete merely because a command returned successfully; inspect the resulting data and state.
 
