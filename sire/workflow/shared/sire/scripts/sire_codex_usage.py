@@ -60,7 +60,9 @@ def load(path: Path, use_cache=True) -> dict:
         if row.get("type") == "turn_context" or (row.get("type") == "event_msg" and p.get("type") == "task_started"):
             context_turn = p.get("turn_id") or context_turn
         if row.get("type") == "token_usage_record" and p.get("response_id") and counters(p.get("usage")) is not None:
-            detail_turns.add(p.get("turn_id") or context_turn)
+            # 回合 ID 缺失时不归入明细回合，避免所有无 ID 事件被合并成同一个 None 回合
+            if p.get("turn_id") or context_turn:
+                detail_turns.add(p.get("turn_id") or context_turn)
     candidate_previous = None
     for row in rows:
         ts, kind = stamp(row.get("timestamp")), row.get("type")
@@ -89,7 +91,7 @@ def load(path: Path, use_cache=True) -> dict:
         else:
             continue
         turn_id = p.get("turn_id") or current_turn
-        if turn_id in detail_turns:
+        if turn_id is not None and turn_id in detail_turns:
             if kind == "token_usage_record" and p.get("response_id") and single is not None:
                 details[(turn_id, p["response_id"])] = {"ts": ts, "turn_id": turn_id,
                                                        "model": model, "usage": single, "method": "detail"}

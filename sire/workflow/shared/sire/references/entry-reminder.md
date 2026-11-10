@@ -14,6 +14,8 @@ SIRE {VERSION} 共享源适配（本提醒由 sire_remind.py 从正本实时生�
 - **子代理降级是省额度的首选机制**：可剥离的检索、读文件、机械改写、复核交给低一档子代理（Opus medium / Sonnet medium / Haiku high 三档），并说明为什么用、做什么；没降级也要写“无，因…”。R6 复核必须由独立角色做，不得作者自评。
 - **能使用中文的一律使用中文**（对话、思考、阶段消息、台账、提交说明、子代理派工）；token、RSI、模型名、代码、命令、路径等专用词保留。
 
+【各端只汇报自己的消耗】Claude 只写自己的 sire_usage.py 输出，Codex 只写自己 rollout 的输出，口径不同不相加、不代报；整段计时的任务第一个阶段前先 --stage-start，没计时写“没有真实记录”。
+
 【Codex 用量来源】
 - 同一 `sire_usage.py` 自动用 `CODEX_THREAD_ID`/`CODEX_SESSION_ID` 绑定当前 rollout，阶段与回合隔离，不回退 Claude；token 实数不套 Claude 权重。Codex 的 5 小时额度从 rollout 的 300 分钟窗口快照读取，替代 `get_usage` 和手填 `--plan-mark/--plan-end`；缺数据写“没有真实记录”或“没有读数来源”，全局快照不归因单任务。详见正本 `references/codex-usage.md`。
 
