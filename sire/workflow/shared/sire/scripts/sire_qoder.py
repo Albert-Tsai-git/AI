@@ -112,7 +112,7 @@ def entry_text() -> str:
     return (f"{ENTRY_TAG}\n# Qoder 全局指令（SIRE 薄入口，由 sire_qoder.py 生成）\n\n"
             f"所有任务必须执行 SIRE v6 工作流。唯一源与规则正文：`{SHARED_SKILL_DIR}`"
             f"（读 `SKILL.md` 与 `references/global-contract.md`；本文件不复述规则）。\n\n"
-            f"两条硬性要求：每次回复首行输出 `[SIRE v6] 已使用 SIRE 工作流执行当前任务`；"
+            f"两条硬性要求：每次回复首行输出 `【sire-<当前版本> 已使用】`；"
             f"动手前先判一次快速通道（规则指纹 {digest}，全文见唯一源）。\n"
             f"本端遥测钩子由 `sire_qoder.py install` 注册，采集状况用 `sire_qoder.py verify` 复核。{ENTRY_TAG}\n")
 
@@ -174,7 +174,7 @@ def _fastpath_section() -> tuple[str, str]:
 
 def cmd_remind(_args) -> int:
     section, digest = _fastpath_section()
-    print(f"[SIRE v6] 每次回复首行必须输出：`[SIRE v6] 已使用 SIRE 工作流执行当前任务`。\n"
+    print(f"[SIRE v6] 每次回复首行必须输出：`【sire-<当前版本> 已使用】`。\n"
           f"唯一源：{SHARED_SKILL_DIR}（快速通道规则指纹 {digest}）；判定标准实时取自该源，"
           f"动手前先过一次快速通道：\n\n{section}")
     return 0
@@ -448,7 +448,7 @@ def cmd_selftest(_args) -> int:
     transcript = Path(os.environ.get("TEMP", "/tmp")) / "sire_qoder_selftest.jsonl"
     transcript.write_text(json.dumps({"type": "assistant", "sessionId": session, "message": {
         "role": "assistant", "content": [{"type": "text",
-        "text": "[SIRE v6] 已使用 SIRE 工作流执行当前任务\n快速通道：否，完整流程"}]}},
+        "text": "【sire-<当前版本> 已使用】\n快速通道：否，完整流程"}]}},
         ensure_ascii=False) + "\n", encoding="utf-8")
     run({"hook_event_name": "Stop", "session_id": session, "transcript_path": str(transcript),
          "cwd": str(DATA_DIR)})

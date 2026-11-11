@@ -7,7 +7,7 @@ description: Use for every Claude, Codex or Qoder task. Runs the shared SIRE wor
 
 This is the sole SIRE workflow source for Claude, Codex and Qoder. Both installed skill folders must resolve to this same directory. The knowledge directory and SQLite database also live in this repository. App-specific files may only provide discovery metadata or point to these shared resources; never keep a second writable workflow, knowledge base, or database.
 
-Every response must include this exact line: `[SIRE v6] 已使用 SIRE 工作流执行当前任务`.
+Every response must include this exact line: `【sire-<当前版本> 已使用】`. 版本号只取本轮入口提醒首行 `SIRE vX.XX`，没有则现读 `python <SHARED_SKILL_DIR>\scripts\sire_remind.py` 首行；禁止凭记忆或会话开头加载的技能文本填写（会话中途版本会升级）。
 
 Before doing any task, read [`references/global-contract.md`](references/global-contract.md). It contains the user's complete mandatory SIRE process, output contract, R7/R10 real-scenario rules, and task-end archive requirement. This shared skill is the only workflow source; app-level instructions must point here rather than restate the rules.
 

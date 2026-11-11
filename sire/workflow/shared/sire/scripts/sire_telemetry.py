@@ -62,6 +62,7 @@ RULES = {
     "RULE_READ": (3, "一个任务读取规则文件 4 次以上：入口文件直接给出所需规则，或合并规则文件"),
     "PHASE_OUTLIER": (2, "某阶段耗时超过历史中位数 3 倍：检查该阶段的脚本或规则是否有新增的低效步骤"),
     "USER_CORRECTION": (3, "用户在提示词里纠正/追问同类问题：回看这些任务，找出规则缺口或理解偏差并写进入口规则"),
+    "USAGE_MISSING": (1, "完整流程的最终回复缺少“耗时”或“额度消耗”：检查 sire_usage.py --plan-mark/--stage-*/--final 是否被执行，补强入口提醒或收尾门禁"),
     "RULE_VIOLATION": (1, "出现违反硬规则的命令（建 worktree、自行建/推 tag）：检查入口提醒与技能是否被执行，补强门禁"),
     "GATE_BLOCK": (2, "同一任务里 sire_run.py 多次失败（门禁字段/状态流转）：把该门禁的正确用法写进规则或脚本报错提示"),
     "REVIEW_FAIL": (2, "单元复核或测试多次 FAIL：检查拆解粒度、验收标准是否写清、执行者是否漏读依赖"),
@@ -466,6 +467,11 @@ def cmd_hook(args) -> int:
                 mode = detect_mode(last_assistant_text(payload))
                 c.execute("INSERT INTO events(ts,client,session,event,detail,ok) VALUES(?,?,?,?,?,1)",
                           (ts, args.client, session, "stop", mode))
+                reply = last_assistant_text(payload)
+                if mode == "full" and not ("耗时" in reply and "额度消耗" in reply):
+                    # 完整流程的最终回复必须自带耗时与额度消耗；缺失记为质量事件，由下次 R9 处理
+                    c.execute("INSERT INTO events(ts,client,session,event,detail,ok) VALUES(?,?,?,?,?,0)",
+                              (ts, args.client, session, "usage_missing", "最终回复缺耗时/额度消耗"))
                 summarize_task(c, args.client, session, ts, mode, str(payload.get("cwd") or ""))
         c.close()
         if event == "Stop":
@@ -484,6 +490,8 @@ def detect_quality(task, events) -> list[tuple[str, str, str]]:
     if CORRECTION_RE.search(prompt):
         out.append(("USER_CORRECTION", "USER_CORRECTION", prompt[:40]))
     tools = [e for e in events if e["event"] == "tool"]
+    if any(e["event"] == "usage_missing" for e in events):
+        out.append(("USAGE_MISSING", "USAGE_MISSING", "完整流程最终回复缺耗时/额度消耗"))
     for e in tools:
         if VIOLATION_RE.search(e["detail"] or ""):
             out.append(("RULE_VIOLATION", "RULE_VIOLATION", (e["detail"] or "")[:80]))

@@ -1211,6 +1211,44 @@ def telemetry_pending_gate(rd: str, note: str) -> str | None:
             % (len(open_items), first))
 
 
+def usage_record_gate(run: dict, note: str) -> str | None:
+    """R9 强制核对：本次运行期间必须有 5 小时额度读数（--plan-mark）和至少一个阶段计时结束记录。
+    读不到额度读数等确有原因时，用 finish --usage-note 显式说明才放行，不能静默放行。"""
+    created = 0.0
+    try:
+        created = datetime.fromisoformat((run.get("created") or "").replace("Z", "+00:00")).timestamp()
+    except ValueError:
+        pass
+
+    def rows(name):
+        """日志按“会话+回合”隔离在 ledger_runs_dir()/usage-<key>/ 下；一个 run 可跨多个回合，故扫描全部。"""
+        out = []
+        for p in ledger_runs_dir().glob("usage-*/" + name):
+            try:
+                for x in p.read_text(encoding="utf-8").splitlines():
+                    if x.strip():
+                        row = json.loads(x)
+                        if isinstance(row, dict) and isinstance(row.get("ts"), (int, float)) and row["ts"] >= created:
+                            out.append(row)
+            except (OSError, ValueError):
+                continue
+        return out
+
+    marks = rows("plan.jsonl")
+    ends = [r for r in rows("stages.jsonl") if r.get("kind") == "end"]
+    # Codex 的 5 小时额度来自 rollout 快照、不支持 --plan-mark，只核对阶段计时
+    is_codex = bool(os.environ.get("CODEX_THREAD_ID") or os.environ.get("CODEX_SESSION_ID"))
+    missing = []
+    if not marks and not is_codex:
+        missing.append("5 小时额度读数（先 get_usage，再 sire_usage.py --plan-mark）")
+    if not ends:
+        missing.append("阶段计时（sire_usage.py --stage-start/--stage-end）")
+    if not missing or note:
+        return None
+    return ("耗时/额度记录缺失：本次运行期间没有 %s。补记后再收尾；确实无法获得时用 "
+            "finish --usage-note 写明原因（读不到额度读数就写“未读到”）" % "、".join(missing))
+
+
 def cmd_finish(args):
     _root, rid, rd, data = ctx(args)
     run, units = data
@@ -1265,6 +1303,9 @@ def cmd_finish(args):
     pending_error = telemetry_pending_gate(rd, getattr(args, "pending_note", ""))
     if pending_error:
         blockers.append(pending_error)
+    usage_error = usage_record_gate(run, getattr(args, "usage_note", ""))
+    if usage_error:
+        blockers.append(usage_error)
     rc = fail_all(blockers)
     if rc:
         return rc
@@ -1380,6 +1421,8 @@ def main():
     s.add_argument("--note", default="")
     s.add_argument("--pending-note", dest="pending_note", default="",
                    help="待处理发现确实需要用户决定时，记录移交理由")
+    s.add_argument("--usage-note", dest="usage_note", default="",
+                   help="耗时/额度记录确实缺失时的原因（读不到额度读数写“未读到”）；不给则缺记录会阻止收尾")
 
     args = p.parse_args()
     if args.cmd == "init":
