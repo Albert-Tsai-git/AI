@@ -1220,22 +1220,9 @@ def usage_record_gate(run: dict, note: str) -> str | None:
     except ValueError:
         pass
 
-    def rows(name):
-        """日志按“会话+回合”隔离在 ledger_runs_dir()/usage-<key>/ 下；一个 run 可跨多个回合，故扫描全部。"""
-        out = []
-        for p in ledger_runs_dir().glob("usage-*/" + name):
-            try:
-                for x in p.read_text(encoding="utf-8").splitlines():
-                    if x.strip():
-                        row = json.loads(x)
-                        if isinstance(row, dict) and isinstance(row.get("ts"), (int, float)) and row["ts"] >= created:
-                            out.append(row)
-            except (OSError, ValueError):
-                continue
-        return out
-
-    marks = rows("plan.jsonl")
-    ends = [r for r in rows("stages.jsonl") if r.get("kind") == "end"]
+    import sire_usage  # 与本脚本同目录；发现规则与提交门禁共用 sire_usage.usage_rows，避免分叉
+    marks = sire_usage.usage_rows("plan", created)
+    ends = [r for r in sire_usage.usage_rows("stage", created) if r.get("kind") == "end"]
     # Codex 的 5 小时额度来自 rollout 快照、不支持 --plan-mark，只核对阶段计时
     is_codex = bool(os.environ.get("CODEX_THREAD_ID") or os.environ.get("CODEX_SESSION_ID"))
     missing = []

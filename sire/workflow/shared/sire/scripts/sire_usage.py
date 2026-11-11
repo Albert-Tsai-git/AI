@@ -162,6 +162,38 @@ def one_line(agg: dict) -> str:
 PAUSE_TOOLS = {"askuserquestion", "exitplanmode"}
 
 
+def usage_rows(kind: str, since: float = 0.0) -> list[dict]:
+    """读取本机全部额度/阶段计时记录（门禁与收尾门禁共用，保证发现规则只有一套）。
+    kind="plan" 读额度读数，kind="stage" 读阶段计时。默认位置 runs/usage-*/plan*.jsonl 或 stages*.jsonl；
+    设置了 SIRE_PLAN_LOG / SIRE_STAGE_LOG 时，本脚本把记录写到 <覆盖路径所在目录>/<stem>-<key><suffix>，一并扫描。
+    逐行容错：坏行、非对象、ts 非数字的行被跳过，不影响同文件其他行；只返回 ts >= since 的行。"""
+    import glob as _glob
+    name, env = ("plan", "SIRE_PLAN_LOG") if kind == "plan" else ("stages", "SIRE_STAGE_LOG")
+    files = list(ledger_runs_dir().glob("usage-*/" + name + "*.jsonl"))
+    override = os.environ.get(env)
+    if override:
+        base = Path(override)
+        try:
+            # 只扫带 key 的文件（Claude 路径只写这种）；用 glob.escape 避免 [ ? 被当通配符
+            files += list(base.parent.glob(_glob.escape(base.stem) + "-*" + _glob.escape(base.suffix)))
+        except Exception:  # noqa: BLE001  通配或路径异常都退回只扫默认目录
+            pass
+    rows: list[dict] = []
+    for path in files:
+        try:
+            lines = path.read_text(encoding="utf-8").splitlines()
+        except (OSError, ValueError):
+            continue
+        for line in lines:
+            try:
+                row = json.loads(line) if line.strip() else None
+            except (ValueError, RecursionError):  # 深层嵌套的坏行也只跳过该行
+                continue
+            if isinstance(row, dict) and isinstance(row.get("ts"), (int, float)) and row["ts"] >= since:
+                rows.append(row)
+    return rows
+
+
 def plan_mark(five: float, weekly: float | None) -> None:
     """记下一次账号额度读数（百分比来自应用的 get_usage 工具，脚本自己读不到）。"""
     PLAN_LOG.parent.mkdir(parents=True, exist_ok=True)

@@ -6,7 +6,7 @@
 
 每次回复必须明确告知用户：`【sire-<当前版本> 已使用】`。版本号只取本轮入口提醒首行 `SIRE vX.XX`，没有则现读 `python <SHARED_SKILL_DIR>\scripts\sire_remind.py` 首行；禁止凭记忆或会话开头加载的技能文本填写（会话中途版本会升级）。
 
-任务开始前必须检索 SIRE 本地知识库和向量数据库；任务结束后必须将可复用知识、任务记录和验证结果同步到机器级归档数据库 `@SIRE_ARCHIVE_ROOT@\sire_vectors.sqlite3`。除下方“简单任务快速通道”外，不得因任务简单而跳过 SIRE 声明、检索、记录或归档要求。
+任务开始前必须检索 SIRE 本地知识库和向量数据库；任务结束后必须将可复用知识、任务记录和验证结果同步到机器级归档数据库 `D:\sire\sire_vectors.sqlite3`。除下方“简单任务快速通道”外，不得因任务简单而跳过 SIRE 声明、检索、记录或归档要求。
 
 ## 强制规则：能使用中文的一律使用中文（2026-11-10，用户定，v6.49 加强）
 
@@ -130,7 +130,7 @@ SIRE 是所有任务的强制自动化处理机制，必须完整执行：
 4. 每个单元完成后依次进行独立 Review 和功能验收；验收不合格必须驳回重做，并记录失败原因和修复动作。
 5. 同一错误重试达到 3 次仍未解决时，中断受影响流程并告知用户原因；其他不受影响的单元可继续。
 6. 所有单元完成并验收后，对整体需求执行关联性、隐患、回归和待优化点 Review。相关联的优化点必须在本任务内解决；不相关的优化点在最终报告中提醒用户。
-7. 最终执行知识收集：提炼关键知识、关键词、决策、验证结果和限制，写入 `@SIRE_ARCHIVE_ROOT@\sire_vectors.sqlite3`，后续检索优先匹配关键词。
+7. 最终执行知识收集：提炼关键知识、关键词、决策、验证结果和限制，写入 `D:\sire\sire_vectors.sqlite3`，后续检索优先匹配关键词。
 
 ## 模型分级与省 token 机制
 
@@ -225,8 +225,12 @@ Qoder 端没有 `model` 参数（Agent 工具与 `create_chat_session` 都不接
   7. 阶段额度是转录里该时间段的 token 折算（估算）；5 小时额度百分点整数粒度太粗，只在汇总里给。没有真实记录的耗时写“没有真实记录，不估算”，不得手写。
   8. **各端只汇报自己的消耗（用户定，2026-11-10）**：Claude 阶段/汇总里的耗时、额度只写 Claude 自己的 `sire_usage.py`（`--client claude`）输出；Codex 只写它自己 rollout 的输出。两端口径不同（Claude 为折算估算，Codex 为 rollout 真实 token），不相加、不互相代报、不引用对方数字。需要整段计时的任务，**第一个阶段开始前**必须先运行 `--stage-start`，没计时的阶段写“没有真实记录”，不得事后估算。
 - 快速通道任务仍然只有三行，不套本模板。
-- **提交与结束由钩子拦截（v6.60）**：`sire_gate.py check` 在 `git commit/push` 前核对本轮已有 `--plan-mark` 额度读数（只匹配命令位置的 git commit/push 子命令，git log/add 等不拦；先读小的额度日志，24 小时内无读数直接判未记录，不解析大转录），没有就 deny（读不到转录时放行）；`sire_gate.py stop-check`（Stop 钩子）发现完整流程（含“快速通道：否”）的最终回复缺“耗时”或“额度消耗”时拦截一次，要求补跑 `sire_usage.py --final`（判定与遥测共用 `reply_lacks_usage`；遥测只在已被拦过仍缺、或非 Claude 端时才记 `USAGE_MISSING`；`stop_hook_active` 时不再拦，避免死循环）。`SIRE_GATE_OFF=1` 可整体关闭。设置了 `SIRE_PLAN_LOG` 时门禁也会扫描覆盖目录下的 `<stem>-<key><suffix>`；但该变量必须在启动客户端的环境（或 settings 的 `env`）里设置，钩子进程才看得到，只在命令行临时设置会导致读写分家、提交被误拦。
-- **耗时/额度记录由脚本强制（v6.59）**：`sire_run.py finish` 核对本次运行期间有 `--plan-mark` 额度读数和至少一个 `--stage-end` 记录，缺失即拒绝收尾，确无法获得时用 `--usage-note` 写明原因（读不到额度写“未读到”）；Stop 钩子发现完整流程的最终回复缺“耗时”或“额度消耗”，记 `USAGE_MISSING` 质量发现，由下次 R9 处理。
+- **耗时与额度记录由脚本和钩子强制（v6.59–v6.62，本条为唯一说明）**：
+  1. **收尾门禁**：`sire_run.py finish` 核对本次运行期间有 `--plan-mark` 额度读数和至少一个 `--stage-end` 记录，缺失即拒绝收尾；确无法获得时用 `--usage-note` 写明原因（读不到额度写“未读到”）。Codex 不支持 `--plan-mark`（额度来自 rollout 快照），只核对阶段计时。
+  2. **提交前门禁**：`sire_gate.py check` 在提交/推送类命令前核对本轮已有 `--plan-mark` 额度读数，没有就 deny；读不到转录时放行。命令识别是尽力拦截的护栏，不是权限边界：覆盖命令位置的 git commit/push/merge/revert/cherry-pick/rebase/am 与 `gh pr merge`，允许环境变量、sudo/time/env/xargs 前缀、`bash -c`、then/do/else 之后与花括号内，允许 git 全局选项与带引号参数；`git log`/`git add`、引号内文字、`echo git commit`、`commit-tree` 不拦。24 小时内无读数直接判未记录，不解析大转录。
+  3. **Stop 拦截**：`sire_gate.py stop-check` 发现完整流程（含“快速通道：否”，兼容半角冒号）的最终回复缺“耗时”或“额度消耗”时拦截一次，要求补跑 `sire_usage.py --final`；`stop_hook_active` 时不再拦，避免死循环。判定与遥测共用 `reply_lacks_usage`；遥测只在“已被拦过仍缺”或非 Claude 端才记 `USAGE_MISSING`，由下次 R9 处理。
+  4. **读数发现规则只有一套**：提交门禁与收尾门禁共用 `sire_usage.usage_rows`，逐行容错；设置了 `SIRE_PLAN_LOG` / `SIRE_STAGE_LOG` 时一并扫描覆盖目录下的 `<stem>-<key><suffix>`。这两个变量必须在启动客户端的环境（或 settings 的 `env`）里设置、并使用绝对路径，钩子进程才看得到且解析一致；只在命令行临时设置会导致读写分家、提交被误拦。
+  5. `SIRE_GATE_OFF=1` 可整体关闭门禁。
 - **耗时必须是真实记录**：任务开始到结束的时间精确到秒，由 `python <SHARED_SKILL_DIR>\scripts\sire_usage.py --final` 一次输出“耗时”和“额度消耗”两行，原样放入回复，**不得估算或手写**。开始时刻取本轮第一条用户提示（回合中途追加的消息不重置起点），结束时刻取调用时刻（最终回复文字的生成另计数秒）；思考/执行/暂停来自转录时间戳（暂停=等用户回答的工具）。精确的任务结束时刻另由 Stop 钩子写入遥测库（`tasks.end_ts`），`sire_telemetry.py report` 可查。脚本读不到数据时写“耗时:未读到本轮转录时间戳”，不得编造。快速通道任务不加这两行。
 - 台账路径只在出错或用户要看时给，不放进默认模板。
 - 不写客套、过程叙述、重复内容和用户没问的背景。
@@ -256,9 +260,9 @@ Qoder 端没有 `model` 参数（Agent 工具与 `create_chat_session` 都不接
 
 - 唯一 SIRE skill 源：`<SIRE_ROOT>/workflow/shared/sire/`。Claude 的 `~/.claude/skills/sire-global-workflow/`、Codex 的 `~/.codex/skills/ai-dev-sire-workflow/` 必须链接到同一物理目录；Qoder 用 `sire_qoder.py link` 建立 `~/.qoder-cn/skills/sire-global-workflow` junction 指向同一目录。
 - 唯一 Claude/Codex 工作数据库：`<SIRE_ROOT>/data/sire_vectors.sqlite3`，暂不进 Git（超过 GitHub 100MB 单文件上限），本机实际路径见 `sire/data/DATABASE-RECORD.md`；知识目录为 `<SIRE_ROOT>/knowledge/global/`。脚本必须通过 `scripts/sire_paths.py` 解析；两端的 `SIRE_ROOT`、`SIRE_DATA_DIR`、`SIRE_VECTOR_DB`、`SIRE_KB_DIR`、`SIRE_EMBED_DIR` 和 `SIRE_TASK_ROOTS` 覆盖值必须相同。
-- 系统级归档规则仍要求更新 `@SIRE_ARCHIVE_ROOT@\sire_vectors.sqlite3`；它是任务闭环归档位置，不得配置成 Claude 或 Codex 的独立工作库。收尾时将任务记录与可复用知识同步到该归档，并将工作流与知识改动提交到 Git（共享数据库只做备份与检查，暂不进 Git，见 `sire/data/DATABASE-RECORD.md`）。
+- 系统级归档规则仍要求更新 `D:\sire\sire_vectors.sqlite3`；它是任务闭环归档位置，不得配置成 Claude 或 Codex 的独立工作库。收尾时将任务记录与可复用知识同步到该归档，并将工作流与知识改动提交到 Git（共享数据库只做备份与检查，暂不进 Git，见 `sire/data/DATABASE-RECORD.md`）。
 - **“提交代码”的定义（用户定，2026-10-15）**：用户明确说“提交代码”时，授权将本次任务范围内的当前改动 commit 后，推送到当前分支已配置的 upstream（使用该 upstream 对应的远端和分支），无需再次确认是否 push。先读取当前分支、upstream 和工作区差异，只提交本次任务范围内的改动；保留并排除无关或此前已有的改动。若 upstream 未配置、远端不可访问或目标 ref 无法明确解析，停止 push 并说明阻塞，不猜测 origin、分支或其他 ref。不得强推、改写已发布历史或推送当前分支以外的 ref；其他 push 仍须用户明确授权。
-- PowerShell 收尾命令中的 `$env:SIRE_ARCHIVE_ROOT` 对应本机的 `@SIRE_ARCHIVE_ROOT@`；`$env:SIRE_ARCHIVE_DB` 必须由 `Join-Path $env:SIRE_ARCHIVE_ROOT 'sire_vectors.sqlite3'` 得到。两者只是执行当前归档步骤的 shell 变量，不配置到任一客户端。
+- **归档库配置（用户定，2026-11-11）**：机器级归档库固定为 `D:\sire\sire_vectors.sqlite3`，三处同时配置，缺一不可：① 用户级环境变量 `SIRE_ARCHIVE_DB`（所有客户端与后台 worker 继承，改后需重启客户端）；② `sire_paths.archive_database_path()` 在环境变量都未设置且该文件存在时回退到它；③ Claude `settings.json` 的 `env.SIRE_ARCHIVE_DB`。后台归档队列里此前因“未配置归档库”失败的任务不会丢弃，下次 SIRE 触发时自动重试。
 - 禁止在客户端 profile 目录下保留可写的第二份 SIRE skill、知识库或向量库。Qoder 端的 `~/.qoder-cn/skills/sire-global-workflow` 只能是由 `sire_qoder.py link` 建立的 junction；入口规则由 `sire_qoder.py remind` 实时从本文件生成，不留手工副本；`sire_qoder.py verify` 用来证明本端钩子确实在采集，`uninstall` 只删自己写入的键。轻量 ZIP 与 Git 仓库目前都不含数据库；数据库只在本机，位置与恢复方法见 `sire/data/DATABASE-RECORD.md`，禁止 `git add -f` 提交它。
 
 ### 按需协作通讯服务

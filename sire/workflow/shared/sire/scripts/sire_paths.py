@@ -27,13 +27,19 @@ def comms_dir() -> Path:
     return COMMS_ROOT
 
 
+# 本机机器级归档库的已知位置（用户 2026-11-11 定）：环境变量都未设置时，文件存在才回退使用，不存在仍返回 None（不凭空创建）
+DEFAULT_ARCHIVE_DB = Path("D:/sire/sire_vectors.sqlite3")
+
+
 def archive_database_path() -> Path | None:
-    """机器级收尾归档库：SIRE_ARCHIVE_DB 优先，其次 SIRE_ARCHIVE_ROOT；都未设置时返回 None（不猜测）。"""
+    """机器级收尾归档库：SIRE_ARCHIVE_DB 优先，其次 SIRE_ARCHIVE_ROOT；都未设置时回退到已知位置 DEFAULT_ARCHIVE_DB（仅当该文件存在），否则返回 None。"""
     explicit = os.environ.get("SIRE_ARCHIVE_DB")
     if explicit:
         return Path(explicit).expanduser()
     root = os.environ.get("SIRE_ARCHIVE_ROOT")
-    return Path(root).expanduser() / "sire_vectors.sqlite3" if root else None
+    if root:
+        return Path(root).expanduser() / "sire_vectors.sqlite3"
+    return DEFAULT_ARCHIVE_DB if DEFAULT_ARCHIVE_DB.is_file() else None
 
 
 def task_roots() -> list[Path]:

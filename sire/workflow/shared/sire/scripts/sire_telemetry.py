@@ -305,7 +305,7 @@ def reply_lacks_usage(text: str) -> bool:
 
 
 def detect_mode(text: str) -> str:
-    text = text.replace("快速通道:", "快速通道：")  # 兼容半角冒号，与 reply_lacks_usage 一致
+    text = re.sub(r"快速通道[：:]\s*", "快速通道：", text)  # 兼容半角冒号与冒号后空格，与 reply_lacks_usage 一致
     fast, full = text.rfind(FAST_MARK), text.rfind(FULL_MARK)
     if fast < 0 and full < 0:
         return "unknown"

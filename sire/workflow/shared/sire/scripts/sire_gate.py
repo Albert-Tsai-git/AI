@@ -20,7 +20,6 @@ Codex 侧暂未启用本门禁（只注入提醒），详见 references/global-c
 """
 from __future__ import annotations
 
-import glob
 import json
 import os
 import re
@@ -108,31 +107,22 @@ def needs_gate(payload: dict) -> bool:
     return (payload.get("tool_name") or "") not in ("Skill", "ToolSearch")
 
 
-# 只匹配“命令位置”的 git 子命令 commit/push：行首或 ; & | ( 之后，允许 git 全局选项（-c k=v、-C 路径、--xxx）；
-# git log --grep commit、git add commit.md、引号里的 "git push" 都不匹配
-COMMIT_RE = re.compile(
-    r"(?:^|[;&|(\n])\s*(?:\S*[\\/])?git(?:\.exe)?"
-    r"(?:\s+(?:-[cC]\s+\S+|--[\w-]+(?:=\S+)?|-[\w])){0,6}\s+(?:commit|push)\b")
+# 提交/推送识别（护栏而非权限边界，尽力拦截）：只匹配“命令位置”的 git 子命令，
+# 命令位置 = 行首、; & | ( { ` 之后、then/do/else 之后、bash -c "..." 引号内；允许环境变量前缀与 sudo/time/env 等包装；
+# 允许 git 全局选项（-c k=v、-C "路径"、--git-dir x 等）；子命令词尾用前瞻，避免 commit-tree 误拦。
+# git log --grep commit、git add commit.md、引号里的 "git push"、echo git commit 都不匹配。
+_CMD_START = r"(?:^|[;&|(\n{`]|\b(?:then|do|else|exec)\b|\b(?:bash|sh|zsh)\s+-c\s+[\"'])"
+_PREFIX = r"\s*(?:\w+=\S*\s+)*(?:(?:sudo|time|env|command|nohup|xargs)\s+)*"
+_GIT = r"(?:\"[^\"]*[\\/]git(?:\.exe)?\"|(?:[^\s\"']*[\\/])?git(?:\.exe)?)"
+_OPTS = (r"(?:\s+(?:-[cC]\s+(?:\"[^\"]*\"|'[^']*'|\S*\"[^\"]*\"\S*|\S+)|--(?:git-dir|work-tree|namespace|exec-path)\s+\S+"
+         r"|--[\w-]+(?:=\S+)?|-[\w])){0,8}")
+_SUB = r"\s+(?:commit|push|merge|revert|cherry-pick|rebase|am)(?=\s|$|[\"';&|)`])(?!\s+--(?:abort|continue|quit|skip)\b)"
+COMMIT_RE = re.compile(_CMD_START + _PREFIX + r"(?:" + _GIT + _OPTS + _SUB + r"|gh\s+pr\s+merge(?=\s|$))")
 USAGE_DENY = ("[sire_gate] 提交/推送前必须已记录本轮额度读数：先调用 get_usage 读 5 小时额度，再运行 "
               "sire_usage.py --plan-mark <5小时%> --weekly <周%>；任务结束的汇总必须带 sire_usage.py --final 的耗时与额度消耗。")
 STOP_REASON = ("[sire_gate] 完整流程的最终回复缺少“耗时”或“额度消耗”。请先读 get_usage，运行 "
                "sire_usage.py --final --plan-end <5小时%> --weekly <周%>，把输出的耗时、额度消耗、阶段排名写进汇总后再结束；"
                "读不到就如实写“未记录/未读到”，不得省略。")
-
-
-def plan_log_files(runs_dir: Path) -> list[Path]:
-    """额度读数文件：默认在 runs/usage-*/plan*.jsonl；设置了 SIRE_PLAN_LOG 时 sire_usage 把读数写到
-    <覆盖路径所在目录>/<stem>-<key><suffix>，需一并扫描（与 sire_usage.py 的写入规则保持一致）。"""
-    files = list(runs_dir.glob("usage-*/plan*.jsonl"))
-    override = os.environ.get("SIRE_PLAN_LOG")
-    if override:
-        base = Path(override)
-        try:
-            # 只扫带 key 的文件（Claude 路径只写这种）；stem 用 glob.escape，避免 [ ** ? 被当通配符
-            files += list(base.parent.glob(glob.escape(base.stem) + "-*" + glob.escape(base.suffix)))
-        except (OSError, ValueError):
-            pass
-    return files
 
 
 def usage_marked_this_turn(payload: dict) -> bool:
@@ -141,21 +131,9 @@ def usage_marked_this_turn(payload: dict) -> bool:
     if not transcript or not os.path.isfile(transcript):
         return True
     sys.path.insert(0, str(Path(__file__).resolve().parent))
-    from sire_paths import ledger_runs_dir
     # 先只读小文件：最近 24 小时内没有任何额度读数就无需解析大转录，直接判未记录
-    stamps = []
-    for p in plan_log_files(Path(ledger_runs_dir())):
-        try:
-            lines = p.read_text(encoding="utf-8").splitlines()
-        except (OSError, ValueError):
-            continue
-        for line in lines:  # 逐行容错：一行坏数据不能让同文件后面的有效读数丢失
-            try:
-                row = json.loads(line) if line.strip() else None
-            except ValueError:
-                continue
-            if isinstance(row, dict) and isinstance(row.get("ts"), (int, float)):
-                stamps.append(row["ts"])
+    from sire_usage import usage_rows
+    stamps = [row["ts"] for row in usage_rows("plan")]
     if not stamps or max(stamps) < time.time() - 86400:
         return False
     from sire_usage import turn_entries, turn_start_index
@@ -195,7 +173,7 @@ def main() -> int:
             if payload.get("agent_id") or payload.get("agent_type"):
                 return 0
             if is_loaded(session_id) and payload.get("tool_name") in ("Bash", "PowerShell"):
-                command = str((payload.get("tool_input") or {}).get("command") or "")
+                command = str((payload.get("tool_input") or {}).get("command") or "")[:8192]  # 截断，避免超长输入下正则平方级退化
                 if COMMIT_RE.search(command) and not usage_marked_this_turn(payload):
                     print(json.dumps({"hookSpecificOutput": {
                         "hookEventName": "PreToolUse",

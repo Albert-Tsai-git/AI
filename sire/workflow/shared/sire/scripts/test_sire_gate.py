@@ -26,12 +26,24 @@ def iso(ts):
 class CommitRegexTest(unittest.TestCase):
     def test_hits(self):
         for cmd in ("git commit -m x", "cd a && git push", "git -C d commit", "git -c a=b push origin main",
-                    "git status\ngit commit", "/usr/bin/git push"):
+                    "git status\ngit commit", "/usr/bin/git push",
+                    # 复核补充的漏拦写法：环境变量与包装前缀、bash -c、控制流关键字、花括号、带引号参数、
+                    # 带空格的 git 路径、其他会产生提交的子命令、gh pr merge、命令替换、xargs
+                    "FOO=1 git commit", "sudo git push", "env git push", "time git push", "x | xargs git push",
+                    'bash -c "git commit -m x"', "if x; then git commit", "{ git commit; }",
+                    'git -C "my dir" commit', 'git -c user.name="A B" commit', "git --git-dir /x commit",
+                    r'"C:\Program Files\Git\bin\git.exe" commit', r"C:\Git\bin\git.exe commit", "git.exe push",
+                    "git merge x", "git revert HEAD", "git cherry-pick a", "git rebase main", "git am p.patch",
+                    "gh pr merge 1", "$(git commit)", "`git push`"):
             self.assertTrue(sire_gate.COMMIT_RE.search(cmd), cmd)
 
     def test_misses(self):
         for cmd in ("git log --grep commit", "git add docs/commit-guide.md", "git checkout feature/push-fix",
-                    'gh pr create --body "git push"', "cat commit-notes.txt", "git diff -- push.py"):
+                    'gh pr create --body "git push"', "cat commit-notes.txt", "git diff -- push.py",
+                    "git commit-tree abc", "git commit-graph write", "git stash push", "echo git commit",
+                    "git status", "git log --oneline",
+                    # 冲突中途的恢复命令不能被拦
+                    "git rebase --abort", "git merge --abort", "git rebase --continue", "git cherry-pick --quit"):
             self.assertIsNone(sire_gate.COMMIT_RE.search(cmd), cmd)
 
 
@@ -99,7 +111,8 @@ class UsageMarkedTest(unittest.TestCase):
         empty = Path(self.tmp) / "empty"
         empty.mkdir()
         with mock.patch.dict(os.environ, {"SIRE_PLAN_LOG": str(empty / "a**b.jsonl")}):
-            self.assertEqual([], sire_gate.plan_log_files(Path(self.tmp) / "none"))
+            import sire_usage
+            self.assertEqual([], sire_usage.usage_rows("plan"))
             self.assertFalse(sire_gate.usage_marked_this_turn(self.payload))
 
     def test_plan_log_override_missing_dir_does_not_crash(self):
