@@ -2,7 +2,8 @@
 
 用法（由客户端钩子调用，从 stdin 读 JSON 载荷）：
   python sire_gate.py record   # PostToolUse：Skill 工具成功加载 SIRE 技能后，记下本会话已加载
-  python sire_gate.py check    # PreToolUse：写类工具且本会话未加载时，返回 deny
+  python sire_gate.py check    # PreToolUse：写类工具且本会话未加载时，返回 deny；git commit/push 前还核对本轮已记录 5 小时额度读数
+  python sire_gate.py stop-check  # Stop：完整流程的最终回复缺“耗时”或“额度消耗”时拦截一次，要求补跑 sire_usage.py --final
 
 硬规则（用户定）：Claude 执行任何任务必须先加载 SIRE，没有例外。未加载时只放行 Skill 调用本身，其余工具全部拦截。
 
@@ -106,6 +107,56 @@ def needs_gate(payload: dict) -> bool:
     return (payload.get("tool_name") or "") not in ("Skill", "ToolSearch")
 
 
+# 只匹配“命令位置”的 git 子命令 commit/push：行首或 ; & | ( 之后，允许 git 全局选项（-c k=v、-C 路径、--xxx）；
+# git log --grep commit、git add commit.md、引号里的 "git push" 都不匹配
+COMMIT_RE = re.compile(
+    r"(?:^|[;&|(\n])\s*(?:\S*[\\/])?git(?:\.exe)?"
+    r"(?:\s+(?:-[cC]\s+\S+|--[\w-]+(?:=\S+)?|-[\w])){0,6}\s+(?:commit|push)\b")
+USAGE_DENY = ("[sire_gate] 提交/推送前必须已记录本轮额度读数：先调用 get_usage 读 5 小时额度，再运行 "
+              "sire_usage.py --plan-mark <5小时%> --weekly <周%>；任务结束的汇总必须带 sire_usage.py --final 的耗时与额度消耗。")
+STOP_REASON = ("[sire_gate] 完整流程的最终回复缺少“耗时”或“额度消耗”。请先读 get_usage，运行 "
+               "sire_usage.py --final --plan-end <5小时%> --weekly <周%>，把输出的耗时、额度消耗、阶段排名写进汇总后再结束；"
+               "读不到就如实写“未记录/未读到”，不得省略。")
+
+
+def usage_marked_this_turn(payload: dict) -> bool:
+    """本轮（自上次 end_turn 后的第一条用户提示起）是否已有 --plan-mark 记录。读不到转录时视为已记录（fail-open）。"""
+    transcript = payload.get("transcript_path")
+    if not transcript or not os.path.isfile(transcript):
+        return True
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from sire_paths import ledger_runs_dir
+    # 先只读小文件：最近 24 小时内没有任何额度读数就无需解析大转录，直接判未记录
+    stamps = []
+    # plan*.jsonl 同时覆盖默认的 plan.jsonl 与设置 SIRE_PLAN_LOG 后的 plan-<key>.jsonl
+    for p in Path(ledger_runs_dir()).glob("usage-*/plan*.jsonl"):
+        try:
+            lines = p.read_text(encoding="utf-8").splitlines()
+        except (OSError, ValueError):
+            continue
+        for line in lines:  # 逐行容错：一行坏数据不能让同文件后面的有效读数丢失
+            try:
+                row = json.loads(line) if line.strip() else None
+            except ValueError:
+                continue
+            if isinstance(row, dict) and isinstance(row.get("ts"), (int, float)):
+                stamps.append(row["ts"])
+    if not stamps or max(stamps) < time.time() - 86400:
+        return False
+    from sire_usage import turn_entries, turn_start_index
+    entries = turn_entries(Path(transcript))
+    index = turn_start_index(entries)
+    if index is None:
+        return True
+    return max(stamps) >= entries[index][0]
+
+
+def reply_missing_usage(payload: dict) -> bool:
+    """完整流程的最终回复缺耗时或额度消耗；判定与遥测共用同一谓词，避免两处分叉。"""
+    from sire_telemetry import last_assistant_text, reply_lacks_usage
+    return reply_lacks_usage(last_assistant_text(payload))
+
+
 def main() -> int:
     mode = sys.argv[1] if len(sys.argv) > 1 else ""
     try:
@@ -119,8 +170,22 @@ def main() -> int:
             if payload.get("tool_name") == "Skill" and is_sire_skill(payload) and tool_succeeded(payload):
                 mark_loaded(session_id)
             return 0
+        if mode == "stop-check":
+            if payload.get("stop_hook_active") or payload.get("agent_id"):
+                return 0  # 只拦一次，避免 Stop 钩子死循环
+            if reply_missing_usage(payload):
+                print(json.dumps({"decision": "block", "reason": STOP_REASON}))
+            return 0
         if mode == "check":
             if payload.get("agent_id") or payload.get("agent_type"):
+                return 0
+            if is_loaded(session_id) and payload.get("tool_name") in ("Bash", "PowerShell"):
+                command = str((payload.get("tool_input") or {}).get("command") or "")
+                if COMMIT_RE.search(command) and not usage_marked_this_turn(payload):
+                    print(json.dumps({"hookSpecificOutput": {
+                        "hookEventName": "PreToolUse",
+                        "permissionDecision": "deny",
+                        "permissionDecisionReason": USAGE_DENY}}))
                 return 0
             if not needs_gate(payload) or is_loaded(session_id):
                 return 0

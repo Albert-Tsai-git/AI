@@ -299,7 +299,13 @@ def _scan_assistant(lines: list[str]) -> str:
     return ""
 
 
+def reply_lacks_usage(text: str) -> bool:
+    """完整流程回复（含“快速通道：否”，全角或半角冒号）缺“耗时”或“额度消耗”。门禁与遥测共用。"""
+    return bool(re.search(r"快速通道[：:]\s*否", text)) and not ("耗时" in text and "额度消耗" in text)
+
+
 def detect_mode(text: str) -> str:
+    text = text.replace("快速通道:", "快速通道：")  # 兼容半角冒号，与 reply_lacks_usage 一致
     fast, full = text.rfind(FAST_MARK), text.rfind(FULL_MARK)
     if fast < 0 and full < 0:
         return "unknown"
@@ -468,7 +474,10 @@ def cmd_hook(args) -> int:
                 c.execute("INSERT INTO events(ts,client,session,event,detail,ok) VALUES(?,?,?,?,?,1)",
                           (ts, args.client, session, "stop", mode))
                 reply = last_assistant_text(payload)
-                if mode == "full" and not ("耗时" in reply and "额度消耗" in reply):
+                # Claude 端首次 Stop 会被 sire_gate 拦住补写，补写后的回复不应留下发现；
+                # 所以只在“已被拦过仍缺”(stop_hook_active) 或没有该拦截的客户端才记
+                if mode == "full" and reply_lacks_usage(reply) and (
+                        payload.get("stop_hook_active") or args.client != "claude"):
                     # 完整流程的最终回复必须自带耗时与额度消耗；缺失记为质量事件，由下次 R9 处理
                     c.execute("INSERT INTO events(ts,client,session,event,detail,ok) VALUES(?,?,?,?,?,0)",
                               (ts, args.client, session, "usage_missing", "最终回复缺耗时/额度消耗"))
