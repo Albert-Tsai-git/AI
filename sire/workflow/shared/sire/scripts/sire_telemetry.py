@@ -49,13 +49,18 @@ CLOSE_PHASES = ("ledger", "archive", "rsi", "commit")
 # classify() 的兜底桶：按任务规模浮动，不代表某个 SIRE 步骤变慢，不参与阶段离群判定
 CATCH_ALL_PHASES = ("execute", "reply")
 FAST_FORBIDDEN = ("retrieve", "ledger", "archive", "rsi", "subagent", "commit")
+FAST_SIMPLE_CALLS = 3        # 快速通道任务本就是一到三条命令；超过它说明不是简单任务
+FAST_MISUSE_CALLS = 10       # 声明快速通道却超过这个调用数 → FAST_MISUSE
+FAST_SCOPE_MIN_CALLS = 3     # 快速通道里检索/台账/归档/子代理/提交类调用达到这个数才算越界
+TOOL_RETRY_RATE = 0.10       # 失败次数至少占调用的这个比例才算反复失败
 FAST_MARK = "快速通道：简单任务"
 FULL_MARK = "快速通道：否"
 
 # 检测规则：规则编号 -> (转为待处理所需命中次数, 优化建议)
 RULES = {
-    "FAST_SLOW": (3, "简单任务超过 60 秒：检查快速通道是否仍在读规则文件、重试或被工具拦截，收紧入口副本里的白名单与命令写法"),
-    "FAST_SCOPE": (2, "快速通道任务做了检索/台账/归档/子代理/提交：入口副本或白名单措辞不够明确，需要收紧"),
+    "FAST_SLOW": (3, "真正简单的任务（不超过 3 次工具调用）超过 60 秒：检查快速通道是否仍在读规则文件、重试或被工具拦截，收紧入口副本里的白名单与命令写法"),
+    "FAST_SCOPE": (2, "快速通道任务做了 3 次以上检索/台账/归档/子代理/提交类调用：入口副本或白名单措辞不够明确，需要收紧"),
+    "FAST_MISUSE": (2, "声明了快速通道，实际却做了 10 次以上工具调用：这不是简单任务。收紧入口提醒里“快速通道”的判定（最多两条命令、查看/单步操作），多步任务一律走完整流程并逐阶段汇报"),
     "CLOSE_HEAVY": (3, "收尾（台账/归档/RSI/提交）占完整任务 40% 以上：把多步手工收尾合并成脚本命令，减少模型轮次"),
     "SUBAGENT_HEAVY": (3, "子代理耗时过半且调用 3 次以上：合并同类复核角色，或小单元改由主控直接执行"),
     "TOOL_RETRY": (2, "同一命令在一个任务里失败 3 次以上：在规则或脚本里写明该场景的正确做法"),
@@ -221,12 +226,35 @@ def connect() -> sqlite3.Connection:
 
 # ---------------------------------------------------------------- 钩子
 
+NOT_RULE_READ_TOOLS = {"grep", "glob", "edit", "write", "multiedit", "notebookedit"}
+LOCATE_RE = re.compile(r"\b(grep|rg|sed|awk|select-string|findstr)\b", re.I)
+WHOLE_READ_RE = re.compile(r"\b(cat|type|get-content|gc|more|less|head|tail)\b", re.I)
+
+
+def is_rule_read(tool: str, tool_input) -> bool:
+    """只有整读规则文件才算“读规则”。合同允许用 grep/sed 定位段落、也允许维护规则文件，这些不该触发 RULE_READ。"""
+    name = (tool or "").lower()
+    if name == "read":
+        return True
+    if name in NOT_RULE_READ_TOOLS:
+        return False
+    if isinstance(tool_input, dict):
+        command = str(tool_input.get("command") or tool_input.get("cmd") or "")
+    else:
+        command = str(tool_input or "")
+    if LOCATE_RE.search(command):
+        return False
+    return bool(WHOLE_READ_RE.search(command))
+
+
 def classify(tool: str, tool_input) -> str:
     if (tool or "").lower() in SUBAGENT_TOOLS:
         return "subagent"
     text = (tool or "") + " " + json.dumps(tool_input, ensure_ascii=False)
     for phase, pattern in PHASE_PATTERNS:
         if pattern.search(text):
+            if phase == "rules" and not is_rule_read(tool, tool_input):
+                continue
             return phase
     return "execute"
 
@@ -559,10 +587,13 @@ def detect(task: sqlite3.Row, history: list[sqlite3.Row], events=()) -> list[tup
     sec, calls = data.get("seconds", {}), data.get("calls", {})
     total, mode, out = task["total_s"] or 0, task["mode"], []
     if mode == "fast":
-        if total > 60:
+        tool_calls = task["tool_calls"] or 0
+        if tool_calls > FAST_MISUSE_CALLS:  # 声明快速通道却做了一大堆调用：真正的问题是误用，而不是“简单任务太慢”
+            out.append(("FAST_MISUSE", "FAST_MISUSE", f"{tool_calls} 次调用，{total:.0f}s"))
+        elif total > 60 and tool_calls <= FAST_SIMPLE_CALLS:
             out.append(("FAST_SLOW", "FAST_SLOW", f"{total:.0f}s"))
         used = [p for p in FAST_FORBIDDEN if calls.get(p)]
-        if used:
+        if sum(calls.get(p, 0) for p in used) >= FAST_SCOPE_MIN_CALLS:  # 查看一下台账状态这类 1~2 次调用是允许的
             out.append(("FAST_SCOPE", "FAST_SCOPE", ",".join(used)))
     if mode != "fast" and total >= 180:
         close = sum(sec.get(p, 0) for p in CLOSE_PHASES)
@@ -570,8 +601,9 @@ def detect(task: sqlite3.Row, history: list[sqlite3.Row], events=()) -> list[tup
             out.append(("CLOSE_HEAVY", "CLOSE_HEAVY", f"收尾 {close:.0f}s / {total:.0f}s"))
         if sec.get("subagent", 0) / total >= 0.5 and calls.get("subagent", 0) >= 3:
             out.append(("SUBAGENT_HEAVY", "SUBAGENT_HEAVY", f"子代理 {sec['subagent']:.0f}s / {total:.0f}s"))
-    if task["failures"] >= 3:
-        out.append(("TOOL_RETRY", "TOOL_RETRY", f"{task['failures']} 次失败"))
+    failures, tool_calls_all = task["failures"] or 0, task["tool_calls"] or 0
+    if failures >= 3 and tool_calls_all and failures / tool_calls_all >= TOOL_RETRY_RATE:  # 长任务里零星几次失败是正常的
+        out.append(("TOOL_RETRY", "TOOL_RETRY", f"{failures} 次失败 / {tool_calls_all} 次调用"))
     if calls.get("rules", 0) >= 4:
         out.append(("RULE_READ", "RULE_READ", f"{calls['rules']} 次"))
     for phase, value in sec.items():
