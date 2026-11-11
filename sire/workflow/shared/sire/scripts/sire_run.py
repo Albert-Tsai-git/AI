@@ -1206,8 +1206,9 @@ def telemetry_pending_gate(rd: str, note: str) -> str | None:
         return None
     first = open_items[0]
     return ("自动优化未闭环：遥测里有 %d 条待处理发现（第一条 %s）。"
-            "按 global-contract.md § RSI 处理完再收尾；确实需要用户决定时，"
-            "用 `sire_telemetry.py resolve <发现> --ignore 原因` 或 finish 带 --pending-note 显式移交"
+            "把它们列给用户，由用户确定怎么处理（global-contract.md § RSI 第 3 条的 2026-11-11 更正：提案由工作流提出、用户确定，助手不自行处理）；"
+            "用户确定后用 `sire_telemetry.py resolve <发现> --proposal 提案号` 或 `--ignore 原因` 记录，"
+            "或 finish 带 --pending-note 显式移交"
             % (len(open_items), first))
 
 

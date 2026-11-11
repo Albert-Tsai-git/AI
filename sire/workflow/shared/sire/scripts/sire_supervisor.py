@@ -316,6 +316,8 @@ def rsi_gate(db_path: Path = DATABASE_PATH, skill_dir: Path = SHARED_SKILL_DIR) 
     for item in rsi_proposals(db_path):
         if item["status"] not in allowed:
             continue
+        if str(item["proposal_id"]).startswith("AUTO-HEALTH-"):
+            continue  # 定时健康检查自动生成的草案不是对本次改动的登记，否则“未提交改动→异常→草案→门禁放行”会自循环
         try:
             created = datetime.fromisoformat(item["created_at"])
         except (TypeError, ValueError):

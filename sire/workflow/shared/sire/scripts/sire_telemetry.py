@@ -25,7 +25,7 @@ import time
 from pathlib import Path
 from sire_process import no_console_kwargs
 
-from sire_paths import DATA_DIR
+from sire_paths import DATA_DIR, LEDGER_ROOT
 
 DB_PATH = Path(os.environ.get("SIRE_TELEMETRY_DB") or DATA_DIR / "sire_telemetry.sqlite3")
 RETENTION_DAYS = 60
@@ -425,6 +425,41 @@ def summarize_task(c: sqlite3.Connection, client: str, session: str, stop_ts: fl
                prompts[0]["detail"] if prompts else ""))
 
 
+HEALTH_STATE = LEDGER_ROOT / "health" / "state.json"
+HEALTH_SPAWN_MARK = LEDGER_ROOT / "health" / ".spawned"
+HEALTH_OVERDUE_SECONDS = 9 * 3600   # 定时检查是每 8 小时（0/8/16 点），超过 9 小时没跑说明错过了计划时间
+HEALTH_SPAWN_COOLDOWN = 3600        # 补跑拉起后 1 小时内不重复拉起（健康检查自身还有运行互斥锁）
+
+
+def spawn_health_if_overdue(now: float | None = None) -> bool:
+    """定时健康检查错过计划时间时，在 Stop 钩子里后台补跑一次；失败静默，绝不影响钩子返回。
+    冷却标记用独占创建，多个会话同时 Stop 也只会有一个通过。"""
+    now = time.time() if now is None else now
+    try:
+        try:
+            last = float(json.loads(HEALTH_STATE.read_text(encoding="utf-8")).get("ts", 0))
+        except (OSError, ValueError, AttributeError, TypeError):
+            last = 0.0  # 没有或损坏的状态文件按“从未运行”处理，仍然可以补跑
+        if now - last < HEALTH_OVERDUE_SECONDS:
+            return False
+        HEALTH_SPAWN_MARK.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            fd = os.open(HEALTH_SPAWN_MARK, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        except FileExistsError:
+            if now - HEALTH_SPAWN_MARK.stat().st_mtime < HEALTH_SPAWN_COOLDOWN:
+                return False
+            HEALTH_SPAWN_MARK.unlink()
+            fd = os.open(HEALTH_SPAWN_MARK, os.O_CREAT | os.O_EXCL | os.O_WRONLY)  # 再抢不到就是别人先拿了
+        os.close(fd)
+        group = subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0
+        subprocess.Popen([sys.executable, str(Path(__file__).resolve().parent / "sire_health.py"), "run", "--record"],
+                         stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                         close_fds=True, cwd=str(Path(__file__).resolve().parent), **no_console_kwargs(group))
+        return True
+    except Exception:  # noqa: BLE001
+        return False
+
+
 def spawn_analyze():
     """后台启动 analyze，不阻塞钩子返回。"""
     group = subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0
@@ -485,6 +520,7 @@ def cmd_hook(args) -> int:
         c.close()
         if event == "Stop":
             spawn_analyze()
+            spawn_health_if_overdue()
     except Exception:
         pass  # 遥测失败不能影响客户端
     return 0
