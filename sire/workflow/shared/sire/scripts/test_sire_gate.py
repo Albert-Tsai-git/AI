@@ -16,6 +16,9 @@ import sire_gate  # noqa: E402
 from sire_telemetry import reply_lacks_usage  # noqa: E402
 
 
+NL = chr(10)
+
+
 def iso(ts):
     return time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime(ts))
 
@@ -37,6 +40,9 @@ class UsageMarkedTest(unittest.TestCase):
         # 台账根目录在 sire_paths 导入时固定（合并运行时早已指向真实台账），所以用 patch 指向临时目录，
         # 并断言生效后才写文件；绝不对真实台账做删除
         self.tmp = tempfile.mkdtemp()
+        self.env = mock.patch.dict(os.environ)  # 隔离外部预设的 SIRE_PLAN_LOG
+        self.env.start()
+        os.environ.pop("SIRE_PLAN_LOG", None)
         self.patch = mock.patch.object(sire_paths, "LEDGER_ROOT", Path(self.tmp))
         self.patch.start()
         self.assertTrue(str(sire_paths.ledger_runs_dir()).startswith(self.tmp))
@@ -53,6 +59,7 @@ class UsageMarkedTest(unittest.TestCase):
 
     def tearDown(self):
         self.patch.stop()
+        self.env.stop()
 
     def write(self, name, rows):
         (self.dir / name).write_text("\n".join(rows) + "\n", encoding="utf-8")
@@ -71,6 +78,33 @@ class UsageMarkedTest(unittest.TestCase):
     def test_garbage_rows_do_not_crash(self):
         self.write("plan.jsonl", ["[]", "null", "{坏", json.dumps({"ts": self.now - 5})])
         self.assertTrue(sire_gate.usage_marked_this_turn(self.payload))
+
+    def test_plan_log_override_dir_is_scanned(self):
+        """设置 SIRE_PLAN_LOG 后读数写到覆盖目录下的 <stem>-<key><suffix>，门禁必须读得到。"""
+        override_dir = Path(self.tmp) / "custom"
+        override_dir.mkdir()
+        (override_dir / "plan-abc123.jsonl").write_text(json.dumps({"ts": self.now - 5}) + "\n", encoding="utf-8")
+        self.assertFalse(sire_gate.usage_marked_this_turn(self.payload))  # 未设置环境变量时读不到
+        with mock.patch.dict(os.environ, {"SIRE_PLAN_LOG": str(override_dir / "plan.jsonl")}):
+            self.assertTrue(sire_gate.usage_marked_this_turn(self.payload))
+
+    def test_plan_log_override_special_chars_in_stem(self):
+        """覆盖路径文件名含 [ 时必须读得到（不能被当字符类而误拦）；含 ** 时不能抛异常也不能意外放行。
+        注意 Windows 文件名不允许 *，含 ** 的文件写不出来，所以只验证不崩溃且判未记录。"""
+        d = Path(self.tmp) / "bracket"
+        d.mkdir()
+        (d / "plan[1]-k1.jsonl").write_text(json.dumps({"ts": self.now - 5}) + NL, encoding="utf-8")
+        with mock.patch.dict(os.environ, {"SIRE_PLAN_LOG": str(d / "plan[1].jsonl")}):
+            self.assertTrue(sire_gate.usage_marked_this_turn(self.payload))
+        empty = Path(self.tmp) / "empty"
+        empty.mkdir()
+        with mock.patch.dict(os.environ, {"SIRE_PLAN_LOG": str(empty / "a**b.jsonl")}):
+            self.assertEqual([], sire_gate.plan_log_files(Path(self.tmp) / "none"))
+            self.assertFalse(sire_gate.usage_marked_this_turn(self.payload))
+
+    def test_plan_log_override_missing_dir_does_not_crash(self):
+        with mock.patch.dict(os.environ, {"SIRE_PLAN_LOG": str(Path(self.tmp) / "nope" / "plan.jsonl")}):
+            self.assertFalse(sire_gate.usage_marked_this_turn(self.payload))
 
     def test_no_transcript_fails_open(self):
         self.assertTrue(sire_gate.usage_marked_this_turn({"transcript_path": "nope"}))

@@ -20,6 +20,7 @@ Codex 侧暂未启用本门禁（只注入提醒），详见 references/global-c
 """
 from __future__ import annotations
 
+import glob
 import json
 import os
 import re
@@ -119,6 +120,21 @@ STOP_REASON = ("[sire_gate] 完整流程的最终回复缺少“耗时”或“�
                "读不到就如实写“未记录/未读到”，不得省略。")
 
 
+def plan_log_files(runs_dir: Path) -> list[Path]:
+    """额度读数文件：默认在 runs/usage-*/plan*.jsonl；设置了 SIRE_PLAN_LOG 时 sire_usage 把读数写到
+    <覆盖路径所在目录>/<stem>-<key><suffix>，需一并扫描（与 sire_usage.py 的写入规则保持一致）。"""
+    files = list(runs_dir.glob("usage-*/plan*.jsonl"))
+    override = os.environ.get("SIRE_PLAN_LOG")
+    if override:
+        base = Path(override)
+        try:
+            # 只扫带 key 的文件（Claude 路径只写这种）；stem 用 glob.escape，避免 [ ** ? 被当通配符
+            files += list(base.parent.glob(glob.escape(base.stem) + "-*" + glob.escape(base.suffix)))
+        except (OSError, ValueError):
+            pass
+    return files
+
+
 def usage_marked_this_turn(payload: dict) -> bool:
     """本轮（自上次 end_turn 后的第一条用户提示起）是否已有 --plan-mark 记录。读不到转录时视为已记录（fail-open）。"""
     transcript = payload.get("transcript_path")
@@ -128,8 +144,7 @@ def usage_marked_this_turn(payload: dict) -> bool:
     from sire_paths import ledger_runs_dir
     # 先只读小文件：最近 24 小时内没有任何额度读数就无需解析大转录，直接判未记录
     stamps = []
-    # plan*.jsonl 同时覆盖默认的 plan.jsonl 与设置 SIRE_PLAN_LOG 后的 plan-<key>.jsonl
-    for p in Path(ledger_runs_dir()).glob("usage-*/plan*.jsonl"):
+    for p in plan_log_files(Path(ledger_runs_dir())):
         try:
             lines = p.read_text(encoding="utf-8").splitlines()
         except (OSError, ValueError):
