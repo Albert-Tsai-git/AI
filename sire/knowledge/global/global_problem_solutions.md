@@ -3463,3 +3463,31 @@ controller/python/sub_common/DataFormatter.py；controller/python/qa_api/tests/t
 **踩坑**: 零差值不保留会把真实零误报缺失；历史回合不限制额度快照截止点会混入后续读数；Windows stderr 必须与 stdout 一起设 UTF-8，避免子进程读取拒绝信息时解码失败。阶段 token 按事件落盘时间归属，不代表精确跨阶段请求拆分；主控 rollout 不含整个代理树，压缩转录暂不支持。
 
 **状态**: 已实现评审修复；本次未测试，版本激活以 RSI 记录为准。
+
+
+### P-20261112: 阶段计时开始与结束落在不同回合目录，报未记录开始时刻
+
+**日期**: 2026-11-11
+**项目**: SIRE 共享工作流 / scripts/sire_usage.py（在 EncoderPlotter 任务中发现）
+**关键词**: sire_usage, stage-start, stage-end, 未记录开始时刻, 未记录本任务开始读数, 回合目录, usage-key, task-notification, 阶段计时, 额度读数
+
+**需求场景 / 现象**: 完整流程任务里，R6 先 `--stage-start R6`，派三个子代理后等通知，之后 `--stage-end R6` 报“R6 耗时:未记录开始时刻,不估算”，`--final` 报“耗时:未读到本轮转录时间戳”和“5小时额度:未记录本任务开始读数”。
+
+**根因**（问题类必填）: 部分定位。阶段记录和额度读数存放在 `ledger_runs_dir()/usage-<key>/`，`<key>` 由“转录文件 + 回合起点 + run_id”哈希得到；开始记录与结束查询落在了不同的 `usage-<key>` 目录，结束时找不到开始记录。已排除子代理完成通知：其转录条目带 `origin.kind=task-notification`、`promptSource=system`，`is_prompt()` 判为非用户提示。未定位：回合起点为什么在派子代理之后发生变化。
+
+**方案 / 架构**: 候选方案（未实施、未验证）：①阶段记录和额度读数统一放在 `sire_run.py init` 的 RUN_ID 目录下，用 `--run-id` 绑定；②回合起点变化时回查同一会话内最近的开始记录。需走 RSI 提案，用户确认后再改。
+
+**关键文件与接口**:
+- `scripts/sire_usage.py:172` — `stage_mark()`，start 追加一行到 STAGE_LOG，end 读同一 STAGE_LOG
+- `scripts/sire_usage.py:418-421` — 回合 key 与 `usage-<key>` 目录的计算
+- `scripts/sire_usage.py:59-70` — `is_prompt()` 对通知条目的判定
+
+**实施步骤**:
+1. 在出问题的转录上复现：对比 `--stage-start` 与 `--stage-end` 时的 `turn_key`。
+2. 确认变化原因后，选上面的方案之一，走 `sire_rsi.py propose`。
+
+**验证方法**: 修复后，跨回合（派子代理后等通知）运行 `--stage-start R6` 与 `--stage-end R6`，应输出真实耗时而不是“未记录开始时刻”；`--final` 应给出本任务额度百分点。当前尚未修复，没有验证。
+
+**踩坑**: 不要把“子代理通知被误判为用户提示”当成原因，已核对条目标记，它们被正确排除。
+
+**状态**: 部分完成

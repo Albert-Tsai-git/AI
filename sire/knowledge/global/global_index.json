@@ -5374,6 +5374,28 @@
         "额度快照",
         "UTF-8"
       ]
+    },
+    {
+      "id": "P-20261112",
+      "type": "problem",
+      "title": "阶段计时开始与结束落在不同回合目录，报未记录开始时刻",
+      "file": "global_problem_solutions.md",
+      "line": 3468,
+      "date": "2026-11-11",
+      "project": "SIRE 共享工作流 / scripts/sire_usage.py（在 EncoderPlotter 任务中发现）",
+      "status": "部分完成",
+      "keywords": [
+        "sire_usage",
+        "stage-start",
+        "stage-end",
+        "未记录开始时刻",
+        "未记录本任务开始读数",
+        "回合目录",
+        "usage-key",
+        "task-notification",
+        "阶段计时",
+        "额度读数"
+      ]
     }
   ],
   "features": {
@@ -11120,6 +11142,36 @@
     ],
     "UTF-8": [
       "P-20261111"
+    ],
+    "sire_usage": [
+      "P-20261112"
+    ],
+    "stage-start": [
+      "P-20261112"
+    ],
+    "stage-end": [
+      "P-20261112"
+    ],
+    "未记录开始时刻": [
+      "P-20261112"
+    ],
+    "未记录本任务开始读数": [
+      "P-20261112"
+    ],
+    "回合目录": [
+      "P-20261112"
+    ],
+    "usage-key": [
+      "P-20261112"
+    ],
+    "task-notification": [
+      "P-20261112"
+    ],
+    "阶段计时": [
+      "P-20261112"
+    ],
+    "额度读数": [
+      "P-20261112"
     ]
   },
   "efficiency": {
@@ -11918,6 +11970,6 @@
       "H-009"
     ]
   },
-  "last_updated": "2026-11-10T08:54:50Z",
-  "total_records": 251
+  "last_updated": "2026-11-11T00:39:13Z",
+  "total_records": 252
 }
