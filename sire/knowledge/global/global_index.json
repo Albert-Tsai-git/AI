@@ -1,63 +1,6 @@
 {
   "records": [
     {
-      "id": "P-20261050",
-      "type": "problem",
-      "title": "防止更新日志缺分类导致发布通知丢失条目",
-      "file": "P-20261050-changelog-category-gate.md",
-      "line": 1,
-      "date": "2026-10-26",
-      "project": "driverSoftware",
-      "status": "实现并本地提交f6ae85d9，未推送；未测试，待用户授权。当前工作目录development初始干净，按SIRE当前目录当前分支规则执行。协作未开启。",
-      "keywords": [
-        "CHANGELOG",
-        "新增",
-        "修复",
-        "分类标题",
-        "飞书通知",
-        "release.py",
-        "强制拦截"
-      ]
-    },
-    {
-      "id": "P-20261051",
-      "type": "problem",
-      "title": "更新日志分类完整流程测试与非标准列表拦截",
-      "file": "P-20261051-release-category-flow-verification.md",
-      "line": 1,
-      "date": "2026-10-26",
-      "project": "driverSoftware",
-      "status": "本地发布与卡片生成测试通过；未触发真实远端CI、未构建正式包、未发送群消息，不能据此称飞书实际投递已验证。台账R20261026-083210-driversoftware。",
-      "keywords": [
-        "未发布",
-        "新增",
-        "修复",
-        "发布通知",
-        "分类",
-        "临时Git仓库",
-        "变异验证",
-        "6918168c"
-      ]
-    },
-    {
-      "id": "P-20261052",
-      "type": "problem",
-      "title": "经明确授权补齐历史更新日志分类",
-      "file": "P-20261052-historical-changelog-categories.md",
-      "line": 1,
-      "date": "2026-10-26",
-      "project": "driverSoftware",
-      "status": "已本地提交fb9f1499，未推送；未测试。风险无。",
-      "keywords": [
-        "CHANGELOG",
-        "历史版本",
-        "分类修复",
-        "新增",
-        "修复",
-        "fb9f1499"
-      ]
-    },
-    {
       "id": "P-20261053",
       "type": "problem",
       "title": "更新日志分类修复提交压缩后的追溯关系",
@@ -137,14 +80,33 @@
       ]
     },
     {
+      "id": "E-007",
+      "type": "efficiency",
+      "title": "先确认发布构建归属，避免在本地误跑长构建",
+      "file": "global_dev_efficiency.md",
+      "line": 3,
+      "date": "2026-09-20",
+      "project": "driverSoftware",
+      "status": "已完成",
+      "keywords": [
+        "SIRE",
+        "发布",
+        "CI Runner",
+        "tag",
+        "本地构建",
+        "效率",
+        "release.py"
+      ]
+    },
+    {
       "id": "E-008",
       "type": "efficiency",
       "title": "SIRE 单一来源收敛与 RSI 双库写入",
       "file": "global_dev_efficiency.md",
-      "line": 3,
+      "line": 23,
       "date": "2026-09-25",
       "project": "SIRE v6 Claude/Codex 共享工作流",
-      "status": "已验证（run R20260925-112329，RSI-20260925-SYNC → v6.3）",
+      "status": "已完成",
       "keywords": [
         "SIRE",
         "单一来源",
@@ -168,10 +130,10 @@
       "type": "efficiency",
       "title": "Claude×Codex 同机本地通讯与协作机制（msg.py 信箱/进度/锁 + 路径所有权 + 接口文档）",
       "file": "global_dev_efficiency.md",
-      "line": 26,
+      "line": 44,
       "date": "2026-09-27",
       "project": "MetalMax 同人（Unity 6）/ D:\\code\\GAME（GitHub Albert-Tsai-git/MetalMax）",
-      "status": "已完成（运行中）",
+      "status": "已完成",
       "keywords": [
         "Claude Codex 本地通讯",
         "双 AI 协作",
@@ -198,10 +160,10 @@
       "type": "efficiency",
       "title": "SIRE 规则同步直接加载共享源并补齐客户端薄入口",
       "file": "global_dev_efficiency.md",
-      "line": 67,
+      "line": 81,
       "date": "2026-10-12",
       "project": "SIRE v6.11 规则同步",
-      "status": "已验证规则入口与实际脚本；真实客户端自动遥测事件触发未实测",
+      "status": "已完成",
       "keywords": [
         "SIRE",
         "Codex",
@@ -220,10 +182,10 @@
       "type": "efficiency",
       "title": "Qoder 端 SIRE 完全兼容适配：junction 入口 + remind 实时注入 + 四事件遥测",
       "file": "global_dev_efficiency.md",
-      "line": 83,
+      "line": 102,
       "date": "2026-10-13",
       "project": "SIRE v6.13 Qoder 端完全兼容适配（`D:\\sire\\AI\\AI\\sire`）",
-      "status": "已验证（run R20261013-074759，RSI-20261013-QODERADAPTER → v6.13；客户端钩子真实触发待重启后用 verify 补测）",
+      "status": "已完成",
       "keywords": [
         "SIRE",
         "Qoder",
@@ -247,10 +209,10 @@
       "type": "efficiency",
       "title": "Qoder 钩子生效时机与可复核判据：下一个提示词即采集、以遥测心跳为准、junction 热加载不等于钩子在跑",
       "file": "global_dev_efficiency.md",
-      "line": 114,
+      "line": 129,
       "date": "2026-10-13",
       "project": "SIRE v6.13/v6.14 Qoder 端接入（`D:\\sire\\AI\\AI\\sire`）",
-      "status": "已验证（run R20261013-081448，本端实测采集在跑）",
+      "status": "已完成",
       "keywords": [
         "Qoder",
         "钩子生效时机",
@@ -270,10 +232,10 @@
       "type": "efficiency",
       "title": "把 RSI 闭环写进代码：finish 强制核对 pending、analyze 自检采集断流、Qoder 加用户级 AGENTS.md 入口",
       "file": "global_dev_efficiency.md",
-      "line": 142,
+      "line": 154,
       "date": "2026-10-13",
       "project": "SIRE v6.15 RSI 闭环强制化（`D:\\sire\\AI\\AI\\sire`）",
-      "status": "已验证（run R20261013-081448 续，RSI-20261013-RSILOOP → v6.15）",
+      "status": "已完成",
       "keywords": [
         "SIRE",
         "RSI",
@@ -297,10 +259,10 @@
       "type": "efficiency",
       "title": "SIRE 收尾合并命令 sire_close.py：一条调用跑完归档+索引+阶段+finish+台账复制，不绕过 pending 门禁",
       "file": "global_dev_efficiency.md",
-      "line": 173,
+      "line": 180,
       "date": "2026-10-13",
       "project": "SIRE v6.17 收尾合并命令（`D:\\sire\\AI\\AI\\sire`）",
-      "status": "已验证（RSI-20261013-CLOSESCRIPT → v6.17）",
+      "status": "已完成",
       "keywords": [
         "SIRE",
         "收尾",
@@ -321,10 +283,10 @@
       "type": "efficiency",
       "title": "git-bash 下 git show ref:path 被 MSYS 转换毁参数，需 MSYS_NO_PATHCONV",
       "file": "global_dev_efficiency.md",
-      "line": 203,
+      "line": 210,
       "date": "2026-10-13",
       "project": "Windows + Git Bash（Qoder / Claude / Codex 三端通用）",
-      "status": "已完成（实测）",
+      "status": "已完成",
       "keywords": [
         "MSYS_NO_PATHCONV",
         "git show",
@@ -339,10 +301,10 @@
       "type": "efficiency",
       "title": "feishu-hub 接入 Qoder 执行器与桌面 Hook：协议落点、CLI 缺口与真机待验项",
       "file": "global_dev_efficiency.md",
-      "line": 225,
+      "line": 231,
       "date": "2026-10-13",
       "project": "feishu-hub Qoder 执行器（`D:\\sire\\AI\\AI\\feishu-hub`）",
-      "status": "单元级已验证；真机端到端 BLOCKED-无法真实验证（Qoder CLI 未安装、启动 Hub 会与旧飞书桥抢长连接）",
+      "status": "部分完成",
       "keywords": [
         "feishu-hub",
         "飞书中转",
@@ -365,10 +327,10 @@
       "type": "efficiency",
       "title": "Qoder CLI（qoderclicn）离线安装与 headless 调用契约：manifest+sha256、SDK 环境变量陷阱、单行 result JSON、--resume、按档位选模型",
       "file": "global_dev_efficiency.md",
-      "line": 256,
+      "line": 259,
       "date": "2026-10-13",
       "project": "Qoder CLI headless 接入（feishu-hub Qoder 执行器）（`D:\\sire\\AI\\AI\\feishu-hub`）",
-      "status": "已验证（真机实测；`tests/test_qoder_executor.py` 11/11）",
+      "status": "已完成",
       "keywords": [
         "qoderclicn",
         "Qoder CLI",
@@ -395,7 +357,7 @@
       "line": 285,
       "date": "2026-10-14",
       "project": "SIRE 固定台账目录规则",
-      "status": "已验证（RSI-20261014-NOPROJECTLEDGER）",
+      "status": "已完成",
       "keywords": [
         "SIRE",
         "台账",
@@ -414,10 +376,10 @@
       "type": "efficiency",
       "title": "SIRE 数据库归档异步排队与失败重试",
       "file": "global_dev_efficiency.md",
-      "line": 303,
+      "line": 304,
       "date": "2026-10-14",
       "project": "SIRE shared workflow",
-      "status": "已完成，RSI-20261014-ASYNCDB / v6.22",
+      "status": "已完成",
       "keywords": [
         "SIRE",
         "异步归档",
@@ -433,10 +395,10 @@
       "type": "efficiency",
       "title": "提交代码时推送当前分支已配置的 upstream",
       "file": "global_dev_efficiency.md",
-      "line": 333,
+      "line": 329,
       "date": "2026-10-15",
       "project": "SIRE v6 共享工作流",
-      "status": "已完成（RSI-20261015-COMMITPUSH）",
+      "status": "已完成",
       "keywords": [
         "提交代码",
         "commit",
@@ -452,10 +414,10 @@
       "type": "efficiency",
       "title": "SIRE 台账耗时：批量记录阶段状态并压缩重复叙述",
       "file": "global_dev_efficiency.md",
-      "line": 360,
+      "line": 352,
       "date": "2026-10-16",
       "project": "SIRE shared workflow",
-      "status": "优化建议，待实施评估",
+      "status": "部分完成",
       "keywords": [
         "SIRE",
         "台账耗时",
@@ -471,10 +433,10 @@
       "type": "efficiency",
       "title": "SIRE v6 完整任务流程图与快速通道/异步归档边界",
       "file": "global_dev_efficiency.md",
-      "line": 375,
-      "date": "",
-      "project": "",
-      "status": "",
+      "line": 370,
+      "date": "原记录未记载",
+      "project": "SIRE v6 共享工作流",
+      "status": "已完成",
       "keywords": [
         "SIRE",
         "R0-R10",
@@ -490,10 +452,10 @@
       "type": "efficiency",
       "title": "SIRE 静默执行、批量台账与合并检索",
       "file": "global_dev_efficiency.md",
-      "line": 418,
+      "line": 390,
       "date": "2026-10-16",
       "project": "SIRE shared workflow",
-      "status": "已完成；RSI-20261016-SILENTFLOW 激活 v6.24；close 迁移文档回退修复 RSI-20261016-CLOSEPATH 激活 v6.25。",
+      "status": "已完成",
       "keywords": [
         "SIRE",
         "静默执行",
@@ -511,10 +473,10 @@
       "type": "efficiency",
       "title": "driverSoftware2 发版治理与编码器仓对照",
       "file": "global_dev_efficiency.md",
-      "line": 449,
-      "date": "",
-      "project": "",
-      "status": "",
+      "line": 416,
+      "date": "原记录未记载",
+      "project": "原记录未记载",
+      "status": "已完成",
       "keywords": [
         "driverSoftware2",
         "EncoderPlotter_0903_01",
@@ -529,10 +491,10 @@
       "type": "efficiency",
       "title": "复用 CI 模板前核实版本源、更新条目和回合路径",
       "file": "global_dev_efficiency.md",
-      "line": 479,
+      "line": 445,
       "date": "2026-10-21",
       "project": "driverSoftware2 / EncoderPlotter CI 模板适配核查",
-      "status": "核查完成，待修复；完整证据在外置台账 R20261021-153304-driversoftware2/audit-report.md。",
+      "status": "部分完成",
       "keywords": [
         "ci-templates",
         "VERSION_CMD",
@@ -551,10 +513,10 @@
       "type": "efficiency",
       "title": "IAP与修复六项静态审查发现（待修复未测试）",
       "file": "global_dev_efficiency.md",
-      "line": 498,
+      "line": 463,
       "date": "2026-10-23",
       "project": "EncoderPlotter_0903_01，feature/iap-zip-custom",
-      "status": "",
+      "status": "部分完成",
       "keywords": [
         "IAP",
         "IAP修复",
@@ -568,12 +530,12 @@
     {
       "id": "E-027",
       "type": "efficiency",
-      "title": "飞书通知解析依赖三级小节导致平铺修改项被静默丢弃",
+      "title": "飞书通知解析依赖三级小节导致平铺修改项被静默丢弃（v0.20.5 发布通知无修改项）",
       "file": "global_dev_efficiency.md",
-      "line": 522,
+      "line": 486,
       "date": "2026-10-26",
-      "project": "",
-      "status": "",
+      "project": "driverSoftware",
+      "status": "部分完成",
       "keywords": [
         "driverSoftware",
         "飞书",
@@ -590,10 +552,10 @@
       "type": "efficiency",
       "title": "0.20.3日志首次漏分类的提交来源及发布门禁缺口",
       "file": "global_dev_efficiency.md",
-      "line": 537,
+      "line": 506,
       "date": "2026-10-26",
       "project": "driverSoftware",
-      "status": "原因追查完成；未修复、未测试。无外部操作。极小排查主控直接执行，R6无代码变更无需代码审批，R7待用户授权，R10无需系统操作。",
+      "status": "部分完成",
       "keywords": [
         "CHANGELOG",
         "v0.20.3",
@@ -610,10 +572,10 @@
       "type": "efficiency",
       "title": "短横线 CHANGELOG 与共享通知解析器兼容门禁",
       "file": "global_dev_efficiency.md",
-      "line": 550,
+      "line": 524,
       "date": "2026-10-26",
-      "project": "",
-      "status": "",
+      "project": "原记录未记载",
+      "status": "部分完成",
       "keywords": [
         "CHANGELOG",
         "driverSoftware",
@@ -629,10 +591,10 @@
       "type": "efficiency",
       "title": "EncoderPlotter 各仓 GitLab 统一使用 192.168.1.200:8888",
       "file": "global_dev_efficiency.md",
-      "line": 567,
+      "line": 542,
       "date": "2026-10-28",
       "project": "EncoderPlotter1（主仓 software/EncoderPlotter 及四个子仓）",
-      "status": "已归档",
+      "status": "已完成",
       "keywords": [
         "GitLab 地址",
         "192.168.1.200:8888",
@@ -653,10 +615,10 @@
       "type": "efficiency",
       "title": "内置浏览器已登录 GitLab 时，用同源 fetch 调 API 读 CI 与流水线，并避免打错标签页",
       "file": "global_dev_efficiency.md",
-      "line": 585,
+      "line": 563,
       "date": "2026-11-05",
       "project": "SIRE / GitLab 排障（192.168.1.200:8888）",
-      "status": "已归档",
+      "status": "已完成",
       "keywords": [
         "Claude Browser",
         "javascript_tool",
@@ -671,72 +633,373 @@
       ]
     },
     {
-      "id": "F-052",
+      "id": "F-004",
       "type": "feature",
-      "title": "下线检测信息确认人工决定与订单号录入",
+      "title": "高低温箱功能影响范围分析",
       "file": "global_dev_features.md",
       "line": 3,
-      "date": "2026-10-12",
-      "project": "driverSoftware2",
-      "status": "已实现并通过隔离模拟 GUI 验证，未做真机验收",
+      "date": "2026-07-16",
+      "project": "EncoderPlotter_0703_02",
+      "status": "已完成",
       "keywords": [
-        "下线检测",
-        "信息确认",
-        "firmware_info",
-        "人工决定",
-        "继续检测",
-        "结束检测",
-        "订单号",
-        "扫码"
+        "chamber",
+        "高低温箱",
+        "temperature",
+        "humidity",
+        "Modbus",
+        "独立进程",
+        "同步采样",
+        "EncoderPlotter"
       ]
     },
     {
-      "id": "F-026",
+      "id": "F-005",
       "type": "feature",
-      "title": "EncoderPlotter 烧录面板放开 DPB 锁定 — 型号/固件文件可重选",
+      "title": "加密模块分析（程序加密 vs 分段加密）",
       "file": "global_dev_features.md",
-      "line": 14,
-      "date": "2026-09-23",
-      "project": "EncoderPlotter_0703_03 (分支 feature/flash-and-pcba，主仓 1f5c515a，子模块 sub_automation 30b1c3f)",
-      "status": "已归档 (可直接调用)",
+      "line": 76,
+      "date": "2026-07-17",
+      "project": "EncoderPlotter_0703_02",
+      "status": "已完成",
       "keywords": [
-        "烧录面板",
-        "flashPanel",
-        "DPB 锁定",
-        "型号选择",
+        "encryption",
+        "程序加密",
+        "分段加密",
         "IAP",
-        "MPT-G",
-        "--mpt-g",
-        "flash_tool.py",
-        "CONFIGS extra_hex",
-        "localStorage 配置恢复",
-        "nuitka 重编"
+        "AES",
+        "RSA",
+        "Protector",
+        "BootLoader"
       ]
     },
     {
-      "id": "F-025",
+      "id": "F-006",
       "type": "feature",
-      "title": "舵机(KingKong)诊断包解密规则 — kkdiag + 本机私钥",
+      "title": "读取模式数据自动保存（时间戳目录）功能",
       "file": "global_dev_features.md",
-      "line": 35,
-      "date": "2026-09-23",
-      "project": "driverSoftware (@CODE_ROOT@\\driverSoftware)",
-      "status": "已归档 (可直接调用)",
+      "line": 113,
+      "date": "2026-08-12",
+      "project": "EncoderPlotter_0703_01",
+      "status": "已完成",
       "keywords": [
-        "诊断包",
-        "diag",
-        "解密",
-        "kkdiag",
-        "diag_private.pem",
-        "私钥",
-        "黑匣子",
-        "blackbox",
-        "events.jrn",
-        "rings.json.enc",
-        "env.json.enc",
-        "key.bin",
-        "AES-GCM",
-        "RSA-4096"
+        "Electron",
+        "Vue2",
+        "Vuex",
+        "设置弹窗",
+        "目录选择",
+        "时间戳目录",
+        "数据持久化",
+        "读取模式",
+        "bin文件复制",
+        "i18n双语"
+      ]
+    },
+    {
+      "id": "F-007",
+      "type": "feature",
+      "title": "IAP升级移除SN格式校验（保留必填）",
+      "file": "global_dev_features.md",
+      "line": 215,
+      "date": "2026-08-28",
+      "project": "EncoderPlotter_0703_03",
+      "status": "已完成",
+      "keywords": [
+        "IAP升级",
+        "SN序列号",
+        "格式校验移除",
+        "必填校验",
+        "Vue2",
+        "i18n",
+        "placeholder"
+      ]
+    },
+    {
+      "id": "F-008",
+      "type": "feature",
+      "title": "IAP升级进度专用progress_sender参数贯通",
+      "file": "global_dev_features.md",
+      "line": 267,
+      "date": "2026-08-28",
+      "project": "EncoderPlotter_0703_03",
+      "status": "已完成",
+      "keywords": [
+        "IAP",
+        "升级进度专用",
+        "progress_sender",
+        "参数贯通",
+        "Encoder.py",
+        "IAP.py"
+      ]
+    },
+    {
+      "id": "F-009",
+      "type": "feature",
+      "title": "IAP失败清除SN+重试通道SN自动还原",
+      "file": "global_dev_features.md",
+      "line": 287,
+      "date": "2026-08-28",
+      "project": "EncoderPlotter_0703_03",
+      "status": "已完成",
+      "keywords": [
+        "IAP",
+        "失败清除",
+        "SN",
+        "重试通道",
+        "自动还原",
+        "iap.js"
+      ]
+    },
+    {
+      "id": "F-010",
+      "type": "feature",
+      "title": "导入调试数据【使用当前配置】覆盖 + 绘图方式默认后端",
+      "file": "global_dev_features.md",
+      "line": 308,
+      "date": "2026-08-28",
+      "project": "EncoderPlotter_0703_03",
+      "status": "已完成",
+      "keywords": [
+        "导入调试数据",
+        "使用当前配置",
+        "覆盖",
+        "绘图方式默认后端",
+        "global.js",
+        "device.js",
+        "Encoder.py",
+        "store默认值global.js"
+      ]
+    },
+    {
+      "id": "F-011",
+      "type": "feature",
+      "title": "EncoderPlotter 国际化(i18n)全面修复",
+      "file": "global_dev_features.md",
+      "line": 334,
+      "date": "2026-09-02",
+      "project": "EncoderPlotter_0703_01",
+      "status": "已完成",
+      "keywords": [
+        "EncoderPlotter",
+        "国际化",
+        "i18n",
+        "全面修复",
+        "涉及mes-config.js",
+        "device.js",
+        "iap.js",
+        "i18n.js",
+        "正则提取全部.js",
+        "threshold.html",
+        "selector.html",
+        "flash_tool_v2.py"
+      ]
+    },
+    {
+      "id": "F-013",
+      "type": "feature",
+      "title": "从 origin/develop 干净重合并 MPT-G QGC 并补齐 V402 配置",
+      "file": "global_dev_features.md",
+      "line": 418,
+      "date": "2026-09-14",
+      "project": "EncoderPlotter3",
+      "status": "已完成",
+      "keywords": [
+        "MPT-G",
+        "MPT-QGC",
+        "V402",
+        "InitArguments_MPT_QGC_V5",
+        "gitlink",
+        "merge"
+      ]
+    },
+    {
+      "id": "F-017",
+      "type": "feature",
+      "title": "EncoderPlotter_0703_01 IAP 后恢复 SN 必须设备回读校验",
+      "file": "global_dev_features.md",
+      "line": 445,
+      "date": "2026-09-15",
+      "project": "EncoderPlotter_0703_01",
+      "status": "已完成",
+      "keywords": [
+        "IAP",
+        "statorSN",
+        "arguments",
+        "EncoderCommandCalibrationRewriteArguments",
+        "回读校验",
+        "SN一致性"
+      ]
+    },
+    {
+      "id": "F-018",
+      "type": "feature",
+      "title": "固件 Flash 布局规范（Bin Footer FLYT / 标定 'i' 指令）对上位机影响分析",
+      "file": "global_dev_features.md",
+      "line": 467,
+      "date": "2026-09-15",
+      "project": "EncoderPlotter_0903_01",
+      "status": "已完成",
+      "keywords": [
+        "Flash布局",
+        "Bin Footer",
+        "FLYT",
+        "'i'指令",
+        "RecalibrationLayoutInfo",
+        "IAP_MUST_PRESERVE",
+        "剥footer",
+        "bin文件过大",
+        "1984包",
+        "DATA_ADDRESS_LAYOUTS",
+        "P/Q/T",
+        "V3100"
+      ]
+    },
+    {
+      "id": "F-019",
+      "type": "feature",
+      "title": "driverSoftware 舵机软件仓库开发、合并、发布与打包规范",
+      "file": "global_dev_features.md",
+      "line": 491,
+      "date": "2026-09-15",
+      "project": "driverSoftware（KingKong 感驱一体舵机 PC 控制软件）",
+      "status": "已完成",
+      "keywords": [
+        "舵机",
+        "driverSoftware",
+        "development",
+        "feature",
+        "fix",
+        "merge",
+        "no-ff",
+        "release.py",
+        "VERSION",
+        "CHANGELOG",
+        "Nuitka",
+        "electron-builder",
+        "SKU",
+        "customer-L0",
+        "customer-L1",
+        "internal",
+        "混源守卫",
+        "构建门禁",
+        "实机验证",
+        "新需求开发"
+      ]
+    },
+    {
+      "id": "F-020",
+      "type": "feature",
+      "title": "driverSoftware 算法仓库与打包产物边界核查",
+      "file": "global_dev_features.md",
+      "line": 533,
+      "date": "2026-09-16",
+      "project": "driverSoftware（舵机 PC 控制软件）",
+      "status": "已完成",
+      "keywords": [
+        "舵机",
+        "算法仓库",
+        "recalibration",
+        "sub_algorithm",
+        "kingkong_calib",
+        "wheel",
+        "pyd",
+        "pyc",
+        "Nuitka",
+        "force_calib",
+        "internal",
+        "release",
+        "customer-L1",
+        "customer-L0",
+        "算法源码不进包",
+        "派生运行产物"
+      ]
+    },
+    {
+      "id": "F-021",
+      "type": "feature",
+      "title": "EncoderPlotter 再标定霍尔测试脚本零依赖单文件化",
+      "file": "global_dev_features.md",
+      "line": 567,
+      "date": "2026-09-17",
+      "project": "EncoderPlotter_0703_01",
+      "status": "已完成",
+      "keywords": [
+        "EncoderPlotter",
+        "再标定",
+        "recalibration",
+        "霍尔",
+        "hall",
+        "单文件",
+        "零依赖",
+        "standalone",
+        "pyserial",
+        "Analyzer",
+        "EncoderReadoutConfig",
+        "CRC8",
+        "singleRead",
+        "协议复制",
+        "技术债"
+      ]
+    },
+    {
+      "id": "F-022",
+      "type": "feature",
+      "title": "EncoderPlotter_0903_01 全项目架构与标定/IAP 产物语义基线",
+      "file": "global_dev_features.md",
+      "line": 608,
+      "date": "2026-09-20",
+      "project": "EncoderPlotter_0903_01",
+      "status": "已完成",
+      "keywords": [
+        "EncoderPlotter_0903_01",
+        "标定",
+        "再标定",
+        "IAP",
+        "在线IAP",
+        "离线IAP",
+        "P/Q/T",
+        "ced_Q",
+        "ced_T",
+        "ged_P",
+        "ged_Q",
+        "ged_T",
+        "调试ZIP",
+        "kingkong.zip",
+        "_iapgen.bin",
+        "iapenc",
+        "IAPENC01",
+        "FLYT",
+        "flash layout",
+        "parse_iap_bin",
+        "DATA_ADDRESS_LAYOUTS",
+        "Arguments",
+        "FunctionArguments",
+        "HTTP IAP",
+        "SSE",
+        "flow-control",
+        "bootloader",
+        "MES",
+        "产物语义",
+        "复核边界"
+      ]
+    },
+    {
+      "id": "F-023",
+      "type": "feature",
+      "title": "正式版本使用 tag 触发 CI Runner 构建",
+      "file": "global_dev_features.md",
+      "line": 653,
+      "date": "2026-09-20",
+      "project": "driverSoftware",
+      "status": "已完成",
+      "keywords": [
+        "driverSoftware",
+        "release.py",
+        "CI Runner",
+        "GitLab",
+        "tag",
+        "vX.Y.Z",
+        "build-win-release",
+        "build-mac-release"
       ]
     },
     {
@@ -744,10 +1007,10 @@
       "type": "feature",
       "title": "AI工程化基建模板 — driverSoftware 全套工程/规则/打包/发布机制",
       "file": "global_dev_features.md",
-      "line": 52,
+      "line": 672,
       "date": "2026-09-22",
       "project": "driverSoftware (@CODE_ROOT@\\driverSoftware, v0.13.10, 分支 development) — 新项目搭建时直接照抄的参考实现",
-      "status": "已归档 (可复用模板)",
+      "status": "已完成",
       "keywords": [
         "AI工程化",
         "工程基建",
@@ -782,14 +1045,63 @@
       ]
     },
     {
+      "id": "F-025",
+      "type": "feature",
+      "title": "舵机(KingKong)诊断包解密规则 — kkdiag + 本机私钥",
+      "file": "global_dev_features.md",
+      "line": 721,
+      "date": "2026-09-23",
+      "project": "driverSoftware (@CODE_ROOT@\\driverSoftware)",
+      "status": "已完成",
+      "keywords": [
+        "诊断包",
+        "diag",
+        "解密",
+        "kkdiag",
+        "diag_private.pem",
+        "私钥",
+        "黑匣子",
+        "blackbox",
+        "events.jrn",
+        "rings.json.enc",
+        "env.json.enc",
+        "key.bin",
+        "AES-GCM",
+        "RSA-4096"
+      ]
+    },
+    {
+      "id": "F-026",
+      "type": "feature",
+      "title": "EncoderPlotter 烧录面板放开 DPB 锁定 — 型号/固件文件可重选",
+      "file": "global_dev_features.md",
+      "line": 746,
+      "date": "2026-09-23",
+      "project": "EncoderPlotter_0703_03 (分支 feature/flash-and-pcba，主仓 1f5c515a，子模块 sub_automation 30b1c3f)",
+      "status": "已完成",
+      "keywords": [
+        "烧录面板",
+        "flashPanel",
+        "DPB 锁定",
+        "型号选择",
+        "IAP",
+        "MPT-G",
+        "--mpt-g",
+        "flash_tool.py",
+        "CONFIGS extra_hex",
+        "localStorage 配置恢复",
+        "nuitka 重编"
+      ]
+    },
+    {
       "id": "F-027",
       "type": "feature",
       "title": "【飞书自动化】飞书 ⇄ Claude Code 双向闭环：完成通知、飞书回复续跑、桌面上下文同步",
       "file": "global_dev_features.md",
-      "line": 111,
+      "line": 771,
       "date": "2026-09-23 ~ 2026-09-24",
       "project": "全局工具 @USER_HOME@\\.feishu_bridge",
-      "status": "已完成",
+      "status": "已废弃",
       "keywords": [
         "飞书自动化",
         "飞书",
@@ -821,7 +1133,7 @@
       "type": "feature",
       "title": "【知识库优化】SIRE 知识检索 v2：bge 语义 + trigram 全文 + 复用要点，recall@3 0.45→1.00",
       "file": "global_dev_features.md",
-      "line": 152,
+      "line": 809,
       "date": "2026-09-24",
       "project": "SIRE 知识检索 v2 实施记录（历史闭环库为 `@SIRE_ARCHIVE_ROOT@\\sire_vectors.sqlite3`；Claude/Codex 当前工作库由 `sire_paths.py` 指向仓库 `data/sire_vectors.sqlite3`）",
       "status": "已完成",
@@ -846,14 +1158,243 @@
       ]
     },
     {
+      "id": "F-029",
+      "type": "feature",
+      "title": "Codex 桌面会话与飞书完整可见对话同步及续跑",
+      "file": "global_dev_features.md",
+      "line": 844,
+      "date": "2026-09-24",
+      "project": "原记录未记载",
+      "status": "部分完成",
+      "keywords": [
+        "飞书",
+        "Feishu",
+        "Codex notify",
+        "transcript JSONL",
+        "用户消息",
+        "助手可见回复",
+        "分卡",
+        "游标",
+        "重启恢复",
+        "codex exec resume",
+        "msg_map"
+      ]
+    },
+    {
+      "id": "F-030",
+      "type": "feature",
+      "title": "飞书回复 Codex 桌面会话：codex queue 入队与回调关联（WAITING_CODEX）",
+      "file": "global_dev_features.md",
+      "line": 863,
+      "date": "2026-09-24",
+      "project": "飞书桥接（FeishuClaudeBridge）",
+      "status": "部分完成",
+      "keywords": [
+        "飞书",
+        "Codex",
+        "codex queue",
+        "active writer",
+        "thread-store conflict",
+        "notify hook",
+        "消息回帖",
+        "WAITING_CODEX",
+        "待关联任务",
+        "重启恢复"
+      ]
+    },
+    {
+      "id": "F-032",
+      "type": "feature",
+      "title": "飞书回复显式指定 Claude/Codex 并按工作目录安全路由",
+      "file": "global_dev_features.md",
+      "line": 884,
+      "date": "2026-09-24",
+      "project": "飞书桥接（FeishuClaudeBridge）",
+      "status": "部分完成",
+      "keywords": [
+        "飞书",
+        "Claude执行",
+        "Codex执行",
+        "显式路由",
+        "执行者前缀",
+        "parent_id",
+        "msg_map",
+        "session_id",
+        "cwd",
+        "多会话歧义"
+      ]
+    },
+    {
+      "id": "F-034",
+      "type": "feature",
+      "title": "飞书显式 Claude 路由已验证，执行受订阅限额阻断（ROUTE_OK 测试）",
+      "file": "global_dev_features.md",
+      "line": 905,
+      "date": "2026-09-24",
+      "project": "飞书桥接（FeishuClaudeBridge）",
+      "status": "已完成",
+      "keywords": [
+        "飞书",
+        "Claude执行",
+        "ROUTE_OK",
+        "路由验证",
+        "session limit",
+        "订阅限额",
+        "错误回传"
+      ]
+    },
+    {
+      "id": "F-035",
+      "type": "feature",
+      "title": "Codex 桌面可见对话通过 Stop 钩子与游标轮询补漏同步飞书",
+      "file": "global_dev_features.md",
+      "line": 925,
+      "date": "2026-09-24",
+      "project": "飞书桥接（FeishuClaudeBridge）",
+      "status": "已完成",
+      "keywords": [
+        "Codex",
+        "Feishu",
+        "飞书",
+        "Stop Hook",
+        "hooks.json",
+        "transcript cursor",
+        "对话补漏",
+        "重启恢复",
+        "完整可见消息"
+      ]
+    },
+    {
+      "id": "F-036",
+      "type": "feature",
+      "title": "飞书桥接当前实现缺口与验收优先级",
+      "file": "global_dev_features.md",
+      "line": 945,
+      "date": "2026-09-24",
+      "project": "飞书桥接（FeishuClaudeBridge）",
+      "status": "部分完成",
+      "keywords": [
+        "飞书",
+        "Codex",
+        "Claude",
+        "会话纳管",
+        "Stop Hook",
+        "消息元数据",
+        "工作目录",
+        "附件清单",
+        "WAITING_CODEX",
+        "队列恢复",
+        "回调关联",
+        "幂等",
+        "R7",
+        "共享规则",
+        "多AI扩展"
+      ]
+    },
+    {
+      "id": "F-037",
+      "type": "feature",
+      "title": "飞书与多AI通过唯一中间服务通讯的单中枢架构（目标架构决策，未实现）",
+      "file": "global_dev_features.md",
+      "line": 965,
+      "date": "2026-09-24",
+      "project": "飞书桥接（单中枢架构）",
+      "status": "部分完成",
+      "keywords": [
+        "飞书",
+        "中间服务",
+        "消息中枢",
+        "单一通信入口",
+        "Codex",
+        "Claude",
+        "Provider Adapter",
+        "任务路由",
+        "消息账本",
+        "Outbox",
+        "会话ID",
+        "工作目录"
+      ]
+    },
+    {
+      "id": "F-038",
+      "type": "feature",
+      "title": "当前飞书桥接与单一中间服务架构的比较结论与迁移步骤",
+      "file": "global_dev_features.md",
+      "line": 989,
+      "date": "2026-09-24",
+      "project": "飞书桥接（单中枢架构）",
+      "status": "部分完成",
+      "keywords": [
+        "飞书",
+        "中间服务",
+        "单一Broker",
+        "架构比较",
+        "Codex",
+        "Claude",
+        "订阅额度",
+        "本地执行器",
+        "渐进迁移",
+        "Provider Adapter"
+      ]
+    },
+    {
+      "id": "F-039",
+      "type": "feature",
+      "title": "单Broker飞书多AI系统的深层逻辑与失效模式审查",
+      "file": "global_dev_features.md",
+      "line": 1011,
+      "date": "2026-09-24",
+      "project": "飞书桥接（单中枢架构）",
+      "status": "部分完成",
+      "keywords": [
+        "Feishu",
+        "单一中间服务",
+        "Broker",
+        "安全边界",
+        "bypassPermissions",
+        "工作目录白名单",
+        "任务状态机",
+        "幂等",
+        "队列恢复",
+        "多AI协作",
+        "上下文回环",
+        "附件",
+        "取消",
+        "并发",
+        "隐私"
+      ]
+    },
+    {
+      "id": "F-040",
+      "type": "feature",
+      "title": "飞书机器人私聊直接发起AI任务的会话入口逻辑（尚未实现）",
+      "file": "global_dev_features.md",
+      "line": 1034,
+      "date": "2026-09-24",
+      "project": "飞书桥接（单中枢架构）",
+      "status": "部分完成",
+      "keywords": [
+        "飞书机器人",
+        "私聊",
+        "新任务入口",
+        "parent_id",
+        "conversation_id",
+        "显式路由",
+        "Claude",
+        "Codex",
+        "工作目录",
+        "会话绑定"
+      ]
+    },
+    {
       "id": "F-041",
       "type": "feature",
       "title": "【飞书自动化】飞书多 AI 中转中间服务 feishu-hub（中间服务 + Claude/Codex 执行器，取代 F-027）",
       "file": "global_dev_features.md",
-      "line": 193,
+      "line": 1056,
       "date": "2026-09-24",
       "project": "飞书多 AI 中转中间服务 feishu-hub —— @SIRE_ROOT@\\AI\\AI\\feishu-hub（GitHub Albert-Tsai-git/AI，分支 feature/feishu-hub，最新 ea704df）",
-      "status": "已完成（已上线运行；遗留：CX-3 测试偶发失败、手动 codex exec 也会推送卡片、需登录 Windows 才启动）",
+      "status": "已完成",
       "keywords": [
         "飞书自动化",
         "飞书中转",
@@ -901,10 +1442,10 @@
       "type": "feature",
       "title": "用现状审计建立项目基础文档基线并标出事实冲突",
       "file": "global_dev_features.md",
-      "line": 254,
+      "line": 1110,
       "date": "2026-09-25",
       "project": "driverSoftware（D:\\code\\driverSoftware）",
-      "status": "已完成；产出为可复用的项目文档基线和有边界说明的仓库审计，适用于启动类似项目的文档规划，不能替代针对各项目的事实核验。",
+      "status": "已完成",
       "keywords": [
         "项目基础文档清单",
         "AI执行规则",
@@ -922,10 +1463,10 @@
       "type": "feature",
       "title": "项目基础文档基线（可迁移完整原文）",
       "file": "global_dev_features.md",
-      "line": 284,
+      "line": 1137,
       "date": "2026-09-25",
       "project": "可迁移的项目搭建知识；来源为 driverSoftware 提交 `927e9a4ece55a4ce27bb707c1720e9a0337d6308`",
-      "status": "已归档原文；项目仓库恢复动作由当前 run 的 U-02 单独处理",
+      "status": "",
       "keywords": [
         "项目基础文档清单",
         "项目搭建",
@@ -946,10 +1487,10 @@
       "type": "feature",
       "title": "Unity/Blender 战车 RPG 的美术启动约定",
       "file": "global_dev_features.md",
-      "line": 416,
+      "line": 1259,
       "date": "2026-09-27",
       "project": "GAME（原创废土战车 RPG）",
-      "status": "已归档（视觉方案仍需实景验收）",
+      "status": "已完成",
       "keywords": [
         "Unity 美术",
         "Blender",
@@ -968,10 +1509,10 @@
       "type": "feature",
       "title": "舵机加密OTA的协议及ACK丢失恢复",
       "file": "global_dev_features.md",
-      "line": 432,
+      "line": 1278,
       "date": "2026-10-08",
       "project": "driverSoftware",
-      "status": "软件实现与模拟验收完成，真机可见 GUI 验收待设备及逐次 OTA 授权。",
+      "status": "部分完成",
       "keywords": [
         "加密OTA",
         "AES-128-CBC",
@@ -985,14 +1526,37 @@
       ]
     },
     {
+      "id": "F-046",
+      "type": "feature",
+      "title": "打包应用通过兼容 profile 切换多仓库组合",
+      "file": "global_dev_features.md",
+      "line": 1304,
+      "date": "2026-10-10",
+      "project": "EncoderPlotter 多仓库打包切换方案（架构咨询）",
+      "status": "部分完成",
+      "keywords": [
+        "Git 子模块",
+        "submodule",
+        "主仓库分支",
+        "打包",
+        "运行时切换",
+        "profile",
+        "manifest",
+        "commit SHA",
+        "launcher",
+        "版本组合",
+        "rollback"
+      ]
+    },
+    {
       "id": "F-047",
       "type": "feature",
       "title": "MPT arguments 解耦：'a'指令字段自描述查询（V4.2.1）",
       "file": "global_dev_features.md",
-      "line": 461,
+      "line": 1332,
       "date": "2026-10-10",
       "project": "Analyzer_Encoder_DebugTest（C:\\Users\\Administrator\\Downloads\\Analyzer_Encoder_DebugTest；Test Script + Test Report，2026-10-09 V4.2.1 第6轮报告）",
-      "status": "已完成（只读分析归档；未改动任何脚本/固件）",
+      "status": "已完成",
       "keywords": [
         "MPT",
         "arguments解耦",
@@ -1021,37 +1585,14 @@
       ]
     },
     {
-      "id": "F-046",
-      "type": "feature",
-      "title": "打包应用通过兼容 profile 切换多仓库组合",
-      "file": "global_dev_features.md",
-      "line": 498,
-      "date": "2026-10-10",
-      "project": "EncoderPlotter 多仓库打包切换方案（架构咨询）",
-      "status": "方案建议，未实现、未验证；离线/在线分发方式与具体目标分支待确认。",
-      "keywords": [
-        "Git 子模块",
-        "submodule",
-        "主仓库分支",
-        "打包",
-        "运行时切换",
-        "profile",
-        "manifest",
-        "commit SHA",
-        "launcher",
-        "版本组合",
-        "rollback"
-      ]
-    },
-    {
       "id": "F-048",
       "type": "feature",
       "title": "EncoderPlotter_0903_01 数据生成四条链路与基线分叉（feature/data-generation）",
       "file": "global_dev_features.md",
-      "line": 528,
+      "line": 1367,
       "date": "2026-10-10",
       "project": "EncoderPlotter_0903_01（分支 feature/data-generation，从 feature/iap-ota-sn@19072126 切出）",
-      "status": "部分完成（分支已建，具体改动范围待用户提供）",
+      "status": "部分完成",
       "keywords": [
         "数据生成",
         "生成标定数据",
@@ -1074,10 +1615,10 @@
       "type": "feature",
       "title": "CI tag写入target并在内部版界面显示",
       "file": "global_dev_features.md",
-      "line": 558,
+      "line": 1394,
       "date": "2026-10-12",
       "project": "EncoderPlotter_0903_01 / 当前仓库",
-      "status": "部分完成（代码已实现；真实 GUI 验收受限）",
+      "status": "部分完成",
       "keywords": [
         "Git tag",
         "CI_COMMIT_TAG",
@@ -1088,14 +1629,14 @@
       ]
     },
     {
-      "id": "F-050",
+      "id": "F-051",
       "type": "feature",
-      "title": "DPB单圈标定采集圆环置灰",
+      "title": "ECharts采集图例说明与禁用圈独立深灰",
       "file": "global_dev_features.md",
-      "line": 588,
+      "line": 1422,
       "date": "2026-10-12",
       "project": "EncoderPlotter_0903_01",
-      "status": "代码完成，真实界面验收受阻。",
+      "status": "部分完成",
       "keywords": [
         "DPB",
         "单圈标定",
@@ -1107,22 +1648,23 @@
       ]
     },
     {
-      "id": "F-051",
+      "id": "F-052",
       "type": "feature",
-      "title": "ECharts采集图例说明与禁用圈独立深灰",
+      "title": "下线检测信息确认人工决定与订单号录入",
       "file": "global_dev_features.md",
-      "line": 602,
+      "line": 1443,
       "date": "2026-10-12",
-      "project": "EncoderPlotter_0903_01",
-      "status": "代码完成，真实界面验收受阻。",
+      "project": "driverSoftware2",
+      "status": "部分完成",
       "keywords": [
-        "DPB",
-        "单圈标定",
-        "圆环",
-        "calibrationChart",
-        "ringTarget",
-        "ECharts",
-        "dispose"
+        "下线检测",
+        "信息确认",
+        "firmware_info",
+        "人工决定",
+        "继续检测",
+        "结束检测",
+        "订单号",
+        "扫码"
       ]
     },
     {
@@ -1130,10 +1672,10 @@
       "type": "feature",
       "title": "driverSoftware2 后端地图：server.py 装配、reader 三变体与运行形态",
       "file": "global_dev_features.md",
-      "line": 618,
+      "line": 1462,
       "date": "2026-10-13",
       "project": "driverSoftware2（KingKong 感驱一体舵机 PC 上位机，@CODE_ROOT@\\driverSoftware2；基线 VERSION 0.16.1 / 分支 feat/offline-detection-optimize / HEAD cf23634）",
-      "status": "已完成（静态勘察 + 全部行号本次逐条 grep 实测；未运行服务与真机，开发机常态不连硬件）",
+      "status": "已完成",
       "keywords": [
         "driverSoftware2",
         "后端地图",
@@ -1169,10 +1711,10 @@
       "type": "feature",
       "title": "driverSoftware2 协议层与固件档案门控：帧/命令/寄存器/profile 四层与新增命令链路",
       "file": "global_dev_features.md",
-      "line": 670,
+      "line": 1506,
       "date": "2026-10-13",
       "project": "driverSoftware2（@CODE_ROOT@\\driverSoftware2，VERSION 0.16.1）",
-      "status": "已完成（行号与 V3.3 差异逐条 grep/读文档实测；未连真机验证任何协议行为）",
+      "status": "已完成",
       "keywords": [
         "RS485 协议",
         "protocol.py",
@@ -1209,10 +1751,10 @@
       "type": "feature",
       "title": "driverSoftware2 前端地图：13 页清单、路由注册五处、REST/WS 与示波器 uPlot 图表",
       "file": "global_dev_features.md",
-      "line": 718,
+      "line": 1547,
       "date": "2026-10-13",
       "project": "driverSoftware2（@CODE_ROOT@\\driverSoftware2，VERSION 0.16.1）",
-      "status": "已完成（页面清单/注册表/行号本次逐条 grep 实测；未在浏览器里跑交互回归 —— 开发机不连硬件，UI 行为需按验证方法自验）",
+      "status": "已完成",
       "keywords": [
         "前端地图",
         "frontend",
@@ -1254,10 +1796,10 @@
       "type": "feature",
       "title": "driverSoftware2 Electron 壳：拉起后端、端口回执与窗口安全项",
       "file": "global_dev_features.md",
-      "line": 766,
+      "line": 1588,
       "date": "2026-10-13",
       "project": "driverSoftware2（@CODE_ROOT@\\driverSoftware2，electron/ 壳，package.json 版本 0.16.1）",
-      "status": "已完成（main.js / package.json 行号本次逐条读文件实测；未实跑 `npm start`，也未打包验证）",
+      "status": "已完成",
       "keywords": [
         "Electron 壳",
         "electron/main.js",
@@ -1290,10 +1832,10 @@
       "type": "feature",
       "title": "driverSoftware2 测试分层、CI 门禁与构建发布（旧前端随 server.dist 走的根因）",
       "file": "global_dev_features.md",
-      "line": 804,
+      "line": 1622,
       "date": "2026-10-13",
       "project": "driverSoftware2（@CODE_ROOT@\\driverSoftware2，VERSION 0.16.1）",
-      "status": "已完成（数字与行号本次实跑/实读；未运行完整构建，未发版）",
+      "status": "已完成",
       "keywords": [
         "pytest",
         "pytest.ini",
@@ -1354,10 +1896,10 @@
       "type": "feature",
       "title": "driverSoftware2 下线检测（产线出厂检测）功能全貌与 duoji 口径",
       "file": "global_dev_features.md",
-      "line": 851,
+      "line": 1662,
       "date": "2026-10-13",
       "project": "driverSoftware2（@CODE_ROOT@\\driverSoftware2，分支 feat/offline-detection-optimize，HEAD cf23634，基线 v0.16.0 首发 / v0.16.1 当前 VERSION）",
-      "status": "部分完成 —— 结构与口径已核实（行号本次逐条读文件实测）；功能本身仍在开发分支，**未做真机验收**，冒烟通道真实存在：`.gitlab-ci.yml:172-175` 的 `build-win-smoke` 按 `/^win-smoke-/` 触发，本分支已打过 `win-smoke-offline-detection` 与 `win-smoke-offline-detection-fix2`（冒烟包不 bump VERSION，落 `02SD\\<tag>\\`）。",
+      "status": "部分完成",
       "keywords": [
         "下线检测",
         "扭矩去皮零点",
@@ -1405,10 +1947,10 @@
       "type": "feature",
       "title": "driverSoftware2 文档三层地图、协作上下文与三条自验路径",
       "file": "global_dev_features.md",
-      "line": 906,
+      "line": 1712,
       "date": "2026-10-13",
       "project": "driverSoftware2（@CODE_ROOT@\\driverSoftware2，VERSION 0.16.1）",
-      "status": "已完成（三层结构、13 份 skill、协作上下文章节行号、两处引用不实均经本次实测；未连真机）",
+      "status": "已完成",
       "keywords": [
         "文档地图",
         "docs/skills",
@@ -1450,10 +1992,10 @@
       "type": "feature",
       "title": "MES 需求规格文档：数据库、后台管理与业务系统边界",
       "file": "global_dev_features.md",
-      "line": 972,
+      "line": 1768,
       "date": "2026-10-13",
       "project": "MES (D:\\code\\mes)",
-      "status": "已完成文档整理；需求基线仍待业务、生产、质量、仓储及 ERP 相关人员评审确认。",
+      "status": "已完成",
       "keywords": [
         "MES",
         "需求规格说明书",
@@ -1471,7 +2013,7 @@
       "type": "feature",
       "title": "将会议架构草图转成可验收的 MES 需求",
       "file": "global_dev_features.md",
-      "line": 1000,
+      "line": 1795,
       "date": "2026-10-13",
       "project": "MES / D:\\code\\mes",
       "status": "已完成",
@@ -1488,12 +2030,12 @@
     {
       "id": "F-062",
       "type": "feature",
-      "title": "Output目录：MPT协议回归与USB描述符探测快照",
+      "title": "Output目录：MPT协议回归与USB描述符探测快照（含USB Hub探测与A~F测试副作用的坑）",
       "file": "global_dev_features.md",
-      "line": 1032,
+      "line": 1819,
       "date": "2026-10-13",
-      "project": "C:\\Users\\Administrator\\Downloads\\Output (只读目录内容分析)",
-      "status": "已完成（只读静态分析；本轮未执行设备验证）",
+      "project": "Output 目录只读分析",
+      "status": "已完成（只读静态分析；未执行设备验证）",
       "keywords": [
         "Output",
         "MPT",
@@ -1511,7 +2053,7 @@
       "type": "feature",
       "title": "当前分支DPB单圈标定能力与DPT及输出限制",
       "file": "global_dev_features.md",
-      "line": 1062,
+      "line": 1842,
       "date": "2026-10-13",
       "project": "EncoderPlotter_0903_01 / feature/dpb-single-turn-calibration",
       "status": "部分完成",
@@ -1530,10 +2072,10 @@
       "type": "feature",
       "title": "MES SRS 集成多版本 DPB 工艺图与 Word 静态流程图",
       "file": "global_dev_features.md",
-      "line": 1090,
+      "line": 1869,
       "date": "2026-10-13",
       "project": "D:\\code\\mes",
-      "status": "部分完成（交付物与结构验收完成；页面视觉验收受环境限制）",
+      "status": "部分完成",
       "keywords": [
         "MES 需求规格说明书",
         "DPB 定子工艺流程",
@@ -1544,33 +2086,14 @@
       ]
     },
     {
-      "id": "F-065",
-      "type": "feature",
-      "title": "当前分支截图需求第2至6项覆盖检查",
-      "file": "global_dev_features.md",
-      "line": 1120,
-      "date": "2026-10-13",
-      "project": "EncoderPlotter_0903_01 / feature/dpb-single-turn-calibration",
-      "status": "部分完成",
-      "keywords": [
-        "标定耗时优化",
-        "DPT 标定台账",
-        "标定失败弹窗",
-        "绿色采集说明",
-        "生产模式",
-        "产品软件版本",
-        "IAP 烧录"
-      ]
-    },
-    {
       "id": "F-066",
       "type": "feature",
       "title": "EncoderPlotter feature/data-generation 分支打包原理与流程（含 Debian 实情）",
       "file": "global_dev_features.md",
-      "line": 1148,
+      "line": 1897,
       "date": "2026-10-13",
       "project": "EncoderPlotter1 / origin/feature/data-generation（本地无该分支）",
-      "status": "已完成（文档已产出，对账脚本实跑 PASS；未执行任何真实打包，本仓打包只能推 tag 由 runner 出包）",
+      "status": "已完成",
       "keywords": [
         "打包原理",
         "electron-builder",
@@ -1592,10 +2115,10 @@
       "type": "feature",
       "title": "DOCX统一设置A4纵向并适配流程图",
       "file": "global_dev_features.md",
-      "line": 1184,
+      "line": 1930,
       "date": "2026-10-13",
       "project": "D:\\code\\mes",
-      "status": "部分完成（新文件完成，原路径被占用且视觉验证待完成）",
+      "status": "部分完成",
       "keywords": [
         "DOCX",
         "A4",
@@ -1610,7 +2133,7 @@
       "type": "feature",
       "title": "DPB4010 主仓与 sub_common 同名功能分支",
       "file": "global_dev_features.md",
-      "line": 1212,
+      "line": 1956,
       "date": "2026-10-13",
       "project": "EncoderPlotter_0903_01 / D:\\code\\EncoderPlotter_0903_01",
       "status": "已完成",
@@ -1628,10 +2151,10 @@
       "type": "feature",
       "title": "DPB4010 子仓与主仓 gitlink 提交顺序",
       "file": "global_dev_features.md",
-      "line": 1239,
+      "line": 1982,
       "date": "2026-10-13",
       "project": "EncoderPlotter_0903_01 / feature/dpb4010",
-      "status": "已完成（未推送）",
+      "status": "已完成",
       "keywords": [
         "DPB4010",
         "sub_common",
@@ -1645,7 +2168,7 @@
       "type": "feature",
       "title": "EncoderPlotter 测试包 tag 规范与序号选择",
       "file": "global_dev_features.md",
-      "line": 1259,
+      "line": 2003,
       "date": "2026-10-13",
       "project": "EncoderPlotter_0903_01 / DPB4010",
       "status": "已完成",
@@ -1662,10 +2185,10 @@
       "type": "feature",
       "title": "MES四部分需求文档与系统设计补充",
       "file": "global_dev_features.md",
-      "line": 1280,
+      "line": 2023,
       "date": "2026-10-14",
       "project": "MES (D:\\\\code\\\\mes)",
-      "status": "Markdown 重构完成，待业务/产品/工艺/质量/仓储/IT 评审。",
+      "status": "部分完成",
       "keywords": [
         "MES",
         "需求说明",
@@ -1682,10 +2205,10 @@
       "type": "feature",
       "title": "MES需求确认基线审查与会议决议清单",
       "file": "global_dev_features.md",
-      "line": 1302,
+      "line": 2043,
       "date": "2026-10-14",
       "project": "MES (D:\\\\code\\\\mes)",
-      "status": "审查完成，建议用于澄清会；正式冻结前补全验收和决策追踪。",
+      "status": "已完成",
       "keywords": [
         "MES",
         "需求确认",
@@ -1701,10 +2224,10 @@
       "type": "feature",
       "title": "MES需求文档会议确认清单附录",
       "file": "global_dev_features.md",
-      "line": 1323,
+      "line": 2063,
       "date": "2026-10-14",
       "project": "MES (D:\\\\code\\\\mes)",
-      "status": "完成，待会议填写决议。",
+      "status": "已完成",
       "keywords": [
         "MES",
         "会议确认清单",
@@ -1719,10 +2242,10 @@
       "type": "feature",
       "title": "MES飞书评审文档完整同步与DPB结构化整理",
       "file": "global_dev_features.md",
-      "line": 1342,
-      "date": "",
-      "project": "",
-      "status": "",
+      "line": 2083,
+      "date": "2026-10-14",
+      "project": "D:/code/mes",
+      "status": "已完成",
       "keywords": [
         "MES",
         "DPB",
@@ -1739,10 +2262,10 @@
       "type": "feature",
       "title": "MES 代码现状基线与 SRS v1.3 差距矩阵（2026-10-14 实测）",
       "file": "global_dev_features.md",
-      "line": 1370,
+      "line": 2106,
       "date": "2026-10-14",
       "project": "MES / D:\\code\\mes",
-      "status": "已完成（只读分析，未运行应用；\"已实现\"仅指代码存在且路由可达，不等于端到端验收通过）",
+      "status": "已完成",
       "keywords": [
         "MES 现状基线",
         "编码器 MES",
@@ -1762,10 +2285,10 @@
       "type": "feature",
       "title": "Nuitka 用原始目录收集需运行时执行的 Python 脚本",
       "file": "global_dev_features.md",
-      "line": 1408,
+      "line": 2140,
       "date": "2026-10-14",
       "project": "driverSoftware / D:\\code\\driverSoftware",
-      "status": "修复已提交 dc946d7；等待使用与 Runner 一致的 vendor wheel 重跑完整冒烟构建。",
+      "status": "部分完成",
       "keywords": [
         "Nuitka",
         "--include-raw-dir",
@@ -1783,10 +2306,10 @@
       "type": "feature",
       "title": "多分支纳入审计：主仓祖先图、子仓内容与 gitlink 分开判定",
       "file": "global_dev_features.md",
-      "line": 1437,
+      "line": 2168,
       "date": "2026-10-15",
       "project": "EncoderPlotter_0903_01 / D:\\code\\EncoderPlotter_0903_01（feature/iap-ota-sn）",
-      "status": "已完成（只读提交图与当前 gitlink 审计）",
+      "status": "已完成",
       "keywords": [
         "branch ancestry",
         "submodule gitlink",
@@ -1802,10 +2325,10 @@
       "type": "feature",
       "title": "标定结果汇总CSV复用日志距离并累计追加",
       "file": "global_dev_features.md",
-      "line": 1456,
+      "line": 2189,
       "date": "2026-10-15",
       "project": "EncoderPlotter_0903_01 / D:\\code\\EncoderPlotter_0903_01",
-      "status": "代码完成；真实设备验收待有读取器环境时进行",
+      "status": "部分完成",
       "keywords": [
         "标定汇总",
         "CSV追加",
@@ -1821,10 +2344,10 @@
       "type": "feature",
       "title": "DPB外部版查看参数显示产品与固件版本",
       "file": "global_dev_features.md",
-      "line": 1484,
+      "line": 2216,
       "date": "2026-10-15",
       "project": "EncoderPlotter_0903_01",
-      "status": "代码完成；真实界面验收 BLOCKED-无法真实验证。",
+      "status": "部分完成",
       "keywords": [
         "DPB",
         "参数查看",
@@ -1843,10 +2366,10 @@
       "type": "feature",
       "title": "DPT V4.2.5 V5参数读取与IAP恢复兼容",
       "file": "global_dev_features.md",
-      "line": 1506,
+      "line": 2237,
       "date": "2026-10-15",
       "project": "EncoderPlotter1（KingKong Encoder Analyzer）",
-      "status": "已完成（离线验证通过，真机 IAP 待验证）",
+      "status": "已完成",
       "keywords": [
         "DPT V4.2.5",
         "DPT V5 Arguments",
@@ -1861,10 +2384,10 @@
       "type": "feature",
       "title": "编码器标定错误与告警源码清单整理",
       "file": "global_dev_features.md",
-      "line": 1536,
+      "line": 2263,
       "date": "2026-10-16",
       "project": "EncoderPlotter_0903_01 / D:\\\\code\\\\EncoderPlotter_0903_01",
-      "status": "已完成（静态源码分析；真机逐条触发未验证）",
+      "status": "已完成",
       "keywords": [
         "编码器标定",
         "calibration",
@@ -1882,10 +2405,10 @@
       "type": "feature",
       "title": "标定错误告警清单转换为DOCX的版式与验证",
       "file": "global_dev_features.md",
-      "line": 1566,
+      "line": 2289,
       "date": "2026-10-16",
       "project": "EncoderPlotter_0903_01 / D:\\\\code\\\\EncoderPlotter_0903_01",
-      "status": "部分完成（Word 结构/内容通过；视觉渲染受限）",
+      "status": "部分完成",
       "keywords": [
         "DOCX",
         "Word文档",
@@ -1900,10 +2423,10 @@
       "type": "feature",
       "title": "Bootloader 扫描目标与普通设备选择隔离",
       "file": "global_dev_features.md",
-      "line": 1594,
+      "line": 2314,
       "date": "2026-10-16",
       "project": "driverSoftware",
-      "status": "已合入 development；设备验证待现场具备设备后进行。",
+      "status": "部分完成",
       "keywords": [
         "Bootloader",
         "RS485",
@@ -1918,10 +2441,10 @@
       "type": "feature",
       "title": "端口回收按本机项目绝对路径识别服务",
       "file": "global_dev_features.md",
-      "line": 1618,
+      "line": 2336,
       "date": "2026-10-16",
       "project": "driverSoftware",
-      "status": "已合入 development；按用户要求未重跑测试。",
+      "status": "已完成",
       "keywords": [
         "server.exe",
         "server.py",
@@ -1936,10 +2459,10 @@
       "type": "feature",
       "title": "sire_comms 按会话 id 绑定通讯身份与双方原文展示",
       "file": "global_dev_features.md",
-      "line": 1641,
+      "line": 2358,
       "date": "2026-10-18",
       "project": "SIRE / D:\\sire\\AI\\AI",
-      "status": "已完成（Codex 侧待其按 #18 采用 --session）",
+      "status": "已完成",
       "keywords": [
         "sire_comms",
         "会话绑定",
@@ -1959,7 +2482,7 @@
       "type": "feature",
       "title": "Claude-Codex 协作通讯机制：会话绑定、实时推送、常驻与会话id可变（v6.28–v6.35）",
       "file": "global_dev_features.md",
-      "line": 1669,
+      "line": 2384,
       "date": "2026-10-20",
       "project": "SIRE / D:\\sire\\AI\\AI（共享 skill sire_comms，v6.28–v6.35）",
       "status": "已完成",
@@ -1987,7 +2510,7 @@
       "type": "feature",
       "title": "用户手册外部版隐藏与测试 tag 序号",
       "file": "global_dev_features.md",
-      "line": 1701,
+      "line": 2414,
       "date": "2026-10-21",
       "project": "EncoderPlotter_0903_01",
       "status": "已完成",
@@ -2006,10 +2529,10 @@
       "type": "feature",
       "title": "driverSoftware 0.8至0.20.2提测范围与客户档边界",
       "file": "global_dev_features.md",
-      "line": 1729,
+      "line": 2438,
       "date": "2026-10-22",
       "project": "driverSoftware",
-      "status": "",
+      "status": "已完成",
       "keywords": [
         "driverSoftware",
         "提测",
@@ -2026,10 +2549,10 @@
       "type": "feature",
       "title": "飞书客户提测文档创建与32项回读核验",
       "file": "global_dev_features.md",
-      "line": 1740,
+      "line": 2456,
       "date": "2026-10-22",
       "project": "driverSoftware",
-      "status": "",
+      "status": "已完成",
       "keywords": [
         "飞书",
         "提测文档",
@@ -2042,14 +2565,33 @@
       ]
     },
     {
+      "id": "F-090",
+      "type": "feature",
+      "title": "MES 当前界面易用性审查：待办、导航与低代码配置缺口",
+      "file": "global_dev_features.md",
+      "line": 2474,
+      "date": "2026-10-23",
+      "project": "MES / D:\\code\\mes",
+      "status": "已完成",
+      "keywords": [
+        "MES 易用性",
+        "待办直达",
+        "人员指派待办",
+        "移动端导航",
+        "明细行设计器",
+        "低代码用户体验",
+        "操作手册过期"
+      ]
+    },
+    {
       "id": "F-091",
       "type": "feature",
       "title": "MES交接续做组成能力与SN入口清理",
       "file": "global_dev_features.md",
-      "line": 1751,
-      "date": "",
-      "project": "",
-      "status": "",
+      "line": 2502,
+      "date": "原记录未记载",
+      "project": "原记录未记载",
+      "status": "部分完成",
       "keywords": [
         "MES",
         "composition",
@@ -2064,10 +2606,10 @@
       "type": "feature",
       "title": "GAME对照FC初代重装机兵的差距与制作优先级",
       "file": "global_dev_features.md",
-      "line": 1769,
+      "line": 2526,
       "date": "2026-10-24",
       "project": "GAME",
-      "status": "已完成静态分析，未测试",
+      "status": "已完成",
       "keywords": [
         "FC",
         "重装机兵",
@@ -2085,10 +2627,10 @@
       "type": "feature",
       "title": "GAME 复古俯视 3D UI 主题与视口锚点实现",
       "file": "global_dev_features.md",
-      "line": 1783,
+      "line": 2546,
       "date": "2026-10-25",
       "project": "GAME / D:\\code\\GAME",
-      "status": "部分完成（视觉实现与静态复核完成；未授权真实运行验收）。",
+      "status": "部分完成",
       "keywords": [
         "Unity UI",
         "UGUI",
@@ -2107,10 +2649,10 @@
       "type": "feature",
       "title": "GAME Unity UGUI 程序化旧钢与暖木平铺材质",
       "file": "global_dev_features.md",
-      "line": 1816,
+      "line": 2577,
       "date": "2026-10-25",
       "project": "GAME / D:\\\\code\\\\GAME",
-      "status": "部分完成（材质绘制已静态复核；运行观感未测试）",
+      "status": "部分完成",
       "keywords": [
         "Unity UGUI",
         "Image.Type.Tiled",
@@ -2126,10 +2668,10 @@
       "type": "feature",
       "title": "Additive 美术场景中的室内样片与安全传送接入",
       "file": "global_dev_features.md",
-      "line": 1847,
+      "line": 2604,
       "date": "2026-10-25",
       "project": "D:/code/GAME（Unity FC 重制）",
-      "status": "部分完成（室内样片静态实现完成；实机验收未完成）。",
+      "status": "部分完成",
       "keywords": [
         "Unity additive scene",
         "SceneManager.sceneLoaded",
@@ -2148,10 +2690,10 @@
       "type": "feature",
       "title": "Unity UI跨UGUI/IMGUI共享旧钢与暖木材质",
       "file": "global_dev_features.md",
-      "line": 1899,
+      "line": 2652,
       "date": "2026-10-25",
       "project": "GAME Unity FC 重制",
-      "status": "部分完成（样式与静态复核完成；实机验收待授权）。",
+      "status": "部分完成",
       "keywords": [
         "Unity UI",
         "shared Texture2D",
@@ -2167,10 +2709,10 @@
       "type": "feature",
       "title": "FC 重制室内切面美术基线与车辆版本锚点",
       "file": "global_dev_features.md",
-      "line": 1923,
+      "line": 2675,
       "date": "2026-10-25",
       "project": "GAME Unity FC 重制",
-      "status": "部分完成（视觉基准文档和静态复核完成；游戏运行视觉、FC 原版车辆细节和完整重制仍未验收/未完成）。",
+      "status": "部分完成",
       "keywords": [
         "Unity art bible",
         "isometric cutaway room",
@@ -2189,12 +2731,18 @@
       "type": "feature",
       "title": "FC重制用户参考图风格扩展到整套UI",
       "file": "global_dev_features.md",
-      "line": 1955,
+      "line": 2705,
       "date": "2026-10-25",
       "project": "GAME / Unity FC 重制",
-      "status": "",
+      "status": "部分完成；并入的偏好 H-008（FC 重制 UI 沿用用户确认的室内参考风格）仍然生效",
       "keywords": [
-        "Unity UI 风格、暖木旧钢、黄铜焦点、像素人物、参考图、标题 HUD 菜单 地图 对话 战斗"
+        "Unity UI 风格、暖木旧钢、黄铜焦点、像素人物、参考图、标题 HUD 菜单 地图 对话 战斗",
+        "风格复确认",
+        "用户参考图",
+        "UGUI",
+        "IMGUI",
+        "FC 重制",
+        "暖纸色"
       ]
     },
     {
@@ -2202,10 +2750,10 @@
       "type": "feature",
       "title": "标题页保留用户显示模式",
       "file": "global_dev_features.md",
-      "line": 1973,
+      "line": 2739,
       "date": "2026-10-26",
       "project": "GAME / D:\\code\\GAME",
-      "status": "标题显示模式修正静态复核通过；Unity与显示设备实测待授权",
+      "status": "部分完成",
       "keywords": [
         "Unity UI",
         "标题界面",
@@ -2221,10 +2769,10 @@
       "type": "feature",
       "title": "FC 45毫米炮独立运行时模型原型与挂装路径",
       "file": "global_dev_features.md",
-      "line": 1989,
+      "line": 2758,
       "date": "2026-10-26",
       "project": "GAME / D:\\code\\GAME",
-      "status": "部分完成（运行时原型与挂装接线完成；正式Blender源文件、FBX、预览与授权后的Unity画面验收仍待完成）。",
+      "status": "部分完成",
       "keywords": [
         "FC重装机兵",
         "45毫米炮",
@@ -2236,27 +2784,14 @@
       ]
     },
     {
-      "id": "F-101",
-      "type": "feature",
-      "title": "FC重制UI风格复确认时复用既有主题实现",
-      "file": "global_dev_features.md",
-      "line": 2013,
-      "date": "2026-10-26",
-      "project": "GAME / D:\\code\\GAME",
-      "status": "部分完成（风格基准与静态覆盖确认；实机显示和可读性待授权验证）。",
-      "keywords": [
-        "Unity UI 风格、风格复确认、旧钢、暖木、像素人物、用户参考图、UGUI、IMGUI"
-      ]
-    },
-    {
       "id": "F-102",
       "type": "feature",
       "title": "Unity同名Cue同步的原创SFX WAV资源生成",
       "file": "global_dev_features.md",
-      "line": 2042,
+      "line": 2780,
       "date": "2026-10-26",
       "project": "GAME / D:\\code\\GAME",
-      "status": "部分完成（19种原创素材静态生成与核对完成；Unity导入和试听待用户授权）",
+      "status": "部分完成",
       "keywords": [
         "Unity SFX",
         "SfxCue",
@@ -2272,10 +2807,10 @@
       "type": "feature",
       "title": "FC 45毫米炮模型资源Prefab交付",
       "file": "global_dev_features.md",
-      "line": 2071,
+      "line": 2809,
       "date": "2026-10-26",
       "project": "GAME / Unity FC 重制",
-      "status": "Unity Resources Prefab 已生成；游戏内装配验收待授权",
+      "status": "部分完成",
       "keywords": [
         "WPN_FC_Cannon45",
         "Unity Prefab",
@@ -2291,12 +2826,12 @@
       "type": "feature",
       "title": "FC重制巨蚁Blender/FBX/Unity资源交付",
       "file": "global_dev_features.md",
-      "line": 2095,
+      "line": 2833,
       "date": "2026-10-26",
       "project": "GAME / D:\\code\\GAME",
-      "status": "",
+      "status": "部分完成",
       "keywords": [
-        "FC重制、巨蚁、Blender源模型、FBX、Unity Prefab、资源ID、低多边形、轴向转换、GUID保留"
+        "**关键词**：FC重制、巨蚁、Blender源模型、FBX、Unity Prefab、资源ID、低多边形、轴向转换、GUID保留"
       ]
     },
     {
@@ -2304,10 +2839,10 @@
       "type": "feature",
       "title": "FC重制UI钢板铆钉跨UGUI与IMGUI统一",
       "file": "global_dev_features.md",
-      "line": 2114,
+      "line": 2852,
       "date": "2026-10-26",
       "project": "D:\\code\\GAME",
-      "status": "部分完成（视觉细节完成并静态复核；运行时显示与响应式验收待授权）",
+      "status": "部分完成",
       "keywords": [
         "FC重制",
         "Unity UI",
@@ -2324,10 +2859,10 @@
       "type": "feature",
       "title": "FC波布机械师绕院事件状态与文档核对边界",
       "file": "global_dev_features.md",
-      "line": 2142,
+      "line": 2879,
       "date": "2026-10-26",
       "project": "GAME / D:/code/GAME",
-      "status": "部分完成（开发事件已有代码；原版逐项核对与实机验收未完成）",
+      "status": "部分完成",
       "keywords": [
         "FC重装机兵",
         "波布机械师",
@@ -2343,12 +2878,12 @@
       "type": "feature",
       "title": "FC重制UI语义色板跨UGUI与IMGUI统一",
       "file": "global_dev_features.md",
-      "line": 2172,
+      "line": 2907,
       "date": "2026-10-26",
       "project": "GAME / Unity FC 初代《重装机兵》3D 重制",
-      "status": "已实现并静态复核通过；真实 Unity 界面验收待授权。",
+      "status": "部分完成",
       "keywords": [
-        "FC重制 UI、RetroUiColors、UGUI、IMGUI、旧钢、暖木、语义色板、RichText"
+        "**关键词**：FC重制 UI、RetroUiColors、UGUI、IMGUI、旧钢、暖木、语义色板、RichText"
       ]
     },
     {
@@ -2356,12 +2891,12 @@
       "type": "feature",
       "title": "FC拉多开局补给商店隔离",
       "file": "global_dev_features.md",
-      "line": 2197,
+      "line": 2931,
       "date": "2026-10-26",
       "project": "GAME / Unity FC 初代《重装机兵》3D 重制",
-      "status": "代码与文档静态实现并复核完成；运行时商店显示、购买效果与闭环仍待用户授权测试。",
+      "status": "部分完成",
       "keywords": [
-        "FC重制、拉多补给店、GameDB.RegisterShop、campaign runtime、药品、修理包、弹药补给、商店隔离"
+        "**关键词**：FC重制、拉多补给店、GameDB.RegisterShop、campaign runtime、药品、修理包、弹药补给、商店隔离"
       ]
     },
     {
@@ -2369,10 +2904,10 @@
       "type": "feature",
       "title": "拉多恢复服务统一",
       "file": "global_dev_features.md",
-      "line": 2216,
+      "line": 2950,
       "date": "2026-10-26",
       "project": "FC Remake / `D:\\code\\GAME`",
-      "status": "已完成静态实现，运行时验收待授权。",
+      "status": "部分完成",
       "keywords": [
         "FC",
         "拉多",
@@ -2392,10 +2927,10 @@
       "type": "feature",
       "title": "标题页区分损坏存档与空槽",
       "file": "global_dev_features.md",
-      "line": 2246,
+      "line": 2976,
       "date": "2026-10-26",
       "project": "GAME / `D:\\code\\GAME`",
-      "status": "已完成静态实现与复核；运行时验收待授权。",
+      "status": "部分完成",
       "keywords": [
         "Unity",
         "FC",
@@ -2414,10 +2949,10 @@
       "type": "feature",
       "title": "存档摘要与读取共享最小结构校验",
       "file": "global_dev_features.md",
-      "line": 2275,
+      "line": 3003,
       "date": "2026-10-26",
       "project": "GAME / `D:\\code\\GAME`",
-      "status": "根级结构校验已静态实现并复核；深层数据验证和真实存档路径待后续授权。",
+      "status": "部分完成",
       "keywords": [
         "Unity",
         "FC",
@@ -2438,10 +2973,10 @@
       "type": "feature",
       "title": "GAME待办状态的证据分层",
       "file": "global_dev_features.md",
-      "line": 2303,
+      "line": 3029,
       "date": "2026-10-26",
       "project": "GAME / `D:\\code\\GAME`",
-      "status": "可复用于后续GAME/FC重制待办盘点；每次输出前必须重新读取当前文档与最新台账。",
+      "status": "已完成",
       "keywords": [
         "GAME",
         "FC重制",
@@ -2451,7 +2986,14 @@
         "运行验收",
         "原版核验",
         "接口签核",
-        "DEFERRED"
+        "DEFERRED",
+        "backlog",
+        "待办分类",
+        "GDD",
+        "FC_REMAKE",
+        "FC_REFERENCE",
+        "原版对照",
+        "实机验收"
       ]
     },
     {
@@ -2459,10 +3001,10 @@
       "type": "feature",
       "title": "Unity 乘车事件复用旧前置条件并加强车辆归属守卫",
       "file": "global_dev_features.md",
-      "line": 2333,
+      "line": 3072,
       "date": "2026-10-27",
       "project": "GAME / D:/code/GAME",
-      "status": "部分完成；代码与文档已静态复核，真实运行验收待用户授权，原版条件待指定版本资料核对。",
+      "status": "部分完成",
       "keywords": [
         "Unity",
         "vehicle ownership",
@@ -2480,10 +3022,10 @@
       "type": "feature",
       "title": "Unity FC系统菜单接入显示控制并复用木钢交互",
       "file": "global_dev_features.md",
-      "line": 2360,
+      "line": 3098,
       "date": "2026-10-27",
       "project": "GAME / D:/code/GAME",
-      "status": "已静态实现与复核；显示平台、窗口尺寸和多分辨率实机行为待授权验收。",
+      "status": "部分完成",
       "keywords": [
         "Unity 6",
         "Screen.SetResolution",
@@ -2501,10 +3043,10 @@
       "type": "feature",
       "title": "Unity战斗C装置行动次数贯通与提交边界",
       "file": "global_dev_features.md",
-      "line": 2388,
+      "line": 3123,
       "date": "2026-10-27",
       "project": "GAME / D:/code/GAME",
-      "status": "开发版功能已静态实现和审查；动态验收未获授权，FC原版行为与数值待核。",
+      "status": "部分完成",
       "keywords": [
         "Unity",
         "C装置",
@@ -2522,10 +3064,10 @@
       "type": "feature",
       "title": "FC重制Rocco北路切片的地图注册与边界核算",
       "file": "global_dev_features.md",
-      "line": 2421,
+      "line": 3154,
       "date": "2026-10-27",
       "project": "GAME / D:\\code\\GAME",
-      "status": "部分完成（罗克静态地图与服务接入、独立审查通过；R7待授权；FC原版核对与北方主线内容未完成）。",
+      "status": "部分完成",
       "keywords": [
         "FC重装机兵",
         "Rocco",
@@ -2544,10 +3086,10 @@
       "type": "feature",
       "title": "EncoderPlotter 内部调试文件解析工具",
       "file": "global_dev_features.md",
-      "line": 2451,
+      "line": 3183,
       "date": "2026-10-28",
       "project": "EncoderPlotter_0903_01",
-      "status": "部分完成（CLI解析实样通过，Electron真实UI验收待完成）",
+      "status": "部分完成",
       "keywords": [
         "内部调试工具",
         "debug_tool.py",
@@ -2565,10 +3107,10 @@
       "type": "feature",
       "title": "EncoderPlotter 五仓 Git Flow 发版与打包规则（2026-09-07 更新版）",
       "file": "global_dev_features.md",
-      "line": 2484,
+      "line": 3213,
       "date": "2026-10-28",
       "project": "EncoderPlotter1（主仓 + sub_embedded/sub_common/sub_automation/sub_algorithm）",
-      "status": "已归档（规则类知识，非代码实现）",
+      "status": "已完成",
       "keywords": [
         "打包规则",
         "发版",
@@ -2605,10 +3147,10 @@
       "type": "feature",
       "title": "ai-tool 手机/电脑接入与外网访问方案（Tailscale + serve HTTPS）",
       "file": "global_dev_features.md",
-      "line": 2517,
+      "line": 3246,
       "date": "2026-11-02",
       "project": "ai-tool（PC 作服务器的私人多 AI 工作台，Fastify + WebSocket，默认监听 0.0.0.0:8787）",
-      "status": "已归档（部署与操作类知识；对应 PLAN 阶段 G3 的实测依据，docs/INSTALL.md 尚未写）",
+      "status": "部分完成",
       "keywords": [
         "外网访问",
         "内网穿透",
@@ -2635,10 +3177,10 @@
       "type": "feature",
       "title": "DYN-200 换普通 USB-RS485 线的兼容适配 (自动查找/记住线/兜底/握手重试)",
       "file": "global_dev_features.md",
-      "line": 2556,
+      "line": 3279,
       "date": "2026-11-04",
       "project": "driverSoftware (D:\\code\\driverSoftware), 分支 fix/dyn200-new-rs485-cable, 提交 593aad7b + c0d8f013 + 432e6954(文档)",
-      "status": "已完成(未推送, 待并入 fix/field-feedback-batch)",
+      "status": "已完成",
       "keywords": [
         "DYN-200",
         "扭矩传感器",
@@ -2665,10 +3207,10 @@
       "type": "feature",
       "title": "dv3-admin 打包→GitLab CI→SSH 上传→浏览器下载 全链路（develop 分支，Windows Runner）",
       "file": "global_dev_features.md",
-      "line": 2589,
+      "line": 3308,
       "date": "2026-11-05",
       "project": "quality-testing/dv3-admin（GitLab 192.168.1.200:8888，项目 ID 159）",
-      "status": "打包与上传链路已验证（4 次成功）；浏览器下载入口待服务器侧落地",
+      "status": "部分完成",
       "keywords": [
         "GitLab CI",
         ".gitlab-ci.yml",
@@ -2695,12 +3237,12 @@
       "type": "feature",
       "title": "Encoder-next全功能对照P0及只读功能的副作用边界",
       "file": "global_dev_features.md",
-      "line": 2616,
-      "date": "",
-      "project": "",
-      "status": "",
+      "line": 3332,
+      "date": "原记录未记载",
+      "project": "原记录未记载",
+      "status": "已完成",
       "keywords": [
-        "EncoderPlotter",
+        "**关键词**：EncoderPlotter",
         "encoder-next",
         "DD003",
         "feature-parity",
@@ -2716,10 +3258,10 @@
       "type": "feature",
       "title": "Encoder-next P1查询供电恢复与真机SN未通过边界",
       "file": "global_dev_features.md",
-      "line": 2629,
-      "date": "",
-      "project": "",
-      "status": "",
+      "line": 3351,
+      "date": "原记录未记载",
+      "project": "原记录未记载",
+      "status": "部分完成",
       "keywords": [
         "EncoderPlotter",
         "encoder-next",
@@ -2734,14 +3276,48 @@
       ]
     },
     {
+      "id": "F-124",
+      "type": "feature",
+      "title": "PostgreSQL 原地改名后重建容器连到另一数据卷：必须核对原卷绑定（Compose volumes.name / MES_POSTGRES_VOLUME）",
+      "file": "global_dev_features.md",
+      "line": 3369,
+      "date": "2026-11-11",
+      "project": "MES / D:/code/mes",
+      "status": "已完成",
+      "keywords": [
+        "PostgreSQL",
+        "ALTER DATABASE RENAME",
+        "Docker Compose",
+        "数据卷",
+        "OID",
+        "MES_POSTGRES_VOLUME",
+        "database does not exist"
+      ]
+    },
+    {
+      "id": "H-002",
+      "type": "habit",
+      "title": "GitLab 操作优先使用可见网页",
+      "file": "global_dev_habits.md",
+      "line": 3,
+      "date": "2026-09-20",
+      "project": "GitLab 相关任务（通用）",
+      "status": "已完成",
+      "keywords": [
+        "GitLab",
+        "操作优先使用可见",
+        "网页"
+      ]
+    },
+    {
       "id": "H-004",
       "type": "habit",
       "title": "硬件联调排查纪律 (来自 v3.4.6 力矩无响应排查)",
       "file": "global_dev_habits.md",
-      "line": 3,
+      "line": 23,
       "date": "2026-09-22",
-      "project": "driverSoftware (通用于上位机 + 固件联调)",
-      "status": "生效",
+      "project": "driverSoftware（通用于上位机 + 固件联调）",
+      "status": "已完成",
       "keywords": [
         "排查纪律",
         "抓包",
@@ -2758,7 +3334,7 @@
       "type": "habit",
       "title": "按任务复杂度和验收风险选择模型以控制成本",
       "file": "global_dev_habits.md",
-      "line": 25,
+      "line": 41,
       "date": "2026-10-12",
       "project": "Codex SIRE shared workflow",
       "status": "已完成",
@@ -2776,7 +3352,7 @@
       "type": "habit",
       "title": "先简洁回答问题，附加建议经用户确认再执行",
       "file": "global_dev_habits.md",
-      "line": 51,
+      "line": 63,
       "date": "2026-10-12",
       "project": "用户全局交互偏好",
       "status": "已完成",
@@ -2794,10 +3370,10 @@
       "type": "habit",
       "title": "用户说提供tag时：按仓库规则只给tag，不做提交",
       "file": "global_dev_habits.md",
-      "line": 68,
+      "line": 81,
       "date": "2026-10-19",
       "project": "通用（所有仓库）",
-      "status": "生效",
+      "status": "已完成",
       "keywords": [
         "提供tag",
         "打tag",
@@ -2808,33 +3384,14 @@
       ]
     },
     {
-      "id": "H-008",
-      "type": "habit",
-      "title": "FC 重制 UI 沿用用户确认的室内参考风格",
-      "file": "global_dev_habits.md",
-      "line": 89,
-      "date": "2026-10-26",
-      "project": "GAME / Unity FC 重制",
-      "status": "生效",
-      "keywords": [
-        "FC 重制",
-        "UI 风格",
-        "参考图",
-        "暖木",
-        "旧钢",
-        "暖纸色",
-        "黄铜焦点"
-      ]
-    },
-    {
       "id": "H-009",
       "type": "habit",
       "title": "改 CI 脚本先本地测试好再提交推送，不要把 pipeline 当调试循环",
       "file": "global_dev_habits.md",
-      "line": 100,
+      "line": 99,
       "date": "2026-11-05",
       "project": "quality-testing/dv3-admin",
-      "status": "生效",
+      "status": "已完成",
       "keywords": [
         "CI",
         "流水线",
@@ -2846,14 +3403,257 @@
       ]
     },
     {
+      "id": "P-001",
+      "type": "problem",
+      "title": "Electron axios localhost连接失败需改用127.0.0.1",
+      "file": "global_problem_solutions.md",
+      "line": 3,
+      "date": "2026-07-04",
+      "project": "Emy",
+      "status": "已完成",
+      "keywords": [
+        "localhost",
+        "127.0.0.1",
+        "IPv6",
+        "ECONNREFUSED",
+        "Electron",
+        "axios"
+      ]
+    },
+    {
+      "id": "P-003",
+      "type": "problem",
+      "title": "npx命令缺少--yes标志导致非交互环境挂起",
+      "file": "global_problem_solutions.md",
+      "line": 23,
+      "date": "2026-07-04",
+      "project": "Emy",
+      "status": "已完成",
+      "keywords": [
+        "npx",
+        "--yes",
+        "交互式提示",
+        "subprocess",
+        "挂起",
+        "超时",
+        "Ok to proceed? (y)",
+        "degit",
+        "create-next-app"
+      ]
+    },
+    {
+      "id": "P-007",
+      "type": "problem",
+      "title": "【读取数据】zip偶发不完整——多级fire-and-forget时序竞态",
+      "file": "global_problem_solutions.md",
+      "line": 43,
+      "date": "2026-08-28",
+      "project": "EncoderPlotter_0703_03",
+      "status": "已完成",
+      "keywords": [
+        "读取数据",
+        "zip",
+        "偶发不完整",
+        "多级",
+        "fire-and-forget",
+        "时序竞态",
+        "device.js",
+        "tools.js",
+        "medianCheck.js",
+        "file.js",
+        "zip.finalize()",
+        "EOCD",
+        "createWriteStream",
+        "unhandled rejection"
+      ]
+    },
+    {
+      "id": "P-008",
+      "type": "problem",
+      "title": "debug-plot-viewer对MPT单圈/半标定图配对失败报\"无法找到配对的图表数据\"",
+      "file": "global_problem_solutions.md",
+      "line": 66,
+      "date": "2026-08-28",
+      "project": "EncoderPlotter_0703_03",
+      "status": "已完成",
+      "keywords": [
+        "debug-plot-viewer",
+        "MPT",
+        "单圈",
+        "半标定图配对失败",
+        "无法找到配对的图",
+        "表数据",
+        "debug-plot-viewer.html"
+      ]
+    },
+    {
+      "id": "P-009",
+      "type": "problem",
+      "title": "debug-plot-viewer滚动放大后上图空白下图正常（uPlot乱序x二分裁剪失效）",
+      "file": "global_problem_solutions.md",
+      "line": 90,
+      "date": "2026-08-28",
+      "project": "EncoderPlotter_0703_03",
+      "status": "已完成",
+      "keywords": [
+        "debug-plot-viewer",
+        "滚动放大后上图空",
+        "白下图正常",
+        "uPlot",
+        "乱序",
+        "二分裁剪失效",
+        "debug-plot-viewer.html"
+      ]
+    },
+    {
+      "id": "P-011",
+      "type": "problem",
+      "title": "debug-plot-viewer缩放卡顿与海量散点前端绘图性能优化（rAF合并+fillRect+自适应密度）",
+      "file": "global_problem_solutions.md",
+      "line": 112,
+      "date": "2026-08-31",
+      "project": "EncoderPlotter_0703_03",
+      "status": "已完成",
+      "keywords": [
+        "debug-plot-viewer",
+        "前端绘图性能优化",
+        "组合拳",
+        "海量散点",
+        "debug-plot-viewer.html",
+        "缩放卡顿数秒",
+        "散点全量重绘",
+        "高频事件"
+      ]
+    },
+    {
+      "id": "P-012",
+      "type": "problem",
+      "title": "前后端渲染图形不一致——uPlot共享x网格 vs matplotlib每曲线独立x",
+      "file": "global_problem_solutions.md",
+      "line": 143,
+      "date": "2026-08-31",
+      "project": "EncoderPlotter_0703_03",
+      "status": "已完成",
+      "keywords": [
+        "前后端渲染图形不",
+        "一致",
+        "uPlot",
+        "共享",
+        "网格",
+        "vs",
+        "matplotlib",
+        "每曲线独立",
+        "debug-plot-viewer.html"
+      ]
+    },
+    {
+      "id": "P-013",
+      "type": "problem",
+      "title": "合并模式引入后上图不显示/下图单色（normalizeSeries置换误伤+src挂载晚于首帧）",
+      "file": "global_problem_solutions.md",
+      "line": 167,
+      "date": "2026-08-31",
+      "project": "EncoderPlotter_0703_03",
+      "status": "已完成",
+      "keywords": [
+        "合并模式引入后上",
+        "图不显示",
+        "下图单色",
+        "normalizeSeries",
+        "置换误伤",
+        "src",
+        "挂载晚于首帧",
+        "uPlot",
+        "mergeSeries",
+        "_mergedSrc",
+        "shareX"
+      ]
+    },
+    {
+      "id": "P-014",
+      "type": "problem",
+      "title": "i18next多语言包四类隐蔽缺陷的排查与修复",
+      "file": "global_problem_solutions.md",
+      "line": 186,
+      "date": "2026-09-02",
+      "project": "EncoderPlotter_0703_01",
+      "status": "已完成",
+      "keywords": [
+        "i18next",
+        "多语言包四类隐蔽",
+        "缺陷的排查与修复",
+        "i18n.js"
+      ]
+    },
+    {
+      "id": "P-015",
+      "type": "problem",
+      "title": "Electron子窗口全部关闭后主窗口被其他应用窗口挡住",
+      "file": "global_problem_solutions.md",
+      "line": 212,
+      "date": "2026-09-02",
+      "project": "EncoderPlotter_0703_01",
+      "status": "已完成",
+      "keywords": [
+        "Electron",
+        "BrowserWindow",
+        "parent",
+        "closed",
+        "focus",
+        "z-order",
+        "前台",
+        "窗口遮挡",
+        "owner window"
+      ]
+    },
+    {
+      "id": "P-016",
+      "type": "problem",
+      "title": "阈值面板三处模板文本硬编码中文未国际化（P-014第5类变体）",
+      "file": "global_problem_solutions.md",
+      "line": 232,
+      "date": "2026-09-02",
+      "project": "EncoderPlotter_0703_01",
+      "status": "已完成",
+      "keywords": [
+        "i18n",
+        "硬编码",
+        "$t",
+        "title属性",
+        "threshold.html",
+        "双包key"
+      ]
+    },
+    {
+      "id": "P-017",
+      "type": "problem",
+      "title": "Windows 深目录下台账创建报 WinError 206",
+      "file": "global_problem_solutions.md",
+      "line": 262,
+      "date": "2026-09-12",
+      "project": "SIRE 工作流",
+      "status": "已完成",
+      "keywords": [
+        "Windows",
+        "MAX_PATH",
+        "WinError 206",
+        "长路径",
+        "扩展前缀",
+        "sire_run",
+        "台账",
+        "lp()",
+        "LONG_PATH_PREFIX"
+      ]
+    },
+    {
       "id": "P-018",
       "type": "problem",
       "title": "fw v3.4.6 使能态修改力矩舵机无响应 (四根因叠加)",
       "file": "global_problem_solutions.md",
-      "line": 3,
+      "line": 282,
       "date": "2026-09-22",
       "project": "driverSoftware (@CODE_ROOT@\\driverSoftware), 发布 v0.13.9",
-      "status": "已解决, 已发布 (a6848b6 + c8ad4e6, tag v0.13.9)",
+      "status": "已完成（已解决, 已发布 a6848b6 + c8ad4e6, tag v0.13.9）",
       "keywords": [
         "v3.4.6",
         "MIT",
@@ -2864,7 +3664,10 @@
         "baudrate",
         "READER_MP",
         "使能对齐",
-        "固件档案"
+        "固件档案",
+        "TypeError",
+        "update_continuous_frame",
+        "gen_fw_profile.py"
       ]
     },
     {
@@ -2872,10 +3675,10 @@
       "type": "problem",
       "title": "位置读数卡在 804.2477 rad (v3.4.x 多圈超量程饱和)",
       "file": "global_problem_solutions.md",
-      "line": 35,
+      "line": 305,
       "date": "2026-09-22",
       "project": "driverSoftware / driver 固件 v3.4.x",
-      "status": "已定位, 未修 (需设零或防护提示, 待决策)",
+      "status": "部分完成（已定位, 未修, 需设零或防护提示, 待决策）",
       "keywords": [
         "804.2477",
         "位置饱和",
@@ -2885,7 +3688,8 @@
         "kMitPosScale",
         "0x18",
         "0x67",
-        "设零"
+        "设零",
+        "pos_raw=2147483647"
       ]
     },
     {
@@ -2893,10 +3697,10 @@
       "type": "problem",
       "title": "使能态 Kp 从 0 调到 >0 时位置指令陈旧 (潜在猛拽, 既有问题)",
       "file": "global_problem_solutions.md",
-      "line": 49,
+      "line": 324,
       "date": "2026-09-22",
       "project": "driverSoftware frontend/js/pages/motion.js",
-      "status": "已识别, 未修 (新行为改动, 待用户决策)",
+      "status": "部分完成",
       "keywords": [
         "使能对齐",
         "Kp",
@@ -2907,35 +3711,13 @@
       ]
     },
     {
-      "id": "P-025",
-      "type": "problem",
-      "title": "运动页 <100Hz 使能时附加寄存器 (0x24/0x27/0x29/0x2A/0x2B) 示波器无曲线",
-      "file": "global_problem_solutions.md",
-      "line": 58,
-      "date": "2026-09-22",
-      "project": "driverSoftware (@CODE_ROOT@\\driverSoftware, development, 未提交)",
-      "status": "已修复, 真机验证通过 (id15 fw v3.4.6 @3Mbps), 代码未提交",
-      "keywords": [
-        "附加寄存器",
-        "extras",
-        "示波器",
-        "100Hz",
-        "软轮询",
-        "doSendMit",
-        "api.mit",
-        "flatExtras",
-        "TELEMETRY_DISPATCH",
-        "xNN"
-      ]
-    },
-    {
       "id": "P-021",
       "type": "problem",
       "title": "【数据库清理】向量库 1.2GB 实为 driver 仓库全量导入，清理后 7.8MB",
       "file": "global_problem_solutions.md",
-      "line": 76,
+      "line": 342,
       "date": "2026-09-24",
-      "project": "",
+      "project": "原记录未记载（SIRE 向量库）",
       "status": "已完成",
       "keywords": [
         "向量库",
@@ -2947,7 +3729,9 @@
         "purge",
         "VACUUM",
         "删除密码",
-        "只增不减"
+        "只增不减",
+        "purge_driver_repo.py",
+        "sire_db_backup"
       ]
     },
     {
@@ -2955,7 +3739,7 @@
       "type": "problem",
       "title": "【飞书自动化】Claude 桌面版 MSIX 路径虚拟化导致续跑工作目录不存在",
       "file": "global_problem_solutions.md",
-      "line": 92,
+      "line": 362,
       "date": "2026-09-24",
       "project": "全局工具 @USER_HOME@\\.feishu_bridge（【飞书自动化】）",
       "status": "已完成",
@@ -2971,7 +3755,8 @@
         "cwd",
         "os.path.isdir False",
         "claude --resume",
-        "计划任务"
+        "计划任务",
+        "NEED_DIR"
       ]
     },
     {
@@ -2979,9 +3764,9 @@
       "type": "problem",
       "title": "【飞书自动化】多 AI 中转切换踩坑合集（计划任务复活、CC-Switch 覆盖、Codex Hook 信任、.CMD 注入、Opus 5.5 CLI 版本）",
       "file": "global_problem_solutions.md",
-      "line": 111,
+      "line": 383,
       "date": "2026-09-24",
-      "project": "飞书多 AI 中转 feishu-hub（@SIRE_ROOT@\\AI\\AI\\feishu-hub），配套 F 记录「【飞书自动化】飞书多 AI 中转中间服务 feishu-hub」",
+      "project": "飞书多 AI 中转 feishu-hub（@SIRE_ROOT@\\AI\\AI\\feishu-hub）",
       "status": "已完成",
       "keywords": [
         "飞书自动化",
@@ -3017,10 +3802,10 @@
       "type": "problem",
       "title": "SIRE Git 归档应对 SQLite 快照做路径规范化与空闲页清理",
       "file": "global_problem_solutions.md",
-      "line": 146,
+      "line": 407,
       "date": "2026-09-24",
       "project": "SIRE v6",
-      "status": "",
+      "status": "已完成",
       "keywords": [
         "SIRE",
         "Git 归档",
@@ -3029,7 +3814,35 @@
         "路径脱敏",
         "FTS",
         "embedding",
-        "VACUUM"
+        "VACUUM",
+        "snapshot_db.py",
+        "secure_delete",
+        "freelist"
+      ]
+    },
+    {
+      "id": "P-025",
+      "type": "problem",
+      "title": "运动页 <100Hz 使能时附加寄存器 (0x24/0x27/0x29/0x2A/0x2B) 示波器无曲线",
+      "file": "global_problem_solutions.md",
+      "line": 430,
+      "date": "2026-09-22",
+      "project": "driverSoftware (@CODE_ROOT@\\driverSoftware, development, 未提交)",
+      "status": "已完成（真机验证通过，代码未提交）",
+      "keywords": [
+        "附加寄存器",
+        "extras",
+        "示波器",
+        "100Hz",
+        "软轮询",
+        "doSendMit",
+        "api.mit",
+        "flatExtras",
+        "TELEMETRY_DISPATCH",
+        "xNN",
+        "MitReq",
+        "_extras_with_state",
+        "getSelectedExtras"
       ]
     },
     {
@@ -3037,10 +3850,10 @@
       "type": "problem",
       "title": "SIRE 向量库检索必须使用只读 SQLite 连接保护 Git 快照",
       "file": "global_problem_solutions.md",
-      "line": 173,
+      "line": 450,
       "date": "2026-09-24",
       "project": "SIRE v6 Claude/Codex 共享工作流",
-      "status": "已修复",
+      "status": "已完成",
       "keywords": [
         "Claude",
         "Codex",
@@ -3050,7 +3863,9 @@
         "WAL",
         "Git 快照",
         "hash",
-        "knowledge retrieval"
+        "knowledge retrieval",
+        "mode=ro",
+        "query_only"
       ]
     },
     {
@@ -3058,10 +3873,10 @@
       "type": "problem",
       "title": "Claude/Codex 共用的 SIRE 工作流与 SQLite 应在单一 Git 源中归档",
       "file": "global_problem_solutions.md",
-      "line": 199,
+      "line": 470,
       "date": "2026-09-24",
       "project": "SIRE v6 Claude/Codex 共享工作流",
-      "status": "已验证；当前任务的真实桌面 UI 验收因无可用 UI 应用而阻塞",
+      "status": "部分完成（已验证；当前任务的真实桌面 UI 验收因无可用 UI 应用而阻塞）",
       "keywords": [
         "SIRE",
         "Claude",
@@ -3073,7 +3888,8 @@
         "WAL",
         "writer lock",
         "snapshot",
-        "database"
+        "database",
+        "sire_paths.py"
       ]
     },
     {
@@ -3081,10 +3897,10 @@
       "type": "problem",
       "title": "SIRE 的 RSI 规则曾是孤岛——入口不可达且无触发点，需由 R9 收尾门禁兜底",
       "file": "global_problem_solutions.md",
-      "line": 228,
+      "line": 492,
       "date": "2026-09-25",
       "project": "SIRE v6 Claude/Codex 共享工作流",
-      "status": "已验证（run R20260925-052105）",
+      "status": "已完成",
       "keywords": [
         "SIRE",
         "RSI",
@@ -3110,8 +3926,8 @@
       "type": "problem",
       "title": "v3.4.6 寄存器文档对账与 0x6A/0x80 清理",
       "file": "global_problem_solutions.md",
-      "line": 263,
-      "date": "",
+      "line": 513,
+      "date": "原记录未记载",
       "project": "driverSoftware（分支 chore/misc-optimizations，提交 b423f31、c140497，未 push）",
       "status": "已完成",
       "keywords": [
@@ -3134,10 +3950,10 @@
       "type": "problem",
       "title": "设输出零位 (0x67) 不会让内圈零位 0x38 失效",
       "file": "global_problem_solutions.md",
-      "line": 288,
+      "line": 535,
       "date": "2026-10-12",
       "project": "driverSoftware (分支 chore/misc-optimizations 的 review)",
-      "status": "已完成 (review 结论, 未改代码)",
+      "status": "已完成（review 结论, 未改代码）",
       "keywords": [
         "0x67",
         "OutputZeroOffset",
@@ -3157,7 +3973,7 @@
       "type": "problem",
       "title": "会跨固件搬家的寄存器按档案名字运行时取址 + 地址合理性校验 (内圈零位 InnerAngle)",
       "file": "global_problem_solutions.md",
-      "line": 321,
+      "line": 556,
       "date": "2026-10-12",
       "project": "driverSoftware (分支 chore/misc-optimizations, 提交 9640f3f..85901f3, 未 push)",
       "status": "已完成",
@@ -3183,7 +3999,7 @@
       "type": "problem",
       "title": "数据区地址两表实测 bin 核对：MPP420 现表错、MPT420 productInfoList 错",
       "file": "global_problem_solutions.md",
-      "line": 354,
+      "line": 577,
       "date": "2026-10-12",
       "project": "EncoderPlotter_0903_01 / D:\\code\\EncoderPlotter_0903_01（分支 feature/mpp-algo-4060）",
       "status": "已完成（分析结论；未改代码）",
@@ -3211,10 +4027,10 @@
       "type": "problem",
       "title": "MPP 数据区地址改查 sub_common productInfoList（PRODUCT_INFO_LIST_SERIES）",
       "file": "global_problem_solutions.md",
-      "line": 384,
+      "line": 598,
       "date": "2026-10-12",
       "project": "EncoderPlotter_0903_01 / D:\\code\\EncoderPlotter_0903_01（分支 feature/mpp-algo-4060）",
-      "status": "已完成（未提交；真机 MPP 验证 BLOCKED）",
+      "status": "部分完成（未提交；真机 MPP 验证 BLOCKED）",
       "keywords": [
         "MPP",
         "105",
@@ -3235,10 +4051,10 @@
       "type": "problem",
       "title": "SIRE RSI 自审：自动发现唯一 PROPOSED 发现来自兜底阶段与未分类任务，钩子单腿断流",
       "file": "global_problem_solutions.md",
-      "line": 412,
+      "line": 617,
       "date": "2026-10-13",
       "project": "SIRE v6 RSI 机制自我审查（`D:\\sire\\AI\\AI\\sire`）",
-      "status": "已验证（run R20261013-063902，RSI-20261013-OUTLIER-BASE → v6.12）",
+      "status": "部分完成（PHASE_OUTLIER 已修并验证；其余五条根因待另立提案，整体仅半生效）",
       "keywords": [
         "SIRE",
         "RSI",
@@ -3254,7 +4070,8 @@
         "rsi-check",
         "evaluate 方向性",
         "resolve 无校验",
-        "v6.12"
+        "v6.12",
+        "CATCH_ALL_PHASES"
       ]
     },
     {
@@ -3262,10 +4079,10 @@
       "type": "problem",
       "title": "CLOSE_HEAVY/FAST_SCOPE 误报根因：阶段正则把真实场景测试与知识检索记成收尾，detail 截断使复核不可能",
       "file": "global_problem_solutions.md",
-      "line": 454,
+      "line": 637,
       "date": "2026-10-13",
       "project": "SIRE v6.14 遥测阶段归属收紧（`D:\\sire\\AI\\AI\\sire`）",
-      "status": "已验证（run R20261013-074759，RSI-20261013-PHASECLASS → v6.14）",
+      "status": "已完成",
       "keywords": [
         "SIRE",
         "遥测",
@@ -3289,7 +4106,7 @@
       "type": "problem",
       "title": "DPB 407/408 到 409 的 IAP 升级白名单",
       "file": "global_problem_solutions.md",
-      "line": 488,
+      "line": 658,
       "date": "2026-10-13",
       "project": "EncoderPlotter_0903_01 / feature/compatibility",
       "status": "部分完成（代码与软件回归完成；物理设备升级验证待进行）",
@@ -3309,10 +4126,10 @@
       "type": "problem",
       "title": "遥测采集看着正常但分析层空转：summarize_task 硬依赖 UserPromptSubmit，自动化/续跑回合没有 prompt 事件就整窗丢弃",
       "file": "global_problem_solutions.md",
-      "line": 517,
+      "line": 678,
       "date": "2026-10-13",
       "project": "SIRE v6.16 遥测回合边界兜底（`D:\\sire\\AI\\AI\\sire`）",
-      "status": "已验证（RSI-20261013-TURNBOUNDARY → v6.16）",
+      "status": "已完成",
       "keywords": [
         "遥测",
         "summarize_task",
@@ -3332,10 +4149,10 @@
       "type": "problem",
       "title": "SIRE 三端兼容实测：Codex/Claude 入口副本对 v6.12-v6.17 的关键词覆盖 0/7，且无机制能发现这种漂移",
       "file": "global_problem_solutions.md",
-      "line": 548,
+      "line": 698,
       "date": "2026-10-13",
       "project": "SIRE 三端兼容性复核（`D:\\sire\\AI\\AI\\sire`）",
-      "status": "已验证（取证脚本 scratch/probe_three_clients.py，run 见本次台账）",
+      "status": "部分完成（只读复核与建议，机制改动未实施）",
       "keywords": [
         "SIRE",
         "三端兼容",
@@ -3360,29 +4177,50 @@
       "type": "problem",
       "title": "DPB MR复审：导入写入校验与packed版本转换",
       "file": "global_problem_solutions.md",
-      "line": 582,
-      "date": "",
-      "project": "",
-      "status": "",
-      "keywords": []
+      "line": 720,
+      "date": "2026-10-13",
+      "project": "原记录未记载（DPB 的 embedded/common 两个子仓 MR 复审）",
+      "status": "已完成（复审结论已发布；问题由 P-20260937 修复）",
+      "keywords": [
+        "GitLab MR review",
+        "DPB 408 409",
+        "imported calibration",
+        "writeEncoderDataV303",
+        "eraseAndWriteFlash",
+        "firmware_number",
+        "packed 4.0.10",
+        "4010",
+        "Flash preflight",
+        "writeEncoderData",
+        "dpbFlashLayout.py"
+      ]
     },
     {
       "id": "P-20260937",
       "type": "problem",
       "title": "DPB导入数据擦除前预检与packed版本修复",
       "file": "global_problem_solutions.md",
-      "line": 599,
-      "date": "",
-      "project": "",
-      "status": "",
-      "keywords": []
+      "line": 740,
+      "date": "原记录未记载",
+      "project": "原记录未记载（DPB 的 embedded/common 子仓，feature/compatibility 分支，MR30/MR31）",
+      "status": "已完成",
+      "keywords": [
+        "DPB Flash preflight",
+        "writeEncoderDataV303",
+        "imported P Q T",
+        "firmware_number",
+        "packed 4010",
+        "MR30 MR31",
+        "regression",
+        "eraseAndWriteFlash"
+      ]
     },
     {
       "id": "P-20260938",
       "type": "problem",
       "title": "飞书卡片队列被单条非法卡片头阻塞；Qoder 钩子两条隐蔽失效点",
       "file": "global_problem_solutions.md",
-      "line": 616,
+      "line": 761,
       "date": "2026-10-13",
       "project": "全局工具 / D:\\sire\\AI\\AI\\feishu-hub",
       "status": "已完成",
@@ -3408,7 +4246,7 @@
       "type": "problem",
       "title": "DPB 4.0.10 版本码 4010：patch 两位数让码值不可比，比较必须走三元组",
       "file": "global_problem_solutions.md",
-      "line": 681,
+      "line": 784,
       "date": "2026-10-14",
       "project": "EncoderPlotter_0903_01 / D:\\code\\EncoderPlotter_0903_01（分支 feature/iap-ota-sn）",
       "status": "已完成（代码 + 真 bin 离线实测 + 自动化回归；接读取器的在线路径未验证——本机无设备）",
@@ -3426,7 +4264,8 @@
         "MIN_SOFTWARE_VERSION_FOR_SN",
         "NUM_TO_HEX",
         "0x04000A00",
-        "补丁号两位数"
+        "补丁号两位数",
+        "未找到有效ARGUMENTS结构"
       ]
     },
     {
@@ -3434,10 +4273,10 @@
       "type": "problem",
       "title": "develop 与在途功能同改一条链的合并：预演、子仓 gitlink 双向核对、静默损坏检测",
       "file": "global_problem_solutions.md",
-      "line": 744,
+      "line": 820,
       "date": "2026-10-14",
       "project": "EncoderPlotter_0903_01 / D:\\code\\EncoderPlotter_0903_01（feature/iap-ota-sn ← origin/develop）",
-      "status": "已完成（本地提交，未推送、未建 MR；接读取器的在线路径未验证）",
+      "status": "已完成",
       "keywords": [
         "合并冲突",
         "git merge-tree",
@@ -3459,7 +4298,7 @@
       "type": "problem",
       "title": "端口回收与Boot混合扫描代码审查检查点",
       "file": "global_problem_solutions.md",
-      "line": 798,
+      "line": 849,
       "date": "2026-10-14",
       "project": "driverSoftware",
       "status": "已完成",
@@ -3481,10 +4320,10 @@
       "type": "problem",
       "title": "飞书文档不可读时用历史台账定位等价基线",
       "file": "global_problem_solutions.md",
-      "line": 826,
+      "line": 870,
       "date": "2026-10-14",
       "project": "MES / D:\\code\\mes",
-      "status": "已完成，方法可直接复用于其他\"用户给外部文档链接但客户端未登录\"的场景",
+      "status": "已完成",
       "keywords": [
         "飞书文档不可读",
         "lark-cli 未安装",
@@ -3501,10 +4340,10 @@
       "type": "problem",
       "title": "driverSoftware Job 8909 台架脚本漏包修复",
       "file": "global_problem_solutions.md",
-      "line": 860,
+      "line": 894,
       "date": "2026-10-14",
       "project": "driverSoftware / D:\\code\\driverSoftware",
-      "status": "修复已提交；相关自动化和原始目录打包验证通过，完整应用构建等待同版依赖环境复核",
+      "status": "部分完成（修复已提交；完整应用构建等待同版依赖环境复核）",
       "keywords": [
         "打包失败",
         "Nuitka",
@@ -3512,7 +4351,8 @@
         "driverSoftware",
         "raw-dir",
         "build.bat",
-        "dc946d7"
+        "dc946d7",
+        "include-raw-dir"
       ]
     },
     {
@@ -3520,10 +4360,10 @@
       "type": "problem",
       "title": "标定汇总 CSV 多语言和 Excel 写入边界修复",
       "file": "global_problem_solutions.md",
-      "line": 885,
+      "line": 915,
       "date": "2026-10-15",
       "project": "EncoderPlotter_0903_01",
-      "status": "源码修复与主进程处理器检查完成；真实应用/读取器路径待有设备环境时验收",
+      "status": "部分完成",
       "keywords": [
         "标定汇总 CSV",
         "i18n",
@@ -3541,7 +4381,7 @@
       "type": "problem",
       "title": "标定失败弹窗读取响应体中的具体不良原因",
       "file": "global_problem_solutions.md",
-      "line": 914,
+      "line": 937,
       "date": "2026-10-15",
       "project": "EncoderPlotter_0903_01 / D:\\code\\EncoderPlotter_0903_01",
       "status": "已完成",
@@ -3558,10 +4398,10 @@
       "type": "problem",
       "title": "MES基础架构方案：分阶段配置、授权与审计恢复",
       "file": "global_problem_solutions.md",
-      "line": 945,
+      "line": 958,
       "date": "2026-10-16",
       "project": "MES 后台管理系统 / D:\\code\\mes",
-      "status": "架构建议稿待产品、生产、质量、仓储、ERP、IT 和安全责任人评审；实施与生产恢复演练待后续验证。",
+      "status": "部分完成（架构建议稿待产品、生产、质量、仓储、ERP、IT 和安全责任人评审；实施与生产恢复演练待后续验证）",
       "keywords": [
         "MES 架构",
         "modular monolith",
@@ -3583,7 +4423,7 @@
       "line": 978,
       "date": "2026-10-16",
       "project": "EncoderPlotter_0903_01",
-      "status": "已完成（形成静态评估方法）；本次目标分支兼容结论仍待验收",
+      "status": "已完成",
       "keywords": [
         "分支合并评估",
         "git merge-tree",
@@ -3597,10 +4437,10 @@
       "type": "problem",
       "title": "IAP解析兼容程序加密包内的分段加密固件",
       "file": "global_problem_solutions.md",
-      "line": 1007,
+      "line": 999,
       "date": "2026-10-16",
       "project": "EncoderPlotter1",
-      "status": "已完成文件解析兼容；真机升级链路未验证。",
+      "status": "部分完成",
       "keywords": [
         "IAP",
         "程序加密",
@@ -3616,10 +4456,10 @@
       "type": "problem",
       "title": "IAP首包C5 01向量表失败与V2/V3传输格式匹配",
       "file": "global_problem_solutions.md",
-      "line": 1035,
+      "line": 1020,
       "date": "2026-10-16",
       "project": "EncoderPlotter1",
-      "status": "已加格式错配保护和明确错误响应；硬件原因待目标BootLoader版本日志确认。",
+      "status": "部分完成",
       "keywords": [
         "IAP",
         "5CC5",
@@ -3634,10 +4474,10 @@
       "type": "problem",
       "title": "IAP V3末包不足256字节导致分段固件解析失败",
       "file": "global_problem_solutions.md",
-      "line": 1056,
+      "line": 1040,
       "date": "2026-10-16",
       "project": "EncoderPlotter1",
-      "status": "文件解析兼容已修复；设备升级链路未验证。",
+      "status": "部分完成",
       "keywords": [
         "IAP V3 segmented encryption",
         "partial final chunk",
@@ -3651,27 +4491,10 @@
       "type": "problem",
       "title": "EncoderPlotter1读取器功能与IAP子模块合并兼容验证",
       "file": "global_problem_solutions.md",
-      "line": 1084,
+      "line": 1060,
       "date": "2026-10-16",
-      "project": "",
-      "status": "",
-      "keywords": [
-        "EncoderPlotter1",
-        "analyzer-iap",
-        "iap-ota-sn",
-        "子模块合并",
-        "AnalyzerInfo"
-      ]
-    },
-    {
-      "id": "P-20260952",
-      "type": "problem",
-      "title": "EncoderPlotter1合并读取器功能的已验证提交与限制",
-      "file": "global_problem_solutions.md",
-      "line": 1100,
-      "date": "2026-10-16",
-      "project": "",
-      "status": "",
+      "project": "EncoderPlotter1",
+      "status": "部分完成",
       "keywords": [
         "EncoderPlotter1",
         "analyzer-iap",
@@ -3685,10 +4508,10 @@
       "type": "problem",
       "title": "MES 可扩展模块基础架构边界与发布流程",
       "file": "global_problem_solutions.md",
-      "line": 1116,
+      "line": 1081,
       "date": "2026-10-16",
       "project": "MES 后台管理系统，D:/code/mes",
-      "status": "架构建议稿，待责任人确认 Release 定义与跨模块门禁语义。",
+      "status": "部分完成（架构建议稿，待责任人确认 Release 定义与跨模块门禁语义）",
       "keywords": [
         "MES基础架构",
         "模块化架构",
@@ -3709,7 +4532,7 @@
       "type": "problem",
       "title": "MES 重建进度交接（Claude/Codex 同步入口）",
       "file": "global_problem_solutions.md",
-      "line": 1146,
+      "line": 1102,
       "date": "2026-10-18",
       "project": "MES 平台重建 / D:/code/mes",
       "status": "部分完成",
@@ -3737,7 +4560,7 @@
       "type": "problem",
       "title": "低代码模块删除与发布需要共享引用锁协议",
       "file": "global_problem_solutions.md",
-      "line": 1178,
+      "line": 1123,
       "date": "2026-10-18",
       "project": "MES 重建 / D:\\code\\mes",
       "status": "部分完成",
@@ -3755,10 +4578,10 @@
       "type": "problem",
       "title": "MES 低代码模块管理：动态权限、防自授权与发布并发锁序",
       "file": "global_problem_solutions.md",
-      "line": 1206,
+      "line": 1143,
       "date": "2026-10-18",
       "project": "MES 平台 / D:/code/mes（mes-admin、mes-server、mes-db）",
-      "status": "已完成（确定性屏障并发测试待补）",
+      "status": "已完成",
       "keywords": [
         "低代码",
         "模块管理",
@@ -3785,10 +4608,10 @@
       "type": "problem",
       "title": "PostgreSQL工作流角色引用的精确查询与并发锁保护",
       "file": "global_problem_solutions.md",
-      "line": 1240,
+      "line": 1171,
       "date": "2026-10-19",
       "project": "MES / D:/code/mes",
-      "status": "已实现，最终测试结果见本次台账 validation.md。",
+      "status": "已完成（已实现，最终测试结果见本次台账 validation.md）",
       "keywords": [
         "PostgreSQL",
         "Kysely",
@@ -3799,7 +4622,9 @@
         "FOR UPDATE",
         "工作流角色引用",
         "流程快照",
-        "并发发布"
+        "并发发布",
+        "pg_locks",
+        "pg_blocking_pids"
       ]
     },
     {
@@ -3807,7 +4632,7 @@
       "type": "problem",
       "title": "【MES 测试服务器】10.0.64.2：SSH 公钥登录、主机指纹核对与 Docker 权限",
       "file": "global_problem_solutions.md",
-      "line": 1271,
+      "line": 1193,
       "date": "2026-10-19",
       "project": "MES 重建 / D:\\code\\mes",
       "status": "已完成",
@@ -3823,7 +4648,8 @@
         "docker compose",
         "共享服务器",
         "ssh-keyscan unsupported KEX sntrup761x25519",
-        "端口占用"
+        "端口占用",
+        "choose_kex"
       ]
     },
     {
@@ -3831,7 +4657,7 @@
       "type": "problem",
       "title": "Compose internal 网络 API 宿主 loopback 发布的测试部署模式",
       "file": "global_problem_solutions.md",
-      "line": 1305,
+      "line": 1213,
       "date": "2026-10-19",
       "project": "MES / D:/code/mes",
       "status": "已完成",
@@ -3849,7 +4675,7 @@
       "type": "problem",
       "title": "Vite 管理端通过 SSH 隧道接入 loopback 部署 API",
       "file": "global_problem_solutions.md",
-      "line": 1335,
+      "line": 1233,
       "date": "2026-10-19",
       "project": "MES / D:/code/mes",
       "status": "已完成",
@@ -3867,7 +4693,7 @@
       "type": "problem",
       "title": "MES订单工序路线版本与审批实走边界",
       "file": "global_problem_solutions.md",
-      "line": 1366,
+      "line": 1254,
       "date": "2026-10-19",
       "project": "MES / D:/code/mes",
       "status": "部分完成（审批之后的流转待具备测试角色账号后实走）",
@@ -3887,10 +4713,10 @@
       "type": "problem",
       "title": "MES生产订单审批角色权限与工作流快照实走",
       "file": "global_problem_solutions.md",
-      "line": 1392,
+      "line": 1274,
       "date": "2026-10-19",
       "project": "MES / D:\\code\\mes",
-      "status": "已完成（配置链路验证至待备料；生产执行、质检和完工未覆盖）。",
+      "status": "部分完成（配置链路验证至待备料；生产执行、质检和完工未覆盖）",
       "keywords": [
         "MES低代码",
         "生产订单审批角色",
@@ -3907,10 +4733,10 @@
       "type": "problem",
       "title": "生产订单工作流版本V1与V2显示同名",
       "file": "global_problem_solutions.md",
-      "line": 1422,
+      "line": 1295,
       "date": "2026-10-19",
       "project": "MES / D:\\code\\mes",
-      "status": "部分完成（标签问题已复现并记录，持久修复未实施）。",
+      "status": "部分完成（标签问题已复现并记录，持久修复未实施）",
       "keywords": [
         "MES生产订单",
         "工序工作流版本",
@@ -3926,10 +4752,10 @@
       "type": "problem",
       "title": "Electron中用Vue弹窗替换不支持的prompt录入",
       "file": "global_problem_solutions.md",
-      "line": 1451,
+      "line": 1316,
       "date": "2026-10-21",
       "project": "EncoderPlotter_0903_01",
-      "status": "部分完成（代码已实现，真实UI验收待执行）",
+      "status": "部分完成",
       "keywords": [
         "Electron 28",
         "prompt() not supported",
@@ -3943,10 +4769,10 @@
       "type": "problem",
       "title": "禁用SN检索按钮的缺BIN提示与结果选中反馈",
       "file": "global_problem_solutions.md",
-      "line": 1480,
+      "line": 1336,
       "date": "2026-10-21",
       "project": "EncoderPlotter_0903_01",
-      "status": "已实现；真实 UI 验收受限",
+      "status": "部分完成",
       "keywords": [
         "Vue",
         "Electron",
@@ -3962,10 +4788,10 @@
       "type": "problem",
       "title": "SN检索需匹配日志相对路径",
       "file": "global_problem_solutions.md",
-      "line": 1496,
+      "line": 1355,
       "date": "2026-10-21",
       "project": "EncoderPlotter_0903_01",
-      "status": "已实现；真实离线UI验收受限。",
+      "status": "部分完成",
       "keywords": [
         "SN检索",
         "IAP调试日志",
@@ -3981,10 +4807,10 @@
       "type": "problem",
       "title": "IAP SN检索与断连写入门禁审查风险",
       "file": "global_problem_solutions.md",
-      "line": 1526,
+      "line": 1376,
       "date": "2026-10-21",
       "project": "EncoderPlotter_0903_01",
-      "status": "待后续修复与硬件路径验证。",
+      "status": "部分完成（待后续修复与硬件路径验证）",
       "keywords": [
         "IAP写入门禁",
         "设备断连竞态",
@@ -3995,35 +4821,11 @@
       ]
     },
     {
-      "id": "P-20261031",
-      "type": "problem",
-      "title": "IAP免标定已覆盖全部可再标定产品系列",
-      "file": "global_problem_solutions.md",
-      "line": 1557,
-      "date": "2026-10-21",
-      "project": "EncoderPlotter_0903_01",
-      "status": "已完成",
-      "keywords": [
-        "IAP",
-        "免标定",
-        "recalibrationDataConversion",
-        "DPT",
-        "MPT",
-        "MPP",
-        "DPB",
-        "MPT-G",
-        "DPT-G1",
-        "MBS",
-        "MBP",
-        "SUPPORTED_SERIES"
-      ]
-    },
-    {
       "id": "P-20261032",
       "type": "problem",
       "title": "IAP免标定全系列支持与算法版本边界",
       "file": "global_problem_solutions.md",
-      "line": 1586,
+      "line": 1396,
       "date": "2026-10-21",
       "project": "EncoderPlotter_0903_01",
       "status": "已完成",
@@ -4036,7 +4838,17 @@
         "V4065",
         "版本矩阵",
         "Flash布局",
-        "storageTarget"
+        "storageTarget",
+        "IAP",
+        "免标定",
+        "DPT",
+        "MPT",
+        "MPP",
+        "DPB",
+        "MPT-G",
+        "DPT-G1",
+        "MBS",
+        "MBP"
       ]
     },
     {
@@ -4044,7 +4856,7 @@
       "type": "problem",
       "title": "MES 管理员可自批生产订单",
       "file": "global_problem_solutions.md",
-      "line": 1617,
+      "line": 1417,
       "date": "2026-10-21",
       "project": "MES / D:\\code\\mes",
       "status": "部分完成",
@@ -4063,10 +4875,10 @@
       "type": "problem",
       "title": "4k算法写入合并必须保留整批校验与目标布局",
       "file": "global_problem_solutions.md",
-      "line": 1645,
-      "date": "",
-      "project": "",
-      "status": "",
+      "line": 1437,
+      "date": "原记录未记载",
+      "project": "原记录未记载",
+      "status": "已完成（设备传输为mock，真机未验证）",
       "keywords": [
         "writeDataBlocks",
         "writeEncoderDataV303",
@@ -4078,25 +4890,66 @@
       ]
     },
     {
+      "id": "P-20261035",
+      "type": "problem",
+      "title": "MES工序目录记录与工作流版本映射审查",
+      "file": "global_problem_solutions.md",
+      "line": 1459,
+      "date": "2026-10-23",
+      "project": "MES / D:\\code\\mes",
+      "status": "部分完成（静态审查；真实环境版本、流程配置与节点数据仍需实测确认）",
+      "keywords": [
+        "MES",
+        "工序流程",
+        "工序引用",
+        "catalog workflow",
+        "workflow version binding",
+        "工序执行记录",
+        "workflowMode",
+        "route.steps"
+      ]
+    },
+    {
+      "id": "P-20261036",
+      "type": "problem",
+      "title": "PostgreSQL完整同步到测试环境的安全恢复与回退步骤",
+      "file": "global_problem_solutions.md",
+      "line": 1480,
+      "date": "2026-10-23",
+      "project": "MES",
+      "status": "部分完成（同步和数据库级核验完成；业务页面未测试）",
+      "keywords": [
+        "PostgreSQL",
+        "数据库完整同步",
+        "staging restore",
+        "回滚",
+        "密钥重加密"
+      ]
+    },
+    {
       "id": "P-20261037",
       "type": "problem",
       "title": "MES manual business and admin separation",
       "file": "global_problem_solutions.md",
-      "line": 1662,
-      "date": "",
-      "project": "",
-      "status": "",
-      "keywords": []
+      "line": 1501,
+      "date": "原记录未记载",
+      "project": "MES / D:/code/mes",
+      "status": "已完成",
+      "keywords": [
+        "MES、使用手册、小白版、业务系统、后台管理、DOCX、SN、流程快照",
+        "build-manual-v2.cjs",
+        "schema.referenceOnly"
+      ]
     },
     {
       "id": "P-20261038",
       "type": "problem",
       "title": "MES通用字段拼接、测试部署与SN原文归档",
       "file": "global_problem_solutions.md",
-      "line": 1671,
-      "date": "",
-      "project": "",
-      "status": "",
+      "line": 1522,
+      "date": "2026-10-22",
+      "project": "MES (D:/code/mes)",
+      "status": "已完成",
       "keywords": [
         "MES",
         "lowcode",
@@ -4111,10 +4964,10 @@
       "type": "problem",
       "title": "MES模块空框与订单SN工序静态适配缺口",
       "file": "global_problem_solutions.md",
-      "line": 1693,
+      "line": 1544,
       "date": "2026-10-22",
-      "project": "MES",
-      "status": "",
+      "project": "MES (D:/code/mes)",
+      "status": "部分完成",
       "keywords": [
         "MES",
         "模块空框",
@@ -4131,10 +4984,10 @@
       "type": "problem",
       "title": "MES平台定义执行与依赖治理方案静态审查缺口",
       "file": "global_problem_solutions.md",
-      "line": 1710,
-      "date": "",
-      "project": "",
-      "status": "",
+      "line": 1563,
+      "date": "原记录未记载",
+      "project": "MES / D:/code/mes",
+      "status": "已完成",
       "keywords": [
         "MES",
         "工作流运行时",
@@ -4142,42 +4995,10 @@
         "提供者绑定",
         "审批状态机",
         "并发锁",
-        "待办分页"
-      ]
-    },
-    {
-      "id": "P-20261035",
-      "type": "problem",
-      "title": "MES工序目录记录与工作流版本映射审查",
-      "file": "global_problem_solutions.md",
-      "line": 1737,
-      "date": "2026-10-23",
-      "project": "MES / D:\\code\\mes",
-      "status": "部分完成（静态审查；真实环境版本、流程配置与节点数据仍需实测确认）。",
-      "keywords": [
-        "MES",
-        "工序流程",
-        "工序引用",
-        "catalog workflow",
-        "workflow version binding",
-        "工序执行记录"
-      ]
-    },
-    {
-      "id": "P-20261036",
-      "type": "problem",
-      "title": "PostgreSQL完整同步到测试环境的安全恢复与回退步骤",
-      "file": "global_problem_solutions.md",
-      "line": 1768,
-      "date": "2026-10-23",
-      "project": "MES",
-      "status": "已完成（同步和数据库级核验完成；业务页面未测试）。",
-      "keywords": [
-        "PostgreSQL",
-        "数据库完整同步",
-        "staging restore",
-        "回滚",
-        "密钥重加密"
+        "待办分页",
+        "execProcess",
+        "impactOf",
+        "workflowView"
       ]
     },
     {
@@ -4185,10 +5006,10 @@
       "type": "problem",
       "title": "Unity 6原生像素野外角色图集与3D战斗隔离",
       "file": "global_problem_solutions.md",
-      "line": 1798,
+      "line": 1583,
       "date": "2026-10-25",
       "project": "GAME / D:\\code\\GAME",
-      "status": "部分完成（像素野外角色实现和静态审查完成，待Unity测试授权及外观校准）。",
+      "status": "部分完成（像素野外角色实现和静态审查完成，待Unity测试授权及外观校准）",
       "keywords": [
         "Unity 6",
         "2.5D像素角色",
@@ -4196,7 +5017,8 @@
         "SpriteRenderer",
         "SubsystemRegistration",
         "contact shadow",
-        "野外角色"
+        "野外角色",
+        "ImageGen"
       ]
     },
     {
@@ -4204,10 +5026,10 @@
       "type": "problem",
       "title": "Unity 3D城镇NPC像素色板图集与交互保留",
       "file": "global_problem_solutions.md",
-      "line": 1825,
+      "line": 1603,
       "date": "2026-10-26",
       "project": "GAME / D:\\code\\GAME",
-      "status": "部分完成（FC城镇Person工厂NPC接入像素版；未覆盖所有NPC、队友跟随和完整配件，待实机校准）。",
+      "status": "部分完成（FC城镇Person工厂NPC接入像素版；未覆盖所有NPC、队友跟随和完整配件，待实机校准）",
       "keywords": [
         "Unity NPC sprites",
         "pixel palette variants",
@@ -4222,10 +5044,10 @@
       "type": "problem",
       "title": "32x32 NPC像素身份配件与侧向镜像",
       "file": "global_problem_solutions.md",
-      "line": 1852,
+      "line": 1623,
       "date": "2026-10-26",
       "project": "D:/code/GAME",
-      "status": "已完成静态实现；运行时美术校准待授权。",
+      "status": "已完成静态实现；运行时美术校准待授权",
       "keywords": [
         "Unity NPC像素附件",
         "32x32 sprite atlas",
@@ -4240,10 +5062,10 @@
       "type": "problem",
       "title": "FC旅店切面房间：可走净宽与玩法边界",
       "file": "global_problem_solutions.md",
-      "line": 1880,
+      "line": 1644,
       "date": "2026-10-26",
       "project": "D:/code/GAME",
-      "status": "已完成静态实现与独立复核；运行时视觉/性能验证待授权。",
+      "status": "已完成静态实现与独立复核；运行时视觉/性能验证待授权",
       "keywords": [
         "Unity切面室内",
         "FC旅店",
@@ -4259,10 +5081,10 @@
       "type": "problem",
       "title": "Unity原创芯片主题曲资源与稳定Meta生成",
       "file": "global_problem_solutions.md",
-      "line": 1910,
+      "line": 1666,
       "date": "2026-10-26",
       "project": "D:/code/GAME",
-      "status": "原创音乐首版已生成并静态复核；Unity导入与听感验收待授权。",
+      "status": "部分完成（原创音乐首版已生成并静态复核；Unity导入与听感验收待授权）",
       "keywords": [
         "Unity原创芯片音乐",
         "AudioDirector MusicCue",
@@ -4278,16 +5100,17 @@
       "type": "problem",
       "title": "FC游戏UI参考风格确认与标题宽屏版式修正",
       "file": "global_problem_solutions.md",
-      "line": 1942,
+      "line": 1688,
       "date": "2026-10-26",
       "project": "D:/code/GAME",
-      "status": "UI主题静态覆盖确认，标题版式静态修正完成；功能与标题排版已完成静态复核，但Unity实机画面与输入验收未测试，等待用户授权。",
+      "status": "部分完成（UI主题静态覆盖确认，标题版式静态修正完成；Unity实机画面与输入验收待授权）",
       "keywords": [
         "重装机兵UI",
         "旧钢暖木界面",
         "Unity CanvasScaler",
         "ultrawide title layout",
-        "UI style confirmation"
+        "UI style confirmation",
+        "ScreenMatchMode.Expand"
       ]
     },
     {
@@ -4295,10 +5118,10 @@
       "type": "problem",
       "title": "GAME FC重制设计文档正典与状态统一",
       "file": "global_problem_solutions.md",
-      "line": 1977,
+      "line": 1709,
       "date": "2026-10-26",
       "project": "D:/code/GAME",
-      "status": "总设计文档正典和领域状态口径已对齐；全游戏内容、Unity运行验收和发行授权仍未完成。",
+      "status": "已完成（总设计文档正典和领域状态口径已对齐；全游戏内容、Unity运行验收和发行授权仍未完成）",
       "keywords": [
         "Unity FC重装机兵3D重制",
         "GDD正典",
@@ -4313,10 +5136,10 @@
       "type": "problem",
       "title": "Unity队伍菜单复用FC像素人物帧作为角色头像",
       "file": "global_problem_solutions.md",
-      "line": 2003,
+      "line": 1730,
       "date": "2026-10-26",
       "project": "GAME / D:/code/GAME",
-      "status": "部分完成（代码和规范静态复核通过；Unity视觉和输入实机验收待用户授权）。",
+      "status": "部分完成（代码和规范静态复核通过；Unity视觉和输入实机验收待用户授权）",
       "keywords": [
         "Unity队伍菜单",
         "Party menu",
@@ -4333,10 +5156,10 @@
       "type": "problem",
       "title": "Unity预备队存档与战车归属重建",
       "file": "global_problem_solutions.md",
-      "line": 2033,
+      "line": 1751,
       "date": "2026-10-26",
       "project": "GAME / D:/code/GAME",
-      "status": "部分完成（代码静态复核通过；I-29接口认可和测试授权待处理）。",
+      "status": "部分完成（代码静态复核通过；I-29接口认可和测试授权待处理）",
       "keywords": [
         "Unity",
         "PlayerState.reserveParty",
@@ -4348,14 +5171,14 @@
       ]
     },
     {
-      "id": "P-20261057",
+      "id": "P-20261050",
       "type": "problem",
       "title": "GAME待办盘点：区分实现、原版依据和验收状态",
       "file": "global_problem_solutions.md",
-      "line": 2057,
+      "line": 1771,
       "date": "2026-10-26",
       "project": "GAME / `D:\\code\\GAME`",
-      "status": "已完成一次只读盘点；持续状态应重新查当前文档与台账。",
+      "status": "已完成（一次只读盘点；持续状态应重新查当前文档与台账）",
       "keywords": [
         "GAME",
         "FC remake",
@@ -4371,25 +5194,21 @@
       ]
     },
     {
-      "id": "P-20261058",
+      "id": "P-20261052",
       "type": "problem",
-      "title": "FC重制待办分类与证据边界",
+      "title": "经明确授权补齐历史更新日志分类（改工作区日志不会重写历史tag/不重发飞书）",
       "file": "global_problem_solutions.md",
-      "line": 2090,
+      "line": 1792,
       "date": "2026-10-26",
-      "project": "GAME / `D:\\code\\GAME`",
-      "status": "已完成一次待办盘点；后续需从文档快照与新台账重查。",
+      "project": "driverSoftware",
+      "status": "已本地提交 fb9f1499，未推送；未测试",
       "keywords": [
-        "FC重制",
-        "backlog",
-        "待办分类",
-        "GDD",
-        "FC_REMAKE",
-        "FC_REFERENCE",
-        "静态实现",
-        "原版对照",
-        "实机验收",
-        "DEFERRED"
+        "CHANGELOG",
+        "历史版本",
+        "分类修复",
+        "新增",
+        "修复",
+        "fb9f1499"
       ]
     },
     {
@@ -4397,10 +5216,10 @@
       "type": "problem",
       "title": "FC风格野外战车牵引与拖车存档",
       "file": "global_problem_solutions.md",
-      "line": 2121,
+      "line": 1813,
       "date": "2026-10-27",
       "project": "GAME / D:\\code\\GAME",
-      "status": "部分完成：代码和静态复核完成；FC指定版本实机校对及运行验收未完成，待用户授权测试。",
+      "status": "部分完成（代码和静态复核完成；FC指定版本实机校对及运行验收未完成，待用户授权测试）",
       "keywords": [
         "FC重装机兵",
         "野外战车牵引",
@@ -4408,7 +5227,8 @@
         "SaveData v10",
         "VehicleService.AttachTow",
         "stale callback",
-        "Game.Runtime与Game.FC解耦"
+        "Game.Runtime与Game.FC解耦",
+        "FieldEvents"
       ]
     },
     {
@@ -4416,10 +5236,10 @@
       "type": "problem",
       "title": "FC租赁战车状态、收益与受损退租",
       "file": "global_problem_solutions.md",
-      "line": 2155,
+      "line": 1835,
       "date": "2026-10-27",
       "project": "GAME / D:/code/GAME",
-      "status": "部分完成（核心纵切片与代码复核完成；FC指定版本车型配置/价格/损伤细节与Unity实机验收待核，测试待用户授权）。",
+      "status": "部分完成（核心纵切片与代码复核完成；FC指定版本车型配置/价格/损伤细节与Unity实机验收待核，测试待用户授权）",
       "keywords": [
         "FC租赁战车",
         "rental tank",
@@ -4436,10 +5256,10 @@
       "type": "problem",
       "title": "FC租赁战车55毫米炮视觉资源回退",
       "file": "global_problem_solutions.md",
-      "line": 2188,
+      "line": 1857,
       "date": "2026-10-27",
       "project": "GAME / D:/code/GAME",
-      "status": "租赁炮视觉ID接线与文档边界已静态实现、三路R6复核通过；租赁蚊式55毫米专属外观和Unity实机验证仍未完成。",
+      "status": "部分完成（视觉ID接线与文档边界已静态实现；专属55毫米外观和Unity实机验证未完成）",
       "keywords": [
         "FC重装机兵",
         "租赁战车",
@@ -4454,10 +5274,10 @@
       "type": "problem",
       "title": "FC租赁蚊式专属55毫米炮源资产与Prefab生成入口",
       "file": "global_problem_solutions.md",
-      "line": 2208,
+      "line": 1877,
       "date": "2026-10-27",
       "project": "GAME / D:/code/GAME",
-      "status": "租赁蚊式专属55毫米原创低模源资产、Y-up/+Z米制FBX、预览及Unity Prefab生成入口已完成；Unity Prefab生成和游戏运行时接入仍未完成。",
+      "status": "部分完成（源资产、FBX、预览及Prefab生成入口完成；Unity Prefab生成和运行时接入未完成）",
       "keywords": [
         "FC重装机兵",
         "租赁战车",
@@ -4472,10 +5292,10 @@
       "type": "problem",
       "title": "FC Buggy独立车身源资产与Prefab生成入口",
       "file": "global_problem_solutions.md",
-      "line": 2230,
+      "line": 1897,
       "date": "2026-10-27",
       "project": "GAME / D:/code/GAME",
-      "status": "FC Buggy原创可编辑车身Blender源、Y-up/+Z米制FBX、渲染预览和同名Resources Prefab生成器已完成；Unity Prefab生成及运行时替换尚未完成。",
+      "status": "部分完成（源资产、FBX、预览和Prefab生成器完成；Unity Prefab生成及运行时替换未完成）",
       "keywords": [
         "FC重装机兵",
         "Buggy",
@@ -4491,10 +5311,10 @@
       "type": "problem",
       "title": "FC荒野地图地点类型标记与滚动图例",
       "file": "global_problem_solutions.md",
-      "line": 2253,
+      "line": 1918,
       "date": "2026-10-27",
       "project": "GAME / D:/code/GAME",
-      "status": "荒野地图现按聚落/洞窟迷宫/地标使用不同图符和语义色；已发现地点按类别列出，长图例可用鼠标滚轮滚动。未知地点过滤、地图坐标和存档逻辑未改。Unity真实视口和滚轮体验未验收。",
+      "status": "部分完成（荒野地图按聚落/洞窟迷宫/地标分类与滚动图例已静态实现；Unity真实视口和滚轮体验未验收）",
       "keywords": [
         "FC重装机兵",
         "大地图UI",
@@ -4509,10 +5329,10 @@
       "type": "problem",
       "title": "FC Buggy与租赁55mm专属Resources prefab生成接线",
       "file": "global_problem_solutions.md",
-      "line": 2273,
+      "line": 1938,
       "date": "2026-10-27",
       "project": "GAME / D:\\code\\GAME",
-      "status": "已把FC Buggy车身与租赁蚊式55毫米炮的既有专属Prefab生成器接入 `FcBuildTasks.PrepareAndBuild`，调用在预览捕获与Player构建前。`docs/FC_REMAKE.md` 记录了两个精确目标路径。工作区当前未执行Unity资源生成，因此两个目标Prefab仍不存在；运行时继续使用Buggy程序化工厂与55毫米炮的45毫米视觉回退。整体FC游戏系统与UI风格目标仍未完成。",
+      "status": "部分完成（生成器已接入PrepareAndBuild；Prefab未生成，Unity验收待授权）",
       "keywords": [
         "FC重装机兵",
         "Buggy",
@@ -4530,7 +5350,7 @@
       "type": "problem",
       "title": "行旅菜单任务与赏金状态语义色",
       "file": "global_problem_solutions.md",
-      "line": 2295,
+      "line": 1958,
       "date": "2026-10-27",
       "project": "GAME / D:\\code\\GAME",
       "status": "部分完成（静态实现和审查完成，运行态视觉验收待做）",
@@ -4551,7 +5371,7 @@
       "type": "problem",
       "title": "行旅菜单操作结果语义反馈色",
       "file": "global_problem_solutions.md",
-      "line": 2325,
+      "line": 1978,
       "date": "2026-10-27",
       "project": "GAME / D:\\code\\GAME",
       "status": "部分完成（静态改动和审查完成，运行态视觉/音效验收待做）",
@@ -4572,7 +5392,7 @@
       "type": "problem",
       "title": "战斗HP SP弹药余量语义色提示",
       "file": "global_problem_solutions.md",
-      "line": 2355,
+      "line": 1998,
       "date": "2026-10-27",
       "project": "GAME / D:\\code\\GAME",
       "status": "部分完成（静态实现和审查完成；运行态视觉验收待做）",
@@ -4594,7 +5414,7 @@
       "type": "problem",
       "title": "FC战斗敌人掉落配置与胜利发放",
       "file": "global_problem_solutions.md",
-      "line": 2385,
+      "line": 2019,
       "date": "2026-10-27",
       "project": "GAME / D:\\code\\GAME",
       "status": "部分完成（可配置掉落系统静态实现完成；FC具体掉落数据和运行态验证待补）",
@@ -4616,7 +5436,7 @@
       "type": "problem",
       "title": "校准FC开局常规敌人经验与现金奖励",
       "file": "global_problem_solutions.md",
-      "line": 2420,
+      "line": 2040,
       "date": "2026-10-27",
       "project": "GAME / D:\\code\\GAME",
       "status": "部分完成（可明确映射的常规敌人EXP/Gold已校准；其他敌人、道具掉率和指定FC版本实机结果仍待核/验收）",
@@ -4637,7 +5457,7 @@
       "type": "problem",
       "title": "Buggy Blender到Unity FBX米制资产管线与挂点合同",
       "file": "global_problem_solutions.md",
-      "line": 2452,
+      "line": 2061,
       "date": "2026-10-27",
       "project": "GAME / D:\\code\\GAME",
       "status": "部分完成（Blender源和FBX已接入，Unity Prefab尚未生成；运行时仍使用程序化外观，待用户授权Unity验收）",
@@ -4659,7 +5479,7 @@
       "type": "problem",
       "title": "FC开局南洞奖励与非消耗收藏物注册",
       "file": "global_problem_solutions.md",
-      "line": 2486,
+      "line": 2083,
       "date": "2026-10-27",
       "project": "D:\\code\\GAME",
       "status": "已实现，未测试",
@@ -4680,10 +5500,10 @@
       "type": "problem",
       "title": "FC开局45毫米主炮弹量与底盘特殊弹仓区分",
       "file": "global_problem_solutions.md",
-      "line": 2517,
+      "line": 2103,
       "date": "2026-10-27",
       "project": "D:\\code\\GAME",
-      "status": "已实现，未测试；底盘特殊砲弾系统仍未实现",
+      "status": "已实现，未测试；底盘特殊砲弹系统未实现（见P-20261073）",
       "keywords": [
         "FC初代",
         "Metal Max NES",
@@ -4700,10 +5520,10 @@
       "type": "problem",
       "title": "FC底盘特殊砲弹弹仓、装卸、存档与战斗命令",
       "file": "global_problem_solutions.md",
-      "line": 2545,
+      "line": 2123,
       "date": "2026-10-27",
       "project": "D:\\code\\GAME",
-      "status": "已实现六种特殊弹纵切片；静态复核通过；未测试。",
+      "status": "已实现六种特殊弹纵切片；静态复核通过；未测试",
       "keywords": [
         "FC Metal Max",
         "chassis special shell magazine",
@@ -4720,10 +5540,10 @@
       "type": "problem",
       "title": "FC Buggy Unity Prefab生成受headless许可阻塞",
       "file": "global_problem_solutions.md",
-      "line": 2574,
+      "line": 2146,
       "date": "2026-10-27",
       "project": "GAME / D:\\code\\GAME",
-      "status": "部分完成；Prefab生成受Unity许可初始化阻塞，运行时仍使用程序化回退。",
+      "status": "部分完成（Prefab生成受Unity许可初始化阻塞，运行时仍使用程序化回退）",
       "keywords": [
         "FC Buggy",
         "Unity Editor",
@@ -4739,7 +5559,7 @@
       "type": "problem",
       "title": "Unity 存档可选记录的局部恢复与重复状态合并",
       "file": "global_problem_solutions.md",
-      "line": 2605,
+      "line": 2167,
       "date": "2026-10-27",
       "project": "GAME / D:\\code\\GAME",
       "status": "部分完成（静态实现与审查完成；存档读写功能测试待用户授权）",
@@ -4749,7 +5569,8 @@
         "malformed optional save records",
         "duplicated bounty",
         "quest progress",
-        "JSON save migration"
+        "JSON save migration",
+        "JsonUtility"
       ]
     },
     {
@@ -4757,7 +5578,7 @@
       "type": "problem",
       "title": "Unity长期仓库应与随身堆叠上限分离",
       "file": "global_problem_solutions.md",
-      "line": 2642,
+      "line": 2190,
       "date": "2026-10-27",
       "project": "GAME / D:\\code\\GAME",
       "status": "部分完成（实现与静态审查完成；运行时存读档及交互验证待授权）",
@@ -4776,10 +5597,10 @@
       "type": "problem",
       "title": "多读取器界面应区分设备选择与设备工作区",
       "file": "global_problem_solutions.md",
-      "line": 2678,
+      "line": 2212,
       "date": "2026-10-27",
       "project": "EncoderPlotter_0903_01 / encoder-next",
-      "status": "部分完成（架构与布局调整完成；操作功能由后续验收覆盖）",
+      "status": "部分完成",
       "keywords": [
         "多读取器界面",
         "reader workspace",
@@ -4795,7 +5616,7 @@
       "type": "problem",
       "title": "EncoderPlotter simulator reader count fixtures",
       "file": "global_problem_solutions.md",
-      "line": 2714,
+      "line": 2234,
       "date": "2026-10-27",
       "project": "EncoderPlotter_0903_01 / encoder-next",
       "status": "已完成",
@@ -4812,12 +5633,17 @@
       "type": "problem",
       "title": "encoder-next RT角度采集接口和CRC兼容",
       "file": "global_problem_solutions.md",
-      "line": 2748,
-      "date": "",
-      "project": "",
-      "status": "",
+      "line": 2255,
+      "date": "原记录未记载",
+      "project": "EncoderPlotter_0903_01 / encoder-next",
+      "status": "已完成",
       "keywords": [
-        "encoder-next、RT、RS485、CRC、空帧、角度采集"
+        "encoder-next",
+        "RT",
+        "RS485",
+        "CRC",
+        "空帧",
+        "角度采集"
       ]
     },
     {
@@ -4825,10 +5651,10 @@
       "type": "problem",
       "title": "encoder-next高频采集限制Vue刷新频率",
       "file": "global_problem_solutions.md",
-      "line": 2770,
+      "line": 2276,
       "date": "2026-10-28",
       "project": "EncoderPlotter_0903_01 / encoder-next",
-      "status": "已实现，待用户授权验证",
+      "status": "部分完成",
       "keywords": [
         "高频采集",
         "Vue响应式渲染",
@@ -4842,10 +5668,10 @@
       "type": "problem",
       "title": "encoder-next 当前功能边界、实时采集绘图架构与踩坑",
       "file": "global_problem_solutions.md",
-      "line": 2792,
+      "line": 2296,
       "date": "2026-10-28",
       "project": "EncoderPlotter_0903_01 / D:/code/EncoderPlotter_0903_01/encoder-next",
-      "status": "部分完成（读取器管理、编码器探测与参数读取、实时采集和绘图已实现；校准、配置写入、IAP/MES/chamber、数据文件导入导出与进程隔离未完成）。",
+      "status": "部分完成",
       "keywords": [
         "encoder-next",
         "功能清单",
@@ -4866,7 +5692,7 @@
       "type": "problem",
       "title": "MES业务模块只读盘点：关系、权限与工作流缺口判读",
       "file": "global_problem_solutions.md",
-      "line": 2854,
+      "line": 2329,
       "date": "2026-10-28",
       "project": "MES / D:/code/mes",
       "status": "已完成（仅静态数据库盘点；未改数据库/代码、未测试运行时行为）",
@@ -4883,7 +5709,8 @@
         "actorRoleCodes",
         "模块权限",
         "软删除模块",
-        "SN绑定"
+        "SN绑定",
+        "BEGIN READ ONLY"
       ]
     },
     {
@@ -4891,10 +5718,10 @@
       "type": "problem",
       "title": "MES开发库分阶段配置重构：安全备份与认证阻塞停步",
       "file": "global_problem_solutions.md",
-      "line": 2886,
+      "line": 2351,
       "date": "2026-10-28",
       "project": "MES / D:/code/mes",
-      "status": "部分完成；E0完成，E1在数据写入前阻塞，E2–E5未执行。",
+      "status": "部分完成（E0完成，E1在数据写入前阻塞，E2–E5未执行）",
       "keywords": [
         "PostgreSQL开发库备份",
         "pg_dump custom archive",
@@ -4909,21 +5736,29 @@
       "type": "problem",
       "title": "MES六核心符合性审查：明细创建权限与数量校验旁路",
       "file": "global_problem_solutions.md",
-      "line": 2920,
-      "date": "2026-10-29",
-      "project": "",
-      "status": "",
-      "keywords": []
+      "line": 2373,
+      "date": "2026-10-28",
+      "project": "MES (D:/code/mes，feat/full-implementation，HEAD fbd24a0)",
+      "status": "部分完成",
+      "keywords": [
+        "MES",
+        "六条核心",
+        "平台边界",
+        "明细权限",
+        "数量校验",
+        "可视化配置",
+        "数据可见性"
+      ]
     },
     {
       "id": "P-20261085",
       "type": "problem",
       "title": "MES手册同步：流程目录、预检与明细保存边界",
       "file": "global_problem_solutions.md",
-      "line": 3011,
+      "line": 2400,
       "date": "2026-10-29",
-      "project": "",
-      "status": "",
+      "project": "原记录未记载",
+      "status": "已完成",
       "keywords": [
         "MES",
         "用户手册",
@@ -4934,29 +5769,17 @@
       ]
     },
     {
-      "id": "P-20261086",
-      "type": "problem",
-      "title": "MES六核心当前能力与执行差距复核",
-      "file": "global_problem_solutions.md",
-      "line": 3022,
-      "date": "2026-10-29",
-      "project": "",
-      "status": "",
-      "keywords": [
-        "MES 六核心 可视化计算 条件分支 扣减 明细保存 资源可见性"
-      ]
-    },
-    {
       "id": "P-20261087",
       "type": "problem",
       "title": "MES七项差距通用实施方案及验收边界",
       "file": "global_problem_solutions.md",
-      "line": 3033,
+      "line": 2424,
       "date": "2026-10-29",
-      "project": "",
-      "status": "",
+      "project": "MES (D:/code/mes)",
+      "status": "部分完成",
       "keywords": [
-        "MES 通用计算 条件构建器 联动写入 原子主从保存 资源脱敏 批量创建"
+        "MES 通用计算 条件构建器 联动写入 原子主从保存 资源脱敏 批量创建",
+        "MES 六核心 可视化计算 条件分支 扣减 明细保存 资源可见性"
       ]
     },
     {
@@ -4964,25 +5787,35 @@
       "type": "problem",
       "title": "MES系统手册补齐功能说明与完整分步案例",
       "file": "global_problem_solutions.md",
-      "line": 3044,
+      "line": 2449,
       "date": "2026-10-29",
-      "project": "",
-      "status": "",
+      "project": "原记录未记载",
+      "status": "已完成",
       "keywords": [
-        "MES 使用手册 功能描述 完整案例 分步操作 结果核对 双入口"
+        "MES 使用手册",
+        "功能描述",
+        "完整案例",
+        "分步操作",
+        "结果核对",
+        "双入口"
       ]
     },
     {
-      "id": "P-20261089",
+      "id": "P-20261090",
       "type": "problem",
-      "title": "扭力标定质量判定与保存完成闭环",
+      "title": "扭力标定未达标人工放行与重标分流",
       "file": "global_problem_solutions.md",
-      "line": 3057,
+      "line": 2471,
       "date": "2026-10-29",
       "project": "driverSoftware",
-      "status": "代码完成，未测试。快速通道：否，完整流程。R0-R5完成，R6独立复核完成；R7跳过待授权，R8静态集成完成，R9归档，R10跳过。",
+      "status": "部分完成",
       "keywords": [
         "扭力标定",
+        "人工确认放行",
+        "重新标定",
+        "不合格原因",
+        "confirm_unqualified",
+        "manual_release_allowed",
         "Kt",
         "R²",
         "自动写入",
@@ -4992,32 +5825,14 @@
       ]
     },
     {
-      "id": "P-20261090",
-      "type": "problem",
-      "title": "扭力标定未达标人工放行与重标分流",
-      "file": "global_problem_solutions.md",
-      "line": 3072,
-      "date": "2026-10-29",
-      "project": "driverSoftware",
-      "status": "已实现并静态复核，未测试。此条更新P-20261089中“不合格一律重标”的产品决策。",
-      "keywords": [
-        "扭力标定",
-        "人工确认放行",
-        "重新标定",
-        "不合格原因",
-        "confirm_unqualified",
-        "manual_release_allowed"
-      ]
-    },
-    {
       "id": "P-20261091",
       "type": "problem",
       "title": "保留原始提交补建主题分支真合并",
       "file": "global_problem_solutions.md",
-      "line": 3088,
+      "line": 2492,
       "date": "2026-10-29",
       "project": "driverSoftware",
-      "status": "已完成。本地主题分支保留，development已正常推送，未强推。",
+      "status": "已完成（本地主题分支保留，development已正常推送，未强推）",
       "keywords": [
         "主题分支",
         "no-ff",
@@ -5032,17 +5847,19 @@
       "type": "problem",
       "title": "断连重复中止导致发布门禁失败的最小修复",
       "file": "global_problem_solutions.md",
-      "line": 3104,
+      "line": 2514,
       "date": "2026-10-29",
       "project": "driverSoftware",
-      "status": "代码修复与静态复核完成，未测试，等待测试授权；工作区干净，修复分支保留。",
+      "status": "部分完成（代码修复与静态复核完成，未测试，等待测试授权；修复分支保留）",
       "keywords": [
         "v0.21.2",
         "CI门禁失败",
         "disconnect",
         "request_abort",
         "abort_calls",
-        "重复中止"
+        "重复中止",
+        "api_disconnect",
+        "test-gates"
       ]
     },
     {
@@ -5050,67 +5867,76 @@
       "type": "problem",
       "title": "自动流转候选分页和关联传播修复",
       "file": "global_problem_solutions.md",
-      "line": 3120,
-      "date": "",
-      "project": "",
-      "status": "",
-      "keywords": []
+      "line": 2536,
+      "date": "原记录未记载",
+      "project": "原记录未记载",
+      "status": "部分完成（实现与R6复核完成，测试待用户授权）",
+      "keywords": [
+        "原记录未记载"
+      ]
     },
     {
       "id": "P-20261094",
       "type": "problem",
       "title": "ERP即时库存导入本机MES口径与完整性核对",
       "file": "global_problem_solutions.md",
-      "line": 3132,
-      "date": "",
-      "project": "",
-      "status": "",
-      "keywords": []
+      "line": 2557,
+      "date": "2026-10-29",
+      "project": "MES（本机 Docker mes-postgres）",
+      "status": "已完成",
+      "keywords": [
+        "ERP即时库存",
+        "本机MES",
+        "PostgreSQL",
+        "mes-postgres",
+        "LC_NOTHING_TO_PUBLISH",
+        "库存明细",
+        "对账",
+        "数据导入"
+      ]
     },
     {
       "id": "P-20261095",
       "type": "problem",
       "title": "流转填写由流程配置，移除默认重复备注",
       "file": "global_problem_solutions.md",
-      "line": 3142,
-      "date": "",
-      "project": "",
-      "status": "",
-      "keywords": []
+      "line": 2579,
+      "date": "原记录未记载",
+      "project": "原记录未记载",
+      "status": "已完成（静态复核通过，未测试未提交）",
+      "keywords": [
+        "原记录未记载"
+      ]
     },
     {
       "id": "P-20261096",
       "type": "problem",
       "title": "指派执行人选择框回显修复",
       "file": "global_problem_solutions.md",
-      "line": 3151,
-      "date": "",
-      "project": "",
-      "status": "",
-      "keywords": []
-    },
-    {
-      "id": "P-20261109",
-      "type": "problem",
-      "title": "流程填写与执行人显示修复提交",
-      "file": "global_problem_solutions.md",
-      "line": 3156,
-      "date": "",
-      "project": "",
-      "status": "",
-      "keywords": []
+      "line": 2599,
+      "date": "原记录未记载",
+      "project": "原记录未记载",
+      "status": "已完成（静态复核通过，未测试未提交）",
+      "keywords": [
+        "原记录未记载"
+      ]
     },
     {
       "id": "P-20261097",
       "type": "problem",
       "title": "总线识别报告身份保持与连接隔离",
       "file": "global_problem_solutions.md",
-      "line": 3161,
+      "line": 2619,
       "date": "2026-11-03",
       "project": "driverSoftware",
-      "status": "实现完成，未测试",
+      "status": "部分完成",
       "keywords": [
-        "driverSoftware、总线设备、识别测试报告、ID变更、连接隔离、CSV"
+        "driverSoftware",
+        "总线设备",
+        "识别测试报告",
+        "ID变更",
+        "连接隔离",
+        "CSV"
       ]
     },
     {
@@ -5118,10 +5944,10 @@
       "type": "problem",
       "title": "多设备轨迹热更新必须防止过时配置恢复使能",
       "file": "global_problem_solutions.md",
-      "line": 3181,
+      "line": 2641,
       "date": "2026-11-03",
       "project": "driverSoftware",
-      "status": "实现完成，未测试",
+      "status": "部分完成（实现完成，未测试）",
       "keywords": [
         "mscope",
         "多设备轨迹",
@@ -5130,7 +5956,8 @@
         "急停",
         "轮次锁",
         "过时配置",
-        "起播预检"
+        "起播预检",
+        "round_lock"
       ]
     },
     {
@@ -5138,10 +5965,10 @@
       "type": "problem",
       "title": "多设备轨迹结束状态不能由陈旧样本推断",
       "file": "global_problem_solutions.md",
-      "line": 3203,
+      "line": 2663,
       "date": "2026-11-03",
       "project": "driverSoftware",
-      "status": "实现完成，未测试",
+      "status": "部分完成",
       "keywords": [
         "多设备轨迹",
         "drain",
@@ -5159,10 +5986,10 @@
       "type": "problem",
       "title": "序列号标签迁移须区分存储值与当前输入",
       "file": "global_problem_solutions.md",
-      "line": 3225,
+      "line": 2685,
       "date": "2026-11-03",
       "project": "driverSoftware",
-      "status": "实现完成，未测试",
+      "status": "部分完成",
       "keywords": [
         "localStorage",
         "序列号",
@@ -5177,10 +6004,10 @@
       "type": "problem",
       "title": "多设备持续控制的急停需要请求预约与处理代次共同收口",
       "file": "global_problem_solutions.md",
-      "line": 3247,
+      "line": 2706,
       "date": "2026-11-03",
       "project": "driverSoftware",
-      "status": "实现完成，静态复核通过，功能测试未执行",
+      "status": "部分完成",
       "keywords": [
         "多设备控制",
         "急停",
@@ -5196,17 +6023,21 @@
       "type": "problem",
       "title": "停止采样时必须失效末帧运行徽章",
       "file": "global_problem_solutions.md",
-      "line": 3266,
+      "line": 2727,
       "date": "2026-11-03",
       "project": "driverSoftware",
-      "status": "静态复核通过，功能测试未执行",
+      "status": "部分完成（静态复核通过，功能测试未执行）",
       "keywords": [
         "急停",
         "多设备",
         "状态徽章",
         "末帧失效",
         "loopGen",
-        "未知状态"
+        "未知状态",
+        "kStopped",
+        "kRunning",
+        "drain",
+        "paintVals"
       ]
     },
     {
@@ -5214,10 +6045,10 @@
       "type": "problem",
       "title": "Windows Runner 上 CI 的 ssh 私钥报 UNPROTECTED PRIVATE KEY FILE，及其引出的私钥文件残留",
       "file": "global_problem_solutions.md",
-      "line": 3282,
+      "line": 2748,
       "date": "2026-11-05",
       "project": "quality-testing/dv3-admin（GitLab CI，Windows shell Runner）",
-      "status": "已修复，4 次流水线验证通过（真实 SYSTEM Runner）；本地在管理员账号下复现了逻辑",
+      "status": "已完成（已修复，4 次流水线验证通过）",
       "keywords": [
         "UNPROTECTED PRIVATE KEY FILE",
         "Bad permissions",
@@ -5240,10 +6071,10 @@
       "type": "problem",
       "title": "中文提交信息会破坏 Windows Runner 的 PowerShell 变量注入，使脚本里的变量变空",
       "file": "global_problem_solutions.md",
-      "line": 3299,
+      "line": 2769,
       "date": "2026-11-05",
       "project": "quality-testing/dv3-admin（GitLab CI，Windows shell Runner）",
-      "status": "已定位并有本地复现；采用英文提交信息规避，线上验证通过",
+      "status": "已完成（已定位并有本地复现；采用英文提交信息规避，线上验证通过）",
       "keywords": [
         "CI_COMMIT_MESSAGE",
         "CI_COMMIT_DESCRIPTION",
@@ -5265,10 +6096,10 @@
       "type": "problem",
       "title": "DPT V4.2.8真实采集请求CRC与读取器信息线布局",
       "file": "global_problem_solutions.md",
-      "line": 3317,
-      "date": "",
-      "project": "",
-      "status": "",
+      "line": 2789,
+      "date": "原记录未记载",
+      "project": "encoder-next（EncoderPlotter，RUN R20261107-204528-encoderplotter-0903-01）",
+      "status": "部分完成",
       "keywords": [
         "encoder-next",
         "DPT",
@@ -5283,10 +6114,10 @@
       "type": "problem",
       "title": "读取器日期每月31格编码的月末与非法日历边界",
       "file": "global_problem_solutions.md",
-      "line": 3333,
-      "date": "",
-      "project": "",
-      "status": "",
+      "line": 2809,
+      "date": "2026-11-08",
+      "project": "encoder-next（EncoderPlotter）",
+      "status": "部分完成",
       "keywords": [
         "AnalyzerInfo",
         "日期",
@@ -5301,7 +6132,7 @@
       "type": "problem",
       "title": "EncoderPlotter 分支管理对照 Gitflow 审计：4.11.1 撤回后收口断裂与分支积压",
       "file": "global_problem_solutions.md",
-      "line": 3347,
+      "line": 2829,
       "date": "2026-11-09",
       "project": "EncoderPlotter（主仓 D:/code/EncoderPlotter_0703_03，子仓 sub_embedded/sub_common/sub_automation/sub_algorithm）",
       "status": "已完成（审计结论已固化；4.11.1 收口与分支清理待用户决定，未执行）",
@@ -5326,7 +6157,10 @@
         "gitlink",
         ".gitmodules",
         "protected_branches",
-        "分支审计"
+        "分支审计",
+        "back-merge-check.sh",
+        "fetch tags 失败",
+        "MSYS_NO_PATHCONV=1"
       ]
     },
     {
@@ -5334,7 +6168,7 @@
       "type": "problem",
       "title": "SIRE 归档 worker 排查：编号冲突、队头阻塞与未配置归档库的入队缺陷",
       "file": "global_problem_solutions.md",
-      "line": 3393,
+      "line": 2854,
       "date": "2026-11-09",
       "project": "SIRE 共享工作流（sire/workflow/shared/sire/scripts/sire_archive_sync.py，队列 D:/sire/sire_ledger/sync_queue）",
       "status": "部分完成（编号冲突已修，知识记录已在归档库可查；脚本四项改动未做，待 RSI；本次 run 的任务记录归档仍 pending）",
@@ -5359,10 +6193,10 @@
       "type": "problem",
       "title": "Codex用量必须绑定会话并去重累计事件",
       "file": "global_problem_solutions.md",
-      "line": 3436,
+      "line": 2875,
       "date": "2026-11-10",
       "project": "SIRE Codex 用量适配",
-      "status": "已实现评审修复；本次未测试，版本激活以 RSI 记录为准。",
+      "status": "已实现评审修复；本次未测试，版本激活以 RSI 记录为准",
       "keywords": [
         "Codex",
         "rollout",
@@ -5380,7 +6214,7 @@
       "type": "problem",
       "title": "阶段计时开始与结束落在不同回合目录，报未记录开始时刻",
       "file": "global_problem_solutions.md",
-      "line": 3468,
+      "line": 2896,
       "date": "2026-11-11",
       "project": "SIRE 共享工作流 / scripts/sire_usage.py（在 EncoderPlotter 任务中发现）",
       "status": "部分完成",
@@ -5396,112 +6230,574 @@
         "阶段计时",
         "额度读数"
       ]
+    },
+    {
+      "id": "P-20261113",
+      "type": "problem",
+      "title": "【数据库清理】SIRE 向量库与知识库整合重建：1.39GB 清理到约 55MB（候选库构建、别名追溯、索引范围收敛）",
+      "file": "global_problem_solutions.md",
+      "line": 2916,
+      "date": "2026-11-11",
+      "project": "SIRE v6（sire_vectors.sqlite3）",
+      "status": "已完成（候选库已建成并自检通过；线上库切换与检索评测待用户授权）",
+      "keywords": [
+        "向量库清理",
+        "知识库整合",
+        "去重合并",
+        "候选库",
+        "build_candidate",
+        "knowledge_aliases",
+        "source_paths",
+        "sync_task_records",
+        "VACUUM",
+        "删除密码",
+        "RSI-v6.66",
+        "只增不减",
+        "旧版本片段",
+        "is_latest",
+        "台账片段",
+        "mermaid.min.js",
+        "evidence"
+      ]
     }
   ],
   "features": {
-    "下线检测": [
-      "F-052",
-      "F-058"
+    "chamber": [
+      "F-004"
     ],
-    "信息确认": [
-      "F-052",
-      "F-058"
+    "高低温箱": [
+      "F-004"
     ],
-    "firmware_info": [
-      "F-052"
+    "temperature": [
+      "F-004"
     ],
-    "人工决定": [
-      "F-052",
-      "F-058"
+    "humidity": [
+      "F-004"
     ],
-    "继续检测": [
-      "F-052"
+    "Modbus": [
+      "F-004"
     ],
-    "结束检测": [
-      "F-052"
+    "独立进程": [
+      "F-004"
     ],
-    "订单号": [
-      "F-052"
+    "同步采样": [
+      "F-004"
     ],
-    "扫码": [
-      "F-052"
+    "EncoderPlotter": [
+      "F-004",
+      "F-011",
+      "F-021",
+      "F-087",
+      "F-123"
     ],
-    "烧录面板": [
-      "F-026"
+    "encryption": [
+      "F-005"
     ],
-    "flashPanel": [
-      "F-026"
+    "程序加密": [
+      "F-005"
     ],
-    "DPB 锁定": [
-      "F-026"
-    ],
-    "型号选择": [
-      "F-026"
+    "分段加密": [
+      "F-005"
     ],
     "IAP": [
+      "F-005",
+      "F-008",
+      "F-009",
+      "F-017",
+      "F-022",
       "F-026",
       "F-047",
       "F-122"
     ],
+    "AES": [
+      "F-005"
+    ],
+    "RSA": [
+      "F-005"
+    ],
+    "Protector": [
+      "F-005"
+    ],
+    "BootLoader": [
+      "F-005"
+    ],
+    "Electron": [
+      "F-006",
+      "F-024"
+    ],
+    "Vue2": [
+      "F-006",
+      "F-007"
+    ],
+    "Vuex": [
+      "F-006"
+    ],
+    "设置弹窗": [
+      "F-006"
+    ],
+    "目录选择": [
+      "F-006"
+    ],
+    "时间戳目录": [
+      "F-006"
+    ],
+    "数据持久化": [
+      "F-006"
+    ],
+    "读取模式": [
+      "F-006"
+    ],
+    "bin文件复制": [
+      "F-006"
+    ],
+    "i18n双语": [
+      "F-006"
+    ],
+    "IAP升级": [
+      "F-007"
+    ],
+    "SN序列号": [
+      "F-007"
+    ],
+    "格式校验移除": [
+      "F-007"
+    ],
+    "必填校验": [
+      "F-007"
+    ],
+    "i18n": [
+      "F-007",
+      "F-011",
+      "F-055"
+    ],
+    "placeholder": [
+      "F-007"
+    ],
+    "升级进度专用": [
+      "F-008"
+    ],
+    "progress_sender": [
+      "F-008"
+    ],
+    "参数贯通": [
+      "F-008"
+    ],
+    "Encoder.py": [
+      "F-008",
+      "F-010"
+    ],
+    "IAP.py": [
+      "F-008"
+    ],
+    "失败清除": [
+      "F-009"
+    ],
+    "SN": [
+      "F-009",
+      "F-078",
+      "F-091",
+      "F-123"
+    ],
+    "重试通道": [
+      "F-009"
+    ],
+    "自动还原": [
+      "F-009"
+    ],
+    "iap.js": [
+      "F-009",
+      "F-011"
+    ],
+    "导入调试数据": [
+      "F-010"
+    ],
+    "使用当前配置": [
+      "F-010"
+    ],
+    "覆盖": [
+      "F-010"
+    ],
+    "绘图方式默认后端": [
+      "F-010"
+    ],
+    "global.js": [
+      "F-010"
+    ],
+    "device.js": [
+      "F-010",
+      "F-011"
+    ],
+    "store默认值global.js": [
+      "F-010"
+    ],
+    "国际化": [
+      "F-011"
+    ],
+    "全面修复": [
+      "F-011"
+    ],
+    "涉及mes-config.js": [
+      "F-011"
+    ],
+    "i18n.js": [
+      "F-011"
+    ],
+    "正则提取全部.js": [
+      "F-011"
+    ],
+    "threshold.html": [
+      "F-011"
+    ],
+    "selector.html": [
+      "F-011"
+    ],
+    "flash_tool_v2.py": [
+      "F-011"
+    ],
     "MPT-G": [
+      "F-013",
       "F-026"
     ],
-    "--mpt-g": [
-      "F-026"
+    "MPT-QGC": [
+      "F-013"
     ],
-    "flash_tool.py": [
-      "F-026"
+    "V402": [
+      "F-013"
     ],
-    "CONFIGS extra_hex": [
-      "F-026"
+    "InitArguments_MPT_QGC_V5": [
+      "F-013"
     ],
-    "localStorage 配置恢复": [
-      "F-026"
+    "gitlink": [
+      "F-013",
+      "F-068",
+      "F-069",
+      "F-118"
     ],
-    "nuitka 重编": [
-      "F-026"
+    "merge": [
+      "F-013",
+      "F-019"
     ],
-    "诊断包": [
-      "F-025"
+    "statorSN": [
+      "F-017"
     ],
-    "diag": [
-      "F-025"
+    "arguments": [
+      "F-017"
     ],
-    "解密": [
-      "F-025"
+    "EncoderCommandCalibrationRewriteArguments": [
+      "F-017"
     ],
-    "kkdiag": [
-      "F-025"
+    "回读校验": [
+      "F-017"
     ],
-    "diag_private.pem": [
-      "F-025"
+    "SN一致性": [
+      "F-017"
     ],
-    "私钥": [
-      "F-025"
+    "Flash布局": [
+      "F-018"
     ],
-    "黑匣子": [
-      "F-025"
+    "Bin Footer": [
+      "F-018"
     ],
-    "blackbox": [
-      "F-025"
+    "FLYT": [
+      "F-018",
+      "F-022"
     ],
-    "events.jrn": [
-      "F-025"
+    "'i'指令": [
+      "F-018"
     ],
-    "rings.json.enc": [
-      "F-025"
+    "RecalibrationLayoutInfo": [
+      "F-018"
     ],
-    "env.json.enc": [
-      "F-025"
+    "IAP_MUST_PRESERVE": [
+      "F-018"
     ],
-    "key.bin": [
-      "F-025"
+    "剥footer": [
+      "F-018"
     ],
-    "AES-GCM": [
-      "F-025"
+    "bin文件过大": [
+      "F-018"
     ],
-    "RSA-4096": [
-      "F-025"
+    "1984包": [
+      "F-018"
+    ],
+    "DATA_ADDRESS_LAYOUTS": [
+      "F-018",
+      "F-022"
+    ],
+    "P/Q/T": [
+      "F-018",
+      "F-022"
+    ],
+    "V3100": [
+      "F-018"
+    ],
+    "舵机": [
+      "F-019",
+      "F-020"
+    ],
+    "driverSoftware": [
+      "F-019",
+      "F-023",
+      "F-042",
+      "F-043",
+      "F-088",
+      "F-089"
+    ],
+    "development": [
+      "F-019"
+    ],
+    "feature": [
+      "F-019",
+      "F-118"
+    ],
+    "fix": [
+      "F-019"
+    ],
+    "no-ff": [
+      "F-019"
+    ],
+    "release.py": [
+      "F-019",
+      "F-023",
+      "F-024",
+      "F-057"
+    ],
+    "VERSION": [
+      "F-019",
+      "F-024"
+    ],
+    "CHANGELOG": [
+      "F-019",
+      "F-024",
+      "F-057"
+    ],
+    "Nuitka": [
+      "F-019",
+      "F-020",
+      "F-024",
+      "F-057",
+      "F-076",
+      "F-084"
+    ],
+    "electron-builder": [
+      "F-019",
+      "F-024",
+      "F-066"
+    ],
+    "SKU": [
+      "F-019",
+      "F-057"
+    ],
+    "customer-L0": [
+      "F-019",
+      "F-020"
+    ],
+    "customer-L1": [
+      "F-019",
+      "F-020"
+    ],
+    "internal": [
+      "F-019",
+      "F-020"
+    ],
+    "混源守卫": [
+      "F-019"
+    ],
+    "构建门禁": [
+      "F-019"
+    ],
+    "实机验证": [
+      "F-019"
+    ],
+    "新需求开发": [
+      "F-019"
+    ],
+    "算法仓库": [
+      "F-020"
+    ],
+    "recalibration": [
+      "F-020",
+      "F-021"
+    ],
+    "sub_algorithm": [
+      "F-020",
+      "F-081",
+      "F-118"
+    ],
+    "kingkong_calib": [
+      "F-020"
+    ],
+    "wheel": [
+      "F-020"
+    ],
+    "pyd": [
+      "F-020"
+    ],
+    "pyc": [
+      "F-020"
+    ],
+    "force_calib": [
+      "F-020",
+      "F-076"
+    ],
+    "release": [
+      "F-020",
+      "F-118"
+    ],
+    "算法源码不进包": [
+      "F-020"
+    ],
+    "派生运行产物": [
+      "F-020"
+    ],
+    "再标定": [
+      "F-021",
+      "F-022"
+    ],
+    "霍尔": [
+      "F-021"
+    ],
+    "hall": [
+      "F-021"
+    ],
+    "单文件": [
+      "F-021"
+    ],
+    "零依赖": [
+      "F-021"
+    ],
+    "standalone": [
+      "F-021"
+    ],
+    "pyserial": [
+      "F-021"
+    ],
+    "Analyzer": [
+      "F-021",
+      "F-047",
+      "F-062",
+      "F-080"
+    ],
+    "EncoderReadoutConfig": [
+      "F-021"
+    ],
+    "CRC8": [
+      "F-021"
+    ],
+    "singleRead": [
+      "F-021"
+    ],
+    "协议复制": [
+      "F-021"
+    ],
+    "技术债": [
+      "F-021"
+    ],
+    "EncoderPlotter_0903_01": [
+      "F-022"
+    ],
+    "标定": [
+      "F-022"
+    ],
+    "在线IAP": [
+      "F-022"
+    ],
+    "离线IAP": [
+      "F-022"
+    ],
+    "ced_Q": [
+      "F-022"
+    ],
+    "ced_T": [
+      "F-022"
+    ],
+    "ged_P": [
+      "F-022",
+      "F-048"
+    ],
+    "ged_Q": [
+      "F-022",
+      "F-048"
+    ],
+    "ged_T": [
+      "F-022",
+      "F-048"
+    ],
+    "调试ZIP": [
+      "F-022"
+    ],
+    "kingkong.zip": [
+      "F-022"
+    ],
+    "_iapgen.bin": [
+      "F-022"
+    ],
+    "iapenc": [
+      "F-022"
+    ],
+    "IAPENC01": [
+      "F-022"
+    ],
+    "flash layout": [
+      "F-022"
+    ],
+    "parse_iap_bin": [
+      "F-022"
+    ],
+    "Arguments": [
+      "F-022"
+    ],
+    "FunctionArguments": [
+      "F-022",
+      "F-080"
+    ],
+    "HTTP IAP": [
+      "F-022"
+    ],
+    "SSE": [
+      "F-022"
+    ],
+    "flow-control": [
+      "F-022"
+    ],
+    "bootloader": [
+      "F-022"
+    ],
+    "MES": [
+      "F-022",
+      "F-060",
+      "F-071",
+      "F-072",
+      "F-073",
+      "F-074",
+      "F-091",
+      "F-122"
+    ],
+    "产物语义": [
+      "F-022"
+    ],
+    "复核边界": [
+      "F-022"
+    ],
+    "CI Runner": [
+      "F-023"
+    ],
+    "GitLab": [
+      "F-023"
+    ],
+    "tag": [
+      "F-023",
+      "F-118"
+    ],
+    "vX.Y.Z": [
+      "F-023"
+    ],
+    "build-win-release": [
+      "F-023",
+      "F-057"
+    ],
+    "build-mac-release": [
+      "F-023"
     ],
     "AI工程化": [
       "F-024"
@@ -5526,35 +6822,11 @@
       "F-057",
       "F-118"
     ],
-    "Nuitka": [
-      "F-024",
-      "F-057",
-      "F-076",
-      "F-084"
-    ],
-    "Electron": [
-      "F-024"
-    ],
-    "electron-builder": [
-      "F-024",
-      "F-066"
-    ],
     "多SKU": [
       "F-024"
     ],
     "发布": [
       "F-024"
-    ],
-    "release.py": [
-      "F-024",
-      "F-057"
-    ],
-    "VERSION": [
-      "F-024"
-    ],
-    "CHANGELOG": [
-      "F-024",
-      "F-057"
     ],
     "GitLab CI": [
       "F-024",
@@ -5613,17 +6885,97 @@
     "分支命名": [
       "F-024"
     ],
+    "诊断包": [
+      "F-025"
+    ],
+    "diag": [
+      "F-025"
+    ],
+    "解密": [
+      "F-025"
+    ],
+    "kkdiag": [
+      "F-025"
+    ],
+    "diag_private.pem": [
+      "F-025"
+    ],
+    "私钥": [
+      "F-025"
+    ],
+    "黑匣子": [
+      "F-025"
+    ],
+    "blackbox": [
+      "F-025"
+    ],
+    "events.jrn": [
+      "F-025"
+    ],
+    "rings.json.enc": [
+      "F-025"
+    ],
+    "env.json.enc": [
+      "F-025"
+    ],
+    "key.bin": [
+      "F-025"
+    ],
+    "AES-GCM": [
+      "F-025"
+    ],
+    "RSA-4096": [
+      "F-025"
+    ],
+    "烧录面板": [
+      "F-026"
+    ],
+    "flashPanel": [
+      "F-026"
+    ],
+    "DPB 锁定": [
+      "F-026"
+    ],
+    "型号选择": [
+      "F-026"
+    ],
+    "--mpt-g": [
+      "F-026"
+    ],
+    "flash_tool.py": [
+      "F-026"
+    ],
+    "CONFIGS extra_hex": [
+      "F-026"
+    ],
+    "localStorage 配置恢复": [
+      "F-026"
+    ],
+    "nuitka 重编": [
+      "F-026"
+    ],
     "飞书自动化": [
       "F-027",
       "F-041"
     ],
     "飞书": [
       "F-027",
+      "F-029",
+      "F-030",
+      "F-032",
+      "F-034",
+      "F-035",
+      "F-036",
+      "F-037",
+      "F-038",
       "F-074",
       "F-089"
     ],
     "Feishu": [
-      "F-027"
+      "F-027",
+      "F-029",
+      "F-035",
+      "F-039"
     ],
     "Lark": [
       "F-027"
@@ -5647,6 +6999,8 @@
     ],
     "Stop Hook": [
       "F-027",
+      "F-035",
+      "F-036",
       "F-041"
     ],
     "UserPromptSubmit": [
@@ -5741,10 +7095,260 @@
     "recall": [
       "F-028"
     ],
-    "飞书中转": [
+    "Codex notify": [
+      "F-029"
+    ],
+    "transcript JSONL": [
+      "F-029"
+    ],
+    "用户消息": [
+      "F-029"
+    ],
+    "助手可见回复": [
+      "F-029"
+    ],
+    "分卡": [
+      "F-029"
+    ],
+    "游标": [
+      "F-029"
+    ],
+    "重启恢复": [
+      "F-029",
+      "F-030",
+      "F-035"
+    ],
+    "codex exec resume": [
+      "F-029",
       "F-041"
     ],
+    "msg_map": [
+      "F-029",
+      "F-032"
+    ],
+    "Codex": [
+      "F-030",
+      "F-035",
+      "F-036",
+      "F-037",
+      "F-038",
+      "F-040"
+    ],
+    "codex queue": [
+      "F-030",
+      "F-041"
+    ],
+    "active writer": [
+      "F-030"
+    ],
+    "thread-store conflict": [
+      "F-030"
+    ],
+    "notify hook": [
+      "F-030"
+    ],
+    "消息回帖": [
+      "F-030"
+    ],
+    "WAITING_CODEX": [
+      "F-030",
+      "F-036"
+    ],
+    "待关联任务": [
+      "F-030"
+    ],
+    "Claude执行": [
+      "F-032",
+      "F-034"
+    ],
+    "Codex执行": [
+      "F-032"
+    ],
+    "显式路由": [
+      "F-032",
+      "F-040"
+    ],
+    "执行者前缀": [
+      "F-032"
+    ],
+    "parent_id": [
+      "F-032",
+      "F-040"
+    ],
+    "session_id": [
+      "F-032"
+    ],
+    "cwd": [
+      "F-032"
+    ],
+    "多会话歧义": [
+      "F-032"
+    ],
+    "ROUTE_OK": [
+      "F-034"
+    ],
+    "路由验证": [
+      "F-034"
+    ],
+    "session limit": [
+      "F-034"
+    ],
+    "订阅限额": [
+      "F-034"
+    ],
+    "错误回传": [
+      "F-034"
+    ],
+    "hooks.json": [
+      "F-035"
+    ],
+    "transcript cursor": [
+      "F-035"
+    ],
+    "对话补漏": [
+      "F-035"
+    ],
+    "完整可见消息": [
+      "F-035"
+    ],
+    "Claude": [
+      "F-036",
+      "F-037",
+      "F-038",
+      "F-040"
+    ],
+    "会话纳管": [
+      "F-036"
+    ],
+    "消息元数据": [
+      "F-036"
+    ],
+    "工作目录": [
+      "F-036",
+      "F-037",
+      "F-040"
+    ],
+    "附件清单": [
+      "F-036"
+    ],
+    "队列恢复": [
+      "F-036",
+      "F-039"
+    ],
+    "回调关联": [
+      "F-036"
+    ],
+    "幂等": [
+      "F-036",
+      "F-039",
+      "F-041"
+    ],
+    "R7": [
+      "F-036"
+    ],
+    "共享规则": [
+      "F-036"
+    ],
+    "多AI扩展": [
+      "F-036"
+    ],
     "中间服务": [
+      "F-037",
+      "F-038",
+      "F-041"
+    ],
+    "消息中枢": [
+      "F-037"
+    ],
+    "单一通信入口": [
+      "F-037"
+    ],
+    "Provider Adapter": [
+      "F-037",
+      "F-038"
+    ],
+    "任务路由": [
+      "F-037"
+    ],
+    "消息账本": [
+      "F-037"
+    ],
+    "Outbox": [
+      "F-037"
+    ],
+    "会话ID": [
+      "F-037"
+    ],
+    "单一Broker": [
+      "F-038"
+    ],
+    "架构比较": [
+      "F-038"
+    ],
+    "订阅额度": [
+      "F-038"
+    ],
+    "本地执行器": [
+      "F-038"
+    ],
+    "渐进迁移": [
+      "F-038"
+    ],
+    "单一中间服务": [
+      "F-039"
+    ],
+    "Broker": [
+      "F-039"
+    ],
+    "安全边界": [
+      "F-039"
+    ],
+    "bypassPermissions": [
+      "F-039"
+    ],
+    "工作目录白名单": [
+      "F-039"
+    ],
+    "任务状态机": [
+      "F-039",
+      "F-041"
+    ],
+    "多AI协作": [
+      "F-039"
+    ],
+    "上下文回环": [
+      "F-039"
+    ],
+    "附件": [
+      "F-039"
+    ],
+    "取消": [
+      "F-039"
+    ],
+    "并发": [
+      "F-039"
+    ],
+    "隐私": [
+      "F-039"
+    ],
+    "飞书机器人": [
+      "F-040"
+    ],
+    "私聊": [
+      "F-040"
+    ],
+    "新任务入口": [
+      "F-040"
+    ],
+    "conversation_id": [
+      "F-040"
+    ],
+    "会话绑定": [
+      "F-040",
+      "F-085",
+      "F-086"
+    ],
+    "飞书中转": [
       "F-041"
     ],
     "feishu-hub": [
@@ -5786,13 +7390,7 @@
     "发送队列": [
       "F-041"
     ],
-    "幂等": [
-      "F-041"
-    ],
     "uuid": [
-      "F-041"
-    ],
-    "任务状态机": [
       "F-041"
     ],
     "NEEDS_RECOVERY": [
@@ -5802,12 +7400,6 @@
       "F-041"
     ],
     "desktop_queue": [
-      "F-041"
-    ],
-    "codex queue": [
-      "F-041"
-    ],
-    "codex exec resume": [
       "F-041"
     ],
     "claude -p": [
@@ -5850,12 +7442,6 @@
     ],
     "文档事实源": [
       "F-042"
-    ],
-    "driverSoftware": [
-      "F-042",
-      "F-043",
-      "F-088",
-      "F-089"
     ],
     "协议版本冲突": [
       "F-042"
@@ -5955,6 +7541,36 @@
     "明文兼容": [
       "F-045"
     ],
+    "Git 子模块": [
+      "F-046"
+    ],
+    "submodule": [
+      "F-046"
+    ],
+    "主仓库分支": [
+      "F-046"
+    ],
+    "运行时切换": [
+      "F-046"
+    ],
+    "profile": [
+      "F-046"
+    ],
+    "manifest": [
+      "F-046"
+    ],
+    "commit SHA": [
+      "F-046"
+    ],
+    "launcher": [
+      "F-046"
+    ],
+    "版本组合": [
+      "F-046"
+    ],
+    "rollback": [
+      "F-046"
+    ],
     "MPT": [
       "F-047",
       "F-062",
@@ -6011,11 +7627,6 @@
     "EncoderBase.py": [
       "F-047"
     ],
-    "Analyzer": [
-      "F-047",
-      "F-062",
-      "F-080"
-    ],
     "A~F协议回归": [
       "F-047",
       "F-062"
@@ -6029,36 +7640,6 @@
     "a3950c3": [
       "F-047"
     ],
-    "Git 子模块": [
-      "F-046"
-    ],
-    "submodule": [
-      "F-046"
-    ],
-    "主仓库分支": [
-      "F-046"
-    ],
-    "运行时切换": [
-      "F-046"
-    ],
-    "profile": [
-      "F-046"
-    ],
-    "manifest": [
-      "F-046"
-    ],
-    "commit SHA": [
-      "F-046"
-    ],
-    "launcher": [
-      "F-046"
-    ],
-    "版本组合": [
-      "F-046"
-    ],
-    "rollback": [
-      "F-046"
-    ],
     "数据生成": [
       "F-048"
     ],
@@ -6069,15 +7650,6 @@
       "F-048"
     ],
     "generatedDualData": [
-      "F-048"
-    ],
-    "ged_P": [
-      "F-048"
-    ],
-    "ged_Q": [
-      "F-048"
-    ],
-    "ged_T": [
       "F-048"
     ],
     "IAP文件生成": [
@@ -6122,36 +7694,56 @@
       "F-049"
     ],
     "DPB": [
-      "F-050",
       "F-051",
       "F-063",
       "F-074",
       "F-079"
     ],
     "单圈标定": [
-      "F-050",
       "F-051",
       "F-063"
     ],
     "圆环": [
-      "F-050",
       "F-051"
     ],
     "calibrationChart": [
-      "F-050",
       "F-051"
     ],
     "ringTarget": [
-      "F-050",
       "F-051"
     ],
     "ECharts": [
-      "F-050",
       "F-051"
     ],
     "dispose": [
-      "F-050",
       "F-051"
+    ],
+    "下线检测": [
+      "F-052",
+      "F-058"
+    ],
+    "信息确认": [
+      "F-052",
+      "F-058"
+    ],
+    "firmware_info": [
+      "F-052"
+    ],
+    "人工决定": [
+      "F-052",
+      "F-058"
+    ],
+    "继续检测": [
+      "F-052"
+    ],
+    "结束检测": [
+      "F-052"
+    ],
+    "订单号": [
+      "F-052"
+    ],
+    "扫码": [
+      "F-052"
     ],
     "driverSoftware2": [
       "F-053"
@@ -6386,9 +7978,6 @@
     "tokens.css": [
       "F-055"
     ],
-    "i18n": [
-      "F-055"
-    ],
     "示波器": [
       "F-055"
     ],
@@ -6538,9 +8127,6 @@
     "test-gates": [
       "F-057"
     ],
-    "build-win-release": [
-      "F-057"
-    ],
     "build-win-smoke": [
       "F-057"
     ],
@@ -6560,9 +8146,6 @@
       "F-057"
     ],
     "INTERNAL_SHA": [
-      "F-057"
-    ],
-    "SKU": [
       "F-057"
     ],
     "客户包": [
@@ -6814,15 +8397,6 @@
     "文档引用失效": [
       "F-059"
     ],
-    "MES": [
-      "F-060",
-      "F-071",
-      "F-072",
-      "F-073",
-      "F-074",
-      "F-091",
-      "F-122"
-    ],
     "需求规格说明书": [
       "F-060"
     ],
@@ -6921,27 +8495,6 @@
     "MES-SRS-001": [
       "F-064"
     ],
-    "标定耗时优化": [
-      "F-065"
-    ],
-    "DPT 标定台账": [
-      "F-065"
-    ],
-    "标定失败弹窗": [
-      "F-065"
-    ],
-    "绿色采集说明": [
-      "F-065"
-    ],
-    "生产模式": [
-      "F-065"
-    ],
-    "产品软件版本": [
-      "F-065"
-    ],
-    "IAP 烧录": [
-      "F-065"
-    ],
     "打包原理": [
       "F-066"
     ],
@@ -7013,11 +8566,6 @@
     ],
     "同名功能分支": [
       "F-068"
-    ],
-    "gitlink": [
-      "F-068",
-      "F-069",
-      "F-118"
     ],
     "child before parent": [
       "F-069"
@@ -7138,9 +8686,6 @@
     ".py 源码打包": [
       "F-076"
     ],
-    "force_calib": [
-      "F-076"
-    ],
     "台架脚本": [
       "F-076"
     ],
@@ -7182,11 +8727,6 @@
     ],
     "deviationItems": [
       "F-078"
-    ],
-    "SN": [
-      "F-078",
-      "F-091",
-      "F-123"
     ],
     "轴向距离": [
       "F-078"
@@ -7235,9 +8775,6 @@
     "descriptor a": [
       "F-080"
     ],
-    "FunctionArguments": [
-      "F-080"
-    ],
     "编码器标定": [
       "F-081"
     ],
@@ -7252,10 +8789,6 @@
     ],
     "轴向偏差": [
       "F-081"
-    ],
-    "sub_algorithm": [
-      "F-081",
-      "F-118"
     ],
     "partial calibration": [
       "F-081"
@@ -7300,10 +8833,6 @@
       "F-084"
     ],
     "sire_comms": [
-      "F-085",
-      "F-086"
-    ],
-    "会话绑定": [
       "F-085",
       "F-086"
     ],
@@ -7376,11 +8905,6 @@
     "comms-protocol": [
       "F-086"
     ],
-    "EncoderPlotter": [
-      "F-087",
-      "F-122",
-      "F-123"
-    ],
     "用户手册": [
       "F-087"
     ],
@@ -7425,6 +8949,27 @@
     ],
     "客户版": [
       "F-089"
+    ],
+    "MES 易用性": [
+      "F-090"
+    ],
+    "待办直达": [
+      "F-090"
+    ],
+    "人员指派待办": [
+      "F-090"
+    ],
+    "移动端导航": [
+      "F-090"
+    ],
+    "明细行设计器": [
+      "F-090"
+    ],
+    "低代码用户体验": [
+      "F-090"
+    ],
+    "操作手册过期": [
+      "F-090"
     ],
     "composition": [
       "F-091"
@@ -7477,10 +9022,12 @@
     ],
     "UGUI": [
       "F-093",
+      "F-098",
       "F-105"
     ],
     "IMGUI": [
       "F-093",
+      "F-098",
       "F-105"
     ],
     "CanvasScaler": [
@@ -7606,6 +9153,19 @@
     "Unity UI 风格、暖木旧钢、黄铜焦点、像素人物、参考图、标题 HUD 菜单 地图 对话 战斗": [
       "F-098"
     ],
+    "风格复确认": [
+      "F-098"
+    ],
+    "用户参考图": [
+      "F-098"
+    ],
+    "FC 重制": [
+      "F-098",
+      "F-103"
+    ],
+    "暖纸色": [
+      "F-098"
+    ],
     "标题界面": [
       "F-099"
     ],
@@ -7648,9 +9208,6 @@
     "URP fallback": [
       "F-100"
     ],
-    "Unity UI 风格、风格复确认、旧钢、暖木、像素人物、用户参考图、UGUI、IMGUI": [
-      "F-101"
-    ],
     "Unity SFX": [
       "F-102"
     ],
@@ -7681,13 +9238,10 @@
     "FBX": [
       "F-103"
     ],
-    "FC 重制": [
-      "F-103"
-    ],
     "资源导入": [
       "F-103"
     ],
-    "FC重制、巨蚁、Blender源模型、FBX、Unity Prefab、资源ID、低多边形、轴向转换、GUID保留": [
+    "**关键词**：FC重制、巨蚁、Blender源模型、FBX、Unity Prefab、资源ID、低多边形、轴向转换、GUID保留": [
       "F-104"
     ],
     "旧钢": [
@@ -7706,7 +9260,8 @@
       "F-106"
     ],
     "FC_REFERENCE": [
-      "F-106"
+      "F-106",
+      "F-112"
     ],
     "事件状态": [
       "F-106"
@@ -7717,10 +9272,10 @@
     "车辆归属": [
       "F-106"
     ],
-    "FC重制 UI、RetroUiColors、UGUI、IMGUI、旧钢、暖木、语义色板、RichText": [
+    "**关键词**：FC重制 UI、RetroUiColors、UGUI、IMGUI、旧钢、暖木、语义色板、RichText": [
       "F-107"
     ],
-    "FC重制、拉多补给店、GameDB.RegisterShop、campaign runtime、药品、修理包、弹药补给、商店隔离": [
+    "**关键词**：FC重制、拉多补给店、GameDB.RegisterShop、campaign runtime、药品、修理包、弹药补给、商店隔离": [
       "F-108"
     ],
     "拉多": [
@@ -7831,6 +9386,24 @@
       "F-112"
     ],
     "DEFERRED": [
+      "F-112"
+    ],
+    "backlog": [
+      "F-112"
+    ],
+    "待办分类": [
+      "F-112"
+    ],
+    "GDD": [
+      "F-112"
+    ],
+    "FC_REMAKE": [
+      "F-112"
+    ],
+    "原版对照": [
+      "F-112"
+    ],
+    "实机验收": [
       "F-112"
     ],
     "vehicle ownership": [
@@ -7965,12 +9538,6 @@
     "发布流程": [
       "F-118"
     ],
-    "feature": [
-      "F-118"
-    ],
-    "release": [
-      "F-118"
-    ],
     "hotfix": [
       "F-118"
     ],
@@ -7987,9 +9554,6 @@
       "F-118"
     ],
     "backmerge": [
-      "F-118"
-    ],
-    "tag": [
       "F-118"
     ],
     "encoder-plotter-v": [
@@ -8178,6 +9742,9 @@
     "打包部署下载": [
       "F-121"
     ],
+    "**关键词**：EncoderPlotter": [
+      "F-122"
+    ],
     "encoder-next": [
       "F-122",
       "F-123"
@@ -8217,66 +9784,30 @@
     ],
     "ER启动等待": [
       "F-123"
+    ],
+    "PostgreSQL": [
+      "F-124"
+    ],
+    "ALTER DATABASE RENAME": [
+      "F-124"
+    ],
+    "Docker Compose": [
+      "F-124"
+    ],
+    "数据卷": [
+      "F-124"
+    ],
+    "OID": [
+      "F-124"
+    ],
+    "MES_POSTGRES_VOLUME": [
+      "F-124"
+    ],
+    "database does not exist": [
+      "F-124"
     ]
   },
   "problems": {
-    "CHANGELOG": [
-      "P-20261050",
-      "P-20261052",
-      "P-20260940",
-      "P-20260944"
-    ],
-    "新增": [
-      "P-20261050",
-      "P-20261051",
-      "P-20261052",
-      "P-20261055"
-    ],
-    "修复": [
-      "P-20261050",
-      "P-20261051",
-      "P-20261052",
-      "P-20261055"
-    ],
-    "分类标题": [
-      "P-20261050"
-    ],
-    "飞书通知": [
-      "P-20261050"
-    ],
-    "release.py": [
-      "P-20261050"
-    ],
-    "强制拦截": [
-      "P-20261050"
-    ],
-    "未发布": [
-      "P-20261051"
-    ],
-    "发布通知": [
-      "P-20261051"
-    ],
-    "分类": [
-      "P-20261051"
-    ],
-    "临时Git仓库": [
-      "P-20261051"
-    ],
-    "变异验证": [
-      "P-20261051"
-    ],
-    "6918168c": [
-      "P-20261051"
-    ],
-    "历史版本": [
-      "P-20261052"
-    ],
-    "分类修复": [
-      "P-20261052"
-    ],
-    "fb9f1499": [
-      "P-20261052"
-    ],
     "压缩提交": [
       "P-20261053"
     ],
@@ -8308,7 +9839,7 @@
     ],
     "Kt": [
       "P-20261054",
-      "P-20261089"
+      "P-20261090"
     ],
     "v0.20.3": [
       "P-20261054"
@@ -8328,6 +9859,14 @@
     ],
     "CLAUDE.md": [
       "P-20261055"
+    ],
+    "新增": [
+      "P-20261055",
+      "P-20261052"
+    ],
+    "修复": [
+      "P-20261055",
+      "P-20261052"
     ],
     "origin/development": [
       "P-20261055"
@@ -8366,6 +9905,292 @@
     "空闲超时": [
       "P-20261103"
     ],
+    "localhost": [
+      "P-001"
+    ],
+    "127.0.0.1": [
+      "P-001"
+    ],
+    "IPv6": [
+      "P-001"
+    ],
+    "ECONNREFUSED": [
+      "P-001"
+    ],
+    "Electron": [
+      "P-001",
+      "P-015",
+      "P-20261028"
+    ],
+    "axios": [
+      "P-001"
+    ],
+    "npx": [
+      "P-003"
+    ],
+    "--yes": [
+      "P-003"
+    ],
+    "交互式提示": [
+      "P-003"
+    ],
+    "subprocess": [
+      "P-003"
+    ],
+    "挂起": [
+      "P-003"
+    ],
+    "超时": [
+      "P-003"
+    ],
+    "Ok to proceed? (y)": [
+      "P-003"
+    ],
+    "degit": [
+      "P-003"
+    ],
+    "create-next-app": [
+      "P-003"
+    ],
+    "读取数据": [
+      "P-007"
+    ],
+    "zip": [
+      "P-007"
+    ],
+    "偶发不完整": [
+      "P-007"
+    ],
+    "多级": [
+      "P-007"
+    ],
+    "fire-and-forget": [
+      "P-007"
+    ],
+    "时序竞态": [
+      "P-007"
+    ],
+    "device.js": [
+      "P-007",
+      "P-20260940"
+    ],
+    "tools.js": [
+      "P-007"
+    ],
+    "medianCheck.js": [
+      "P-007"
+    ],
+    "file.js": [
+      "P-007"
+    ],
+    "zip.finalize()": [
+      "P-007"
+    ],
+    "EOCD": [
+      "P-007"
+    ],
+    "createWriteStream": [
+      "P-007"
+    ],
+    "unhandled rejection": [
+      "P-007"
+    ],
+    "debug-plot-viewer": [
+      "P-008",
+      "P-009",
+      "P-011"
+    ],
+    "MPT": [
+      "P-008",
+      "P-20261032"
+    ],
+    "单圈": [
+      "P-008"
+    ],
+    "半标定图配对失败": [
+      "P-008"
+    ],
+    "无法找到配对的图": [
+      "P-008"
+    ],
+    "表数据": [
+      "P-008"
+    ],
+    "debug-plot-viewer.html": [
+      "P-008",
+      "P-009",
+      "P-011",
+      "P-012"
+    ],
+    "滚动放大后上图空": [
+      "P-009"
+    ],
+    "白下图正常": [
+      "P-009"
+    ],
+    "uPlot": [
+      "P-009",
+      "P-012",
+      "P-013",
+      "P-20261081"
+    ],
+    "乱序": [
+      "P-009"
+    ],
+    "二分裁剪失效": [
+      "P-009"
+    ],
+    "前端绘图性能优化": [
+      "P-011"
+    ],
+    "组合拳": [
+      "P-011"
+    ],
+    "海量散点": [
+      "P-011"
+    ],
+    "缩放卡顿数秒": [
+      "P-011"
+    ],
+    "散点全量重绘": [
+      "P-011"
+    ],
+    "高频事件": [
+      "P-011"
+    ],
+    "前后端渲染图形不": [
+      "P-012"
+    ],
+    "一致": [
+      "P-012"
+    ],
+    "共享": [
+      "P-012"
+    ],
+    "网格": [
+      "P-012"
+    ],
+    "vs": [
+      "P-012"
+    ],
+    "matplotlib": [
+      "P-012"
+    ],
+    "每曲线独立": [
+      "P-012"
+    ],
+    "合并模式引入后上": [
+      "P-013"
+    ],
+    "图不显示": [
+      "P-013"
+    ],
+    "下图单色": [
+      "P-013"
+    ],
+    "normalizeSeries": [
+      "P-013"
+    ],
+    "置换误伤": [
+      "P-013"
+    ],
+    "src": [
+      "P-013"
+    ],
+    "挂载晚于首帧": [
+      "P-013"
+    ],
+    "mergeSeries": [
+      "P-013"
+    ],
+    "_mergedSrc": [
+      "P-013"
+    ],
+    "shareX": [
+      "P-013"
+    ],
+    "i18next": [
+      "P-014"
+    ],
+    "多语言包四类隐蔽": [
+      "P-014"
+    ],
+    "缺陷的排查与修复": [
+      "P-014"
+    ],
+    "i18n.js": [
+      "P-014"
+    ],
+    "BrowserWindow": [
+      "P-015"
+    ],
+    "parent": [
+      "P-015"
+    ],
+    "closed": [
+      "P-015"
+    ],
+    "focus": [
+      "P-015"
+    ],
+    "z-order": [
+      "P-015"
+    ],
+    "前台": [
+      "P-015"
+    ],
+    "窗口遮挡": [
+      "P-015"
+    ],
+    "owner window": [
+      "P-015"
+    ],
+    "i18n": [
+      "P-016",
+      "P-20260944"
+    ],
+    "硬编码": [
+      "P-016"
+    ],
+    "$t": [
+      "P-016"
+    ],
+    "title属性": [
+      "P-016"
+    ],
+    "threshold.html": [
+      "P-016"
+    ],
+    "双包key": [
+      "P-016"
+    ],
+    "Windows": [
+      "P-017"
+    ],
+    "MAX_PATH": [
+      "P-017"
+    ],
+    "WinError 206": [
+      "P-017"
+    ],
+    "长路径": [
+      "P-017"
+    ],
+    "扩展前缀": [
+      "P-017"
+    ],
+    "sire_run": [
+      "P-017"
+    ],
+    "台账": [
+      "P-017"
+    ],
+    "lp()": [
+      "P-017"
+    ],
+    "LONG_PATH_PREFIX": [
+      "P-017"
+    ],
     "v3.4.6": [
       "P-018",
       "P-20260926"
@@ -8400,6 +10225,15 @@
       "P-018",
       "P-20260926"
     ],
+    "TypeError": [
+      "P-018"
+    ],
+    "update_continuous_frame": [
+      "P-018"
+    ],
+    "gen_fw_profile.py": [
+      "P-018"
+    ],
     "804.2477": [
       "P-019"
     ],
@@ -8428,6 +10262,9 @@
     "设零": [
       "P-019"
     ],
+    "pos_raw=2147483647": [
+      "P-019"
+    ],
     "Kp": [
       "P-020"
     ],
@@ -8442,36 +10279,6 @@
     ],
     "motion.js": [
       "P-020"
-    ],
-    "附加寄存器": [
-      "P-025"
-    ],
-    "extras": [
-      "P-025"
-    ],
-    "示波器": [
-      "P-025"
-    ],
-    "100Hz": [
-      "P-025"
-    ],
-    "软轮询": [
-      "P-025"
-    ],
-    "doSendMit": [
-      "P-025"
-    ],
-    "api.mit": [
-      "P-025"
-    ],
-    "flatExtras": [
-      "P-025"
-    ],
-    "TELEMETRY_DISPATCH": [
-      "P-025"
-    ],
-    "xNN": [
-      "P-025"
     ],
     "向量库": [
       "P-021"
@@ -8496,12 +10303,21 @@
     ],
     "VACUUM": [
       "P-021",
-      "P-024"
+      "P-024",
+      "P-20261113"
     ],
     "删除密码": [
-      "P-021"
+      "P-021",
+      "P-20261113"
     ],
     "只增不减": [
+      "P-021",
+      "P-20261113"
+    ],
+    "purge_driver_repo.py": [
+      "P-021"
+    ],
+    "sire_db_backup": [
       "P-021"
     ],
     "飞书自动化": [
@@ -8542,6 +10358,9 @@
     "计划任务": [
       "P-022",
       "P-023"
+    ],
+    "NEED_DIR": [
+      "P-022"
     ],
     "踩坑": [
       "P-023"
@@ -8641,6 +10460,54 @@
     "embedding": [
       "P-024"
     ],
+    "snapshot_db.py": [
+      "P-024"
+    ],
+    "secure_delete": [
+      "P-024"
+    ],
+    "freelist": [
+      "P-024"
+    ],
+    "附加寄存器": [
+      "P-025"
+    ],
+    "extras": [
+      "P-025"
+    ],
+    "示波器": [
+      "P-025"
+    ],
+    "100Hz": [
+      "P-025"
+    ],
+    "软轮询": [
+      "P-025"
+    ],
+    "doSendMit": [
+      "P-025"
+    ],
+    "api.mit": [
+      "P-025"
+    ],
+    "flatExtras": [
+      "P-025"
+    ],
+    "TELEMETRY_DISPATCH": [
+      "P-025"
+    ],
+    "xNN": [
+      "P-025"
+    ],
+    "MitReq": [
+      "P-025"
+    ],
+    "_extras_with_state": [
+      "P-025"
+    ],
+    "getSelectedExtras": [
+      "P-025"
+    ],
     "SQLite": [
       "P-20260923",
       "P-20260924"
@@ -8661,6 +10528,12 @@
     "knowledge retrieval": [
       "P-20260923"
     ],
+    "mode=ro": [
+      "P-20260923"
+    ],
+    "query_only": [
+      "P-20260923"
+    ],
     "shared workflow": [
       "P-20260924"
     ],
@@ -8677,6 +10550,9 @@
       "P-20260924"
     ],
     "database": [
+      "P-20260924"
+    ],
+    "sire_paths.py": [
       "P-20260924"
     ],
     "RSI": [
@@ -8880,7 +10756,7 @@
     ],
     "MPP": [
       "P-20260930",
-      "P-20261031"
+      "P-20261032"
     ],
     "105": [
       "P-20260930"
@@ -8940,6 +10816,9 @@
       "P-20260931"
     ],
     "v6.12": [
+      "P-20260931"
+    ],
+    "CATCH_ALL_PHASES": [
       "P-20260931"
     ],
     "遥测": [
@@ -9061,6 +10940,60 @@
     "feishu-hub": [
       "P-20260935"
     ],
+    "GitLab MR review": [
+      "P-20260936"
+    ],
+    "DPB 408 409": [
+      "P-20260936"
+    ],
+    "imported calibration": [
+      "P-20260936"
+    ],
+    "writeEncoderDataV303": [
+      "P-20260936",
+      "P-20260937",
+      "P-20261034"
+    ],
+    "eraseAndWriteFlash": [
+      "P-20260936",
+      "P-20260937"
+    ],
+    "firmware_number": [
+      "P-20260936",
+      "P-20260937",
+      "P-20260939"
+    ],
+    "packed 4.0.10": [
+      "P-20260936"
+    ],
+    "4010": [
+      "P-20260936",
+      "P-20260939"
+    ],
+    "Flash preflight": [
+      "P-20260936"
+    ],
+    "writeEncoderData": [
+      "P-20260936"
+    ],
+    "dpbFlashLayout.py": [
+      "P-20260936"
+    ],
+    "DPB Flash preflight": [
+      "P-20260937"
+    ],
+    "imported P Q T": [
+      "P-20260937"
+    ],
+    "packed 4010": [
+      "P-20260937"
+    ],
+    "MR30 MR31": [
+      "P-20260937"
+    ],
+    "regression": [
+      "P-20260937"
+    ],
     "outbox 头阻塞": [
       "P-20260938"
     ],
@@ -9103,9 +11036,6 @@
     "DPB 4.0.10": [
       "P-20260939"
     ],
-    "4010": [
-      "P-20260939"
-    ],
     "410": [
       "P-20260939"
     ],
@@ -9116,9 +11046,6 @@
       "P-20260939"
     ],
     "tryDpb": [
-      "P-20260939"
-    ],
-    "firmware_number": [
       "P-20260939"
     ],
     "iap_sn_restore": [
@@ -9134,6 +11061,9 @@
       "P-20260939"
     ],
     "补丁号两位数": [
+      "P-20260939"
+    ],
+    "未找到有效ARGUMENTS结构": [
       "P-20260939"
     ],
     "合并冲突": [
@@ -9158,8 +11088,10 @@
     "EncoderBase.py": [
       "P-20260940"
     ],
-    "device.js": [
-      "P-20260940"
+    "CHANGELOG": [
+      "P-20260940",
+      "P-20260944",
+      "P-20261052"
     ],
     "静默损坏": [
       "P-20260940"
@@ -9231,7 +11163,8 @@
       "P-20260943"
     ],
     "driverSoftware": [
-      "P-20260943"
+      "P-20260943",
+      "P-20261097"
     ],
     "raw-dir": [
       "P-20260943"
@@ -9242,10 +11175,10 @@
     "dc946d7": [
       "P-20260943"
     ],
-    "标定汇总 CSV": [
-      "P-20260944"
+    "include-raw-dir": [
+      "P-20260943"
     ],
-    "i18n": [
+    "标定汇总 CSV": [
       "P-20260944"
     ],
     "内圈": [
@@ -9265,7 +11198,7 @@
     ],
     "DPB": [
       "P-20260944",
-      "P-20261031"
+      "P-20261032"
     ],
     "标定失败弹窗": [
       "P-20260945"
@@ -9327,7 +11260,7 @@
     "IAP": [
       "P-20260948",
       "P-20260949",
-      "P-20261031",
+      "P-20261032",
       "P-20261034"
     ],
     "程序加密": [
@@ -9377,24 +11310,19 @@
       "P-20260950"
     ],
     "EncoderPlotter1": [
-      "P-20260951",
-      "P-20260952"
+      "P-20260951"
     ],
     "analyzer-iap": [
-      "P-20260951",
-      "P-20260952"
+      "P-20260951"
     ],
     "iap-ota-sn": [
-      "P-20260951",
-      "P-20260952"
+      "P-20260951"
     ],
     "子模块合并": [
-      "P-20260951",
-      "P-20260952"
+      "P-20260951"
     ],
     "AnalyzerInfo": [
       "P-20260951",
-      "P-20260952",
       "P-20261106",
       "P-20261107"
     ],
@@ -9557,7 +11485,8 @@
     "PostgreSQL": [
       "P-20261020",
       "P-20261022",
-      "P-20261036"
+      "P-20261036",
+      "P-20261094"
     ],
     "Kysely": [
       "P-20261020"
@@ -9579,6 +11508,12 @@
       "P-20261024"
     ],
     "并发发布": [
+      "P-20261020"
+    ],
+    "pg_locks": [
+      "P-20261020"
+    ],
+    "pg_blocking_pids": [
       "P-20261020"
     ],
     "MES 测试服务器": [
@@ -9617,6 +11552,9 @@
     "端口占用": [
       "P-20261021"
     ],
+    "choose_kex": [
+      "P-20261021"
+    ],
     "Docker Compose internal 网络": [
       "P-20261022"
     ],
@@ -9650,10 +11588,11 @@
     "MES": [
       "P-20261024",
       "P-20261033",
+      "P-20261035",
       "P-20261038",
       "P-20261039",
       "P-20261040",
-      "P-20261035",
+      "P-20261084",
       "P-20261085"
     ],
     "生产订单": [
@@ -9738,9 +11677,6 @@
     "Vue": [
       "P-20261028"
     ],
-    "Electron": [
-      "P-20261028"
-    ],
     "disabled button": [
       "P-20261028"
     ],
@@ -9790,37 +11726,13 @@
     "调试日志": [
       "P-20261030"
     ],
-    "免标定": [
-      "P-20261031"
+    "IAP免标定": [
+      "P-20261032"
     ],
     "recalibrationDataConversion": [
-      "P-20261031",
       "P-20261032"
-    ],
-    "DPT": [
-      "P-20261031",
-      "P-20261106"
-    ],
-    "MPT": [
-      "P-20261031"
-    ],
-    "MPT-G": [
-      "P-20261031"
-    ],
-    "DPT-G1": [
-      "P-20261031"
-    ],
-    "MBS": [
-      "P-20261031"
-    ],
-    "MBP": [
-      "P-20261031"
     ],
     "SUPPORTED_SERIES": [
-      "P-20261031",
-      "P-20261032"
-    ],
-    "IAP免标定": [
       "P-20261032"
     ],
     "SUPPORTED_VERSIONS": [
@@ -9839,6 +11751,25 @@
       "P-20261032"
     ],
     "storageTarget": [
+      "P-20261032"
+    ],
+    "免标定": [
+      "P-20261032"
+    ],
+    "DPT": [
+      "P-20261032",
+      "P-20261106"
+    ],
+    "MPT-G": [
+      "P-20261032"
+    ],
+    "DPT-G1": [
+      "P-20261032"
+    ],
+    "MBS": [
+      "P-20261032"
+    ],
+    "MBP": [
       "P-20261032"
     ],
     "生产订单审批": [
@@ -9862,9 +11793,6 @@
     "writeDataBlocks": [
       "P-20261034"
     ],
-    "writeEncoderDataV303": [
-      "P-20261034"
-    ],
     "4000": [
       "P-20261034"
     ],
@@ -9876,6 +11804,46 @@
     ],
     "整批预检查": [
       "P-20261034"
+    ],
+    "工序流程": [
+      "P-20261035",
+      "P-20261039"
+    ],
+    "工序引用": [
+      "P-20261035"
+    ],
+    "catalog workflow": [
+      "P-20261035"
+    ],
+    "workflow version binding": [
+      "P-20261035"
+    ],
+    "工序执行记录": [
+      "P-20261035"
+    ],
+    "workflowMode": [
+      "P-20261035"
+    ],
+    "route.steps": [
+      "P-20261035"
+    ],
+    "数据库完整同步": [
+      "P-20261036"
+    ],
+    "staging restore": [
+      "P-20261036"
+    ],
+    "密钥重加密": [
+      "P-20261036"
+    ],
+    "MES、使用手册、小白版、业务系统、后台管理、DOCX、SN、流程快照": [
+      "P-20261037"
+    ],
+    "build-manual-v2.cjs": [
+      "P-20261037"
+    ],
+    "schema.referenceOnly": [
+      "P-20261037"
     ],
     "concat": [
       "P-20261038"
@@ -9902,10 +11870,6 @@
     "linkRange": [
       "P-20261039"
     ],
-    "工序流程": [
-      "P-20261039",
-      "P-20261035"
-    ],
     "配置漂移": [
       "P-20261039"
     ],
@@ -9927,26 +11891,14 @@
     "待办分页": [
       "P-20261040"
     ],
-    "工序引用": [
-      "P-20261035"
+    "execProcess": [
+      "P-20261040"
     ],
-    "catalog workflow": [
-      "P-20261035"
+    "impactOf": [
+      "P-20261040"
     ],
-    "workflow version binding": [
-      "P-20261035"
-    ],
-    "工序执行记录": [
-      "P-20261035"
-    ],
-    "数据库完整同步": [
-      "P-20261036"
-    ],
-    "staging restore": [
-      "P-20261036"
-    ],
-    "密钥重加密": [
-      "P-20261036"
+    "workflowView": [
+      "P-20261040"
     ],
     "Unity 6": [
       "P-20261041"
@@ -9967,6 +11919,9 @@
       "P-20261041"
     ],
     "野外角色": [
+      "P-20261041"
+    ],
+    "ImageGen": [
       "P-20261041"
     ],
     "Unity NPC sprites": [
@@ -10062,6 +12017,9 @@
     "UI style confirmation": [
       "P-20261046"
     ],
+    "ScreenMatchMode.Expand": [
+      "P-20261046"
+    ],
     "Unity FC重装机兵3D重制": [
       "P-20261047"
     ],
@@ -10126,55 +12084,46 @@
       "P-20261049"
     ],
     "GAME": [
-      "P-20261057"
+      "P-20261050"
     ],
     "FC remake": [
-      "P-20261057"
+      "P-20261050"
     ],
     "未完成任务盘点": [
-      "P-20261057"
+      "P-20261050"
     ],
     "GDD": [
-      "P-20261057",
-      "P-20261058"
+      "P-20261050"
     ],
     "FC_REMAKE": [
-      "P-20261057",
-      "P-20261058"
+      "P-20261050"
     ],
     "FC_REFERENCE": [
-      "P-20261057",
-      "P-20261058"
+      "P-20261050"
     ],
     "INTERFACE": [
-      "P-20261057"
+      "P-20261050"
     ],
     "原版核验": [
-      "P-20261057"
+      "P-20261050"
     ],
     "静态实现": [
-      "P-20261057",
-      "P-20261058"
+      "P-20261050"
     ],
     "实机验收": [
-      "P-20261057",
-      "P-20261058"
+      "P-20261050"
     ],
     "DEFERRED": [
-      "P-20261057",
-      "P-20261058"
+      "P-20261050"
     ],
-    "FC重制": [
-      "P-20261058"
+    "历史版本": [
+      "P-20261052"
     ],
-    "backlog": [
-      "P-20261058"
+    "分类修复": [
+      "P-20261052"
     ],
-    "待办分类": [
-      "P-20261058"
-    ],
-    "原版对照": [
-      "P-20261058"
+    "fb9f1499": [
+      "P-20261052"
     ],
     "FC重装机兵": [
       "P-20261056",
@@ -10205,6 +12154,9 @@
       "P-20261056"
     ],
     "Game.Runtime与Game.FC解耦": [
+      "P-20261056"
+    ],
+    "FieldEvents": [
       "P-20261056"
     ],
     "FC租赁战车": [
@@ -10556,6 +12508,9 @@
     "JSON save migration": [
       "P-20261075"
     ],
+    "JsonUtility": [
+      "P-20261075"
+    ],
     "Unity存档": [
       "P-20261076"
     ],
@@ -10613,8 +12568,27 @@
     "多读取器夹具": [
       "P-20261078"
     ],
-    "encoder-next、RT、RS485、CRC、空帧、角度采集": [
+    "encoder-next": [
+      "P-20261079",
+      "P-20261081",
+      "P-20261106"
+    ],
+    "RT": [
       "P-20261079"
+    ],
+    "RS485": [
+      "P-20261079"
+    ],
+    "CRC": [
+      "P-20261079",
+      "P-20261106"
+    ],
+    "空帧": [
+      "P-20261079"
+    ],
+    "角度采集": [
+      "P-20261079",
+      "P-20261081"
     ],
     "高频采集": [
       "P-20261080",
@@ -10632,23 +12606,13 @@
     "帧率卡顿": [
       "P-20261080"
     ],
-    "encoder-next": [
-      "P-20261081",
-      "P-20261106"
-    ],
     "功能清单": [
-      "P-20261081"
-    ],
-    "角度采集": [
       "P-20261081"
     ],
     "WebSocket": [
       "P-20261081"
     ],
     "readout": [
-      "P-20261081"
-    ],
-    "uPlot": [
       "P-20261081"
     ],
     "TypedArray ring buffer": [
@@ -10702,6 +12666,9 @@
     "SN绑定": [
       "P-20261082"
     ],
+    "BEGIN READ ONLY": [
+      "P-20261082"
+    ],
     "PostgreSQL开发库备份": [
       "P-20261083"
     ],
@@ -10720,6 +12687,24 @@
     "阶段失败停步": [
       "P-20261083"
     ],
+    "六条核心": [
+      "P-20261084"
+    ],
+    "平台边界": [
+      "P-20261084"
+    ],
+    "明细权限": [
+      "P-20261084"
+    ],
+    "数量校验": [
+      "P-20261084"
+    ],
+    "可视化配置": [
+      "P-20261084"
+    ],
+    "数据可见性": [
+      "P-20261084"
+    ],
     "用户手册": [
       "P-20261085"
     ],
@@ -10735,33 +12720,32 @@
     "配置包": [
       "P-20261085"
     ],
-    "MES 六核心 可视化计算 条件分支 扣减 明细保存 资源可见性": [
-      "P-20261086"
-    ],
     "MES 通用计算 条件构建器 联动写入 原子主从保存 资源脱敏 批量创建": [
       "P-20261087"
     ],
-    "MES 使用手册 功能描述 完整案例 分步操作 结果核对 双入口": [
+    "MES 六核心 可视化计算 条件分支 扣减 明细保存 资源可见性": [
+      "P-20261087"
+    ],
+    "MES 使用手册": [
+      "P-20261088"
+    ],
+    "功能描述": [
+      "P-20261088"
+    ],
+    "完整案例": [
+      "P-20261088"
+    ],
+    "分步操作": [
+      "P-20261088"
+    ],
+    "结果核对": [
+      "P-20261088"
+    ],
+    "双入口": [
       "P-20261088"
     ],
     "扭力标定": [
-      "P-20261089",
       "P-20261090"
-    ],
-    "R²": [
-      "P-20261089"
-    ],
-    "自动写入": [
-      "P-20261089"
-    ],
-    "手动确认": [
-      "P-20261089"
-    ],
-    "质量门禁": [
-      "P-20261089"
-    ],
-    "连接代次": [
-      "P-20261089"
     ],
     "人工确认放行": [
       "P-20261090"
@@ -10776,6 +12760,21 @@
       "P-20261090"
     ],
     "manual_release_allowed": [
+      "P-20261090"
+    ],
+    "R²": [
+      "P-20261090"
+    ],
+    "自动写入": [
+      "P-20261090"
+    ],
+    "手动确认": [
+      "P-20261090"
+    ],
+    "质量门禁": [
+      "P-20261090"
+    ],
+    "连接代次": [
       "P-20261090"
     ],
     "主题分支": [
@@ -10815,7 +12814,51 @@
     "重复中止": [
       "P-20261092"
     ],
-    "driverSoftware、总线设备、识别测试报告、ID变更、连接隔离、CSV": [
+    "api_disconnect": [
+      "P-20261092"
+    ],
+    "test-gates": [
+      "P-20261092"
+    ],
+    "原记录未记载": [
+      "P-20261093",
+      "P-20261095",
+      "P-20261096"
+    ],
+    "ERP即时库存": [
+      "P-20261094"
+    ],
+    "本机MES": [
+      "P-20261094"
+    ],
+    "mes-postgres": [
+      "P-20261094"
+    ],
+    "LC_NOTHING_TO_PUBLISH": [
+      "P-20261094"
+    ],
+    "库存明细": [
+      "P-20261094"
+    ],
+    "对账": [
+      "P-20261094"
+    ],
+    "数据导入": [
+      "P-20261094"
+    ],
+    "总线设备": [
+      "P-20261097"
+    ],
+    "识别测试报告": [
+      "P-20261097"
+    ],
+    "ID变更": [
+      "P-20261097"
+    ],
+    "连接隔离": [
+      "P-20261097"
+    ],
+    "CSV": [
       "P-20261097"
     ],
     "mscope": [
@@ -10843,8 +12886,12 @@
     "起播预检": [
       "P-20261098"
     ],
+    "round_lock": [
+      "P-20261098"
+    ],
     "drain": [
-      "P-20261099"
+      "P-20261099",
+      "P-20261102"
     ],
     "完成通知": [
       "P-20261099"
@@ -10913,6 +12960,15 @@
       "P-20261102"
     ],
     "未知状态": [
+      "P-20261102"
+    ],
+    "kStopped": [
+      "P-20261102"
+    ],
+    "kRunning": [
+      "P-20261102"
+    ],
+    "paintVals": [
       "P-20261102"
     ],
     "UNPROTECTED PRIVATE KEY FILE": [
@@ -10996,9 +13052,6 @@
     "ASCII 提交信息": [
       "P-20261105"
     ],
-    "CRC": [
-      "P-20261106"
-    ],
     "真机": [
       "P-20261106"
     ],
@@ -11078,6 +13131,15 @@
       "P-20261108"
     ],
     "分支审计": [
+      "P-20261108"
+    ],
+    "back-merge-check.sh": [
+      "P-20261108"
+    ],
+    "fetch tags 失败": [
+      "P-20261108"
+    ],
+    "MSYS_NO_PATHCONV=1": [
       "P-20261108"
     ],
     "sire_archive_sync": [
@@ -11172,10 +13234,53 @@
     ],
     "额度读数": [
       "P-20261112"
+    ],
+    "向量库清理": [
+      "P-20261113"
+    ],
+    "知识库整合": [
+      "P-20261113"
+    ],
+    "去重合并": [
+      "P-20261113"
+    ],
+    "候选库": [
+      "P-20261113"
+    ],
+    "build_candidate": [
+      "P-20261113"
+    ],
+    "knowledge_aliases": [
+      "P-20261113"
+    ],
+    "source_paths": [
+      "P-20261113"
+    ],
+    "sync_task_records": [
+      "P-20261113"
+    ],
+    "RSI-v6.66": [
+      "P-20261113"
+    ],
+    "旧版本片段": [
+      "P-20261113"
+    ],
+    "is_latest": [
+      "P-20261113"
+    ],
+    "台账片段": [
+      "P-20261113"
+    ],
+    "mermaid.min.js": [
+      "P-20261113"
+    ],
+    "evidence": [
+      "P-20261113"
     ]
   },
   "efficiency": {
     "SIRE": [
+      "E-007",
       "E-008",
       "E-010",
       "E-011",
@@ -11186,6 +13291,26 @@
       "E-021",
       "E-022",
       "E-023"
+    ],
+    "发布": [
+      "E-007"
+    ],
+    "CI Runner": [
+      "E-007"
+    ],
+    "tag": [
+      "E-007"
+    ],
+    "本地构建": [
+      "E-007"
+    ],
+    "效率": [
+      "E-007",
+      "E-014"
+    ],
+    "release.py": [
+      "E-007",
+      "E-028"
     ],
     "单一来源": [
       "E-008",
@@ -11434,9 +13559,6 @@
       "E-014"
     ],
     "合并命令": [
-      "E-014"
-    ],
-    "效率": [
       "E-014"
     ],
     "CLOSE_HEAVY": [
@@ -11758,9 +13880,6 @@
     "59c538c6": [
       "E-028"
     ],
-    "release.py": [
-      "E-028"
-    ],
     "分类标题": [
       "E-028",
       "E-029"
@@ -11849,6 +13968,15 @@
     ]
   },
   "habits": {
+    "GitLab": [
+      "H-002"
+    ],
+    "操作优先使用可见": [
+      "H-002"
+    ],
+    "网页": [
+      "H-002"
+    ],
     "排查纪律": [
       "H-004"
     ],
@@ -11927,27 +14055,6 @@
     "不推送代码": [
       "H-007"
     ],
-    "FC 重制": [
-      "H-008"
-    ],
-    "UI 风格": [
-      "H-008"
-    ],
-    "参考图": [
-      "H-008"
-    ],
-    "暖木": [
-      "H-008"
-    ],
-    "旧钢": [
-      "H-008"
-    ],
-    "暖纸色": [
-      "H-008"
-    ],
-    "黄铜焦点": [
-      "H-008"
-    ],
     "CI": [
       "H-009"
     ],
@@ -11970,6 +14077,6 @@
       "H-009"
     ]
   },
-  "last_updated": "2026-11-11T00:39:13Z",
-  "total_records": 252
+  "last_updated": "2026-11-11T02:38:34Z",
+  "total_records": 283
 }

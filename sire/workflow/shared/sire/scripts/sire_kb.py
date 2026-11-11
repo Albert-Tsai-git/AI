@@ -427,6 +427,20 @@ def cmd_show(args):
             print("")
             print("\n".join(r["_body"]).strip())
             return 0
+    # ★ 2026-11-11 (RSI-v6.66) 清理合并后旧编号仍可追溯：查别名表并指向新卡片
+    try:
+        import sqlite3
+        conn = sqlite3.connect("file:%s?mode=ro" % VECTOR_DB.replace("\\", "/"), uri=True)
+        row = conn.execute("SELECT new_id, action, reason FROM knowledge_aliases WHERE old_id = ?", (rid,)).fetchone()
+        conn.close()
+    except Exception:  # noqa: BLE001  别名表不存在或库不可读时按未找到处理
+        row = None
+    if row:
+        if row[0]:
+            print("记录 %s 已合并到 %s（%s）；请用 show %s 查看" % (rid, row[0], row[2], row[0]))
+        else:
+            print("记录 %s 已在清理中归档丢弃：%s" % (rid, row[2]))
+        return 0
     print("ERROR 未找到记录 %s" % rid)
     return 1
 

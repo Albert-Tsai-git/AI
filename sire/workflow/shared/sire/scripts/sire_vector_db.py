@@ -31,7 +31,11 @@ TEXT_SUFFIXES = {
     ".toml", ".ini", ".cfg", ".py", ".ps1", ".sh", ".js", ".ts",
     ".tsx", ".jsx", ".html", ".css", ".sql",
 }
-SKIP_DIRS = {".git", "__pycache__", "node_modules", "vector_db", "exports", "integrity"}
+SKIP_DIRS = {".git", "__pycache__", "node_modules", "vector_db", "exports", "integrity", ".pytest_cache"}
+# ★ 2026-11-11 (RSI-v6.66) 向量片段只来自说明文档，规则与候选库构建脚本一致
+DOC_SUFFIXES = {".md", ".markdown"}
+RECORD_FILES = {"global_dev_features.md", "global_problem_solutions.md", "global_dev_efficiency.md", "global_dev_habits.md"}
+NOISE_DIR_NAMES = {"sire_ledger", "evidence", "mermaid", ".sire", "runs", "secrets"}
 WORD_RE = re.compile(r"[A-Za-z0-9_./:@+-]+|[\u4e00-\u9fff]+")
 
 
@@ -125,25 +129,28 @@ def source_paths() -> list[Path]:
         if not root.is_dir():
             continue
         for path in root.rglob("*"):
-            if not path.is_file() or path.suffix.lower() not in TEXT_SUFFIXES:
+            if not path.is_file() or path.suffix.lower() not in DOC_SUFFIXES:
                 continue
             if any(part in SKIP_DIRS for part in path.parts):
                 continue
             # ★ 2026-09-24 派生索引/配置/备份文件不再切片入库
             if path.name.lower() in ("global_index.json", "settings.json", "settings.local.json", "global_knowledge_records.md", "knowledge_template.md") or ".bak" in path.name.lower():
                 continue
+            # ★ 2026-11-11 索引范围收敛(RSI-v6.66)：只切片说明文档；知识记录文件已在 knowledge_records，不重复切片
+            if path.name.lower() in RECORD_FILES or path.name.lower() == "sire-migration-legacy-v1.md":
+                continue
+            try:
+                rel_parts = {part.lower() for part in path.relative_to(root).parts[:-1]}
+            except ValueError:
+                rel_parts = set()
+            if rel_parts & NOISE_DIR_NAMES:  # 只匹配相对索引根的目录段，避免被上层路径名误伤
+                continue
             files.add(path.resolve())
     for path in global_files():
         if path.is_file():
             files.add(path.resolve())
-    # 历史任务台账同时进入向量索引，保证任务前检索也能参考过去的执行记录。
-    for root in task_roots():
-        if not root.is_dir():
-            continue
-        for run in run_directories(root):
-            for path in run.rglob("*"):
-                if path.is_file() and path.suffix.lower() in TEXT_SUFFIXES:
-                    files.add(path.resolve())
+    # ★ 2026-11-11 历史任务台账不再进入向量片段：台账日志/evidence 会淹没真实知识并撑大库(曾达 1.39GB)。
+    #   任务记录仍由 sync_task_records 写入 task_records 表留档，可按 run_id 查询。
     return sorted(files, key=lambda p: str(p).lower())
 
 
@@ -502,6 +509,11 @@ def run_directories(root: Path) -> list[Path]:
     return sorted(found, key=lambda item: str(item).lower())
 
 
+def task_run_is_noise(run_id: str) -> bool:
+    """封闭枚举的噪声 run：用量统计、三重复核测试、假项目、current-run 指针。"""
+    return run_id.startswith(("usage-", "RTEST-TRIPLE")) or run_id.endswith("-fakeproj") or run_id == "current-run"
+
+
 def sync_task_records(conn: sqlite3.Connection) -> int:
     """将台账文件（含固定目录 sire_ledger/runs）导入数据库；幂等，不删除原始台账。"""
     allowed = {".json", ".md", ".log", ".txt", ".yaml", ".yml"}
@@ -510,11 +522,18 @@ def sync_task_records(conn: sqlite3.Connection) -> int:
         conn.execute("DELETE FROM task_records")
     count = 0
     now = datetime.now(timezone.utc).isoformat()
+    # ★ 2026-11-11 (RSI-v6.66) 去噪+去重，防止清理后的库被下次同步灌回：
+    #   噪声 run 不入库；同一 run 内内容完全相同(项目副本与固定目录各一份)只留一条。
+    seen: dict[tuple[str, str], str] = {}
+    for row in conn.execute("SELECT record_key, run_id, content FROM task_records"):
+        seen.setdefault((row[1], hashlib.sha256((row[2] or "").encode("utf-8", "replace")).hexdigest()), row[0])
     for root in task_roots():
         if not root.is_dir():
             continue
         for run in run_directories(root):
                 run_id = run.name
+                if task_run_is_noise(run_id):
+                    continue
                 project_path = str(run.parent.parent.resolve())
                 for record in run.rglob("*"):
                     if not record.is_file() or record.suffix.lower() not in allowed:
@@ -524,6 +543,9 @@ def sync_task_records(conn: sqlite3.Connection) -> int:
                     except OSError:
                         continue
                     key = str(record.resolve())
+                    digest = (run_id, hashlib.sha256(content.encode("utf-8", "replace")).hexdigest())
+                    if seen.setdefault(digest, key) != key:
+                        continue
                     domain, kind, status, scope, confidence = classify(record, record.name, content)
                     conn.execute("""INSERT OR REPLACE INTO task_records
                         (record_key, run_id, project_path, record_path, record_type, content, updated_at, domain, kind, status, scope, confidence)
